@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <meta name="color-scheme" content="light">
+    <title>Plan de Correlatividades - Prof. Biología</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #F8FAFC; }
+        
+        .cuatrimestre-divider {
+            display: flex;
+            align-items: center;
+            margin: 1.25rem 0 0.5rem 0;
+            color: #94a3b8;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .cuatrimestre-divider::before, .cuatrimestre-divider::after {
+            content: "";
+            flex: 1;
+            border-bottom: 1px dashed #cbd5e1;
+        }
+        .cuatrimestre-divider span { margin: 0 10px; }
+        
+        /* Scrollbars personalizados */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+
+<body class="p-4 lg:p-8 text-slate-800 h-screen flex flex-col overflow-hidden">
+
+<div id="cascadaApp" class="w-full max-w-[1800px] mx-auto flex flex-col h-full space-y-4">
+
+    <!-- Header -->
+    <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4 flex-shrink-0">
+        <div>
+            <h2 class="text-2xl font-extrabold text-slate-900 tracking-tight">Profesorado en Biología</h2>
+            <p class="mt-1 text-sm text-slate-500 font-medium">
+                Mapa de correlatividades. <span class="text-emerald-600 font-bold">Clic en una materia</span> para ver detalles.
+            </p>
+        </div>
+        
+        <div class="flex flex-col items-end gap-2">
+            <!-- Leyenda de Tipos (Campos de Formación) -->
+            <div class="flex flex-wrap gap-2 text-[10px] font-bold uppercase justify-end opacity-80">
+                <span class="px-2 py-1 rounded border bg-[#eff6ff] text-[#1d4ed8] border-[#bfdbfe]">Formación General</span>
+                <span class="px-2 py-1 rounded border bg-[#ecfdf5] text-[#047857] border-[#a7f3d0]">Formación Específica</span>
+                <span class="px-2 py-1 rounded border bg-[#f5f3ff] text-[#6d28d9] border-[#ddd6fe]">Práctica Profesional</span>
+            </div>
+            <!-- Leyenda de Formatos -->
+            <div class="flex flex-wrap gap-2 text-[10px] uppercase justify-end">
+                <span class="px-2 py-0.5 rounded border bg-[#fffbeb] text-[#b45309] border-[#fcd34d] font-bold">Taller</span>
+                <span class="px-2 py-0.5 rounded border bg-[#fff1f2] text-[#be123c] border-[#fda4af] font-bold">Seminario</span>
+                <span class="px-2 py-0.5 rounded border bg-[#fdf4ff] text-[#a21caf] border-[#f0abfc] font-bold">Variable</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Controles -->
+    <div class="bg-white p-3 rounded-2xl border border-gray-200 shadow-sm z-30 flex-shrink-0">
+        <div class="flex flex-col sm:flex-row gap-3 items-center justify-between">
+            <div class="relative flex-1 w-full sm:max-w-xs">
+                <svg class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <input type="text" id="searchInput" placeholder="Buscar materia..." class="pl-9 w-full rounded-xl border-gray-200 bg-slate-50 p-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all outline-none">
+            </div>
+
+            <div class="flex gap-2 w-full sm:w-auto">
+                <!-- Filtro por Formato -->
+                <select id="filterFormato" class="flex-1 sm:flex-none rounded-xl border border-gray-200 px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-emerald-100 outline-none">
+                    <option value="">Todos los Formatos</option>
+                    <option value="Asignatura">Asignaturas</option>
+                    <option value="Taller">Talleres</option>
+                    <option value="Seminario">Seminarios</option>
+                    <option value="Variable">Variable (UDI)</option>
+                </select>
+                <!-- Filtro por Tipo -->
+                <select id="filterTipo" class="flex-1 sm:flex-none rounded-xl border border-gray-200 px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-emerald-100 outline-none">
+                    <option value="">Todos los Campos</option>
+                    <option value="Formación General">Formación General</option>
+                    <option value="Formación Específica">Formación Específica</option>
+                    <option value="Práctica Profesional">Práctica Profesional</option>
+                </select>
+                <button id="resetBtn" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-sm font-bold transition-colors">Limpiar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grid Principal (Scroll Horizontal Puro) -->
+    <div class="flex-1 overflow-x-auto overflow-y-hidden pb-2">
+        <div id="mainGrid" class="flex flex-nowrap gap-5 h-full px-1">
+            <!-- Las columnas se generan aquí dinámicamente -->
+        </div>
+    </div>
+
+    <!-- Panel de Detalles -->
+    <div id="detailPanel" class="fixed inset-x-0 bottom-0 z-50 transform translate-y-full transition-transform duration-300 ease-in-out pointer-events-none">
+        <div class="pointer-events-auto bg-white rounded-t-2xl shadow-[0_-10px_40px_rgba(0,0,0,0.15)] border-t border-gray-200 max-h-[85vh] overflow-y-auto">
+            <div class="p-6 max-w-5xl mx-auto">
+                <div class="flex justify-between items-start mb-6 border-b border-slate-100 pb-4">
+                    <div>
+                        <div class="flex items-center gap-2 mb-2">
+                            <span id="detailCodigo" class="px-2 py-0.5 rounded text-[10px] font-black bg-slate-800 text-white uppercase tracking-wider"></span>
+                            <span id="detailTipo" class="px-2 py-0.5 rounded text-[10px] font-bold border uppercase tracking-wider"></span>
+                            <span id="detailFormatoBadge" class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border"></span>
+                        </div>
+                        <h3 id="detailTitle" class="text-2xl font-extrabold text-slate-900 leading-tight"></h3>
+                        <p id="detailInfo" class="text-sm text-slate-500 font-medium mt-1"></p>
+                    </div>
+                    <button id="closeDetail" class="p-2 bg-slate-100 rounded-full hover:bg-slate-200 text-slate-500 transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div>
+                        <h4 class="font-bold text-slate-800 mb-3 flex items-center gap-2 text-xs uppercase tracking-wide">
+                            <span class="w-2 h-2 rounded-full bg-red-500"></span> Para cursar necesitas
+                        </h4>
+                        <div id="correlativesList" class="space-y-2"></div>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-slate-800 mb-3 flex items-center gap-2 text-xs uppercase tracking-wide">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Te habilita cursar
+                        </h4>
+                        <div id="dependentsList" class="space-y-2"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+      
+      // Mapeo de colores ACTUALIZADO para los nuevos nombres de Tipos
+      const tipoColores = {
+          "Formación Específica": "bg-[#ecfdf5] text-[#047857] border-[#a7f3d0]",      // Verde
+          "Formación General": "bg-[#eff6ff] text-[#1d4ed8] border-[#bfdbfe]",         // Azul
+          "Práctica Profesional": "bg-[#f5f3ff] text-[#6d28d9] border-[#ddd6fe]",      // Violeta
+          "default": "bg-gray-100 text-gray-700 border-gray-200"
+      };
+
+      // Mapeo de colores para la variable FORMATO
+      const formatoColores = {
+          "Asignatura": "bg-[#ffffff] text-[#64748b] border-[#e2e8f0]",
+          "Taller": "bg-[#fffbeb] text-[#b45309] border-[#fcd34d] font-bold",
+          "Seminario": "bg-[#fff1f2] text-[#be123c] border-[#fda4af] font-bold",
+          "Seminario-Taller": "bg-[#fff7ed] text-[#c2410c] border-[#fed7aa] font-bold",
+          "Asignatura-Taller": "bg-[#f0f9ff] text-[#0369a1] border-[#bae6fd] font-bold",
+          "Variable": "bg-[#fdf4ff] text-[#a21caf] border-[#f0abfc] font-bold",
+          "default": "bg-white text-gray-500 border-gray-200"
+      };
+
+      // DATOS PROFESORADO DE EDUCACIÓN SECUNDARIA EN BIOLOGÍA
+      // Tipos actualizados y UDI definida como formato "Variable"
+      const materias = [
+  // --- 1° AÑO (Todas sin correlativas) ---
+  { id: "PED", codigo: "PED", nombre: "Pedagogía", anio: 1, cuatri: null, horas: 96, tipo: "Formación General", formato: "Asignatura", correlativas: [], reqs: [] },
+  { id: "CJL", codigo: "CJL", nombre: "Corporeidad, Juego y Lenguajes Artísticos", anio: 1, cuatri: null, horas: 96, tipo: "Formación General", formato: "Taller", correlativas: [], reqs: [] },
+  { id: "OLE", codigo: "OLE", nombre: "Oralidad, Lectura, Escritura y TIC", anio: 1, cuatri: null, horas: 96, tipo: "Formación General", formato: "Taller", correlativas: [], reqs: [] },
+  { id: "DGR", codigo: "DGR", nombre: "Didáctica General", anio: 1, cuatri: null, horas: 96, tipo: "Formación General", formato: "Asignatura", correlativas: [], reqs: [] },
+  { id: "BIO", codigo: "BIO", nombre: "Biología General", anio: 1, cuatri: null, horas: 128, tipo: "Formación Específica", formato: "Asignatura", correlativas: [], reqs: [] },
+  { id: "MAT", codigo: "MAT", nombre: "Matemática", anio: 1, cuatri: null, horas: 128, tipo: "Formación Específica", formato: "Asignatura", correlativas: [], reqs: [] },
+  { id: "QUI", codigo: "QUI", nombre: "Química", anio: 1, cuatri: null, horas: 128, tipo: "Formación Específica", formato: "Asignatura", correlativas: [], reqs: [] },
+  { id: "FIS", codigo: "FIS", nombre: "Física", anio: 1, cuatri: null, horas: 128, tipo: "Formación Específica", formato: "Asignatura", correlativas: [], reqs: [] },
+  { id: "CTI", codigo: "CTI", nombre: "Ciencias de la Tierra", anio: 1, cuatri: null, horas: 96, tipo: "Formación Específica", formato: "Asignatura-Taller", correlativas: [], reqs: [] },
+  { id: "PD1", codigo: "PD1", nombre: "Práctica Docente I", anio: 1, cuatri: null, horas: 128, tipo: "Práctica Profesional", formato: "Seminario-Taller", correlativas: [], reqs: [] },
+
+  // --- 2° AÑO ---
+  { id: "FIL", codigo: "FIL", nombre: "Filosofía", anio: 2, cuatri: null, horas: 96, tipo: "Formación General", formato: "Asignatura",
+    correlativas: ["PED"], reqs: [{ id: "PED", type: "R" }] },
+  { id: "HSP", codigo: "HSP", nombre: "Historia Social y Política Arg. y Lat.", anio: 2, cuatri: null, horas: 96, tipo: "Formación General", formato: "Asignatura",
+    correlativas: ["PED"], reqs: [{ id: "PED", type: "R" }] },
+  { id: "PSE", codigo: "PSE", nombre: "Psicología Educacional", anio: 2, cuatri: null, horas: 96, tipo: "Formación General", formato: "Asignatura",
+    correlativas: ["PED"], reqs: [{ id: "PED", type: "R" }] },
+  { id: "PD2", codigo: "PD2", nombre: "Práctica Docente II", anio: 2, cuatri: null, horas: 128, tipo: "Práctica Profesional", formato: "Seminario-Taller",
+    correlativas: ["PD1", "PED", "DGR"],
+    reqs: [{ id: "PD1", type: "A" }, { id: "PED", type: "R" }, { id: "DGR", type: "R" }] },
+  { id: "SES", codigo: "SES", nombre: "Sujetos de la Educación Secundaria", anio: 2, cuatri: null, horas: 96, tipo: "Formación Específica", formato: "Seminario",
+    correlativas: ["DGR", "PED"], reqs: [{ id: "DGR", type: "R" }, { id: "PED", type: "R" }] },
+  { id: "DCN", codigo: "DCN", nombre: "Didáctica de las Ciencias Naturales", anio: 2, cuatri: null, horas: 96, tipo: "Formación Específica", formato: "Asignatura",
+    correlativas: ["DGR", "BIO", "CTI", "QUI"],
+    reqs: [{ id: "DGR", type: "A" }, { id: "BIO", type: "R" }, { id: "CTI", type: "R" }, { id: "QUI", type: "R" }] },
+  { id: "BCM", codigo: "BCM", nombre: "Biología Celular y Molecular", anio: 2, cuatri: null, horas: 128, tipo: "Formación Específica", formato: "Asignatura",
+    correlativas: ["BIO", "QUI"], reqs: [{ id: "BIO", type: "R" }, { id: "QUI", type: "R" }] },
+  { id: "BHU", codigo: "BHU", nombre: "Biología Humana", anio: 2, cuatri: null, horas: 160, tipo: "Formación Específica", formato: "Asignatura",
+    correlativas: ["BIO", "FIS"], reqs: [{ id: "BIO", type: "R" }, { id: "FIS", type: "R" }] },
+  { id: "RUN", codigo: "RUN", nombre: "Reinos Unicelulares", anio: 2, cuatri: null, horas: 64, tipo: "Formación Específica", formato: "Asignatura",
+    correlativas: ["BIO"], reqs: [{ id: "BIO", type: "R" }] },
+  { id: "ESI", codigo: "ESI", nombre: "Educación Sexual Integral", anio: 2, cuatri: null, horas: 64, tipo: "Formación General", formato: "Seminario-Taller", correlativas: [], reqs: [] },
+
+  // --- 3° AÑO ---
+  { id: "HEA", codigo: "HEA", nombre: "Historia de la Educación Argentina", anio: 3, cuatri: null, horas: 96, tipo: "Formación General", formato: "Asignatura",
+    correlativas: ["PED", "HSP"], reqs: [{ id: "PED", type: "A" }, { id: "HSP", type: "R" }] },
+  { id: "SOC", codigo: "SOC", nombre: "Sociología de la Educación", anio: 3, cuatri: null, horas: 96, tipo: "Formación General", formato: "Asignatura",
+    correlativas: ["HSP"], reqs: [{ id: "HSP", type: "R" }] },
+  { id: "PD3", codigo: "PD3", nombre: "Práctica Docente III", anio: 3, cuatri: null, horas: 192, tipo: "Práctica Profesional", formato: "Seminario-Taller",
+    correlativas: ["PD2", "PSE", "SES", "BHU", "DCN", "CTI"],
+    reqs: [{ id: "PD2", type: "A" }, { id: "PSE", type: "R" }, { id: "SES", type: "R" }, { id: "BHU", type: "R" }, { id: "DCN", type: "R" }, { id: "CTI", type: "A" }] },
+  { id: "AOI", codigo: "AOI", nombre: "Análisis y Org. de las Inst. Educ.", anio: 3, cuatri: null, horas: 96, tipo: "Formación General", formato: "Seminario-Taller",
+    correlativas: ["SES", "PD1", "PD2"], reqs: [{ id: "SES", type: "R" }, { id: "PD1", type: "A" }, { id: "PD2", type: "R" }] },
+  { id: "RPL", codigo: "RPL", nombre: "Reinos Pluricelulares", anio: 3, cuatri: null, horas: 96, tipo: "Formación Específica", formato: "Asignatura",
+    correlativas: ["RUN"], reqs: [{ id: "RUN", type: "R" }] },
+  { id: "RAN", codigo: "RAN", nombre: "Reino Animal", anio: 3, cuatri: null, horas: 160, tipo: "Formación Específica", formato: "Asignatura",
+    correlativas: ["BIO"], reqs: [{ id: "BIO", type: "R" }] },
+  { id: "DBI", codigo: "DBI", nombre: "Didáctica de la Biología", anio: 3, cuatri: null, horas: 96, tipo: "Formación Específica", formato: "Asignatura",
+    correlativas: ["DCN", "SES", "BHU", "BCM"],
+    reqs: [{ id: "DCN", type: "A" }, { id: "SES", type: "R" }, { id: "BHU", type: "R" }, { id: "BCM", type: "R" }] },
+  { id: "EPI", codigo: "EPI", nombre: "Epistemología de la Biología", anio: 3, cuatri: null, horas: 96, tipo: "Formación Específica", formato: "Asignatura",
+    correlativas: ["FIL", "BIO"], reqs: [{ id: "FIL", type: "R" }, { id: "BIO", type: "A" }] },
+  { id: "UDI3", codigo: "UDI3", nombre: "Unidad de Definición Inst.", anio: 3, cuatri: null, horas: 96, tipo: "Formación Específica", formato: "Variable", correlativas: [], reqs: [] },
+
+  // --- 4° AÑO ---
+  { id: "DHE", codigo: "DHE", nombre: "DDHH: Ética y Ciudadanía", anio: 4, cuatri: null, horas: 96, tipo: "Formación General", formato: "Asignatura",
+    correlativas: ["FIL", "HSP", "SES"], reqs: [{ id: "FIL", type: "A" }, { id: "HSP", type: "A" }, { id: "SES", type: "A" }] },
+  { id: "PD4", codigo: "PD4", nombre: "Práctica Docente IV", anio: 4, cuatri: null, horas: 320, tipo: "Práctica Profesional", formato: "Seminario-Taller",
+    correlativas: ["HEA", "SOC", "PD3", "AOI", "RPL", "RAN", "DBI", "EPI"],
+    reqs: [{ isSpecial: true, text: "Todo 3° Año Aprobado", type: "A" }] },
+  { id: "ECO", codigo: "ECO", nombre: "Ecología", anio: 4, cuatri: null, horas: 128, tipo: "Formación Específica", formato: "Asignatura",
+    correlativas: ["RUN", "RPL", "RAN", "BHU", "QUI", "FIS", "CTI"],
+    reqs: [{ id: "RUN", type: "R" }, { id: "RPL", type: "R" }, { id: "RAN", type: "R" }, { id: "BHU", type: "A" }, { id: "QUI", type: "A" }, { id: "FIS", type: "A" }, { id: "CTI", type: "A" }] },
+  { id: "SAM", codigo: "SAM", nombre: "Salud y Ambiente", anio: 4, cuatri: null, horas: 64, tipo: "Formación Específica", formato: "Seminario-Taller",
+    correlativas: ["BHU"], reqs: [{ id: "BHU", type: "A" }] },
+  { id: "GEN", codigo: "GEN", nombre: "Genética", anio: 4, cuatri: null, horas: 128, tipo: "Formación Específica", formato: "Asignatura",
+    correlativas: ["BCM"], reqs: [{ id: "BCM", type: "A" }] },
+  { id: "EVO", codigo: "EVO", nombre: "Evolución", anio: 4, cuatri: null, horas: 128, tipo: "Formación Específica", formato: "Asignatura",
+    correlativas: ["EPI", "RUN", "RPL", "RAN"],
+    reqs: [{ id: "EPI", type: "R" }, { id: "RUN", type: "A" }, { id: "RPL", type: "R" }, { id: "RAN", type: "R" }] },
+  { id: "UDI4", codigo: "UDI4", nombre: "Unidad de Definición Inst.", anio: 4, cuatri: null, horas: 96, tipo: "Formación Específica", formato: "Variable", correlativas: [], reqs: [] }
+];
+
+      // --- RENDER ---
+      let searchTerm = "";
+      let filterTipo = "";
+      let filterFormato = "";
+      let selectedMateria = null;
+
+      const grid = document.getElementById("mainGrid");
+      const detailPanel = document.getElementById("detailPanel");
+      
+      const getMateria = (id) => materias.find(m => m.id === id);
+      const getDependents = (id) => materias.filter(m => m.correlativas.includes(id));
+
+      const renderGrid = () => {
+        grid.innerHTML = "";
+        
+        const filtered = materias.filter(m => {
+            const matchSearch = m.nombre.toLowerCase().includes(searchTerm.toLowerCase()) || m.codigo.includes(searchTerm.toUpperCase());
+            const matchTipo = filterTipo === "" || m.tipo === filterTipo;
+            const matchFormato = filterFormato === "" || m.formato.includes(filterFormato);
+            // Manejo especial para filtrar "Variable" si el usuario selecciona "UDI" en el filtro anterior o "Variable" en el nuevo
+            // Como cambiamos el value del option a "Variable", el includes funcionará bien.
+            return matchSearch && matchTipo && matchFormato;
+        });
+
+        for(let i=1; i<=4; i++) {
+            const materiasAnio = filtered.filter(m => m.anio === i);
+            
+            const col = document.createElement("div");
+            col.className = "flex-none w-[280px] bg-white rounded-2xl border border-gray-200 shadow-sm flex flex-col overflow-hidden h-full";
+            
+            col.innerHTML = `
+                <div class="px-4 py-3 border-b border-gray-100 bg-slate-50 flex items-center justify-between flex-shrink-0">
+                    <h3 class="font-black text-slate-700 text-lg">${i}° Año</h3>
+                    <span class="text-xs font-bold text-emerald-400 bg-white px-2 py-1 rounded border border-gray-200">${materiasAnio.length}</span>
+                </div>
+                <div class="p-2 space-y-2 flex-1 overflow-y-auto" id="col-content-${i}"></div>
+            `;
+            
+            const colContent = col.querySelector(`#col-content-${i}`);
+            
+            // Tratamiento de Materias Anuales (Cuatri 1)
+            const matsCuatri = materiasAnio.filter(m => m.cuatri === 1);
+            if(matsCuatri.length > 0) {
+                const divider = document.createElement("div");
+                divider.className = "cuatrimestre-divider";
+                divider.innerHTML = `<span>Materias Anuales</span>`;
+                colContent.appendChild(divider);
+
+                matsCuatri.forEach(m => {
+                    const card = document.createElement("div");
+                    const isSelected = selectedMateria && selectedMateria.id === m.id;
+                    const badgeClass = tipoColores[m.tipo] || tipoColores["default"];
+                    const formatoClass = formatoColores[m.formato] || formatoColores["default"];
+                    
+                    const activeClass = isSelected ? "ring-2 ring-emerald-500 shadow-md transform scale-[1.02]" : "hover:border-emerald-300 hover:shadow-md";
+                    
+                    let formatoDisplay = m.formato;
+                    if (m.formato === "Seminario-Taller") formatoDisplay = "Sem-Taller";
+                    if (m.formato === "Asignatura-Taller") formatoDisplay = "Asig-Taller";
+                    // Variable se muestra como Variable o UDI según prefieras, dejaremos Variable por consistencia con el código
+
+                    card.className = `p-3 bg-white border border-gray-100 rounded-xl cursor-pointer transition-all duration-200 group ${activeClass}`;
+                    
+                    card.innerHTML = `
+                        <div class="flex items-start justify-between gap-2 mb-1">
+                            <span class="text-[9px] font-black tracking-wide uppercase px-1.5 py-0.5 rounded border ${badgeClass}">${m.tipo}</span>
+                            <span class="text-[9px] text-slate-400 font-bold">${m.codigo}</span>
+                        </div>
+                        <h4 class="font-bold text-xs text-slate-700 leading-snug group-hover:text-emerald-700 transition-colors line-clamp-2">${m.nombre}</h4>
+                        <div class="mt-2 flex items-center justify-between">
+                            <span class="text-[9px] px-1.5 py-0.5 rounded ${formatoClass}">${formatoDisplay}</span>
+                            <span class="text-[9px] font-bold text-slate-300">${m.horas}hs</span>
+                        </div>
+                    `;
+                    
+                    card.onclick = () => openDetail(m);
+                    colContent.appendChild(card);
+                });
+            }
+
+            grid.appendChild(col);
+        }
+    };
+
+      const openDetail = (m) => {
+          selectedMateria = m;
+          renderGrid();
+          
+          detailPanel.classList.remove("translate-y-full");
+          
+          const badgeClass = tipoColores[m.tipo] || tipoColores["default"];
+          const fmtClass = formatoColores[m.formato] || formatoColores["default"];
+
+          const tipoEl = document.getElementById("detailTipo");
+          tipoEl.textContent = m.tipo;
+          tipoEl.className = `px-2 py-0.5 rounded text-[10px] font-bold border uppercase tracking-wider ${badgeClass}`;
+
+          const fmtBadge = document.getElementById("detailFormatoBadge");
+          fmtBadge.textContent = m.formato;
+          fmtBadge.className = `px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${fmtClass}`;
+
+          document.getElementById("detailTitle").textContent = m.nombre;
+          document.getElementById("detailCodigo").textContent = m.codigo;
+          document.getElementById("detailInfo").textContent = `${m.anio}° Año | Anual | ${m.horas} horas cátedra`;
+
+          // REQUISITOS
+          const reqList = document.getElementById("correlativesList");
+          reqList.innerHTML = "";
+          
+          if(m.reqs.length === 0) {
+              reqList.innerHTML = `<div class="p-3 bg-slate-50 rounded-lg border border-dashed border-slate-200 text-xs text-slate-400 text-center italic">No se requieren materias previas.</div>`;
+          } else {
+              m.reqs.forEach(r => {
+                  const el = document.createElement("div");
+                  if(r.isSpecial) {
+                       el.className = "flex items-center gap-3 p-3 rounded-lg bg-red-50 text-red-800 border border-red-100";
+                       el.innerHTML = `<span class="text-xs font-bold uppercase">${r.text}</span>`;
+                  } else {
+                      const matReq = getMateria(r.id);
+                      if(matReq) {
+                          el.className = "flex items-center gap-3 p-2 rounded-lg bg-white border border-gray-100 hover:border-red-200 hover:bg-red-50 cursor-pointer transition-colors group";
+                          
+                          // badge tipo
+                          const badgeType = r.type === 'R' ? 'Regularizada' : 'Aprobada';
+                          const badgeColor = r.type === 'R' ? 'text-orange-500' : 'text-red-500';
+
+                          el.innerHTML = `
+                             <span class="w-8 h-8 flex items-center justify-center text-[9px] font-black bg-slate-100 text-slate-500 rounded-lg group-hover:bg-white group-hover:text-red-500 transition-colors uppercase">${matReq.codigo}</span>
+                             <div class="flex-1">
+                                <div class="text-xs font-bold text-slate-700 group-hover:text-red-700">${matReq.nombre}</div>
+                                <div class="text-[10px] font-bold ${badgeColor} uppercase tracking-wider mt-0.5">${badgeType}</div>
+                             </div>
+                          `;
+                          el.onclick = () => openDetail(matReq);
+                      }
+                  }
+                  reqList.appendChild(el);
+              });
+          }
+
+          // HABILITA
+          const depList = document.getElementById("dependentsList");
+          depList.innerHTML = "";
+          // Lógica especial para Práctica IV que requiere TODO 3ro
+          let dependientes = getDependents(m.id);
+          
+          if(m.anio === 3) {
+             const pd4 = getMateria("PD4");
+             if(!dependientes.includes(pd4)) dependientes.push(pd4);
+          }
+
+          if(dependientes.length === 0) {
+               depList.innerHTML = `<div class="p-3 bg-slate-50 rounded-lg border border-dashed border-slate-200 text-xs text-slate-400 text-center italic">No es correlativa de ninguna materia posterior.</div>`;
+          } else {
+              dependientes.forEach(d => {
+                  const el = document.createElement("div");
+                  
+                  // Buscar el requisito específico
+                  let requirement = d.reqs.find(r => r.id === m.id);
+                  let condition = "";
+                  
+                  if(requirement) {
+                      condition = requirement.type === 'R' ? 'Para Cursar' : 'Para Rendir';
+                  } else if (d.id === "PD4" && m.anio === 3) {
+                      condition = "Para Rendir (Todo 3° Aprob)";
+                  }
+
+                  el.className = "flex items-center gap-3 p-2 rounded-lg bg-white border border-gray-100 hover:border-emerald-200 hover:bg-emerald-50 cursor-pointer transition-colors group";
+                  el.innerHTML = `
+                     <span class="w-8 h-8 flex items-center justify-center text-[9px] font-black bg-emerald-50 text-emerald-600 rounded-lg border border-emerald-100 uppercase">${d.codigo}</span>
+                     <div class="flex-1">
+                        <div class="text-xs font-bold text-slate-700 group-hover:text-emerald-800">${d.nombre}</div>
+                        <div class="text-[10px] text-slate-400 mt-0.5">Habilita: <span class="font-bold text-emerald-600 uppercase">${condition}</span></div>
+                     </div>
+                  `;
+                  el.onclick = () => openDetail(d);
+                  depList.appendChild(el);
+              });
+          }
+      };
+
+      // EVENTOS
+      document.getElementById("closeDetail").onclick = () => {
+          detailPanel.classList.add("translate-y-full");
+          selectedMateria = null;
+          renderGrid();
+      };
+      
+      document.getElementById("searchInput").addEventListener("input", (e) => {
+          searchTerm = e.target.value;
+          renderGrid();
+      });
+      
+      document.getElementById("filterTipo").addEventListener("change", (e) => {
+          filterTipo = e.target.value;
+          renderGrid();
+      });
+
+      document.getElementById("filterFormato").addEventListener("change", (e) => {
+          filterFormato = e.target.value;
+          renderGrid();
+      });
+
+      document.getElementById("resetBtn").onclick = () => {
+          searchTerm = "";
+          filterTipo = "";
+          filterFormato = "";
+          document.getElementById("searchInput").value = "";
+          document.getElementById("filterTipo").value = "";
+          document.getElementById("filterFormato").value = "";
+          renderGrid();
+      };
+
+      renderGrid();
+    });
+</script>
+
+</body>
+</html>

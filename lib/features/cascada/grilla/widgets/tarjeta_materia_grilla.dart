@@ -1,0 +1,169 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../../shared/providers/app_state.dart';
+import '../../../../models/materia.dart';
+
+import '../utils/estilos_chips.dart';
+import 'modal_detalle_materia.dart';
+
+class _TokensTarjeta {
+  static const borderLight = Color(0xFFE5E7EB);
+}
+
+class TarjetaMateriaGrilla extends ConsumerWidget {
+  const TarjetaMateriaGrilla(this.m, {super.key, this.borderless = false});
+
+  final Materia m;
+  final bool borderless;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final selectedId = ref.watch(selectedMateriaIdProvider);
+    final isSelected = selectedId == m.id;
+
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
+    final plan = ref.watch(planProvider).valueOrNull;
+    final codeById = {
+      for (final x in (plan?.materias ?? <Materia>[])) x.id: x.codigo
+    };
+
+    String abbr = (codeById[m.id] ?? m.codigo).toString().trim().toUpperCase();
+    if (abbr.isEmpty) abbr = m.id.substring(0, 2).toUpperCase();
+
+    final bgColor = isDark ? oscurecer(cs.surface) : Colors.white;
+    final borderColor = isSelected
+        ? const Color(0xFF005B7F)
+        : (isDark ? const Color(0xFF374151) : _TokensTarjeta.borderLight);
+
+    final titleColor = colorTituloDesdeTipo(isDark, m.tipo);
+
+    final normalizedFormato = normalizarFormatoChip(m.formato);
+    final (fmtBg, fmtFg, fmtBd) = coloresFormato(isDark, normalizedFormato);
+
+    final (typeBg, typeFg, typeBd) = coloresTipo(isDark, m.tipo);
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () async {
+          ref.read(selectedMateriaIdProvider.notifier).state = m.id;
+          await mostrarModalDetalleMateria(context: context, ref: ref);
+        },
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          decoration: BoxDecoration(
+            color: bgColor,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: borderColor,
+              width: isSelected ? 2 : 1,
+            ),
+            boxShadow: isDark || borderless
+                ? []
+                : [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 2,
+                offset: const Offset(0, 1),
+              )
+            ],
+          ),
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      abbr,
+                      style: TextStyle(
+                        fontSize: 15.4,
+                        fontWeight: FontWeight.w800,
+                        color: titleColor.withValues(
+                          alpha: isDark ? 0.9 : 0.8,
+                        ),
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      m.nombre,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: titleColor,
+                        height: 1.2,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 4,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: fmtBg,
+                            borderRadius: BorderRadius.circular(99),
+                            border: Border.all(color: fmtBd),
+                          ),
+                          child: Text(
+                            normalizedFormato,
+                            style: TextStyle(
+                              fontSize: 11.34,
+                              fontWeight: FontWeight.w600,
+                              color: fmtFg,
+                            ),
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: typeBg,
+                            borderRadius: BorderRadius.circular(99),
+                            border: Border.all(color: typeBd),
+                          ),
+                          child: Text(
+                            m.tipo,
+                            style: TextStyle(
+                              fontSize: 11.34,
+                              fontWeight: FontWeight.w600,
+                              color: typeFg,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Align(
+                alignment: Alignment.centerRight,
+                child: Icon(
+                  Icons.chevron_right_rounded,
+                  size: 20,
+                  color: Color(0xFFD1D5DB),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

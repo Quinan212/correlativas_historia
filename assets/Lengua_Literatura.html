@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <title>Profesorado de Lengua y Literatura</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <style>
+        :root {
+            --bg-body: #0f172a;
+            --bg-card: #020617;
+            --bg-chip: #1e293b;
+            --border-subtle: #1e293b;
+            --border-strong: #38bdf8;
+            --text-main: #e5e7eb;
+            --text-soft: #9ca3af;
+            --accent-blue: #38bdf8;
+            --accent-green: #22c55e;
+            --accent-yellow: #eab308;
+            --accent-purple: #a855f7;
+            --chip-general: #0369a1;
+            --chip-especifica: #15803d;
+            --chip-practica: #7c2d12;
+            --chip-other: #6b21a8;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 24px;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: radial-gradient(circle at top, #1e293b 0, #020617 40%, #000 100%);
+            color: var(--text-main);
+        }
+
+        .page {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            margin: 0 0 4px;
+            font-size: 1.9rem;
+            letter-spacing: -0.03em;
+        }
+
+        .subtitle {
+            margin: 0 0 16px;
+            font-size: 0.95rem;
+            color: var(--text-soft);
+        }
+
+        .badges-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            border: 1px solid #1e293b;
+            background: rgba(15, 23, 42, 0.8);
+            color: #e5e7eb;
+        }
+
+        .badge-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 999px;
+        }
+
+        .badge-dot.blue { background: var(--accent-blue); }
+        .badge-dot.green { background: var(--accent-green); }
+        .badge-dot.yellow { background: var(--accent-yellow); }
+        .badge-dot.purple { background: var(--accent-purple); }
+
+        .grid {
+            display: grid;
+            grid-template-columns: minmax(0, 2.5fr) minmax(0, 3fr);
+            gap: 16px;
+        }
+
+        @media (max-width: 900px) {
+            .grid {
+                grid-template-columns: minmax(0, 1fr);
+            }
+        }
+
+        .card {
+            border-radius: 18px;
+            border: 1px solid rgba(148, 163, 184, 0.25);
+            background: radial-gradient(circle at top, #020617, #020617 45%, #020617 100%);
+            box-shadow:
+                0 24px 60px rgba(0, 0, 0, 0.9),
+                inset 0 0 0 1px rgba(148, 163, 184, 0.04);
+            padding: 16px 16px 18px;
+        }
+
+        .card-header-row {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .card-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: #9ca3af;
+        }
+
+        .card-meta {
+            font-size: 0.8rem;
+            color: #64748b;
+        }
+
+        .years-column {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .year-block {
+            border-radius: 14px;
+            border: 1px solid rgba(30, 64, 175, 0.5);
+            background: radial-gradient(circle at top left, rgba(30, 64, 175, 0.35), transparent 58%);
+            padding: 10px 10px 12px;
+        }
+
+        .year-header {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .year-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+        }
+
+        .year-count {
+            font-size: 0.78rem;
+            color: #cbd5f5;
+        }
+
+        .year-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+            gap: 8px;
+        }
+
+        .subject-card {
+            position: relative;
+            border-radius: 12px;
+            padding: 8px 9px;
+            border: 1px solid rgba(30, 64, 175, 0.35);
+            background:
+                radial-gradient(circle at top left, rgba(30, 64, 175, 0.35), transparent 58%),
+                linear-gradient(to bottom right, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 1));
+        }
+
+        .subject-header {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 3px;
+        }
+
+        .subject-code {
+            font-size: 0.83rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #bfdbfe;
+        }
+
+        .subject-hours {
+            font-size: 0.78rem;
+            color: #e5e7eb;
+            opacity: 0.7;
+        }
+
+        .subject-name {
+            font-size: 0.86rem;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #e5e7eb;
+        }
+
+        .chips-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 0.7rem;
+            border: 1px solid rgba(148, 163, 184, 0.4);
+            background: rgba(15, 23, 42, 0.9);
+            color: #e5e7eb;
+        }
+
+        .chip-type-general {
+            border-color: rgba(56, 189, 248, 0.6);
+            background: radial-gradient(circle at top left, rgba(37, 99, 235, 0.35), rgba(15, 23, 42, 0.9));
+            color: #dbeafe;
+        }
+
+        .chip-type-especifica {
+            border-color: rgba(34, 197, 94, 0.6);
+            background: radial-gradient(circle at top left, rgba(22, 163, 74, 0.4), rgba(15, 23, 42, 0.9));
+            color: #bbf7d0;
+        }
+
+        .chip-type-practica {
+            border-color: rgba(249, 115, 22, 0.7);
+            background: radial-gradient(circle at top left, rgba(194, 65, 12, 0.5), rgba(15, 23, 42, 0.95));
+            color: #fed7aa;
+        }
+
+        .chip-type-other {
+            border-color: rgba(168, 85, 247, 0.7);
+            background: radial-gradient(circle at top left, rgba(109, 40, 217, 0.6), rgba(15, 23, 42, 0.95));
+            color: #e9d5ff;
+        }
+
+        .chip-format {
+            border-color: rgba(148, 163, 184, 0.5);
+            background: rgba(15, 23, 42, 0.7);
+            color: #e5e7eb;
+        }
+
+        .chip-requisitos {
+            border-color: rgba(250, 204, 21, 0.7);
+            background: radial-gradient(circle at top left, rgba(252, 211, 77, 0.25), rgba(15, 23, 42, 0.95));
+            color: #fef9c3;
+        }
+
+        .chip-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 999px;
+            margin-right: 4px;
+        }
+
+        .dot-general { background: #38bdf8; }
+        .dot-especifica { background: #22c55e; }
+        .dot-practica { background: #f97316; }
+        .dot-other { background: #a855f7; }
+
+        .chip-requisitos .chip-dot {
+            background: #facc15;
+        }
+
+        .chip-weak {
+            opacity: 0.8;
+        }
+
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 8px;
+            font-size: 0.72rem;
+            color: #9ca3af;
+        }
+
+        .legend-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .side-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .side-section {
+            border-radius: 14px;
+            border: 1px solid rgba(148, 163, 184, 0.35);
+            padding: 10px 11px 11px;
+            background:
+                radial-gradient(circle at top left, rgba(15, 23, 42, 1), rgba(15, 23, 42, 0.96)),
+                linear-gradient(to bottom right, rgba(15, 23, 42, 1), rgba(15, 23, 42, 1));
+        }
+
+        .side-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: #94a3b8;
+            margin-bottom: 6px;
+        }
+
+        .side-body {
+            font-size: 0.82rem;
+            color: #e5e7eb;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+<div class="page">
+    <header>
+        <h1>Profesorado de Lengua y Literatura</h1>
+        <p class="subtitle">
+            Malla curricular estructurada en 4 años, con ejes de formación general, específica y práctica docente.
+        </p>
+
+        <div class="badges-row">
+            <div class="badge">
+                <div class="badge-dot blue"></div>
+                4 años de formación
+            </div>
+            <div class="badge">
+                <div class="badge-dot green"></div>
+                Fuerte eje en Lengua, Literatura, Gramática y Didácticas
+            </div>
+            <div class="badge">
+                <div class="badge-dot yellow"></div>
+                Prácticas docentes progresivas I–IV
+            </div>
+            <div class="badge">
+                <div class="badge-dot purple"></div>
+                Unidades de Definición Institucional (UDI)
+            </div>
+        </div>
+    </header>
+
+    <main class="grid">
+        <section class="card">
+            <div class="card-header-row">
+                <div>
+                    <div class="card-title">Mapa de materias por año</div>
+                    <div class="card-meta">Organización por año de cursado y tipo de formación</div>
+                </div>
+            </div>
+
+            <div id="years-root" class="years-column"></div>
+
+            <div class="legend">
+                <div class="legend-item">
+                    <span class="chip-dot dot-general"></span> Form. General
+                </div>
+                <div class="legend-item">
+                    <span class="chip-dot dot-especifica"></span> Form. Específica
+                </div>
+                <div class="legend-item">
+                    <span class="chip-dot dot-practica"></span> Práctica Profesional
+                </div>
+                <div class="legend-item">
+                    <span class="chip-dot dot-other"></span> UDI / otras
+                </div>
+            </div>
+        </section>
+
+        <aside class="card side-panel">
+            <section class="side-section">
+                <div class="side-title">Recorrido formativo</div>
+                <div class="side-body">
+                    El plan articula la formación pedagógica, disciplinar y didáctica desde el primer año. Las
+                    Prácticas Docentes I a IV van complejizando los espacios de intervención: observación,
+                    participación en aulas, diseño de propuestas y residencia.
+                </div>
+            </section>
+
+            <section class="side-section">
+                <div class="side-title">Foco en Lengua y Literatura</div>
+                <div class="side-body">
+                    Las materias de Gramática, Literatura Universal, Española, Argentina y Latinoamericana, junto con
+                    las lenguas clásicas, garantizan una sólida base disciplinar para el trabajo en aula.
+                </div>
+            </section>
+
+            <section class="side-section">
+                <div class="side-title">Requisitos y correlatividades</div>
+                <div class="side-body">
+                    Las correlativas se organizan en torno a tramos: la aprobación de materias de 1° y 2° año habilita
+                    Práctica II y III, y la aprobación de todo 3° año es requisito para Práctica Docente IV.
+                </div>
+            </section>
+        </aside>
+    </main>
+</div>
+
+<script>
+    const pdfUrl = 'https://drive.google.com/tu_link_oficial_de_lengua_literatura';
+
+    // DATOS PROFESORADO LENGUA Y LITERATURA
+    const materias = [
+        // --- 1° AÑO (Todas sin correlativas) ---
+        { id: "PED", codigo: "PED", nombre: "Pedagogía", anio: 1, horas: 96, tipo: "Formación General", formato: "Asignatura", correlativas: [], reqs: [] },
+        { id: "CJL", codigo: "CJL", nombre: "Corporeidad, Juego y Lenguajes Artísticos", anio: 1, horas: 96, tipo: "Formación General", formato: "Taller", correlativas: [], reqs: [] },
+        { id: "OLE", codigo: "OLE", nombre: "Oralidad, Lectura, Escritura y TIC", anio: 1, horas: 96, tipo: "Formación General", formato: "Taller", correlativas: [], reqs: [] },
+        { id: "DGR", codigo: "DGR", nombre: "Didáctica General", anio: 1, horas: 96, tipo: "Formación General", formato: "Asignatura", correlativas: [], reqs: [] },
+        { id: "GR1", codigo: "GR1", nombre: "Gramática I", anio: 1, horas: 96, tipo: "Formación Específica", formato: "Asignatura", correlativas: [], reqs: [] },
+        { id: "LU1", codigo: "LU1", nombre: "Literatura Universal I", anio: 1, horas: 128, tipo: "Formación Específica", formato: "Asignatura", correlativas: [], reqs: [] },
+        { id: "TLI", codigo: "TLI", nombre: "Teoría Literaria", anio: 1, horas: 128, tipo: "Formación Específica", formato: "Asignatura", correlativas: [], reqs: [] },
+        { id: "LES", codigo: "LES", nombre: "Literatura Española", anio: 1, horas: 128, tipo: "Formación Específica", formato: "Asignatura", correlativas: [], reqs: [] },
+        { id: "PD1", codigo: "PD1", nombre: "Práctica Docente I", anio: 1, horas: 128, tipo: "Práctica Profesional", formato: "Seminario-Taller", correlativas: [], reqs: [] },
+
+        // --- 2° AÑO ---
+        { id: "FIL", codigo: "FIL", nombre: "Filosofía", anio: 2, horas: 96, tipo: "Formación General", formato: "Asignatura",
+          correlativas: ["PED"], reqs: [{id:"PED", type:"R"}] },
+        { id: "PSE", codigo: "PSE", nombre: "Psicología Educacional", anio: 2, horas: 96, tipo: "Formación General", formato: "Asignatura",
+          correlativas: ["PED"], reqs: [{id:"PED", type:"R"}] },
+        { id: "HSP", codigo: "HSP", nombre: "Historia Social y Política Arg. y Lat.", anio: 2, horas: 96, tipo: "Formación General", formato: "Asignatura",
+          correlativas: ["PED"], reqs: [{id:"PED", type:"R"}] },
+        { id: "PD2", codigo: "PD2", nombre: "Práctica Docente II", anio: 2, horas: 128, tipo: "Práctica Profesional", formato: "Seminario-Taller",
+          correlativas: ["PD1", "PED", "DGR", "GR1", "TLI"],
+          reqs: [{id:"PD1", type:"A"}, {id:"PED", type:"R"}, {id:"DGR", type:"A"}, {id:"GR1", type:"A"}, {id:"TLI", type:"A"}] },
+        { id: "SES", codigo: "SES", nombre: "Sujetos de la Educación Secundaria", anio: 2, horas: 96, tipo: "Formación Específica", formato: "Seminario",
+          correlativas: ["DGR", "PED"], reqs: [{id:"DGR", type:"R"}, {id:"PED", type:"R"}] },
+        { id: "GR2", codigo: "GR2", nombre: "Gramática II", anio: 2, horas: 96, tipo: "Formación Específica", formato: "Asignatura",
+          correlativas: ["GR1"], reqs: [{id:"GR1", type:"R"}] },
+        { id: "LLC1", codigo: "LLC1", nombre: "Lengua y Lit. Clásica I (Latín)", anio: 2, horas: 128, tipo: "Formación Específica", formato: "Asignatura",
+          correlativas: ["GR1", "TLI"], reqs: [{id:"GR1", type:"R"}, {id:"TLI", type:"R"}] },
+        { id: "LU2", codigo: "LU2", nombre: "Literatura Universal II", anio: 2, horas: 96, tipo: "Formación Específica", formato: "Asignatura",
+          correlativas: ["LU1", "LES", "TLI"], reqs: [{id:"LU1", type:"R"}, {id:"LES", type:"R"}, {id:"TLI", type:"R"}] },
+        { id: "DLL1", codigo: "DLL1", nombre: "Didáctica de la Lengua y la Lit. I", anio: 2, horas: 96, tipo: "Formación Específica", formato: "Asignatura",
+          correlativas: ["LU1", "LES", "TLI", "GR1", "DGR", "PED"],
+          reqs: [{id:"LU1", type:"R"}, {id:"LES", type:"R"}, {id:"TLI", type:"R"}, {id:"GR1", type:"R"}, {id:"DGR", type:"A"}, {id:"PED", type:"R"}] },
+        { id: "ESI", codigo: "ESI", nombre: "Educación Sexual Integral", anio: 2, horas: 64, tipo: "Formación General", formato: "Seminario-Taller", correlativas: [], reqs: [] },
+
+        // --- 3° AÑO ---
+        { id: "HEA", codigo: "HEA", nombre: "Historia de la Educación Argentina", anio: 3, horas: 96, tipo: "Formación General", formato: "Asignatura",
+          correlativas: ["PED", "HSP"], reqs: [{id:"PED", type:"A"}, {id:"HSP", type:"R"}] },
+        { id: "SOC", codigo: "SOC", nombre: "Sociología de la Educación", anio: 3, horas: 96, tipo: "Formación General", formato: "Asignatura",
+          correlativas: ["HSP"], reqs: [{id:"HSP", type:"R"}] },
+        { id: "PD3", codigo: "PD3", nombre: "Práctica Docente III", anio: 3, horas: 192, tipo: "Práctica Profesional", formato: "Seminario-Taller",
+          correlativas: ["PD2", "PSE", "SES", "DLL1", "GR2", "LU2"],
+          reqs: [{id:"PD2", type:"A"}, {id:"PSE", type:"R"}, {id:"SES", type:"R"}, {id:"DLL1", type:"R"}, {id:"GR2", type:"A"}, {id:"LU2", type:"R"}] },
+        { id: "AOI", codigo: "AOI", nombre: "Análisis y Org. de las Inst. Educ.", anio: 3, horas: 96, tipo: "Formación General", formato: "Seminario-Taller",
+          correlativas: ["SES", "PD1", "PD2"], reqs: [{id:"SES", type:"R"}, {id:"PD1", type:"A"}, {id:"PD2", type:"R"}] },
+        { id: "LA1", codigo: "LA1", nombre: "Literatura Argentina I", anio: 3, horas: 96, tipo: "Formación Específica", formato: "Asignatura",
+          correlativas: ["HSP", "TLI", "LU1"], reqs: [{id:"HSP", type:"R"}, {id:"TLI", type:"A"}, {id:"LU1", type:"A"}] },
+        { id: "LLC2", codigo: "LLC2", nombre: "Lengua y Lit. Clásica II (Griego)", anio: 3, horas: 128, tipo: "Formación Específica", formato: "Asignatura",
+          correlativas: ["LLC1"], reqs: [{id:"LLC1", type:"R"}] },
+        { id: "LL1", codigo: "LL1", nombre: "Literatura Latinoamericana I", anio: 3, horas: 96, tipo: "Formación Específica", formato: "Asignatura",
+          correlativas: ["HSP", "TLI", "LES"], reqs: [{id:"HSP", type:"R"}, {id:"TLI", type:"A"}, {id:"LES", type:"A"}] },
+        { id: "EPL", codigo: "EPL", nombre: "Epistemología de la Lingüística", anio: 3, horas: 96, tipo: "Formación Específica", formato: "Asignatura",
+          correlativas: ["FIL", "GR2"], reqs: [{id:"FIL", type:"R"}, {id:"GR2", type:"R"}] },
+        { id: "DLL2", codigo: "DLL2", nombre: "Didáctica de la Lengua y la Lit. II", anio: 3, horas: 96, tipo: "Formación Específica", formato: "Asignatura",
+          correlativas: ["DLL1", "SES", "GR2", "LU2", "LES"],
+          reqs: [{id:"DLL1", type:"A"}, {id:"SES", type:"R"}, {id:"GR2", type:"A"}, {id:"LU2", type:"R"}, {id:"LES", type:"A"}] },
+        { id: "UDI3", codigo: "UDI3", nombre: "Unidad de Definición Inst. I", anio: 3, horas: 96, tipo: "Formación Específica", formato: "Variable", correlativas: [], reqs: [] },
+
+        // --- 4° AÑO ---
+        { id: "DHE", codigo: "DHE", nombre: "DDHH: Ética y Ciudadanía", anio: 4, horas: 96, tipo: "Formación General", formato: "Asignatura",
+          correlativas: ["HSP", "FIL", "SES"], reqs: [{id:"HSP", type:"A"}, {id:"FIL", type:"A"}, {id:"SES", type:"A"}] },
+        { id: "PD4", codigo: "PD4", nombre: "Práctica Docente IV", anio: 4, horas: 320, tipo: "Práctica Profesional", formato: "Seminario-Taller",
+          correlativas: ["HEA","SOC","PD3","AOI","LA1","LLC2","LL1","EPL","DLL2"],
+          reqs: [{isSpecial: true, text: "Todo 3° Año Aprobado", type: "A"}] },
+        { id: "ALF", codigo: "ALF", nombre: "Alfabetización", anio: 4, horas: 96, tipo: "Formación Específica", formato: "Asignatura",
+          correlativas: ["DLL1", "PED", "HEA"], reqs: [{id:"DLL1", type:"R"}, {id:"PED", type:"A"}, {id:"HEA", type:"R"}] },
+        { id: "LA2", codigo: "LA2", nombre: "Literatura Argentina II", anio: 4, horas: 128, tipo: "Formación Específica", formato: "Asignatura",
+          correlativas: ["LA1", "LL1", "HSP"], reqs: [{id:"LA1", type:"R"}, {id:"LL1", type:"R"}, {id:"HSP", type:"A"}] },
+        { id: "HDL", codigo: "HDL", nombre: "Historia de la Lengua", anio: 4, horas: 96, tipo: "Formación Específica", formato: "Asignatura",
+          correlativas: ["LLC1", "LLC2"], reqs: [{id:"LLC1", type:"R"}, {id:"LLC2", type:"R"}] },
+        { id: "LAD", codigo: "LAD", nombre: "Lingüística y Análisis del Discurso", anio: 4, horas: 128, tipo: "Formación Específica", formato: "Seminario",
+          correlativas: ["EPL"], reqs: [{id:"EPL", type:"R"}] },
+        { id: "LL2", codigo: "LL2", nombre: "Literatura Latinoamericana II", anio: 4, horas: 96, tipo: "Formación Específica", formato: "Asignatura",
+          correlativas: ["LA1", "LL1", "HSP"], reqs: [{id:"LA1", type:"R"}, {id:"LL1", type:"R"}, {id:"HSP", type:"A"}] },
+        { id: "UDI4", codigo: "UDI4", nombre: "Unidad de Definición Inst. II", anio: 4, horas: 96, tipo: "Formación Específica", formato: "Variable", correlativas: [], reqs: [] }
+    ];
+
+    function tipoChipClass(tipo) {
+        const t = tipo.toLowerCase();
+        if (t.includes("general")) return "chip-type-general";
+        if (t.includes("espec")) return "chip-type-especifica";
+        if (t.includes("práctica") || t.includes("practica") || t.includes("profesional")) return "chip-type-practica";
+        return "chip-type-other";
+    }
+
+    function tipoDotClass(tipo) {
+        const t = tipo.toLowerCase();
+        if (t.includes("general")) return "dot-general";
+        if (t.includes("espec")) return "dot-especifica";
+        if (t.includes("práctica") || t.includes("practica") || t.includes("profesional")) return "dot-practica";
+        return "dot-other";
+    }
+
+    const yearsRoot = document.getElementById('years-root');
+
+    function renderYears() {
+        const byYear = {};
+        for (const m of materias) {
+            if (!byYear[m.anio]) byYear[m.anio] = [];
+            byYear[m.anio].push(m);
+        }
+
+        const yearNumbers = Object.keys(byYear)
+            .map((n) => parseInt(n, 10))
+            .sort((a, b) => a - b);
+
+        yearsRoot.innerHTML = '';
+
+        for (const year of yearNumbers) {
+            const group = byYear[year];
+            const yearBlock = document.createElement('div');
+            yearBlock.className = 'year-block';
+
+            const headerRow = document.createElement('div');
+            headerRow.className = 'year-header';
+
+            const title = document.createElement('div');
+            title.className = 'year-title';
+            title.textContent = `${year}° Año`;
+
+            const count = document.createElement('div');
+            count.className = 'year-count';
+            count.textContent = `${group.length} materias`;
+
+            headerRow.appendChild(title);
+            headerRow.appendChild(count);
+
+            const cards = document.createElement('div');
+            cards.className = 'year-cards';
+
+            group.sort((a, b) => {
+                const tipoRank = (t) => {
+                    const s = t.toLowerCase();
+                    if (s.includes('general')) return 0;
+                    if (s.includes('espec')) return 1;
+                    if (s.includes('práctica') || s.includes('practica')) return 2;
+                    return 3;
+                };
+                const rt = tipoRank(a.tipo) - tipoRank(b.tipo);
+                if (rt !== 0) return rt;
+                return a.nombre.localeCompare(b.nombre);
+            });
+
+            for (const m of group) {
+                const card = document.createElement('div');
+                card.className = 'subject-card';
+
+                const header = document.createElement('div');
+                header.className = 'subject-header';
+
+                const code = document.createElement('div');
+                code.className = 'subject-code';
+                code.textContent = m.codigo || m.id;
+
+                const hours = document.createElement('div');
+                hours.className = 'subject-hours';
+                hours.textContent = `${m.horas ?? ''} hs`.trim();
+
+                header.appendChild(code);
+                header.appendChild(hours);
+
+                const name = document.createElement('div');
+                name.className = 'subject-name';
+                name.textContent = m.nombre;
+
+                const chipsRow = document.createElement('div');
+                chipsRow.className = 'chips-row';
+
+                const typeChip = document.createElement('div');
+                typeChip.className = `chip ${tipoChipClass(m.tipo)}`;
+                const dot = document.createElement('span');
+                dot.className = `chip-dot ${tipoDotClass(m.tipo)}`;
+                const typeLabel = document.createElement('span');
+                typeLabel.textContent = m.tipo;
+                typeChip.appendChild(dot);
+                typeChip.appendChild(typeLabel);
+                chipsRow.appendChild(typeChip);
+
+                const fmtChip = document.createElement('div');
+                fmtChip.className = 'chip chip-format chip-weak';
+                fmtChip.textContent = m.formato;
+                chipsRow.appendChild(fmtChip);
+
+                if (m.correlativas && m.correlativas.length > 0) {
+                    const corrChip = document.createElement('div');
+                    corrChip.className = 'chip chip-requisitos chip-weak';
+                    const corrDot = document.createElement('span');
+                    corrDot.className = 'chip-dot';
+                    const corrLabel = document.createElement('span');
+                    corrLabel.textContent = `Correlativas: ${m.correlativas.join(', ')}`;
+                    corrChip.appendChild(corrDot);
+                    corrChip.appendChild(corrLabel);
+                    chipsRow.appendChild(corrChip);
+                }
+
+                card.appendChild(header);
+                card.appendChild(name);
+                card.appendChild(chipsRow);
+                cards.appendChild(card);
+            }
+
+            yearBlock.appendChild(headerRow);
+            yearBlock.appendChild(cards);
+            yearsRoot.appendChild(yearBlock);
+        }
+    }
+
+    renderYears();
+</script>
+</body>
+</html>
