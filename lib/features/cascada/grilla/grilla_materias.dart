@@ -1,10 +1,9 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../shared/providers/app_state.dart';
-import '../../../models/materia.dart';
-
 import 'utils/cuatrimestre.dart';
 import 'utils/orden_materias.dart';
 import 'widgets/tarjeta_materia_grilla.dart';
@@ -38,9 +37,15 @@ class _VisualizationGridState extends ConsumerState<VisualizationGrid> {
     final materias = ref.watch(filteredMateriasProvider);
 
     final ordered = ordenarMateriasParaGrilla(materias);
-
     final byYear = agruparPorAnio(ordered);
     final years = aniosPresentes(byYear);
+
+    // Key que cambia cuando cambia el contenido visible (carrera/filtros)
+    // sin depender de providers extra.
+    final gridKey = '${ordered.length}_'
+        '${years.length}_'
+        '${ordered.isNotEmpty ? ordered.first.id : 'none'}_'
+        '${ordered.isNotEmpty ? ordered.last.id : 'none'}';
 
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
@@ -72,132 +77,202 @@ class _VisualizationGridState extends ConsumerState<VisualizationGrid> {
 
     return Container(
       decoration: hostDeco,
-      child: Padding(
-        padding: hostPadding,
-        child: Transform.scale(
-          alignment: Alignment.topLeft,
-          scale: zoom,
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final maxW = constraints.maxWidth;
-              final bool isDesktopLike = kIsWeb || maxW >= 1100;
-              final double cardW = widget.borderless
-                  ? maxW * 0.3
-                  : (isDesktopLike ? 360 : maxW * 0.6);
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 220),
+        switchInCurve: Curves.easeOutCubic,
+        switchOutCurve: Curves.easeInCubic,
+        transitionBuilder: (child, anim) {
+          final curved = CurvedAnimation(parent: anim, curve: Curves.easeOutCubic);
+          return FadeTransition(
+            opacity: curved,
+            child: SlideTransition(
+              position: Tween<Offset>(
+                begin: const Offset(0.00, 0.02),
+                end: Offset.zero,
+              ).animate(curved),
+              child: child,
+            ),
+          );
+        },
+        child: KeyedSubtree(
+          key: ValueKey(gridKey),
+          child: Padding(
+            padding: hostPadding,
+            child: Transform.scale(
+              alignment: Alignment.topLeft,
+              scale: zoom,
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final maxW = constraints.maxWidth;
+                  final bool isDesktopLike = kIsWeb || maxW >= 1100;
+                  final double cardW = widget.borderless
+                      ? maxW * 0.4
+                      : (isDesktopLike ? 360 : maxW * 0.6);
 
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  for (final y in years) ...[
-                    if (widget.showYearHeaders)
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(4, 8, 4, 8),
-                        child: Row(
-                          children: [
-                            Text(
-                              '$y° Año',
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.w800,
-                                color: isDark
-                                    ? Colors.white
-                                    : _TokensGrilla.textPrimaryLight,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Container(
-                                height: 1,
-                                color: isDark
-                                    ? const Color(0xFF4B5563)
-                                    : _TokensGrilla.borderLight,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: isDark
-                                    ? const Color(0xFF374151)
-                                    : const Color(0xFFF3F4F6),
-                                borderRadius: BorderRadius.circular(6),
-                                border: Border.all(
-                                  color: isDark
-                                      ? const Color(0xFF4B5563)
-                                      : _TokensGrilla.borderLight,
-                                ),
-                              ),
-                              child: Text(
-                                '${byYear[y]!.length} materias',
-                                style: TextStyle(
-                                  color: isDark
-                                      ? const Color(0xFF9CA3AF)
-                                      : _TokensGrilla.textSecondaryLight,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ],
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      for (int yi = 0; yi < years.length; yi++)
+                        _yearBlock(
+                          context: context,
+                          theme: theme,
+                          isDark: isDark,
+                          year: years[yi],
+                          yearIndex: yi,
+                          yearMaterias: byYear[years[yi]]!,
+                          cardW: cardW,
                         ),
-                      ),
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: () {
-                          final yearMaterias = byYear[y]!;
-                          final List<Widget> children = [
-                            const SizedBox(width: 4),
-                          ];
-
-                          int? lastCuatri;
-                          for (final m in yearMaterias) {
-                            if (m.cuatri != lastCuatri) {
-                              children.add(
-                                Padding(
-                                  padding: const EdgeInsets.only(right: 8),
-                                  child: Text(
-                                    etiquetaCuatri(m.cuatri),
-                                    style: theme.textTheme.bodySmall?.copyWith(
-                                      fontWeight: FontWeight.w700,
-                                      color: isDark
-                                          ? Colors.white70
-                                          : _TokensGrilla.textSecondaryLight,
-                                    ),
-                                  ),
-                                ),
-                              );
-                              lastCuatri = m.cuatri;
-                            }
-
-                            children.add(
-                              SizedBox(
-                                width: cardW,
-                                child: TarjetaMateriaGrilla(
-                                  m,
-                                  borderless: widget.borderless,
-                                ),
-                              ),
-                            );
-                            children.add(const SizedBox(width: 12));
-                          }
-
-                          children.add(const SizedBox(width: 4));
-                          return children;
-                        }(),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                  ],
-                ],
-              );
-            },
+                    ],
+                  );
+                },
+              ),
+            ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _yearBlock({
+    required BuildContext context,
+    required ThemeData theme,
+    required bool isDark,
+    required int year,
+    required int yearIndex,
+    required List<dynamic> yearMaterias,
+    required double cardW,
+  }) {
+    int? lastCuatri;
+
+    final List<Widget> rowChildren = [
+      const SizedBox(width: 4),
+    ];
+
+    for (int i = 0; i < yearMaterias.length; i++) {
+      final m = yearMaterias[i];
+
+      if (m.cuatri != lastCuatri) {
+        rowChildren.add(
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: Text(
+              etiquetaCuatri(m.cuatri),
+              style: theme.textTheme.bodySmall?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: isDark
+                    ? Colors.white70
+                    : _TokensGrilla.textSecondaryLight,
+              ),
+            ),
+          )
+              .animate()
+              .fadeIn(delay: (i * 12).ms, duration: 180.ms)
+              .slideY(begin: 0.06, end: 0, delay: (i * 12).ms, duration: 220.ms),
+        );
+        lastCuatri = m.cuatri;
+      }
+
+      rowChildren.add(
+        SizedBox(
+          width: cardW,
+          child: TarjetaMateriaGrilla(
+            m,
+            borderless: widget.borderless,
+          ),
+        )
+            .animate()
+            .fadeIn(delay: (i * 18).ms, duration: 220.ms)
+            .slideY(
+          begin: 0.06,
+          end: 0,
+          delay: (i * 18).ms,
+          duration: 260.ms,
+          curve: Curves.easeOutCubic,
+        ),
+      );
+
+      rowChildren.add(const SizedBox(width: 12));
+    }
+
+    rowChildren.add(const SizedBox(width: 4));
+
+    final block = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (widget.showYearHeaders)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(4, 8, 4, 8),
+            child: Row(
+              children: [
+                Text(
+                  '$year° Año',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: isDark
+                        ? Colors.white
+                        : _TokensGrilla.textPrimaryLight,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Container(
+                    height: 1,
+                    color: isDark
+                        ? const Color(0xFF4B5563)
+                        : _TokensGrilla.borderLight,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? const Color(0xFF374151)
+                        : const Color(0xFFF3F4F6),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: isDark
+                          ? const Color(0xFF4B5563)
+                          : _TokensGrilla.borderLight,
+                    ),
+                  ),
+                  child: Text(
+                    '${yearMaterias.length} materias',
+                    style: TextStyle(
+                      color: isDark
+                          ? const Color(0xFF9CA3AF)
+                          : _TokensGrilla.textSecondaryLight,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: rowChildren,
+          ),
+        ),
+        const SizedBox(height: 16),
+      ],
+    );
+
+    return block
+        .animate()
+        .fadeIn(delay: (yearIndex * 40).ms, duration: 220.ms)
+        .slideY(
+      begin: 0.05,
+      end: 0,
+      delay: (yearIndex * 40).ms,
+      duration: 260.ms,
+      curve: Curves.easeOutCubic,
     );
   }
 }

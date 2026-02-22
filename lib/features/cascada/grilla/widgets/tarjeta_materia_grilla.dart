@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
 
 import '../../../../shared/providers/app_state.dart';
 import '../../../../models/materia.dart';
@@ -11,14 +12,29 @@ class _TokensTarjeta {
   static const borderLight = Color(0xFFE5E7EB);
 }
 
-class TarjetaMateriaGrilla extends ConsumerWidget {
+class TarjetaMateriaGrilla extends ConsumerStatefulWidget {
   const TarjetaMateriaGrilla(this.m, {super.key, this.borderless = false});
 
   final Materia m;
   final bool borderless;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<TarjetaMateriaGrilla> createState() =>
+      _TarjetaMateriaGrillaState();
+}
+
+class _TarjetaMateriaGrillaState extends ConsumerState<TarjetaMateriaGrilla> {
+  bool _pressed = false;
+
+  void _setPressed(bool v) {
+    if (_pressed == v) return;
+    setState(() => _pressed = v);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final m = widget.m;
+
     final selectedId = ref.watch(selectedMateriaIdProvider);
     final isSelected = selectedId == m.id;
 
@@ -43,126 +59,146 @@ class TarjetaMateriaGrilla extends ConsumerWidget {
 
     final normalizedFormato = normalizarFormatoChip(m.formato);
     final (fmtBg, fmtFg, fmtBd) = coloresFormato(isDark, normalizedFormato);
-
     final (typeBg, typeFg, typeBd) = coloresTipo(isDark, m.tipo);
 
-    return Material(
+    final card = Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: () async {
+          HapticFeedback.lightImpact();
           ref.read(selectedMateriaIdProvider.notifier).state = m.id;
-          await mostrarModalDetalleMateria(context: context, ref: ref);
+          await mostrarModalDetalleMateria(
+            context: context,
+            ref: ref,
+            heroId: m.id,
+          );
         },
+        onTapDown: (_) => _setPressed(true),
+        onTapCancel: () => _setPressed(false),
+        onTapUp: (_) => _setPressed(false),
         borderRadius: BorderRadius.circular(16),
-        child: Container(
-          decoration: BoxDecoration(
-            color: bgColor,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: borderColor,
-              width: isSelected ? 2 : 1,
+        child: AnimatedScale(
+          scale: _pressed ? 0.985 : 1.0,
+          duration: const Duration(milliseconds: 120),
+          curve: Curves.easeOutCubic,
+          child: Container(
+            decoration: BoxDecoration(
+              color: bgColor,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: borderColor,
+                width: isSelected ? 2 : 1,
+              ),
+              boxShadow: isDark || widget.borderless
+                  ? const []
+                  : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 2,
+                  offset: const Offset(0, 1),
+                )
+              ],
             ),
-            boxShadow: isDark || borderless
-                ? []
-                : [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 2,
-                offset: const Offset(0, 1),
-              )
-            ],
-          ),
-          padding: const EdgeInsets.all(14),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      abbr,
-                      style: TextStyle(
-                        fontSize: 15.4,
-                        fontWeight: FontWeight.w800,
-                        color: titleColor.withValues(
-                          alpha: isDark ? 0.9 : 0.8,
+            padding: const EdgeInsets.all(14),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        abbr,
+                        style: TextStyle(
+                          fontSize: 15.4,
+                          fontWeight: FontWeight.w800,
+                          color: titleColor.withValues(
+                            alpha: isDark ? 0.9 : 0.8,
+                          ),
+                          letterSpacing: 0.5,
                         ),
-                        letterSpacing: 0.5,
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      m.nombre,
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: titleColor,
-                        height: 1.2,
+                      const SizedBox(height: 4),
+                      Text(
+                        m.nombre,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: titleColor,
+                          height: 1.2,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 10),
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 4,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: fmtBg,
-                            borderRadius: BorderRadius.circular(99),
-                            border: Border.all(color: fmtBd),
-                          ),
-                          child: Text(
-                            normalizedFormato,
-                            style: TextStyle(
-                              fontSize: 11.34,
-                              fontWeight: FontWeight.w600,
-                              color: fmtFg,
+                      const SizedBox(height: 10),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 4,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: fmtBg,
+                              borderRadius: BorderRadius.circular(99),
+                              border: Border.all(color: fmtBd),
+                            ),
+                            child: Text(
+                              normalizedFormato,
+                              style: TextStyle(
+                                fontSize: 11.34,
+                                fontWeight: FontWeight.w600,
+                                color: fmtFg,
+                              ),
                             ),
                           ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: typeBg,
-                            borderRadius: BorderRadius.circular(99),
-                            border: Border.all(color: typeBd),
-                          ),
-                          child: Text(
-                            m.tipo,
-                            style: TextStyle(
-                              fontSize: 11.34,
-                              fontWeight: FontWeight.w600,
-                              color: typeFg,
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: typeBg,
+                              borderRadius: BorderRadius.circular(99),
+                              border: Border.all(color: typeBd),
+                            ),
+                            child: Text(
+                              m.tipo,
+                              style: TextStyle(
+                                fontSize: 11.34,
+                                fontWeight: FontWeight.w600,
+                                color: typeFg,
+                              ),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ],
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              const Align(
-                alignment: Alignment.centerRight,
-                child: Icon(
-                  Icons.chevron_right_rounded,
-                  size: 20,
-                  color: Color(0xFFD1D5DB),
+                const SizedBox(width: 8),
+                const Align(
+                  alignment: Alignment.centerRight,
+                  child: Icon(
+                    Icons.chevron_right_rounded,
+                    size: 20,
+                    color: Color(0xFFD1D5DB),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
+      ),
+    );
+
+    return card;(
+      tag: 'mat_${m.id}',
+      child: Material(
+        color: Colors.transparent,
+        child: card,
       ),
     );
   }
