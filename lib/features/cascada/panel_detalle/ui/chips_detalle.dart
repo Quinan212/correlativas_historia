@@ -2,7 +2,6 @@
 import 'package:flutter/material.dart';
 
 import '../utils/paleta_detalle.dart';
-import '../utils/reglas_practicas_detalle.dart';
 
 Widget _chipBase({
   required String text,

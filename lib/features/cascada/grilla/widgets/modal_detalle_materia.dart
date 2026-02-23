@@ -147,7 +147,10 @@ class _DetalleMateriaPageState extends ConsumerState<_DetalleMateriaPage>
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    final maxH = MediaQuery.sizeOf(context).height * 0.92;
+    // un toque más alto, más "flotante"
+    final maxH = MediaQuery.sizeOf(context).height * 0.90;
+    final bottomSafe = MediaQuery.viewPaddingOf(context).bottom;
+    const lift = 1.0;
 
     return Material(
       type: MaterialType.transparency,
@@ -163,7 +166,8 @@ class _DetalleMateriaPageState extends ConsumerState<_DetalleMateriaPage>
           final dimA = 0.28 * t * focus;
           final tintA = 0.10 * t * focus;
 
-          final sheetOffset = (1.0 - t) * 44.0 + _dragDy;
+          // entra desde un poco menos abajo
+          final sheetOffset = (1.0 - t) * 26.0 + _dragDy;
 
           return Stack(
             children: [
@@ -207,7 +211,6 @@ class _DetalleMateriaPageState extends ConsumerState<_DetalleMateriaPage>
                   ),
                 ),
               ),
-
               Align(
                 alignment: Alignment.bottomCenter,
                 child: Transform.translate(
@@ -215,7 +218,12 @@ class _DetalleMateriaPageState extends ConsumerState<_DetalleMateriaPage>
                   child: Opacity(
                     opacity: t,
                     child: Padding(
-                      padding: const EdgeInsets.all(12),
+                      padding: EdgeInsets.fromLTRB(
+                        12,
+                        12,
+                        12,
+                        12 + bottomSafe + lift,
+                      ),
                       child: ConstrainedBox(
                         constraints: BoxConstraints(maxHeight: maxH),
                         child: GestureDetector(
@@ -253,9 +261,7 @@ class _DetalleMateriaPageState extends ConsumerState<_DetalleMateriaPage>
                                   ),
                                 ),
                               ),
-
                               const SizedBox(height: 10),
-
                               ClipRRect(
                                 borderRadius: BorderRadius.circular(18),
                                 child: Material(

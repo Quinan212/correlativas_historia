@@ -25,10 +25,18 @@ android {
 
     defaultConfig {
         applicationId = "ar.maillet.correlativas_historia"
-        minSdk = flutter.minSdkVersion
-        targetSdk = 36
-        versionCode = 2
-        versionName = "1.0.1"
+
+        // ✅ fijalo explícito para que no te cambie solo
+        minSdk = 24
+
+        // ✅ requerido por Play
+        targetSdk = 35
+
+        // ✅ CLAVE: mayor que 413
+        versionCode = 414
+
+        // ✅ lo que ve el usuario
+        versionName = "1.2.26"
     }
 
     signingConfigs {
@@ -44,7 +52,6 @@ android {
 
     buildTypes {
         getByName("release") {
-            // Si no existe key.properties, no fuerza firma y no crashea.
             if (keystorePropertiesFile.exists()) {
                 signingConfig = signingConfigs.getByName("release")
             }
@@ -53,7 +60,6 @@ android {
 
     splits {
         abi {
-            // Para AAB, NO usar splits de APK
             isEnable = false
             reset()
             isUniversalApk = false

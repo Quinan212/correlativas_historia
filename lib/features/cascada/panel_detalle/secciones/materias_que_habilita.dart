@@ -12,21 +12,32 @@ Widget seccionMateriasQueHabilita({
   required BuildContext context,
   required WidgetRef ref,
   required List<Materia> dependents,
+  bool showTitle = true,
 }) {
   final cs = Theme.of(context).colorScheme;
+
+  Widget header() {
+    if (!showTitle) return const SizedBox.shrink();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Materias que Habilita',
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            fontSize: 16,
+            color: cs.onSurface,
+          ),
+        ),
+        const SizedBox(height: 10),
+      ],
+    );
+  }
 
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Text(
-        'Materias que Habilita',
-        style: TextStyle(
-          fontWeight: FontWeight.w800,
-          fontSize: 16,
-          color: cs.onSurface,
-        ),
-      ),
-      const SizedBox(height: 10),
+      header(),
       if (dependents.isEmpty)
         Text(
           'No es correlativa con otras materias.',

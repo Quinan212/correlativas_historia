@@ -30,8 +30,7 @@ class FiltersTopBar extends ConsumerWidget {
       filled: true,
       fillColor: isDark ? cs.surface : const Color(0xFFF3F4F6),
       isDense: true,
-      contentPadding:
-      const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide(
@@ -84,7 +83,6 @@ class FiltersTopBar extends ConsumerWidget {
     final tipo = ref.watch(filtroTipoProvider);
     final anio = ref.watch(filtroAnioProvider);
     final isDark = ref.watch(themeModeProvider) == ThemeMode.dark;
-    final downloadUrl = ref.watch(careerDownloadUrlProvider);
     final cs = Theme.of(context).colorScheme;
 
     final planAsync = ref.watch(planProvider);
@@ -109,6 +107,12 @@ class FiltersTopBar extends ConsumerWidget {
     final List<int> anios =
     aniosDisponibles.isEmpty ? <int>[1, 2, 3, 4] : aniosDisponibles;
 
+    const double kTiposBaseWidth = 170;
+    final double desiredTiposW = kTiposBaseWidth * 1;
+
+    const double desiredAniosW = 220.0;
+    const double minAniosReserve = 92.0; // reserva para que “Años” no se muera
+
     return Container(
       decoration: BoxDecoration(
         color: isDark ? cs.surface : Colors.white,
@@ -121,96 +125,81 @@ class FiltersTopBar extends ConsumerWidget {
         ],
       ),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      child: Row(
-        children: [
-          Expanded(
-            child: SizedBox(
-              height: 44,
-              child: DropdownButtonFormField<String>(
-                value: tipo,
-                hint: const Text('Tipos'),
-                isExpanded: true,
-                borderRadius: BorderRadius.circular(12),
-                dropdownColor: isDark ? cs.surface : Colors.white,
-                decoration: _ddDecoration(context),
-                icon: const Icon(Icons.keyboard_arrow_down_rounded),
-                items: [
-                  for (final t in tipos)
-                    DropdownMenuItem<String>(
-                      value: t,
-                      child: Text(
-                        t == 'todos' ? 'Todos' : t,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+      child: LayoutBuilder(
+        builder: (context, c) {
+          const gap = 8.0;
+          final double available = c.maxWidth;
+
+          // max para “Tipos”: no puede comerse el espacio que necesita “Años”
+          final double maxTiposW =
+          (available - gap - minAniosReserve).clamp(0.0, desiredTiposW).toDouble();
+          final double tiposW = desiredTiposW <= maxTiposW ? desiredTiposW : maxTiposW;
+
+          // max para “Años”: lo que queda (pero nunca más de su deseado)
+          final double maxAniosW =
+          (available - gap - tiposW).clamp(0.0, desiredAniosW).toDouble();
+
+          return Row(
+            children: [
+              SizedBox(
+                width: tiposW,
+                height: 44,
+                child: DropdownButtonFormField<String>(
+                  initialValue: tipo,
+                  hint: const Text('Tipos'),
+                  isExpanded: true,
+                  borderRadius: BorderRadius.circular(12),
+                  dropdownColor: isDark ? cs.surface : Colors.white,
+                  decoration: _ddDecoration(context),
+                  icon: const Icon(Icons.keyboard_arrow_down_rounded),
+                  items: [
+                    for (final t in tipos)
+                      DropdownMenuItem<String>(
+                        value: t,
+                        child: Text(
+                          t == 'todos' ? 'Todos' : t,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                  ],
+                  onChanged: (v) {
+                    ref.read(filtroTipoProvider.notifier).state = v ?? 'todos';
+                  },
+                ),
+              ),
+              const SizedBox(width: 8),
+              SizedBox(
+                width: maxAniosW,
+                height: 44,
+                child: DropdownButtonFormField<int?>(
+                  initialValue: anio,
+                  hint: const Text('Años'),
+                  isExpanded: true,
+                  borderRadius: BorderRadius.circular(12),
+                  dropdownColor: isDark ? cs.surface : Colors.white,
+                  decoration: _ddDecoration(context),
+                  icon: const Icon(Icons.keyboard_arrow_down_rounded),
+                  items: <DropdownMenuItem<int?>>[
+                    const DropdownMenuItem<int?>(
+                      value: null,
+                      child: Text('Todos'),
+                    ),
+                    ...anios.map(
+                          (y) => DropdownMenuItem<int?>(
+                        value: y,
+                        child: Text('$y° Año'),
                       ),
                     ),
-                ],
-                onChanged: (v) {
-                  ref.read(filtroTipoProvider.notifier).state = v ?? 'todos';
-                },
+                  ],
+                  onChanged: (v) {
+                    ref.read(filtroAnioProvider.notifier).state = v;
+                  },
+                ),
               ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          SizedBox(
-            width: 120,
-            height: 44,
-            child: DropdownButtonFormField<int?>(
-              value: anio,
-              hint: const Text('Años'),
-              isExpanded: true,
-              borderRadius: BorderRadius.circular(12),
-              dropdownColor: isDark ? cs.surface : Colors.white,
-              decoration: _ddDecoration(context),
-              icon: const Icon(Icons.keyboard_arrow_down_rounded),
-              items: <DropdownMenuItem<int?>>[
-                const DropdownMenuItem<int?>(
-                  value: null,
-                  child: Text('Todos'),
-                ),
-                ...anios.map(
-                      (y) => DropdownMenuItem<int?>(
-                    value: y,
-                    child: Text('$y° Año'),
-                  ),
-                ),
-              ],
-              onChanged: (v) {
-                ref.read(filtroAnioProvider.notifier).state = v;
-              },
-            ),
-          ),
-          const SizedBox(width: 8),
-          _squareIconButton(
-            context: context,
-            tooltip: 'Descargar',
-            icon: Icons.download_rounded,
-            onTap: () async {
-              final uri = Uri.parse(downloadUrl);
-              final ok = await launchUrl(
-                uri,
-                mode: LaunchMode.externalApplication,
-              );
-              if (!ok && context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('No se pudo abrir: $uri')),
-                );
-              }
-            },
-          ),
-          const SizedBox(width: 8),
-          _squareIconButton(
-            context: context,
-            tooltip: isDark ? 'Modo claro' : 'Modo oscuro',
-            icon:
-            isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
-            onTap: () {
-              final cur = ref.read(themeModeProvider);
-              ref.read(themeModeProvider.notifier).state =
-              cur == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
-            },
-          ),
-        ],
+            ],
+          );
+        },
       ),
     );
   }
@@ -247,7 +236,11 @@ class _SearchBarCardState extends ConsumerState<SearchBarCard> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDarkTheme = Theme.of(context).brightness == Brightness.dark;
+
+    final themeMode = ref.watch(themeModeProvider);
+    final isDark = themeMode == ThemeMode.dark;
+    final downloadUrl = ref.watch(careerDownloadUrlProvider);
 
     ref.listen<String>(searchTermProvider, (prev, next) {
       if (_searchCtrl.text != next) {
@@ -260,49 +253,85 @@ class _SearchBarCardState extends ConsumerState<SearchBarCard> {
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? cs.surface : Colors.white,
+        color: isDarkTheme ? cs.surface : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDark ? cs.outlineVariant : const Color(0xFFE5E7EB),
+          color: isDarkTheme ? cs.outlineVariant : const Color(0xFFE5E7EB),
         ),
         boxShadow: const [
           BoxShadow(blurRadius: 6, color: Color(0x12000000)),
         ],
       ),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      child: SizedBox(
-        height: 44,
-        child: TextField(
-          controller: _searchCtrl,
-          decoration: InputDecoration(
-            hintText: 'Buscar materia…',
-            prefixIcon: const Icon(Icons.search),
-            filled: true,
-            fillColor: isDark ? cs.surface : Colors.white,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 14,
-              vertical: 14,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: BorderSide(
-                color:
-                isDark ? cs.outlineVariant : const Color(0xFFE5E7EB),
+      child: Row(
+        children: [
+          Expanded(
+            child: SizedBox(
+              height: 44,
+              child: TextField(
+                controller: _searchCtrl,
+                decoration: InputDecoration(
+                  hintText: 'Buscar materia…',
+                  prefixIcon: const Icon(Icons.search),
+                  filled: true,
+                  fillColor: isDarkTheme ? cs.surface : Colors.white,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 14,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide(
+                      color: isDarkTheme
+                          ? cs.outlineVariant
+                          : const Color(0xFFE5E7EB),
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide(
+                      color: isDarkTheme
+                          ? cs.outlineVariant
+                          : const Color(0xFFE5E7EB),
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide(color: cs.primary),
+                  ),
+                ),
               ),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: BorderSide(
-                color:
-                isDark ? cs.outlineVariant : const Color(0xFFE5E7EB),
-              ),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: BorderSide(color: cs.primary),
             ),
           ),
-        ),
+          const SizedBox(width: 8),
+          FiltersTopBar._squareIconButton(
+            context: context,
+            tooltip: 'Descargar',
+            icon: Icons.download_rounded,
+            onTap: () async {
+              final uri = Uri.parse(downloadUrl);
+              final ok = await launchUrl(
+                uri,
+                mode: LaunchMode.externalApplication,
+              );
+              if (!ok && context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('No se pudo abrir: $uri')),
+                );
+              }
+            },
+          ),
+          const SizedBox(width: 8),
+          FiltersTopBar._squareIconButton(
+            context: context,
+            tooltip: isDark ? 'Modo claro' : 'Modo oscuro',
+            icon: isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+            onTap: () {
+              ref.read(themeModeProvider.notifier).state =
+              isDark ? ThemeMode.light : ThemeMode.dark;
+            },
+          ),
+        ],
       ),
     );
   }

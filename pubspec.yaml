@@ -2,10 +2,10 @@ name: correlativas_historia
 description: "correlativas"
 publish_to: "none"
 
-version: 1.0.0+1
+version: 1.2.26+414
 
 environment:
-  sdk: ^3.11.0
+  sdk: ">=3.3.0 <4.0.0"
 
 dependencies:
   flutter:
@@ -40,7 +40,7 @@ flutter:
     - assets/contador_publico.html
     - assets/Filosofia.html
     - assets/Fisica.html
-    - assets/Geografia.html
+    - assets/geografia.html
     - assets/historia.html
     - assets/Lengua_Literatura.html
     - assets/Musica.html
@@ -48,6 +48,9 @@ flutter:
     - assets/Psicologia.html
     - assets/logo.png
     - assets/icon_fore.png
+    - assets/examenes_llamado1.json
+    - assets/examenes_llamado2.json
+    - assets/coloquios_feb_mar_2026.json
 
   fonts:
     - family: Inter

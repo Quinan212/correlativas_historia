@@ -228,7 +228,7 @@ class _BarraControlesUnaLineaState extends ConsumerState<BarraControlesUnaLinea>
                 width: 130,
                 height: 44,
                 child: DropdownButtonFormField<String>(
-                  key: ValueKey('tipoFiltro_${tipo}'),
+                  key: ValueKey('tipoFiltro_$tipo'),
                   initialValue: tipo == 'todos' ? null : tipo,
                   hint: const Text('Tipos'),
                   isExpanded: true,

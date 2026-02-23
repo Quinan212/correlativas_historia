@@ -1,0 +1,288 @@
+{
+  "year": 2026,
+  "instancia": "coloquio",
+  "careers": {
+    "historia": {
+      "0": [
+        {
+          "careerId": "historia",
+          "anio": null,
+          "fecha": "2026-02-26",
+          "hora": null,
+          "materia": "Didáctica de las Ciencias Sociales",
+          "instancia": "coloquio",
+          "docentes": ["Coduri Emilia"],
+          "actaDigital": "https://docs.google.com/document/d/1mx192wpuLmqEwEa9X5lzkGTZGr6k861XV-kWzjhbtzQ/edit?usp=sharing"
+        },
+        {
+          "careerId": "historia",
+          "anio": null,
+          "fecha": null,
+          "hora": null,
+          "materia": "Didáctica de las Ciencias Sociales",
+          "instancia": "coloquio",
+          "docentes": ["Patricia P"],
+          "actaDigital": null
+        },
+        {
+          "careerId": "historia",
+          "anio": null,
+          "fecha": null,
+          "hora": null,
+          "materia": "ESI",
+          "instancia": "coloquio",
+          "docentes": [],
+          "actaDigital": "https://docs.google.com/document/d/13fBLbw8bV3of0Pyz67pNP5nWmBOYevKzAUe3O3vY9t8/edit?usp=sharing"
+        },
+        {
+          "careerId": "historia",
+          "anio": null,
+          "fecha": null,
+          "hora": null,
+          "materia": "El mundo y las nuevas territorialidades",
+          "instancia": "coloquio",
+          "docentes": [],
+          "actaDigital": "https://docs.google.com/document/d/1ORLKMEQam8motHJvbb2PAZrc0MRESurBbbzkBqSUQBA/edit?usp=sharing"
+        },
+        {
+          "careerId": "historia",
+          "anio": null,
+          "fecha": "2026-03-06",
+          "hora": null,
+          "materia": "Epistemología de la Historia",
+          "instancia": "coloquio",
+          "docentes": ["Borche Javier"],
+          "actaDigital": "https://docs.google.com/document/d/11_O-sC5mVyooE853b5kd0G2IOIFwrcVnHfn6XacIrnk/edit?usp=sharing"
+        },
+        {
+          "careerId": "historia",
+          "anio": null,
+          "fecha": "2026-03-04",
+          "hora": null,
+          "materia": "Historia de las ideas II",
+          "instancia": "coloquio",
+          "docentes": ["Borche Javier"],
+          "actaDigital": "https://docs.google.com/document/d/1xucNVQYn7AZ0L4380yaUXz3rX5gQFoyJg8aD-eVUuQA/edit?usp=sharing"
+        },
+        {
+          "careerId": "historia",
+          "anio": null,
+          "fecha": "2026-03-03",
+          "hora": null,
+          "materia": "Historia de las ideas II",
+          "instancia": "coloquio",
+          "docentes": ["CARMARÁN"],
+          "actaDigital": "https://docs.google.com/document/d/1xucNVQYn7AZ0L4380yaUXz3rX5gQFoyJg8aD-eVUuQA/edit?usp=sharing"
+        },
+        {
+          "careerId": "historia",
+          "anio": null,
+          "fecha": null,
+          "hora": null,
+          "materia": "Problemática Históricas Regionales y Locales",
+          "instancia": "coloquio",
+          "docentes": [],
+          "actaDigital": "https://docs.google.com/document/d/1Q7xTKDXbGabJBU4ajQvEIIcKQ31WZiGzh2aSEki69GU/edit?usp=sharing"
+        },
+        {
+          "careerId": "historia",
+          "anio": null,
+          "fecha": "2026-03-02",
+          "hora": null,
+          "materia": "Sujeto de la Educación",
+          "instancia": "coloquio",
+          "docentes": ["Diaz Romina"],
+          "actaDigital": "https://docs.google.com/document/d/1T3ZsytMLPfTh_cKfZE3mbWoZhls-T9DtmGqSMgc1Ndk/edit?usp=sharing"
+        },
+        {
+          "careerId": "historia",
+          "anio": null,
+          "fecha": null,
+          "hora": null,
+          "materia": "Práctica Docente II",
+          "instancia": "coloquio",
+          "docentes": [],
+          "actaDigital": "https://docs.google.com/document/d/12T7qqCdJvNQRU1SXUyQL5TLgkrX7Jt2njiUZi6l_HHw/edit?usp=sharing"
+        },
+        {
+          "careerId": "historia",
+          "anio": null,
+          "fecha": "2026-02-25",
+          "hora": null,
+          "materia": "Práctica Docente I - Comisión B",
+          "instancia": "coloquio",
+          "docentes": ["Medina", "Diaz"],
+          "actaDigital": null
+        },
+        {
+          "careerId": "historia",
+          "anio": null,
+          "fecha": null,
+          "hora": null,
+          "materia": "Práctica III",
+          "instancia": "coloquio",
+          "docentes": [],
+          "actaDigital": "https://docs.google.com/document/d/1UrOvoAlE7dqwtQ6zzG35dhTaViQbNVgyPfUCv2V7kV8/edit?usp=sharing"
+        },
+        {
+          "careerId": "historia",
+          "anio": null,
+          "fecha": null,
+          "hora": null,
+          "materia": "UDI",
+          "instancia": "coloquio",
+          "docentes": [],
+          "actaDigital": "https://docs.google.com/document/d/1HL7g7tt80mVE1OofEk8_mDsGveVNhzq9V6sMKQUPUEA/edit?usp=sharing"
+        },
+        {
+          "careerId": "historia",
+          "anio": null,
+          "fecha": null,
+          "hora": null,
+          "materia": "Historia de las ideas I",
+          "instancia": "coloquio",
+          "docentes": [],
+          "actaDigital": "https://docs.google.com/document/d/1ijH6nSEEVlocAnC6p621JBndan4bnlBDUe5wUKn6LGs/edit?usp=sharing"
+        }
+      ]
+    },
+    "geografia": {
+      "0": [
+        {
+          "careerId": "geografia",
+          "anio": null,
+          "fecha": null,
+          "hora": null,
+          "materia": "Análisis y organización de las instituciones educativas",
+          "instancia": "coloquio",
+          "docentes": ["Ruiz Diaz Carlos"],
+          "actaDigital": null
+        },
+        {
+          "careerId": "geografia",
+          "anio": null,
+          "fecha": "2026-02-23",
+          "hora": null,
+          "materia": "Geotecnología",
+          "instancia": "coloquio",
+          "docentes": ["Coduri Emilia"],
+          "actaDigital": "https://docs.google.com/document/d/1upjLMkrkiliD6AUMJKIdWjvNW-M-_eOaKzPVwXyhHdg/edit?usp=sharing"
+        },
+        {
+          "careerId": "geografia",
+          "anio": null,
+          "fecha": null,
+          "hora": null,
+          "materia": "Práctica Docente I",
+          "instancia": "coloquio",
+          "docentes": [],
+          "actaDigital": "https://docs.google.com/document/d/1juXwhM2EqPEP2QAIl9HuvIPdxnH0nL7phHxFCHv8JRg/edit?usp=sharing"
+        },
+        {
+          "careerId": "geografia",
+          "anio": null,
+          "fecha": null,
+          "hora": null,
+          "materia": "Práctica Docente II",
+          "instancia": "coloquio",
+          "docentes": [],
+          "actaDigital": "https://docs.google.com/document/d/1UPLvrE2tWEx5LPTDCNBsLNq15enIEzZuXPogRHX3Tvk/edit?usp=sharing"
+        },
+        {
+          "careerId": "geografia",
+          "anio": null,
+          "fecha": "2026-03-03",
+          "hora": null,
+          "materia": "Práctica Docente III",
+          "instancia": "coloquio",
+          "docentes": ["Roda", "Carrera"],
+          "actaDigital": "https://docs.google.com/document/d/1vjsBdDQytU3tLb8YEK1KpJc3d-uDJXU9YOTCYx_zdRY/edit?usp=sharing"
+        },
+        {
+          "careerId": "geografia",
+          "anio": null,
+          "fecha": null,
+          "hora": null,
+          "materia": "Práctica Docente IV",
+          "instancia": "coloquio",
+          "docentes": [],
+          "actaDigital": null
+        },
+        {
+          "careerId": "geografia",
+          "anio": null,
+          "fecha": null,
+          "hora": null,
+          "materia": "Técnica de la Representación Cartográfica",
+          "instancia": "coloquio",
+          "docentes": ["Carrera Franklin"],
+          "actaDigital": "https://docs.google.com/document/d/1x5hdtulTL0PBFbiMbh7anUMCx3qLNVp20K9OPolIvJk/edit?usp=sharing"
+        },
+        {
+          "careerId": "geografia",
+          "anio": null,
+          "fecha": "2026-02-20",
+          "hora": null,
+          "materia": "UDI",
+          "instancia": "coloquio",
+          "docentes": ["Coduri Emilia"],
+          "actaDigital": null
+        },
+        {
+          "careerId": "geografia",
+          "anio": null,
+          "fecha": null,
+          "hora": null,
+          "materia": "Ole y tic",
+          "instancia": "coloquio",
+          "docentes": [],
+          "actaDigital": "https://docs.google.com/document/d/1uIw6_8d6RS_vr0udPLnbhqGuxXvJmhDtXYrNy63aQsY/edit?usp=sharing"
+        }
+      ]
+    },
+    "politica": {
+      "0": [
+        {
+          "careerId": "politica",
+          "anio": null,
+          "fecha": "2026-02-19",
+          "hora": null,
+          "materia": "Ole y Tic",
+          "instancia": "coloquio",
+          "docentes": ["Braghini", "Luna"],
+          "actaDigital": null
+        },
+        {
+          "careerId": "politica",
+          "anio": null,
+          "fecha": null,
+          "hora": null,
+          "materia": "Práctica II",
+          "instancia": "coloquio",
+          "docentes": ["Leiva"],
+          "actaDigital": "https://docs.google.com/document/d/1_lZWhPUwlRvgKj3NT7qXEocN7f4PURmSxRpxgZoO83I/edit?usp=sharing"
+        },
+        {
+          "careerId": "politica",
+          "anio": null,
+          "fecha": null,
+          "hora": null,
+          "materia": "Didáctica de las Cs sociales",
+          "instancia": "coloquio",
+          "docentes": [],
+          "actaDigital": "https://docs.google.com/document/d/1nosQlN07AHZAlYYcfgDNAfxO8IVJ4V-0vzB3o5dGJWY/edit?usp=sharing"
+        },
+        {
+          "careerId": "politica",
+          "anio": null,
+          "fecha": "2026-02-24",
+          "hora": null,
+          "materia": "Teoría sociológica clásica y contemporánea",
+          "instancia": "coloquio",
+          "docentes": ["VILLA"],
+          "actaDigital": "https://docs.google.com/document/d/1sTvgu-87vmawWMeqWN52XvqBU4F2iq23KwekL7_fOoY/edit?usp=sharing"
+        }
+      ]
+    }
+  }
+}

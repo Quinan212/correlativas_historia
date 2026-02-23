@@ -134,7 +134,7 @@ class PanelResultado {
         if (hasExplanation) ...[
           const SizedBox(height: 8),
           Text(
-            explanation!,
+            explanation,
             style: EstilosPanel.gf(
               size: 13.5,
               weight: FontWeight.w400,

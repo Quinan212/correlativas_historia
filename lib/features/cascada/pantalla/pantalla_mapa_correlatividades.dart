@@ -1,7 +1,8 @@
-import 'dart:math' as math;
-
+import 'package:correlativas_historia/features/examenes/examenes_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'widgets/callout_examenes.dart';
 
 import '../../../shared/providers/app_state.dart';
 import '../filters_bar.dart';
@@ -28,6 +29,12 @@ class CascadaScreen extends ConsumerWidget {
   static const double kColsFactor = 1.18;
   static const double kColsSidePadding = 12.0;
 
+  void _openExamenes(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const ExamenesScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final planAsync = ref.watch(planProvider);
@@ -43,6 +50,13 @@ class CascadaScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: isDark ? cs.surface : kPageBgLight,
+      floatingActionButton: (!isDesktop)
+          ? FloatingActionButton.extended(
+        onPressed: () => _openExamenes(context),
+        icon: const Icon(Icons.calendar_month),
+        label: const Text('Exámenes'),
+      )
+          : null,
       body: CustomScrollView(
         slivers: [
           SliverPersistentHeader(
@@ -75,6 +89,7 @@ class CascadaScreen extends ConsumerWidget {
                     ] else ...[
                       const TarjetaPresentacionMapa(),
                       const SizedBox(height: 12),
+
                       if (isDesktop) ...[
                         const Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -84,13 +99,21 @@ class CascadaScreen extends ConsumerWidget {
                             Expanded(child: SelectorCarreraStandalone()),
                           ],
                         ),
+                        const SizedBox(height: 8),
+                        CalloutExamenes(onTap: () => _openExamenes(context)),
                         const SizedBox(height: 12),
                         const FiltersBar(),
                       ] else ...[
                         const TarjetaRegimenCorrelatividades(),
                         const SizedBox(height: 12),
+
+                        // ✅ acá: el aviso ANTES del selector
+                        CalloutExamenes(onTap: () => _openExamenes(context)),
+                        const SizedBox(height: 12),
+
                         const SelectorCarreraStandalone(),
                         const SizedBox(height: 12),
+
                         const FiltersBar(),
                       ],
                     ],
@@ -126,7 +149,8 @@ class CascadaScreen extends ConsumerWidget {
                     const SizedBox(height: 24),
                     planAsync.when(
                       data: (_) => const SizedBox.shrink(),
-                      loading: () => const Center(child: CircularProgressIndicator()),
+                      loading: () =>
+                      const Center(child: CircularProgressIndicator()),
                       error: (e, _) => Text(
                         'Error cargando plan: $e',
                         style: theme.textTheme.bodyMedium,

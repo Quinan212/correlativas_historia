@@ -107,7 +107,7 @@ class _VisualizationGridState extends ConsumerState<VisualizationGrid> {
                   final bool isDesktopLike = kIsWeb || maxW >= 1100;
                   final double cardW = widget.borderless
                       ? maxW * 0.4
-                      : (isDesktopLike ? 360 : maxW * 0.6);
+                      : (isDesktopLike ? 360 : maxW * 0.7);
 
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,

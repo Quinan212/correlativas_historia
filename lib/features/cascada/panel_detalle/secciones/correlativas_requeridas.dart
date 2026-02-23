@@ -15,6 +15,7 @@ Widget seccionCorrelativasRequeridas({
   required List<Materia> all,
   required Materia m,
   required String careerId,
+  bool showTitle = true,
 }) {
   final cs = Theme.of(context).colorScheme;
 
@@ -22,9 +23,8 @@ Widget seccionCorrelativasRequeridas({
   final specials = det.where((c) => c.isSpecial == true).toList();
   final onlySpecials = det.isNotEmpty && specials.length == det.length;
 
-  if (esPracticaIV(m)) {
-    final label = etiquetaEspecialPd4(det) ??
-        'Todas las UC de 1°, 2° y 3° año (APROBADAS)';
+  Widget header() {
+    if (!showTitle) return const SizedBox.shrink();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -37,6 +37,17 @@ Widget seccionCorrelativasRequeridas({
           ),
         ),
         const SizedBox(height: 10),
+      ],
+    );
+  }
+
+  if (esPracticaIV(m)) {
+    final label = etiquetaEspecialPd4(det) ??
+        'Todas las UC de 1°, 2° y 3° año (APROBADAS)';
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        header(),
         bloqueEspecial(context, label),
       ],
     );
@@ -72,15 +83,7 @@ Widget seccionCorrelativasRequeridas({
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Correlativas Requeridas',
-          style: TextStyle(
-            fontWeight: FontWeight.w800,
-            fontSize: 16,
-            color: cs.onSurface,
-          ),
-        ),
-        const SizedBox(height: 10),
+        header(),
         ...items.asMap().entries.map((entry) {
           final i = entry.key;
           final e = entry.value;
@@ -133,15 +136,7 @@ Widget seccionCorrelativasRequeridas({
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Correlativas Requeridas',
-          style: TextStyle(
-            fontWeight: FontWeight.w800,
-            fontSize: 16,
-            color: cs.onSurface,
-          ),
-        ),
-        const SizedBox(height: 10),
+        header(),
         bloqueEspecial(context, '$texto$tipo'),
       ],
     );
@@ -155,15 +150,7 @@ Widget seccionCorrelativasRequeridas({
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Text(
-        'Correlativas Requeridas',
-        style: TextStyle(
-          fontWeight: FontWeight.w800,
-          fontSize: 16,
-          color: cs.onSurface,
-        ),
-      ),
-      const SizedBox(height: 10),
+      header(),
       ...entries.asMap().entries.map((entry) {
         final i = entry.key;
         final tuple = entry.value;
