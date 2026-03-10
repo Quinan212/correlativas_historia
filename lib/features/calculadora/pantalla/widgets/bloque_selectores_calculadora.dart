@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../shared/providers/app_state.dart';
+import '../../../../shared/widgets/career_option_label.dart';
 import '../../../../models/materia.dart';
 import '../tema/estilos_calculadora.dart';
 
@@ -21,14 +22,16 @@ class BloqueSelectoresCalculadora extends ConsumerWidget {
 
     final year = ref.watch(evalYearProvider);
     final selectedId = ref.watch(selectedCalcMateriaIdProvider);
+    final currentCareer = ref.watch(selectedCareerInfoOrNullProvider);
+    final hasSelectedCareer = ref.watch(hasSelectedCareerProvider);
 
     Text label(String text) => Text(
-      text,
-      style: TextStyle(
-        fontWeight: FontWeight.w700,
-        color: EstilosCalculadora.textoPrincipal(context),
-      ),
-    );
+          text,
+          style: TextStyle(
+            fontWeight: FontWeight.w700,
+            color: EstilosCalculadora.textoPrincipal(context),
+          ),
+        );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -37,11 +40,10 @@ class BloqueSelectoresCalculadora extends ConsumerWidget {
         const SizedBox(height: 6),
         Builder(builder: (_) {
           final careers = ref.watch(careersProvider);
-          final currentC = ref.watch(selectedCareerInfoProvider);
 
-          return DropdownButtonFormField<String>(
-            key: ValueKey('career_${currentC.id}'),
-            initialValue: currentC.id,
+          return DropdownButtonFormField<String?>(
+            key: ValueKey('career_${currentCareer?.id ?? 'null'}'),
+            initialValue: currentCareer?.id,
             isExpanded: true,
             decoration: EstilosCalculadora.decoracionInput(context),
             icon: const Icon(Icons.keyboard_arrow_down_rounded),
@@ -56,14 +58,14 @@ class BloqueSelectoresCalculadora extends ConsumerWidget {
             ),
             items: careers
                 .map(
-                  (c) => DropdownMenuItem<String>(
-                value: c.id,
-                child: Text(c.nombre, overflow: TextOverflow.ellipsis),
-              ),
-            )
+                  (c) => DropdownMenuItem<String?>(
+                    value: c.id,
+                    child: CareerOptionLabel(c),
+                  ),
+                )
                 .toList(),
             onChanged: (v) {
-              if (v == null || v == currentC.id) return;
+              if (v == null || v == currentCareer?.id) return;
               ref.read(selectedCareerIdProvider.notifier).state = v;
               ref.read(evalYearProvider.notifier).state = 2;
               ref.read(selectedCalcMateriaIdProvider.notifier).state = null;
@@ -92,12 +94,14 @@ class BloqueSelectoresCalculadora extends ConsumerWidget {
           items: const [1, 2, 3, 4]
               .map((y) => DropdownMenuItem(value: y, child: Text('$y° Año')))
               .toList(),
-          onChanged: (v) {
-            if (v == null) return;
-            ref.read(evalYearProvider.notifier).state = v;
-            ref.read(selectedCalcMateriaIdProvider.notifier).state = null;
-            ref.read(correlativaStatusMapProvider.notifier).clear();
-          },
+          onChanged: !hasSelectedCareer
+              ? null
+              : (v) {
+                  if (v == null) return;
+                  ref.read(evalYearProvider.notifier).state = v;
+                  ref.read(selectedCalcMateriaIdProvider.notifier).state = null;
+                  ref.read(correlativaStatusMapProvider.notifier).clear();
+                },
         ),
         const SizedBox(height: 16),
         label('Materia:'),
@@ -126,7 +130,7 @@ class BloqueSelectoresCalculadora extends ConsumerWidget {
               child: Text('-- Elige una materia --'),
             ),
             ...materiasYear.map(
-                  (m) => DropdownMenuItem<String?>(
+              (m) => DropdownMenuItem<String?>(
                 value: m.id,
                 child: Text(
                   '${m.codigo} — ${m.nombre}',
@@ -135,10 +139,12 @@ class BloqueSelectoresCalculadora extends ConsumerWidget {
               ),
             ),
           ],
-          onChanged: (v) {
-            ref.read(selectedCalcMateriaIdProvider.notifier).state = v;
-            ref.read(correlativaStatusMapProvider.notifier).clear();
-          },
+          onChanged: !hasSelectedCareer
+              ? null
+              : (v) {
+                  ref.read(selectedCalcMateriaIdProvider.notifier).state = v;
+                  ref.read(correlativaStatusMapProvider.notifier).clear();
+                },
         ),
       ],
     );

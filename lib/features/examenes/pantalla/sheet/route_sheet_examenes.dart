@@ -7,15 +7,19 @@ import 'pagina_sheet_examenes.dart';
 
 class RouteSheetExamenes extends PageRoute<void> {
   RouteSheetExamenes({
+    required this.careerId,
     required this.materia,
-    required this.llamado1,
-    required this.llamado2,
+    required this.llamado1Eventos,
+    required this.llamado2Eventos,
+    required this.coloquioEventos,
     required this.detalleInicial,
   });
 
+  final String careerId;
   final String materia;
-  final ExamenEvent? llamado1;
-  final ExamenEvent? llamado2;
+  final List<ExamenEvent> llamado1Eventos;
+  final List<ExamenEvent> llamado2Eventos;
+  final List<ExamenEvent> coloquioEventos;
   final DetalleArgs? detalleInicial;
 
   @override
@@ -46,9 +50,11 @@ class RouteSheetExamenes extends PageRoute<void> {
       Animation<double> secondaryAnimation,
       ) {
     return PaginaSheetExamenes(
+      careerId: careerId,
       materia: materia,
-      llamado1: llamado1,
-      llamado2: llamado2,
+      llamado1Eventos: llamado1Eventos,
+      llamado2Eventos: llamado2Eventos,
+      coloquioEventos: coloquioEventos,
       detalleInicial: detalleInicial,
     );
   }

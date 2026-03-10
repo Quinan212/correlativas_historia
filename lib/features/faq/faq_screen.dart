@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -32,16 +31,15 @@ String _stripOuterQuotes(String s) {
 
 /// ===================== Modelo + datos =====================
 class QAItem {
-  final int id; // para mantener el orden original (1..32)
-  final String section; // nombre de la sección
-  final String question; // pregunta
-  final String answer; // respuesta
+  final int id;
+  final String section;
+  final String question;
+  final String answer;
+
   const QAItem(this.id, this.section, this.question, this.answer);
 }
 
-// Lista completa (32 items) organizada por secciones
 const List<QAItem> _faqItems = [
-  // ---------- Sobre el Ingreso ----------
   QAItem(
     1,
     'Sobre el Ingreso',
@@ -67,8 +65,6 @@ const List<QAItem> _faqItems = [
     'Sí, hay una posibilidad. "La presentación de la documentación para el ingreso de estudiantes, fuera de los plazos académicos estipulados, '
         'podrá realizarse hasta el último día hábil del mes de abril". Este ingreso "será puesto a consideración del Consejo Directivo u órgano análogo".',
   ),
-
-  // ---------- Sobre Correlatividades y Promoción ----------
   QAItem(
     4,
     'Sobre Correlatividades y Promoción',
@@ -136,8 +132,6 @@ const List<QAItem> _faqItems = [
     'Exactamente. Se habilitan mesas extraordinarias "de las unidades curriculares correlativas a fin de generar las condiciones para la promoción o '
         'regularización de las unidades curriculares subsiguientes".',
   ),
-
-  // ---------- Sobre el Cursado y Estatus ----------
   QAItem(
     13,
     'Sobre el Cursado y Estatus del Estudiante',
@@ -184,8 +178,6 @@ const List<QAItem> _faqItems = [
     '19. Trabajo y se me complica cumplir con el 70% de asistencia, ¿hay alguna consideración para mi caso?',
     'Sí. "Se considerará el 60% de asistencia para aquellos/as estudiantes que trabajen y/o presenten situaciones particulares".',
   ),
-
-  // ---------- Sobre Pautas de Evaluación y Mesas ----------
   QAItem(
     20,
     'Sobre Pautas de Evaluación y Mesas de Examen',
@@ -236,8 +228,6 @@ const List<QAItem> _faqItems = [
     'En situaciones específicas como: si adeudar una materia te impide cursar Práctica Docente II, III, IV (en este caso la mesa es "exclusivamente en el mes de mayo"); '
         'por "finalización de la carrera por terminalidad, cierre de la misma o por cambio de diseño curricular".',
   ),
-
-  // ---------- Sobre la Carrera y Contenidos ----------
   QAItem(
     28,
     'Sobre la Carrera y Contenidos',
@@ -263,8 +253,6 @@ const List<QAItem> _faqItems = [
     'El Diseño Curricular del Profesorado de Historia establece como correlativa: "Todas las Unidades Curriculares de Tercer año.(A)" (Aprobadas). '
         'Además, "Aquellos estudiantes que adeuden la práctica docente anterior y/o unidades correlativas establecidas en el Diseño Curricular no podrán ingresar a la institución asociada".',
   ),
-
-  // ---------- Sobre el Egreso ----------
   QAItem(
     31,
     'Sobre el Egreso',
@@ -280,7 +268,6 @@ const List<QAItem> _faqItems = [
   ),
 ];
 
-/// ===================== Helpers de búsqueda (normaliza y fuzzy) =====================
 String _normalize(String s) {
   const map = {
     'á': 'a',
@@ -334,7 +321,6 @@ String _normalize(String s) {
   return buf.toString();
 }
 
-// Distancia de edición (Levenshtein) con codeUnits y early-exit
 int _levenshtein(String a, String b, {int max = 2}) {
   if (a == b) return 0;
   if (a.isEmpty || b.isEmpty) return (a.length + b.length);
@@ -358,7 +344,7 @@ int _levenshtein(String a, String b, {int max = 2}) {
       curr[j] = (v < sub ? v : sub);
       if (curr[j] < rowMin) rowMin = curr[j];
     }
-    if (rowMin > max) return max + 1; // early exit
+    if (rowMin > max) return max + 1;
     final tmp = prev;
     prev = curr;
     curr = tmp;
@@ -366,7 +352,6 @@ int _levenshtein(String a, String b, {int max = 2}) {
   return prev[n];
 }
 
-// Coincidencia “inteligente”: contiene, prefijo o Levenshtein<=1 en palabras clave
 bool _matches(QAItem item, String query) {
   if (query.trim().isEmpty) return true;
   final q = _normalize(query);
@@ -381,16 +366,16 @@ bool _matches(QAItem item, String query) {
 
   for (final qt in qTokens) {
     for (final tt in titleTokens) {
-      if (tt.startsWith(qt) && qt.length >= 3) return true; // prefijo
-      if (_levenshtein(qt, tt, max: 1) <= 1 && (qt.length >= 5 || tt.length >= 5)) {
-        return true; // parecido
+      if (tt.startsWith(qt) && qt.length >= 3) return true;
+      if (_levenshtein(qt, tt, max: 1) <= 1 &&
+          (qt.length >= 5 || tt.length >= 5)) {
+        return true;
       }
     }
   }
   return false;
 }
 
-/// Agrupa manteniendo orden de aparición
 Map<String, List<QAItem>> _groupBySection(List<QAItem> items) {
   final map = <String, List<QAItem>>{};
   for (final it in items) {
@@ -399,7 +384,6 @@ Map<String, List<QAItem>> _groupBySection(List<QAItem> items) {
   return map;
 }
 
-/// ===================== Pantalla =====================
 class FaqScreen extends ConsumerWidget {
   const FaqScreen({super.key});
 
@@ -409,7 +393,6 @@ class FaqScreen extends ConsumerWidget {
 
     return CustomScrollView(
       slivers: [
-        // Header colapsable (coincide con las otras pantallas)
         SliverPersistentHeader(
           pinned: true,
           delegate: _CollapsingBannerDelegate(
@@ -417,8 +400,6 @@ class FaqScreen extends ConsumerWidget {
             subtitle: 'Preguntas Frecuentes',
           ),
         ),
-
-        // Contenido
         const SliverToBoxAdapter(
           child: Padding(
             padding: EdgeInsets.fromLTRB(16, 16, 16, 24),
@@ -429,7 +410,7 @@ class FaqScreen extends ConsumerWidget {
                 SizedBox(height: 12),
                 _SearchBar(),
                 SizedBox(height: 12),
-                _FaqList(), // lista renderizada con filtro
+                _FaqList(),
                 SizedBox(height: 24),
                 _AutorBlock(),
               ],
@@ -441,7 +422,6 @@ class FaqScreen extends ConsumerWidget {
   }
 }
 
-// ===================== Hero / título =====================
 class _FaqHero extends StatelessWidget {
   const _FaqHero();
 
@@ -474,7 +454,7 @@ class _FaqHero extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             'Buscá por palabra clave (ej.: "promoción", "correlativa", "mesa"). '
-                'El buscador es tolerante a acentos y errores pequeños.',
+            'El buscador es tolerante a acentos y errores pequeños.',
             style: TextStyle(
               fontSize: 15,
               height: 1.6,
@@ -487,7 +467,6 @@ class _FaqHero extends StatelessWidget {
   }
 }
 
-// ===================== Barra de búsqueda =====================
 class _SearchBar extends ConsumerWidget {
   const _SearchBar();
 
@@ -501,17 +480,20 @@ class _SearchBar extends ConsumerWidget {
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide:
-        BorderSide(color: isDark ? cs.outlineVariant : const Color(0xFFE5E7EB)),
+        borderSide: BorderSide(
+          color: isDark ? cs.outlineVariant : const Color(0xFFE5E7EB),
+        ),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide:
-        BorderSide(color: isDark ? cs.outlineVariant : const Color(0xFFE5E7EB)),
+        borderSide: BorderSide(
+          color: isDark ? cs.outlineVariant : const Color(0xFFE5E7EB),
+        ),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: isDark ? cs.primary : const Color(0xFF93C5FD)),
+        borderSide:
+            BorderSide(color: isDark ? cs.primary : const Color(0xFF93C5FD)),
       ),
     );
   }
@@ -526,8 +508,10 @@ class _SearchBar extends ConsumerWidget {
       style: TextStyle(color: isDark ? cs.onSurface : null),
       controller: TextEditingController(text: term)
         ..selection = TextSelection.collapsed(offset: term.length),
-      decoration: _dec(context, hint: 'Escribí algo: promoción, correlativa, mesa…')
-          .copyWith(
+      decoration: _dec(
+        context,
+        hint: 'Escribí algo: promoción, correlativa, mesa…',
+      ).copyWith(
         prefixIcon: Icon(
           Icons.search,
           color: isDark ? cs.onSurfaceVariant : const Color(0xFF6B7280),
@@ -535,13 +519,14 @@ class _SearchBar extends ConsumerWidget {
         suffixIcon: term.isEmpty
             ? null
             : IconButton(
-          tooltip: 'Limpiar',
-          onPressed: () => ref.read(faqSearchProvider.notifier).state = '',
-          icon: Icon(
-            Icons.close,
-            color: isDark ? cs.onSurfaceVariant : const Color(0xFF9CA3AF),
-          ),
-        ),
+                tooltip: 'Limpiar',
+                onPressed: () =>
+                    ref.read(faqSearchProvider.notifier).state = '',
+                icon: Icon(
+                  Icons.close,
+                  color: isDark ? cs.onSurfaceVariant : const Color(0xFF9CA3AF),
+                ),
+              ),
       ),
       onChanged: (v) => ref.read(faqSearchProvider.notifier).state = v,
       textInputAction: TextInputAction.search,
@@ -549,7 +534,6 @@ class _SearchBar extends ConsumerWidget {
   }
 }
 
-// ===================== Lista filtrada por búsqueda =====================
 class _FaqList extends ConsumerWidget {
   const _FaqList();
 
@@ -606,9 +590,9 @@ class _FaqList extends ConsumerWidget {
   }
 }
 
-// ===================== Título de sección =====================
 class _SectionTitle extends StatelessWidget {
   final String text;
+
   const _SectionTitle(this.text);
 
   @override
@@ -637,10 +621,10 @@ class _SectionTitle extends StatelessWidget {
   }
 }
 
-// ===================== Tarjeta de pregunta =====================
 class _QACard extends StatelessWidget {
   final String q;
   final String a;
+
   const _QACard({required this.q, required this.a});
 
   @override
@@ -649,7 +633,8 @@ class _QACard extends StatelessWidget {
     final isDark = _isDark(context);
 
     final cardColor = isDark ? _darken(cs.surface) : Colors.white;
-    final innerColor = isDark ? _darken(cs.surface, 0.28) : const Color(0xFFFAFAFA);
+    final innerColor =
+        isDark ? _darken(cs.surface, 0.28) : const Color(0xFFFAFAFA);
 
     return Container(
       decoration: BoxDecoration(
@@ -671,12 +656,15 @@ class _QACard extends StatelessWidget {
           childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
           backgroundColor: cardColor,
           collapsedBackgroundColor: cardColor,
-          shape:
-          const RoundedRectangleBorder(side: BorderSide(color: Colors.transparent)),
-          collapsedShape:
-          const RoundedRectangleBorder(side: BorderSide(color: Colors.transparent)),
+          shape: const RoundedRectangleBorder(
+            side: BorderSide(color: Colors.transparent),
+          ),
+          collapsedShape: const RoundedRectangleBorder(
+            side: BorderSide(color: Colors.transparent),
+          ),
           iconColor: isDark ? cs.onSurfaceVariant : const Color(0xFF6B7280),
-          collapsedIconColor: isDark ? cs.onSurfaceVariant : const Color(0xFF6B7280),
+          collapsedIconColor:
+              isDark ? cs.onSurfaceVariant : const Color(0xFF6B7280),
           title: Text(
             q,
             style: TextStyle(
@@ -710,7 +698,6 @@ class _QACard extends StatelessWidget {
   }
 }
 
-// ===================== Autor =====================
 class _AutorBlock extends StatelessWidget {
   const _AutorBlock();
 
@@ -758,14 +745,14 @@ class _AutorBlock extends StatelessWidget {
   }
 }
 
-// =================== Header colapsable ===================
 class _CollapsingBannerDelegate extends SliverPersistentHeaderDelegate {
   _CollapsingBannerDelegate({required this.topInset, required this.subtitle});
+
   final double topInset;
   final String subtitle;
 
-  static const double _h1 = 56.0; // franja 1
-  static const double _h2 = 40.0; // franja 2
+  static const double _h1 = 56.0;
+  static const double _h2 = 40.0;
   static const c1 = Color(0xFF005B7F);
   static const c2 = Color(0xFF004966);
 
@@ -776,7 +763,8 @@ class _CollapsingBannerDelegate extends SliverPersistentHeaderDelegate {
   double get maxExtent => topInset + _h1 + _h2;
 
   @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+  Widget build(
+      BuildContext context, double shrinkOffset, bool overlapsContent) {
     final range = maxExtent - minExtent;
     final t = (maxExtent - shrinkOffset - minExtent) / range;
     final vis = t.clamp(0.0, 1.0);
@@ -788,7 +776,6 @@ class _CollapsingBannerDelegate extends SliverPersistentHeaderDelegate {
       elevation: overlapsContent ? 4 : 0,
       child: Column(
         children: [
-          // Franja 1: colapsa
           SizedBox(
             height: _h1 * vis,
             child: Opacity(
@@ -797,8 +784,9 @@ class _CollapsingBannerDelegate extends SliverPersistentHeaderDelegate {
                 offset: Offset(0, (1 - vis) * -8),
                 child: Container(
                   width: double.infinity,
-                  padding: EdgeInsets.only(top: topInset)
-                      .add(const EdgeInsets.symmetric(horizontal: 12, vertical: 8)),
+                  padding: EdgeInsets.only(top: topInset).add(
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  ),
                   color: c1,
                   child: const Align(
                     alignment: Alignment.centerLeft,
@@ -817,7 +805,6 @@ class _CollapsingBannerDelegate extends SliverPersistentHeaderDelegate {
               ),
             ),
           ),
-          // Franja 2: fija (aparece al colapsar)
           Container(
             width: double.infinity,
             color: c2,

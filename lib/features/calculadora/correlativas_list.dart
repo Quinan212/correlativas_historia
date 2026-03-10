@@ -29,7 +29,8 @@ class CorrelativasList extends ConsumerWidget {
       final specials = det.where((c) => c.isSpecial == true).toList();
       if (specials.isNotEmpty) {
         final s = specials.first;
-        final tipo = (s.type ?? '').trim().isEmpty ? '' : ' (${s.type})';
+        final tipoRaw = s.type.trim();
+        final tipo = tipoRaw.isEmpty ? '' : ' ($tipoRaw)';
         final texto = (s.nombre?.trim().isNotEmpty == true) ? s.nombre!.trim() : 'Requisito especial';
         return _especialBlock('$texto$tipo');
       }
@@ -96,10 +97,13 @@ class CorrelativasList extends ConsumerWidget {
     final items = <CorrelativaDetallada>[];
 
     for (final c in det) {
-      final tipo = (c.type ?? '').toUpperCase();
+      final tipo = c.type.toUpperCase();
+      final fallbackId = c.id.trim();
       final title = (c.isSpecial == true && (c.nombre?.trim().isNotEmpty == true))
           ? c.nombre!.trim()
-          : (_nombreMateria(all, c.id) ?? (c.id ?? 'Requisito')).trim();
+          : (_nombreMateria(all, c.id) ??
+                  (fallbackId.isEmpty ? 'Requisito' : fallbackId))
+              .trim();
 
       final key = '${title.toLowerCase()}|$tipo';
       if (seen.add(key)) items.add(c);
@@ -108,10 +112,12 @@ class CorrelativasList extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: items.map((c) {
-        final tipo = (c.type ?? '').toUpperCase();
+        final tipo = c.type.toUpperCase();
+        final fallbackId = c.id.trim();
         final title = (c.isSpecial == true && (c.nombre?.trim().isNotEmpty == true))
             ? c.nombre!.trim()
-            : (_nombreMateria(all, c.id) ?? (c.id ?? 'Requisito'));
+            : (_nombreMateria(all, c.id) ??
+                (fallbackId.isEmpty ? 'Requisito' : fallbackId));
 
         return Padding(
           padding: const EdgeInsets.only(bottom: 8),
@@ -151,8 +157,7 @@ class CorrelativasList extends ConsumerWidget {
     ),
   );
 
-  String? _nombreMateria(List<Materia> all, String? id) {
-    if (id == null) return null;
+  String? _nombreMateria(List<Materia> all, String id) {
     final m = all.where((x) => x.id == id);
     if (m.isEmpty) return null;
     return '${m.first.codigo} — ${m.first.nombre}';

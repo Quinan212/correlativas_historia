@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../grilla/utils/estilos_chips.dart';
+
 class TarjetaLeyendaMapa extends StatelessWidget {
   const TarjetaLeyendaMapa({super.key});
 
@@ -36,7 +38,7 @@ class TarjetaLeyendaMapa extends StatelessWidget {
                 desc,
                 textAlign: TextAlign.center,
                 style: tt.bodySmall?.copyWith(
-                  color: textC.withValues(alpha: 0.8),
+                  color: textC.withValues(alpha: 0.82),
                   fontSize: 10,
                   height: 1.2,
                 ),
@@ -47,7 +49,7 @@ class TarjetaLeyendaMapa extends StatelessWidget {
       );
     }
 
-    Widget chipRow(String label, String desc, Color bg, Color fg) {
+    Widget chipRow(String label, String desc, Color bg, Color fg, Color bd) {
       return Padding(
         padding: const EdgeInsets.only(bottom: 10),
         child: Row(
@@ -61,11 +63,7 @@ class TarjetaLeyendaMapa extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: bg,
                   borderRadius: BorderRadius.circular(50),
-                  border: Border.all(
-                    color: bg == const Color(0xFFE5E7EB)
-                        ? Colors.grey.shade300
-                        : Colors.transparent,
-                  ),
+                  border: Border.all(color: bd),
                 ),
                 child: Text(
                   label,
@@ -82,13 +80,58 @@ class TarjetaLeyendaMapa extends StatelessWidget {
             Expanded(
               child: Text(
                 desc,
-                style: tt.bodySmall?.copyWith(color: cs.onSurface, height: 1.3),
+                style: tt.bodySmall?.copyWith(
+                  color: cs.onSurface,
+                  height: 1.3,
+                ),
               ),
             ),
           ],
         ),
       );
     }
+
+    final general = coloresTipo(isDark, 'Formacion General');
+    final especifica = coloresTipo(isDark, 'Formacion Especifica');
+    final practica = coloresTipo(isDark, 'Practica Profesional');
+
+    final asignatura = coloresFormato(isDark, 'asignatura');
+    final seminario = coloresFormato(isDark, 'seminario');
+    final taller = coloresFormato(isDark, 'taller');
+    final semTaller = coloresFormato(isDark, 'seminario-taller');
+    final variable = isDark
+        ? (
+            oscurecer(const Color(0xFF29313A)),
+            const Color(0xFFE5E7EB),
+            const Color(0xFF3E4753),
+          )
+        : (
+            const Color(0xFFF3F4F6),
+            const Color(0xFF374151),
+            const Color(0xFFE5E7EB),
+          );
+    final abreviatura = isDark
+        ? (
+            oscurecer(const Color(0xFF6B4E16)),
+            const Color(0xFFFDE68A),
+            const Color(0xFFD4A72C),
+          )
+        : (
+            const Color(0xFFFEF3C7),
+            const Color(0xFF92400E),
+            const Color(0xFFFDE68A),
+          );
+    final especial = isDark
+        ? (
+            oscurecer(const Color(0xFF223761)),
+            const Color(0xFFBFD4FF),
+            const Color(0xFF3E60A4),
+          )
+        : (
+            const Color(0xFFE0E7FF),
+            const Color(0xFF1D4ED8),
+            const Color(0xFFBFDBFE),
+          );
 
     return Container(
       decoration: BoxDecoration(
@@ -116,8 +159,12 @@ class TarjetaLeyendaMapa extends StatelessWidget {
             childrenPadding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
             backgroundColor: isDark ? cs.surface : Colors.white,
             collapsedBackgroundColor: isDark ? cs.surface : Colors.white,
-            shape: const RoundedRectangleBorder(side: BorderSide(color: Colors.transparent)),
-            collapsedShape: const RoundedRectangleBorder(side: BorderSide(color: Colors.transparent)),
+            shape: const RoundedRectangleBorder(
+              side: BorderSide(color: Colors.transparent),
+            ),
+            collapsedShape: const RoundedRectangleBorder(
+              side: BorderSide(color: Colors.transparent),
+            ),
             iconColor: cs.primary,
             collapsedIconColor: cs.onSurfaceVariant,
             title: Row(
@@ -125,7 +172,7 @@ class TarjetaLeyendaMapa extends StatelessWidget {
                 Icon(Icons.info_outline_rounded, size: 22, color: cs.primary),
                 const SizedBox(width: 12),
                 Text(
-                  'Guía de Referencias',
+                  'Guia de referencias',
                   style: tt.titleMedium?.copyWith(
                     fontWeight: FontWeight.w800,
                     color: cs.onSurface,
@@ -134,9 +181,9 @@ class TarjetaLeyendaMapa extends StatelessWidget {
               ],
             ),
             subtitle: Padding(
-              padding: const EdgeInsets.only(left: 34.0, top: 2),
+              padding: const EdgeInsets.only(left: 34, top: 2),
               child: Text(
-                'Entendé los colores y etiquetas del mapa.',
+                'Entende los colores y etiquetas del mapa.',
                 style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
               ),
             ),
@@ -158,12 +205,27 @@ class TarjetaLeyendaMapa extends StatelessWidget {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  colorCard('General', 'Formación común y transversal.', const Color(0xFFE0E7FF),
-                      const Color(0xFFC7D2FE), const Color(0xFF1E40AF)),
-                  colorCard('Específica', 'Propia de la especialidad.', const Color(0xFFD1FAE5),
-                      const Color(0xFFA7F3D0), const Color(0xFF065F46)),
-                  colorCard('Práctica', 'Vinculación profesional.', const Color(0xFFEDE9FE),
-                      const Color(0xFFDDD6FE), const Color(0xFF6D28D9)),
+                  colorCard(
+                    'General',
+                    'Formacion comun y transversal.',
+                    general.$1,
+                    general.$3,
+                    general.$2,
+                  ),
+                  colorCard(
+                    'Especifica',
+                    'Propia de la especialidad.',
+                    especifica.$1,
+                    especifica.$3,
+                    especifica.$2,
+                  ),
+                  colorCard(
+                    'Practica',
+                    'Vinculacion profesional.',
+                    practica.$1,
+                    practica.$3,
+                    practica.$2,
+                  ),
                 ],
               ),
               const SizedBox(height: 24),
@@ -179,26 +241,61 @@ class TarjetaLeyendaMapa extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
-              chipRow('Asignatura', 'Materia regular teórica/práctica.', const Color(0xFFE0E7FF),
-                  const Color(0xFF1D4ED8)),
-              chipRow('Seminario', 'Estudio intensivo de un tema específico.', const Color(0xFFD1FAE5),
-                  const Color(0xFF065F46)),
-              chipRow('Taller', 'Espacio práctico de producción.', const Color(0xFFFDEAD7),
-                  const Color(0xFF9A3412)),
-              chipRow('Sem-Taller', 'Combinación aplicada de seminario.', const Color(0xFFEDE9FE),
-                  const Color(0xFF6B7280)),
-              chipRow('Variable', 'Definido por la institución (UDI).', const Color(0xFFE5E7EB),
-                  const Color(0xFF374151)),
+              chipRow(
+                'Asignatura',
+                'Materia regular teorica o practica.',
+                asignatura.$1,
+                asignatura.$2,
+                asignatura.$3,
+              ),
+              chipRow(
+                'Seminario',
+                'Estudio intensivo de un tema especifico.',
+                seminario.$1,
+                seminario.$2,
+                seminario.$3,
+              ),
+              chipRow(
+                'Taller',
+                'Espacio practico de produccion.',
+                taller.$1,
+                taller.$2,
+                taller.$3,
+              ),
+              chipRow(
+                'Sem-Taller',
+                'Combinacion aplicada de seminario.',
+                semTaller.$1,
+                semTaller.$2,
+                semTaller.$3,
+              ),
+              chipRow(
+                'Variable',
+                'Definido por la institucion (UDI).',
+                variable.$1,
+                variable.$2,
+                variable.$3,
+              ),
               const SizedBox(height: 8),
               Container(
                 height: 1,
                 color: isDark ? cs.outlineVariant : Colors.grey.shade100,
               ),
               const SizedBox(height: 16),
-              chipRow('ABC', 'Abreviatura del nombre de la materia.', const Color(0xFFFEF3C7),
-                  const Color(0xFF92400E)),
-              chipRow('Especial', 'Requisito especial (ej. tener todas aprobadas).', const Color(0xFFE0E7FF),
-                  const Color(0xFF1D4ED8)),
+              chipRow(
+                'ABC',
+                'Abreviatura del nombre de la materia.',
+                abreviatura.$1,
+                abreviatura.$2,
+                abreviatura.$3,
+              ),
+              chipRow(
+                'Especial',
+                'Requisito especial (por ejemplo, tener todas aprobadas).',
+                especial.$1,
+                especial.$2,
+                especial.$3,
+              ),
             ],
           ),
         ),

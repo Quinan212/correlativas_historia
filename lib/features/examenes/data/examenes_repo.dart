@@ -1,11 +1,15 @@
 import 'dart:convert';
+
 import 'package:flutter/services.dart' show rootBundle;
 
-import '../models/examen_event.dart';
 import '../../../models/materia.dart';
+import '../../../shared/utils/text_sanitize.dart';
+import '../models/examen_event.dart';
 
 class ExamenesRepo {
   const ExamenesRepo();
+
+  static final Map<String, Future<List<ExamenEvent>>> _eventCache = {};
 
   Future<List<ExamenEvent>> loadLlamado1() =>
       _loadJson('assets/examenes_llamado1.json');
@@ -16,63 +20,57 @@ class ExamenesRepo {
   Future<List<ExamenEvent>> loadColoquios() =>
       _loadJson('assets/coloquios_feb_mar_2026.json');
 
-  Future<List<ExamenEvent>> _loadJson(String assetPath) async {
-    final raw = await rootBundle.loadString(assetPath);
-    final decoded = json.decode(raw);
+  Future<List<ExamenEvent>> _loadJson(String assetPath) {
+    return _eventCache.putIfAbsent(assetPath, () async {
+      final raw = await rootBundle.loadString(assetPath);
+      final decoded = json.decode(raw);
 
-    // Caso 1: el JSON ya es una lista de eventos
-    if (decoded is List) {
-      return decoded
-          .map((e) => _eventoDesdeJson((e as Map).cast<String, dynamic>()))
-          .toList();
-    }
-
-    // Caso 2: tu formato actual (root map con careers -> carrera -> año -> lista)
-    if (decoded is Map) {
-      final root = decoded.cast<String, dynamic>();
-
-      final careersRaw = root['careers'];
-      if (careersRaw is! Map) {
-        throw StateError(
-          'JSON inválido: esperaba "careers" como Map en $assetPath',
+      if (decoded is List) {
+        return List<ExamenEvent>.unmodifiable(
+          decoded
+              .map((e) => _eventoDesdeJson((e as Map).cast<String, dynamic>())),
         );
       }
 
-      final careers = careersRaw.cast<String, dynamic>();
-      final out = <ExamenEvent>[];
+      if (decoded is Map) {
+        final root = decoded.cast<String, dynamic>();
+        final careersRaw = root['careers'];
+        if (careersRaw is! Map) {
+          throw StateError(
+            'JSON invalido: esperaba "careers" como Map en $assetPath',
+          );
+        }
 
-      for (final carreraEntry in careers.entries) {
-        final yearsRaw = carreraEntry.value;
+        final careers = careersRaw.cast<String, dynamic>();
+        final out = <ExamenEvent>[];
 
-        if (yearsRaw is! Map) continue;
-        final years = yearsRaw.cast<String, dynamic>();
+        for (final careerEntry in careers.entries) {
+          final yearsRaw = careerEntry.value;
+          if (yearsRaw is! Map) continue;
+          final years = yearsRaw.cast<String, dynamic>();
 
-        for (final yearEntry in years.entries) {
-          final eventosRaw = yearEntry.value;
+          for (final yearEntry in years.entries) {
+            final eventosRaw = yearEntry.value;
+            if (eventosRaw is! List) continue;
 
-          if (eventosRaw is! List) continue;
-          for (final item in eventosRaw) {
-            if (item is! Map) continue;
-            out.add(_eventoDesdeJson(item.cast<String, dynamic>()));
+            for (final item in eventosRaw) {
+              if (item is! Map) continue;
+              out.add(_eventoDesdeJson(item.cast<String, dynamic>()));
+            }
           }
         }
+
+        return List<ExamenEvent>.unmodifiable(out);
       }
 
-      return out;
-    }
-
-    throw StateError('Formato de JSON inesperado en $assetPath');
+      throw StateError('Formato de JSON inesperado en $assetPath');
+    });
   }
 }
 
 ExamenEvent _eventoDesdeJson(Map<String, dynamic> m) {
-  // esto asume que tu modelo tiene factory ExamenEvent.fromJson
   return ExamenEvent.fromJson(m);
 }
-
-// ----------------------
-// LOADER DEL PLAN (HTML)
-// ----------------------
 
 class PlanData {
   final List<Materia> materias;
@@ -80,6 +78,8 @@ class PlanData {
 
   PlanData({required this.materias, required this.pdfUrl});
 }
+
+final Map<String, Future<PlanData>> _planCache = {};
 
 Future<PlanData> loadPlanFromHistoriaHtml() =>
     loadPlanFromHtml('assets/historia.html');
@@ -93,30 +93,34 @@ Future<PlanData> loadPlanFromPoliticaHtml() =>
 Future<PlanData> loadPlanFromHtmlAsset(String assetPath) =>
     loadPlanFromHtml(assetPath);
 
-Future<PlanData> loadPlanFromHtml(String assetPath) async {
-  final html = await rootBundle.loadString(assetPath);
+Future<PlanData> loadPlanFromHtml(String assetPath) {
+  return _planCache.putIfAbsent(assetPath, () async {
+    final html = await rootBundle.loadString(assetPath);
 
-  final jsArray = _extractMateriasArray(html);
-  if (jsArray == null) {
-    throw StateError('No se encontró el array "materias" en $assetPath');
-  }
+    final jsArray = _extractMateriasArray(html);
+    if (jsArray == null) {
+      throw StateError('No se encontro el array "materias" en $assetPath');
+    }
 
-  final jsonText = _jsArrayToJson(jsArray);
-  final dynamicList = json.decode(jsonText) as List;
+    final jsonText = _jsArrayToJson(jsArray);
+    final dynamicList = json.decode(jsonText) as List;
 
-  _applyReqsToCorrelativasDetalladas(dynamicList);
-  _applyFixPracticaIV(dynamicList);
+    _applyReqsToCorrelativasDetalladas(dynamicList);
+    _applyFixPracticaIV(dynamicList);
 
-  final materias = dynamicList
-      .map((e) => Materia.fromMap(e as Map<String, dynamic>))
-      .toList();
+    final materias = dynamicList
+        .map((e) => Materia.fromMap(e as Map<String, dynamic>))
+        .toList(growable: false);
 
-  final pdfMatch =
-  RegExp(r"const\s+pdfUrl\s*=\s*'([^']+)'", multiLine: true)
-      .firstMatch(html);
-  final pdfUrl = pdfMatch != null ? Uri.tryParse(pdfMatch.group(1)!) : null;
+    final pdfMatch = RegExp(r"const\s+pdfUrl\s*=\s*'([^']+)'", multiLine: true)
+        .firstMatch(html);
+    final pdfUrl = pdfMatch != null ? Uri.tryParse(pdfMatch.group(1)!) : null;
 
-  return PlanData(materias: materias, pdfUrl: pdfUrl);
+    return PlanData(
+      materias: List<Materia>.unmodifiable(materias),
+      pdfUrl: pdfUrl,
+    );
+  });
 }
 
 String? _extractMateriasArray(String html) {
@@ -124,11 +128,11 @@ String? _extractMateriasArray(String html) {
   src = src.replaceAll(RegExp(r'/\*[\s\S]*?\*/'), '');
   src = src.replaceAll(RegExp(r'//[^\n\r]*'), '');
 
-  final m =
-  RegExp(r'\bmaterias\b\s*=\s*\[', caseSensitive: false).firstMatch(src);
-  if (m == null) return null;
+  final match =
+      RegExp(r'\bmaterias\b\s*=\s*\[', caseSensitive: false).firstMatch(src);
+  if (match == null) return null;
 
-  final startBracket = m.end - 1;
+  final startBracket = match.end - 1;
   var depth = 0;
   var inSingle = false;
   var inDouble = false;
@@ -186,36 +190,16 @@ String _jsArrayToJson(String jsArray) {
   s = s.replaceAll(RegExp(r'/\*[\s\S]*?\*/', multiLine: true), '');
   s = s.replaceAll(RegExp(r'//[^\n\r]*', multiLine: true), '');
 
-  String quoteKey(String key) {
-    final re = RegExp('([\\{,])\\s*$key\\s*:', multiLine: true);
-    s = s.replaceAllMapped(re, (m) => '${m.group(1)} "$key":');
-    return s;
-  }
-
-  for (final k in const [
-    'id',
-    'codigo',
-    'nombre',
-    'año',
-    'anio',
-    'tipo',
-    'formato',
-    'correlativas',
-    'horas',
-    'correlativasDetalladas',
-    'type',
-    'isSpecial',
-    'nombreCorto',
-    'cuatri',
-    'reqs',
-    'text',
-  ]) {
-    quoteKey(k);
-  }
+  s = s.replaceAllMapped(
+    RegExp(
+      r'([,{]\s*)([A-Za-z_\u00C0-\u024F][A-Za-z0-9_\-\u00C0-\u024F]*)(\s*:)',
+    ),
+    (m) => '${m.group(1)}"${m.group(2)}"${m.group(3)}',
+  );
 
   s = s.replaceAllMapped(
     RegExp(r"'([^'\\]*(?:\\.[^'\\]*)*)'"),
-        (m) => '"${m.group(1)!.replaceAll('"', r'\"')}"',
+    (m) => '"${m.group(1)!.replaceAll('"', r'\"')}"',
   );
 
   s = s.replaceAll(RegExp(r',\s*(?=[\]\}])'), '');
@@ -223,8 +207,9 @@ String _jsArrayToJson(String jsArray) {
   final startOk = s.trimLeft().startsWith('[');
   final endOk = s.trimRight().endsWith(']');
   if (!startOk || !endOk) {
-    final inner =
-    s.replaceFirst(RegExp(r'^\s*\['), '').replaceFirst(RegExp(r'\]\s*$'), '');
+    final inner = s
+        .replaceFirst(RegExp(r'^\s*\['), '')
+        .replaceFirst(RegExp(r'\]\s*$'), '');
     s = '[$inner]';
   }
 
@@ -240,18 +225,19 @@ void _applyReqsToCorrelativasDetalladas(List<dynamic> list) {
     if (reqs is! List || reqs.isEmpty) continue;
 
     final existingRaw = map['correlativasDetalladas'];
-    final det = existingRaw is List ? List<dynamic>.from(existingRaw) : <dynamic>[];
+    final det =
+        existingRaw is List ? List<dynamic>.from(existingRaw) : <dynamic>[];
 
-    for (final r in reqs) {
-      if (r is! Map) continue;
-      final rmap = r.cast<String, dynamic>();
+    for (final req in reqs) {
+      if (req is! Map) continue;
+      final rmap = req.cast<String, dynamic>();
 
-      final bool isSpecial = rmap['isSpecial'] == true;
-      final String rawType = (rmap['type'] ?? 'R').toString().toUpperCase();
-      final String type = (rawType == 'A' || rawType == 'R') ? rawType : 'R';
+      final isSpecial = rmap['isSpecial'] == true;
+      final rawType = (rmap['type'] ?? 'R').toString().toUpperCase();
+      final type = (rawType == 'A' || rawType == 'R') ? rawType : 'R';
 
-      final String? id = rmap['id']?.toString();
-      final String? text = rmap['text']?.toString();
+      final id = rmap['id']?.toString();
+      final text = rmap['text']?.toString();
 
       final out = <String, dynamic>{
         'id': id ?? 'esp_${map['id']}_${det.length}',
@@ -260,7 +246,7 @@ void _applyReqsToCorrelativasDetalladas(List<dynamic> list) {
       };
 
       if (text != null && text.trim().isNotEmpty) {
-        out['nombre'] = text.trim();
+        out['nombre'] = sanitizeText(text.trim());
       }
 
       det.add(out);
@@ -274,19 +260,16 @@ void _applyFixPracticaIV(List<dynamic> list) {
   for (final item in list) {
     if (item is! Map) continue;
     final map = item.cast<String, dynamic>();
-    final nombre = (map['nombre'] ?? '').toString().toLowerCase();
+    final nombre = sanitizeLowerNoAccents((map['nombre'] ?? '').toString());
 
-    final match = nombre.contains('práctica docente iv') ||
-        nombre.contains('practica docente iv');
-
-    if (match) {
+    if (nombre.contains('practica docente iv')) {
       map['correlativas'] = <String>[];
       map['correlativasDetalladas'] = [
         {
           'id': 'esp_todas_uc_1_2_3',
           'type': 'A',
           'isSpecial': true,
-          'nombre': 'Todas las UC de 1°, 2° y 3° año',
+          'nombre': 'Todas las UC de 1\u00b0, 2\u00b0 y 3\u00b0 a\u00f1o',
         },
       ];
     }

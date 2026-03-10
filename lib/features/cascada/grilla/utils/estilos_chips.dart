@@ -206,6 +206,6 @@ String normalizarFormatoChip(String raw) {
 }
 
 Color colorTituloDesdeTipo(bool isDark, String tipo) {
-  final (_, fg, __) = coloresTipo(isDark, tipo);
+  final (_, fg, _) = coloresTipo(isDark, tipo);
   return fg;
 }

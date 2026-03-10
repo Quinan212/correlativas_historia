@@ -11,6 +11,7 @@ class CareerInfo {
   final String assetHtml;
   final String downloadUrl;
   final String categoria;
+  final String? iconAsset;
   final bool hidden;
 
   const CareerInfo({
@@ -19,8 +20,60 @@ class CareerInfo {
     required this.assetHtml,
     required this.downloadUrl,
     required this.categoria,
+    this.iconAsset,
     this.hidden = false,
   });
+}
+
+class MateriaOverride {
+  final String materiaId;
+  final String? codigo;
+  final String? nombre;
+  final int? anio;
+  final int? cuatri;
+  final String? tipo;
+  final String? formato;
+  final String? horas;
+
+  const MateriaOverride({
+    required this.materiaId,
+    this.codigo,
+    this.nombre,
+    this.anio,
+    this.cuatri,
+    this.tipo,
+    this.formato,
+    this.horas,
+  });
+}
+
+class InstitutionInfo {
+  final String id;
+  final String careerId;
+  final String nombre;
+  final String? iconAsset;
+  final String? downloadUrl;
+  final List<MateriaOverride> overrides;
+  final bool hidden;
+
+  const InstitutionInfo({
+    required this.id,
+    required this.careerId,
+    required this.nombre,
+    this.iconAsset,
+    this.downloadUrl,
+    this.overrides = const [],
+    this.hidden = false,
+  });
+}
+
+String? institutionIconForCareer(String careerId) {
+  for (final institution in kInstitutions) {
+    if (institution.careerId == careerId && institution.iconAsset != null) {
+      return institution.iconAsset;
+    }
+  }
+  return null;
 }
 
 const List<CareerInfo> kCareers = [
@@ -29,24 +82,27 @@ const List<CareerInfo> kCareers = [
     nombre: 'Profesorado de Historia',
     assetHtml: 'assets/historia.html',
     downloadUrl:
-    'https://drive.google.com/file/d/13znCaPZBl00OHVRLZhJ6Fh8CQaGIKi63/view?usp=sharing',
+        'https://drive.google.com/file/d/13znCaPZBl00OHVRLZhJ6Fh8CQaGIKi63/view?usp=sharing',
     categoria: 'profesorado',
+    iconAsset: 'assets/career_icons/career_logo.png',
   ),
   CareerInfo(
     id: 'geografia',
     nombre: 'Profesorado en Geografía',
     assetHtml: 'assets/geografia.html',
     downloadUrl:
-    'https://drive.google.com/file/d/1Sj91vNoBMlo_0ZPOAvLEJciPsjaWH4S9/view',
+        'https://drive.google.com/file/d/1Sj91vNoBMlo_0ZPOAvLEJciPsjaWH4S9/view',
     categoria: 'profesorado',
+    iconAsset: 'assets/career_icons/career_logo.png',
   ),
   CareerInfo(
     id: 'politica',
     nombre: 'Profesorado en Ciencia Política',
     assetHtml: 'assets/politica.html',
     downloadUrl:
-    'https://drive.google.com/file/d/1UjXaF41TL5AKRpOaE9YJOIdtAguPUJ83/view?usp=sharing',
+        'https://drive.google.com/file/d/1UjXaF41TL5AKRpOaE9YJOIdtAguPUJ83/view?usp=sharing',
     categoria: 'profesorado',
+    iconAsset: 'assets/career_icons/career_logo.png',
   ),
   CareerInfo(
     id: 'artes_visuales',
@@ -76,7 +132,7 @@ const List<CareerInfo> kCareers = [
     nombre: 'Profesorado en Lengua y Literatura',
     assetHtml: 'assets/Lengua_Literatura.html',
     downloadUrl:
-    'https://drive.google.com/tu_link_oficial_de_lengua_literatura',
+        'https://drive.google.com/tu_link_oficial_de_lengua_literatura',
     categoria: 'profesorado',
     hidden: true,
   ),
@@ -113,6 +169,34 @@ const List<CareerInfo> kCareers = [
   ),
 ];
 
+const List<InstitutionInfo> kInstitutions = [
+  InstitutionInfo(
+    id: 'historia_pscs',
+    careerId: 'historia',
+    nombre: 'Profesorado Superior de Ciencias Sociales',
+    iconAsset: 'assets/career_icons/career_logo.png',
+  ),
+  InstitutionInfo(
+    id: 'geografia_pscs',
+    careerId: 'geografia',
+    nombre: 'Profesorado Superior de Ciencias Sociales',
+    iconAsset: 'assets/career_icons/career_logo.png',
+  ),
+  InstitutionInfo(
+    id: 'politica_pscs',
+    careerId: 'politica',
+    nombre: 'Profesorado Superior de Ciencias Sociales',
+    iconAsset: 'assets/career_icons/career_logo.png',
+  ),
+  InstitutionInfo(
+    id: 'artes_visuales_cesareo',
+    careerId: 'artes_visuales',
+    nombre:
+        'Instituto Superior de Formación Docente N° 1 "Cesáreo Bernaldo de Quirós"',
+    iconAsset: 'assets/career_icons/logo_artes.png',
+  ),
+];
+
 // =================== THEME ===================
 
 final themeModeProvider = StateProvider<ThemeMode>((_) => ThemeMode.light);
@@ -120,18 +204,19 @@ final themeModeProvider = StateProvider<ThemeMode>((_) => ThemeMode.light);
 void toggleTheme(WidgetRef ref) {
   final cur = ref.read(themeModeProvider);
   ref.read(themeModeProvider.notifier).state =
-  cur == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
+      cur == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
 }
 
 // =================== CAREERS ===================
 
-final careersProvider = Provider<List<CareerInfo>>((_) =>
-    kCareers.where((c) => !c.hidden).toList());
+final careersProvider = Provider<List<CareerInfo>>(
+    (_) => kCareers.where((c) => !c.hidden).toList());
 
 // 'todas' | 'profesorado' | 'grado'
 final selectedCareerTypeProvider = StateProvider<String>((_) => 'todas');
 
-final selectedCareerIdProvider = StateProvider<String>((_) => 'historia');
+final selectedCareerIdProvider = StateProvider<String?>((_) => null);
+final selectedInstitutionIdProvider = StateProvider<String?>((_) => null);
 
 // lista filtrada según tipo/categoría
 final careersByTypeProvider = Provider<List<CareerInfo>>((ref) {
@@ -143,23 +228,109 @@ final careersByTypeProvider = Provider<List<CareerInfo>>((ref) {
 });
 
 // carrera seleccionada (si el id no está en la lista filtrada, cae al primero)
-final selectedCareerInfoProvider = Provider<CareerInfo>((ref) {
+final selectedCareerInfoOrNullProvider = Provider<CareerInfo?>((ref) {
   final id = ref.watch(selectedCareerIdProvider);
-  final available = ref.watch(careersByTypeProvider);
-
-  return available.firstWhere(
-        (c) => c.id == id,
-    orElse: () => available.isNotEmpty ? available.first : kCareers.first,
-  );
+  if (id == null) return null;
+  final all = ref.watch(careersProvider);
+  for (final career in all) {
+    if (career.id == id) return career;
+  }
+  return null;
 });
 
-final careerDownloadUrlProvider =
-Provider<String>((ref) => ref.watch(selectedCareerInfoProvider).downloadUrl);
+final hasSelectedCareerProvider = Provider<bool>((ref) {
+  return ref.watch(selectedCareerInfoOrNullProvider) != null;
+});
+
+// Compatibilidad para consumidores que todavia esperan una carrera no nula.
+final selectedCareerInfoProvider = Provider<CareerInfo>((ref) {
+  final selected = ref.watch(selectedCareerInfoOrNullProvider);
+  if (selected != null) return selected;
+  final available = ref.watch(careersByTypeProvider);
+  return available.isNotEmpty ? available.first : kCareers.first;
+});
+
+final institutionsProvider = Provider<List<InstitutionInfo>>(
+    (_) => kInstitutions.where((i) => !i.hidden).toList());
+
+final institutionsForSelectedCareerProvider =
+    Provider<List<InstitutionInfo>>((ref) {
+  final careerId = ref.watch(selectedCareerInfoOrNullProvider)?.id;
+  if (careerId == null) return const <InstitutionInfo>[];
+  final all = ref.watch(institutionsProvider);
+  return all.where((i) => i.careerId == careerId).toList();
+});
+
+final selectedInstitutionInfoProvider = Provider<InstitutionInfo?>((ref) {
+  final selectedId = ref.watch(selectedInstitutionIdProvider);
+  final available = ref.watch(institutionsForSelectedCareerProvider);
+  if (available.isEmpty) return null;
+  for (final institution in available) {
+    if (institution.id == selectedId) return institution;
+  }
+  return available.first;
+});
+
+final careerDownloadUrlProvider = Provider<String>((ref) {
+  final career = ref.watch(selectedCareerInfoOrNullProvider);
+  if (career == null) return '';
+  final institution = ref.watch(selectedInstitutionInfoProvider);
+  if (institution?.downloadUrl != null &&
+      institution!.downloadUrl!.isNotEmpty) {
+    return institution.downloadUrl!;
+  }
+  return career.downloadUrl;
+});
+
+List<Materia> _applyInstitutionOverrides(
+  List<Materia> materias,
+  List<MateriaOverride> overrides,
+) {
+  if (overrides.isEmpty) return materias;
+
+  final byId = <String, MateriaOverride>{
+    for (final override in overrides) override.materiaId: override,
+  };
+
+  return materias.map((m) {
+    final override = byId[m.id];
+    if (override == null) return m;
+    return Materia(
+      id: m.id,
+      codigo: override.codigo ?? m.codigo,
+      nombre: override.nombre ?? m.nombre,
+      anio: override.anio ?? m.anio,
+      cuatri: override.cuatri ?? m.cuatri,
+      tipo: override.tipo ?? m.tipo,
+      formato: override.formato ?? m.formato,
+      correlativas: m.correlativas,
+      horas: override.horas ?? m.horas,
+      correlativasDetalladas: m.correlativasDetalladas,
+    );
+  }).toList(growable: false);
+}
 
 // sin autoDispose para evitar recargas al navegar
 final planProvider = FutureProvider<PlanData>((ref) async {
-  final career = ref.watch(selectedCareerInfoProvider);
-  return loadPlanFromHtmlAsset(career.assetHtml);
+  final career = ref.watch(selectedCareerInfoOrNullProvider);
+  if (career == null) {
+    return PlanData(materias: const [], pdfUrl: null);
+  }
+  final institution = ref.watch(selectedInstitutionInfoProvider);
+  final basePlan = await loadPlanFromHtmlAsset(career.assetHtml);
+  final materias = _applyInstitutionOverrides(
+    basePlan.materias,
+    institution?.overrides ?? const [],
+  );
+  return PlanData(
+    materias: materias,
+    pdfUrl: Uri.tryParse(
+          institution?.downloadUrl?.isNotEmpty == true
+              ? institution!.downloadUrl!
+              : career.downloadUrl,
+        ) ??
+        basePlan.pdfUrl,
+  );
 });
 
 // =================== ROUTER ===================
@@ -178,7 +349,7 @@ final compactModeProvider = StateProvider<bool>((_) => false);
 final zoomProvider = StateProvider<double>((_) => 1.0);
 
 final transformationControllerProvider =
-Provider.autoDispose<TransformationController>((ref) {
+    Provider.autoDispose<TransformationController>((ref) {
   final c = TransformationController();
   ref.onDispose(c.dispose);
   return c;
@@ -189,11 +360,11 @@ Provider.autoDispose<TransformationController>((ref) {
 final selectedMateriaIdProvider = StateProvider<String?>((_) => null);
 
 final filteredMateriasProvider = Provider<List<Materia>>(
-      (ref) {
+  (ref) {
     final plan = ref.watch(planProvider).maybeWhen(
-      data: (p) => p,
-      orElse: () => null,
-    );
+          data: (p) => p,
+          orElse: () => null,
+        );
 
     final term = ref.watch(searchTermProvider);
     final tipo = ref.watch(filtroTipoProvider);
@@ -225,10 +396,10 @@ List<Materia> getDependents(List<Materia> all, String materiaId) =>
     all.where((m) => m.correlativas.contains(materiaId)).toList();
 
 List<String> getTodasCorrelativas(
-    List<Materia> all,
-    String materiaId, [
-      Set<String>? acc,
-    ]) {
+  List<Materia> all,
+  String materiaId, [
+  Set<String>? acc,
+]) {
   acc ??= <String>{};
 
   final hit = all.where((m) => m.id == materiaId);
@@ -251,8 +422,8 @@ final evalYearProvider = StateProvider<int>((_) => 2);
 final selectedCalcMateriaIdProvider = StateProvider<String?>((_) => null);
 
 final correlativaStatusMapProvider =
-StateNotifierProvider<CorrelativaStatusMap, Map<String, String>>(
-      (ref) => CorrelativaStatusMap(),
+    StateNotifierProvider<CorrelativaStatusMap, Map<String, String>>(
+  (ref) => CorrelativaStatusMap(),
 );
 
 class CorrelativaStatusMap extends StateNotifier<Map<String, String>> {
@@ -297,26 +468,26 @@ class EvalResult {
   });
 }
 
-const _NO_PUEDE = 'No puede cursar';
-const _CONDICIONAL = 'Cursada condicional';
-const _RESTRICCIONES = 'Cursa con restricciones';
-const _SIN_RESTRICCIONES = 'Puede cursar sin restricciones';
+const _noPuede = 'No puede cursar';
+const _condicional = 'Cursada condicional';
+const _restricciones = 'Cursa con restricciones';
+const _sinRestricciones = 'Puede cursar sin restricciones';
 
-const _NOTA_NO_PUEDE = [
+const _notaNoPuede = [
   'Debes, como mínimo, regularizar o aprobar las correlativas pendientes para habilitar la cursada.'
 ];
 
-const _NOTAS_CONDICIONAL = [
+const _notasCondicional = [
   'Puedes cursar y realizar actividades y trabajos prácticos solo si el/la docente lo permite.',
   'Parciales y promoción no habilitados hasta aprobar previamente las correlativas pendientes en mesa extraordinaria (u otra habilitada).',
 ];
 
-const _NOTAS_SIN_RESTR = [
+const _notasSinRestr = [
   'Puedes hacer actividades, rendir parciales y promocionar directamente.',
   'Si cumples asistencia y notas mínimas, no necesitas rendir final.',
 ];
 
-const _NOTAS_RESTR = [
+const _notasRestr = [
   'Puedes cursar y realizar actividades y trabajos prácticos.',
   'Para rendir parciales o promocionar, primero debes APROBAR las correlativas que tienes regularizadas.',
   'Si no las apruebas a tiempo en una mesa de examen, no podrás promocionar y quedarás en condición "Regular" (si cumples los requisitos de la cursada).',
@@ -324,10 +495,10 @@ const _NOTAS_RESTR = [
 ];
 
 EvalResult evaluateCourse(
-    Materia? course,
-    Map<String, String> map,
-    List<Materia> all,
-    ) {
+  Materia? course,
+  Map<String, String> map,
+  List<Materia> all,
+) {
   if (course == null) {
     return const EvalResult(
       canEnroll: false,
@@ -341,11 +512,13 @@ EvalResult evaluateCourse(
     );
   }
 
-  final aItems = course.correlativasDetalladas.where((c) => c.type == 'A').toList();
-  final rItems = course.correlativasDetalladas.where((c) => c.type == 'R').toList();
+  final aItems =
+      course.correlativasDetalladas.where((c) => c.type == 'A').toList();
+  final rItems =
+      course.correlativasDetalladas.where((c) => c.type == 'R').toList();
 
   final notSet =
-  course.correlativasDetalladas.where((c) => map[c.id] == null).toList();
+      course.correlativasDetalladas.where((c) => map[c.id] == null).toList();
   if (notSet.isNotEmpty) {
     final nombresPend = notSet.map((c) {
       if (c.isSpecial == true && c.nombre != null) return c.nombre!;
@@ -371,29 +544,30 @@ EvalResult evaluateCourse(
   }
 
   final anyNoReg = course.correlativasDetalladas.any(
-        (c) => map[c.id] == 'no-regularizada',
+    (c) => map[c.id] == 'no-regularizada',
   );
 
   final aAllApproved = aItems.every((c) => map[c.id] == 'aprobada');
 
   final rAllAtLeastReg = rItems.every(
-        (c) => map[c.id] == 'aprobada' || map[c.id] == 'regularizada',
+    (c) => map[c.id] == 'aprobada' || map[c.id] == 'regularizada',
   );
 
   final allApproved =
-  course.correlativasDetalladas.every((c) => map[c.id] == 'aprobada');
+      course.correlativasDetalladas.every((c) => map[c.id] == 'aprobada');
 
   if (anyNoReg) {
     return const EvalResult(
       canEnroll: false,
-      overallLabel: _NO_PUEDE,
+      overallLabel: _noPuede,
       activities: false,
       activitiesRestricted: false,
       exams: false,
       examsRestricted: false,
       promotion: false,
-      notes: _NOTA_NO_PUEDE,
-      strategy: 'Regulariza/aprueba las correlativas faltantes antes de inscribirte.',
+      notes: _notaNoPuede,
+      strategy:
+          'Regulariza/aprueba las correlativas faltantes antes de inscribirte.',
     );
   }
 
@@ -407,16 +581,17 @@ EvalResult evaluateCourse(
 
     return EvalResult(
       canEnroll: false,
-      overallLabel: _CONDICIONAL,
+      overallLabel: _condicional,
       activities: true,
       activitiesRestricted: true,
       exams: true,
       examsRestricted: true,
       promotion: false,
-      notes: _NOTAS_CONDICIONAL,
+      notes: _notasCondicional,
       detailedExplanation:
-      'Según el reglamento, no deberías poder cursar hasta aprobar todas las (A) pendientes: $missingNames. Algunxs docentes pueden permitir cursada condicional si te comprometés a aprobar pronto en mesa/instancia habilitada.',
-      strategy: 'Gestiona autorización y prioriza aprobar las (A) en la próxima mesa.',
+          'Según el reglamento, no deberías poder cursar hasta aprobar todas las (A) pendientes: $missingNames. Algunxs docentes pueden permitir cursada condicional si te comprometes a aprobar pronto en mesa/instancia habilitada.',
+      strategy:
+          'Gestiona autorización y prioriza aprobar las (A) en la próxima mesa.',
     );
   }
 
@@ -424,34 +599,34 @@ EvalResult evaluateCourse(
     if (allApproved) {
       return const EvalResult(
         canEnroll: true,
-        overallLabel: _SIN_RESTRICCIONES,
+        overallLabel: _sinRestricciones,
         activities: true,
         activitiesRestricted: false,
         exams: true,
         examsRestricted: false,
         promotion: true,
-        notes: _NOTAS_SIN_RESTR,
+        notes: _notasSinRestr,
         strategy: 'Mantén calificaciones y asistencia para promocionar.',
       );
     } else {
       return const EvalResult(
         canEnroll: true,
-        overallLabel: _RESTRICCIONES,
+        overallLabel: _restricciones,
         activities: true,
         activitiesRestricted: false,
         exams: true,
         examsRestricted: true,
         promotion: false,
-        notes: _NOTAS_RESTR,
+        notes: _notasRestr,
         strategy:
-        'Aprobá las (R) cuanto antes para habilitar evaluación completa y la posibilidad de promocionar.',
+            'Aprobá las (R) cuanto antes para habilitar evaluación completa y la posibilidad de promocionar.',
       );
     }
   }
 
   return const EvalResult(
     canEnroll: false,
-    overallLabel: _NO_PUEDE,
+    overallLabel: _noPuede,
     activities: false,
     activitiesRestricted: false,
     exams: false,

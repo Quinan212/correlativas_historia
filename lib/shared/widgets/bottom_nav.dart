@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
 class AppBottomNav extends StatelessWidget {
-  final int current; // 0 = Cascada/Mapa, 1 = Calculadora, 2 = FAQ
+  final int current; // 0 = Inicio, 1 = Cascada/Mapa, 2 = Calculadora, 3 = FAQ
+  final VoidCallback onTapHome;
   final VoidCallback onTapMap;
   final VoidCallback onTapCalc;
   final VoidCallback onTapFaq;
@@ -9,6 +10,7 @@ class AppBottomNav extends StatelessWidget {
   const AppBottomNav({
     super.key,
     required this.current,
+    required this.onTapHome,
     required this.onTapMap,
     required this.onTapCalc,
     required this.onTapFaq,
@@ -54,18 +56,17 @@ class AppBottomNav extends StatelessWidget {
         ),
         child: Row(
           children: [
-            // IZQUIERDA: Cascada/Mapa
             Expanded(
               child: InkWell(
-                onTap: onTapMap,
-                splashColor: _brand.withOpacity(0.08),
-                highlightColor: _brand.withOpacity(0.04),
+                onTap: onTapHome,
+                splashColor: _brand.withValues(alpha: 0.08),
+                highlightColor: _brand.withValues(alpha: 0.04),
                 child: SizedBox(
                   height: 60,
                   child: _tile(
                     selected: current == 0,
-                    icon: Icons.map_outlined,
-                    filledIcon: Icons.map,
+                    icon: Icons.home_outlined,
+                    filledIcon: Icons.home_rounded,
                     color: current == 0 ? _brand : unselected,
                   ),
                 ),
@@ -73,18 +74,18 @@ class AppBottomNav extends StatelessWidget {
             ),
             _divider(brd),
 
-            // MEDIO: Calculadora
+            // MAPA
             Expanded(
               child: InkWell(
-                onTap: onTapCalc,
-                splashColor: _brand.withOpacity(0.08),
-                highlightColor: _brand.withOpacity(0.04),
+                onTap: onTapMap,
+                splashColor: _brand.withValues(alpha: 0.08),
+                highlightColor: _brand.withValues(alpha: 0.04),
                 child: SizedBox(
                   height: 60,
                   child: _tile(
                     selected: current == 1,
-                    icon: Icons.calculate_outlined,
-                    filledIcon: Icons.calculate,
+                    icon: Icons.map_outlined,
+                    filledIcon: Icons.map,
                     color: current == 1 ? _brand : unselected,
                   ),
                 ),
@@ -92,19 +93,38 @@ class AppBottomNav extends StatelessWidget {
             ),
             _divider(brd),
 
-            // DERECHA: FAQ
+            // CALCULADORA
             Expanded(
               child: InkWell(
-                onTap: onTapFaq,
-                splashColor: _brand.withOpacity(0.08),
-                highlightColor: _brand.withOpacity(0.04),
+                onTap: onTapCalc,
+                splashColor: _brand.withValues(alpha: 0.08),
+                highlightColor: _brand.withValues(alpha: 0.04),
                 child: SizedBox(
                   height: 60,
                   child: _tile(
                     selected: current == 2,
+                    icon: Icons.calculate_outlined,
+                    filledIcon: Icons.calculate,
+                    color: current == 2 ? _brand : unselected,
+                  ),
+                ),
+              ),
+            ),
+            _divider(brd),
+
+            // FAQ
+            Expanded(
+              child: InkWell(
+                onTap: onTapFaq,
+                splashColor: _brand.withValues(alpha: 0.08),
+                highlightColor: _brand.withValues(alpha: 0.04),
+                child: SizedBox(
+                  height: 60,
+                  child: _tile(
+                    selected: current == 3,
                     icon: Icons.quiz_outlined,
                     filledIcon: Icons.quiz,
-                    color: current == 2 ? _brand : unselected,
+                    color: current == 3 ? _brand : unselected,
                   ),
                 ),
               ),

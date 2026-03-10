@@ -19,6 +19,7 @@
           ],
           "actaDigital": "https://docs.google.com/document/d/1LxYIW3E330UBzyldurNhhSjS2c94lb7MSFlfW5_oSGc/edit?usp=sharing"
         },
+
         {
           "careerId": "historia",
           "anio": 1,
@@ -102,6 +103,16 @@
             "Robinson, Soledad"
           ]
         },
+        {
+          "careerId": "historia",
+          "anio": 2,
+          "fecha": "2026-02-23",
+          "hora": "19:00",
+          "materia": "El mundo y las nuevas territorialidades",
+          "instancia": "llamado_1",
+          "docentes": ["Robinson, Soledad", "Ozuna, Ana", "Medina, Jorge"]
+        },
+
         {
           "careerId": "historia",
           "anio": 2,

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../shared/providers/app_state.dart';
+
 import '../../models/materia.dart';
+import '../../shared/providers/app_state.dart';
 
 class FiltersBar extends StatelessWidget {
   const FiltersBar({super.key});
@@ -83,35 +84,38 @@ class FiltersTopBar extends ConsumerWidget {
     final tipo = ref.watch(filtroTipoProvider);
     final anio = ref.watch(filtroAnioProvider);
     final isDark = ref.watch(themeModeProvider) == ThemeMode.dark;
-    final cs = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final tt = theme.textTheme;
 
     final planAsync = ref.watch(planProvider);
     final plan = planAsync.valueOrNull;
-    final List<Materia> materias =
-    plan == null ? const <Materia>[] : plan.materias;
+    final materias = plan == null ? const <Materia>[] : plan.materias;
 
-    final List<String> tiposDisponibles = materias
+    final tiposDisponibles = materias
         .map((m) => m.tipo.trim())
         .where((t) => t.isNotEmpty)
         .toSet()
         .toList()
       ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
-    final List<String> tipos = ['todos', ...tiposDisponibles];
+    final tipos = ['todos', ...tiposDisponibles];
 
-    final List<int> aniosDisponibles = materias
+    final aniosDisponibles = materias
         .map((m) => m.anio)
         .where((y) => y > 0)
         .toSet()
         .toList()
       ..sort();
-    final List<int> anios =
-    aniosDisponibles.isEmpty ? <int>[1, 2, 3, 4] : aniosDisponibles;
+    final anios = aniosDisponibles.isEmpty ? <int>[1, 2, 3, 4] : aniosDisponibles;
 
-    const double kTiposBaseWidth = 170;
-    final double desiredTiposW = kTiposBaseWidth * 1;
+    const desiredTiposW = 170.0;
+    const desiredAniosW = 220.0;
+    const minAniosReserve = 92.0;
 
-    const double desiredAniosW = 220.0;
-    const double minAniosReserve = 92.0; // reserva para que “Años” no se muera
+    final labelStyle = tt.labelMedium?.copyWith(
+      fontWeight: FontWeight.w700,
+      color: cs.onSurfaceVariant,
+    );
 
     return Container(
       decoration: BoxDecoration(
@@ -128,73 +132,123 @@ class FiltersTopBar extends ConsumerWidget {
       child: LayoutBuilder(
         builder: (context, c) {
           const gap = 8.0;
-          final double available = c.maxWidth;
-
-          // max para “Tipos”: no puede comerse el espacio que necesita “Años”
-          final double maxTiposW =
-          (available - gap - minAniosReserve).clamp(0.0, desiredTiposW).toDouble();
-          final double tiposW = desiredTiposW <= maxTiposW ? desiredTiposW : maxTiposW;
-
-          // max para “Años”: lo que queda (pero nunca más de su deseado)
-          final double maxAniosW =
-          (available - gap - tiposW).clamp(0.0, desiredAniosW).toDouble();
+          final available = c.maxWidth;
+          final maxTiposW =
+              (available - gap - minAniosReserve).clamp(0.0, desiredTiposW).toDouble();
+          final tiposW = desiredTiposW <= maxTiposW ? desiredTiposW : maxTiposW;
+          final maxAniosW =
+              (available - gap - tiposW).clamp(0.0, desiredAniosW).toDouble();
 
           return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               SizedBox(
                 width: tiposW,
-                height: 44,
-                child: DropdownButtonFormField<String>(
-                  initialValue: tipo,
-                  hint: const Text('Tipos'),
-                  isExpanded: true,
-                  borderRadius: BorderRadius.circular(12),
-                  dropdownColor: isDark ? cs.surface : Colors.white,
-                  decoration: _ddDecoration(context),
-                  icon: const Icon(Icons.keyboard_arrow_down_rounded),
-                  items: [
-                    for (final t in tipos)
-                      DropdownMenuItem<String>(
-                        value: t,
-                        child: Text(
-                          t == 'todos' ? 'Todos' : t,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Tipo', style: labelStyle),
+                    const SizedBox(height: 6),
+                    SizedBox(
+                      height: 44,
+                      child: DropdownButtonFormField<String>(
+                        initialValue: tipo,
+                        hint: const Text('Tipo de materia'),
+                        isExpanded: true,
+                        borderRadius: BorderRadius.circular(12),
+                        dropdownColor: isDark ? cs.surface : Colors.white,
+                        decoration: _ddDecoration(context),
+                        icon: const Icon(Icons.keyboard_arrow_down_rounded),
+                        selectedItemBuilder: (context) {
+                          return tipos.map((t) {
+                            final text = t == 'todos' ? 'Todos los tipos' : t;
+                            return Align(
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                text,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            );
+                          }).toList();
+                        },
+                        items: [
+                          for (final t in tipos)
+                            DropdownMenuItem<String>(
+                              value: t,
+                              child: Text(
+                                t == 'todos' ? 'Todos los tipos' : t,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                        ],
+                        onChanged: (v) {
+                          ref.read(filtroTipoProvider.notifier).state = v ?? 'todos';
+                        },
                       ),
+                    ),
                   ],
-                  onChanged: (v) {
-                    ref.read(filtroTipoProvider.notifier).state = v ?? 'todos';
-                  },
                 ),
               ),
               const SizedBox(width: 8),
               SizedBox(
                 width: maxAniosW,
-                height: 44,
-                child: DropdownButtonFormField<int?>(
-                  initialValue: anio,
-                  hint: const Text('Años'),
-                  isExpanded: true,
-                  borderRadius: BorderRadius.circular(12),
-                  dropdownColor: isDark ? cs.surface : Colors.white,
-                  decoration: _ddDecoration(context),
-                  icon: const Icon(Icons.keyboard_arrow_down_rounded),
-                  items: <DropdownMenuItem<int?>>[
-                    const DropdownMenuItem<int?>(
-                      value: null,
-                      child: Text('Todos'),
-                    ),
-                    ...anios.map(
-                          (y) => DropdownMenuItem<int?>(
-                        value: y,
-                        child: Text('$y° Año'),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Año', style: labelStyle),
+                    const SizedBox(height: 6),
+                    SizedBox(
+                      height: 44,
+                      child: DropdownButtonFormField<int?>(
+                        initialValue: anio,
+                        hint: const Text('Año del plan'),
+                        isExpanded: true,
+                        borderRadius: BorderRadius.circular(12),
+                        dropdownColor: isDark ? cs.surface : Colors.white,
+                        decoration: _ddDecoration(context),
+                        icon: const Icon(Icons.keyboard_arrow_down_rounded),
+                        selectedItemBuilder: (context) {
+                          return <Widget>[
+                            const Align(
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                'Todos los años',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            ...anios.map(
+                              (y) => Align(
+                                alignment: Alignment.centerLeft,
+                                child: Text(
+                                  '$y° año',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ),
+                          ];
+                        },
+                        items: <DropdownMenuItem<int?>>[
+                          const DropdownMenuItem<int?>(
+                            value: null,
+                            child: Text('Todos los años'),
+                          ),
+                          ...anios.map(
+                            (y) => DropdownMenuItem<int?>(
+                              value: y,
+                              child: Text('$y° año'),
+                            ),
+                          ),
+                        ],
+                        onChanged: (v) {
+                          ref.read(filtroAnioProvider.notifier).state = v;
+                        },
                       ),
                     ),
                   ],
-                  onChanged: (v) {
-                    ref.read(filtroAnioProvider.notifier).state = v;
-                  },
                 ),
               ),
             ],
@@ -237,7 +291,6 @@ class _SearchBarCardState extends ConsumerState<SearchBarCard> {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final isDarkTheme = Theme.of(context).brightness == Brightness.dark;
-
     final themeMode = ref.watch(themeModeProvider);
     final isDark = themeMode == ThemeMode.dark;
     final downloadUrl = ref.watch(careerDownloadUrlProvider);
@@ -271,7 +324,7 @@ class _SearchBarCardState extends ConsumerState<SearchBarCard> {
               child: TextField(
                 controller: _searchCtrl,
                 decoration: InputDecoration(
-                  hintText: 'Buscar materia…',
+                  hintText: 'Buscar materia...',
                   prefixIcon: const Icon(Icons.search),
                   filled: true,
                   fillColor: isDarkTheme ? cs.surface : Colors.white,
@@ -282,17 +335,13 @@ class _SearchBarCardState extends ConsumerState<SearchBarCard> {
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
                     borderSide: BorderSide(
-                      color: isDarkTheme
-                          ? cs.outlineVariant
-                          : const Color(0xFFE5E7EB),
+                      color: isDarkTheme ? cs.outlineVariant : const Color(0xFFE5E7EB),
                     ),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
                     borderSide: BorderSide(
-                      color: isDarkTheme
-                          ? cs.outlineVariant
-                          : const Color(0xFFE5E7EB),
+                      color: isDarkTheme ? cs.outlineVariant : const Color(0xFFE5E7EB),
                     ),
                   ),
                   focusedBorder: OutlineInputBorder(
@@ -328,7 +377,7 @@ class _SearchBarCardState extends ConsumerState<SearchBarCard> {
             icon: isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
             onTap: () {
               ref.read(themeModeProvider.notifier).state =
-              isDark ? ThemeMode.light : ThemeMode.dark;
+                  isDark ? ThemeMode.light : ThemeMode.dark;
             },
           ),
         ],

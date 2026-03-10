@@ -27,8 +27,8 @@ class TarjetaHeroCalculadora extends ConsumerWidget {
           const SizedBox(height: 10),
           Text(
             'Ya sabés qué te falta... ahora, ¿Podés Cursar?\n'
-                'Con Puedo Cursar descubrís en segundos si podés avanzar en tu carrera. '
-                'Un par de clics y sabrás exactamente qué camino seguir para llegar a tu meta académica.',
+            'Con Puedo Cursar descubrís en segundos si podés avanzar en tu carrera. '
+            'Un par de clics y sabrás exactamente qué camino seguir para llegar a tu meta académica.',
             style: TextStyle(
               fontSize: 14.5,
               height: 1.45,
@@ -40,14 +40,15 @@ class TarjetaHeroCalculadora extends ConsumerWidget {
           Align(
             alignment: Alignment.centerRight,
             child: OutlinedButton(
-              onPressed: () => ref.read(routerIndexProvider.notifier).state = 0,
+              onPressed: () => ref.read(routerIndexProvider.notifier).state = 1,
               style: OutlinedButton.styleFrom(
                 padding:
-                const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                    const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
-                side: BorderSide(color: EstilosCalculadora.bordeTarjeta(context)),
+                side:
+                    BorderSide(color: EstilosCalculadora.bordeTarjeta(context)),
                 foregroundColor: EstilosCalculadora.textoPrincipal(context),
                 textStyle: const TextStyle(
                   fontSize: 14,

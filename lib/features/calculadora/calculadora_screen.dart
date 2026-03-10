@@ -382,7 +382,7 @@ class CalculadoraScreen extends ConsumerWidget {
           alignment: Alignment.centerRight,
           child: OutlinedButton(
             onPressed: () =>
-            ref.read(routerIndexProvider.notifier).state = 0,
+            ref.read(routerIndexProvider.notifier).state = 1,
             style: OutlinedButton.styleFrom(
               padding:
               const EdgeInsets.symmetric(horizontal: 18, vertical: 12),

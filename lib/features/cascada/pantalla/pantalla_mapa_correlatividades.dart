@@ -2,37 +2,29 @@ import 'package:correlativas_historia/features/examenes/examenes_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'widgets/callout_examenes.dart';
-
 import '../../../shared/providers/app_state.dart';
 import '../filters_bar.dart';
 import '../visualization_grid.dart';
-
-import 'utils/layout_mapa.dart';
 import 'utils/decoraciones_mapa.dart';
-
+import 'utils/layout_mapa.dart';
 import 'widgets/banner_colapsable_mapa.dart';
-import 'widgets/tarjeta_presentacion_mapa.dart';
-import 'widgets/tarjeta_regimen_correlatividades.dart';
-import 'widgets/tarjeta_leyenda_mapa.dart';
-import 'widgets/tarjeta_autor_mapa.dart';
 import 'widgets/barra_controles_una_linea.dart';
+import 'widgets/callout_examenes.dart';
 import 'widgets/selector_carrera_standalone.dart';
 import 'widgets/tablero_anios_desktop.dart';
+import 'widgets/tarjeta_regimen_correlatividades.dart';
 
 class CascadaScreen extends ConsumerWidget {
   const CascadaScreen({super.key});
 
-  static const kPageBgLight = Color(0xFFF5F7FA);
-
+  static const Color kPageBgLight = Color(0xFFF5F7FA);
   static const double kMaxWGeneral = 1400;
   static const double kColsFactor = 1.18;
   static const double kColsSidePadding = 12.0;
 
-  void _openExamenes(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const ExamenesScreen()),
-    );
+  void _openExamenes(BuildContext context, WidgetRef ref) {
+    prewarmExamenesData(ref);
+    Navigator.of(context).push(buildExamenesRoute());
   }
 
   @override
@@ -47,15 +39,16 @@ class CascadaScreen extends ConsumerWidget {
     final width = MediaQuery.of(context).size.width;
     final isDesktop = width >= 1180;
     final isWindowsDesktop = LayoutMapa.isWindowsDesktop();
+    final hasSelectedCareer = ref.watch(hasSelectedCareerProvider);
 
     return Scaffold(
       backgroundColor: isDark ? cs.surface : kPageBgLight,
-      floatingActionButton: (!isDesktop)
-          ? FloatingActionButton.extended(
-        onPressed: () => _openExamenes(context),
-        icon: const Icon(Icons.calendar_month),
-        label: const Text('Exámenes'),
-      )
+      floatingActionButton: !isDesktop
+          ? FloatingActionButton(
+              onPressed: () => _openExamenes(context, ref),
+              tooltip: 'Examenes',
+              child: const Icon(Icons.calendar_month),
+            )
           : null,
       body: CustomScrollView(
         slivers: [
@@ -73,58 +66,49 @@ class CascadaScreen extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    const _PanelHerramientaMapa(),
+                    const SizedBox(height: 12),
                     if (isDesktop && isWindowsDesktop) ...[
-                      const Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(child: TarjetaPresentacionMapa()),
-                          SizedBox(width: 12),
-                          Expanded(child: TarjetaRegimenCorrelatividades()),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
                       BarraControlesUnaLinea(
-                        inputDecorationBuilder: DecoracionesMapa.inputDecoration,
+                        inputDecorationBuilder:
+                            DecoracionesMapa.inputDecoration,
                       ),
                     ] else ...[
-                      const TarjetaPresentacionMapa(),
-                      const SizedBox(height: 12),
-
                       if (isDesktop) ...[
-                        const Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(child: TarjetaRegimenCorrelatividades()),
-                            SizedBox(width: 12),
-                            Expanded(child: SelectorCarreraStandalone()),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        CalloutExamenes(onTap: () => _openExamenes(context)),
-                        const SizedBox(height: 12),
-                        const FiltersBar(),
-                      ] else ...[
-                        const TarjetaRegimenCorrelatividades(),
-                        const SizedBox(height: 12),
-
-                        // ✅ acá: el aviso ANTES del selector
-                        CalloutExamenes(onTap: () => _openExamenes(context)),
-                        const SizedBox(height: 12),
-
                         const SelectorCarreraStandalone(),
+                        const SizedBox(height: 8),
+                        CalloutExamenes(
+                          onTap: () => _openExamenes(context, ref),
+                        ),
+                        if (hasSelectedCareer) ...[
+                          const SizedBox(height: 12),
+                          const FiltersBar(),
+                        ],
+                      ] else ...[
+                        CalloutExamenes(
+                          onTap: () => _openExamenes(context, ref),
+                        ),
                         const SizedBox(height: 12),
-
-                        const FiltersBar(),
+                        const SelectorCarreraStandalone(),
+                        if (hasSelectedCareer) ...[
+                          const SizedBox(height: 12),
+                          const FiltersBar(),
+                        ],
                       ],
                     ],
-                    const SizedBox(height: 12),
-                    if (!isDesktop) const VisualizationGrid(),
+                    if (hasSelectedCareer) ...[
+                      const SizedBox(height: 12),
+                      const TarjetaRegimenCorrelatividades(),
+                      const SizedBox(height: 12),
+                    ],
+                    if (!isDesktop && hasSelectedCareer)
+                      const VisualizationGrid(),
                   ],
                 ),
               ),
             ),
           ),
-          if (isDesktop)
+          if (isDesktop && hasSelectedCareer)
             SliverToBoxAdapter(
               child: LayoutMapa.columnsContainer(
                 context,
@@ -140,25 +124,102 @@ class CascadaScreen extends ConsumerWidget {
               maxW: kMaxWGeneral,
               child: Padding(
                 padding: const EdgeInsets.only(top: 12, bottom: 24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const TarjetaLeyendaMapa(),
-                    const SizedBox(height: 12),
-                    const TarjetaAutorMapa(),
-                    const SizedBox(height: 24),
-                    planAsync.when(
-                      data: (_) => const SizedBox.shrink(),
-                      loading: () =>
+                child: planAsync.when(
+                  data: (_) => const SizedBox.shrink(),
+                  loading: () =>
                       const Center(child: CircularProgressIndicator()),
-                      error: (e, _) => Text(
-                        'Error cargando plan: $e',
-                        style: theme.textTheme.bodyMedium,
-                      ),
-                    ),
-                  ],
+                  error: (e, _) => Text(
+                    'Error cargando plan: $e',
+                    style: theme.textTheme.bodyMedium,
+                  ),
                 ),
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PanelHerramientaMapa extends ConsumerWidget {
+  const _PanelHerramientaMapa();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final hasSelectedCareer = ref.watch(hasSelectedCareerProvider);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? cs.surface : Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isDark ? cs.outlineVariant : const Color(0xFFDCE3EC),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.14 : 0.05),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                'Herramienta activa',
+                style: theme.textTheme.labelLarge?.copyWith(
+                  color: cs.primary,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.2,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Container(
+                width: 36,
+                height: 36,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: cs.primary.withValues(alpha: isDark ? 0.18 : 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: cs.primary.withValues(alpha: isDark ? 0.3 : 0.18),
+                  ),
+                ),
+                child: Icon(
+                  Icons.account_tree_outlined,
+                  size: 18,
+                  color: cs.primary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Text(
+            hasSelectedCareer
+                ? 'Mapa de correlatividades'
+                : 'Selecciona una carrera para empezar',
+            style: theme.textTheme.headlineSmall?.copyWith(
+              color: cs.onSurface,
+              fontWeight: FontWeight.w800,
+              height: 1.12,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            hasSelectedCareer
+                ? 'Selecciona tu carrera, filtra por ano o tipo y recorre la grilla para ver requisitos, bloqueos y materias relacionadas.'
+                : 'Primero elegi una carrera. En cuanto la selecciones, se van a abrir la referencia normativa, los filtros y la grilla completa del mapa.',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: cs.onSurfaceVariant,
+              height: 1.45,
             ),
           ),
         ],

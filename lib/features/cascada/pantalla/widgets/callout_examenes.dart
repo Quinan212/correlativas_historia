@@ -2,6 +2,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+const bool kEnableCalloutExamenesMotion = false;
+
 class CalloutExamenes extends StatefulWidget {
   const CalloutExamenes({
     super.key,
@@ -28,11 +30,9 @@ class _CalloutExamenesState extends State<CalloutExamenes>
   }
 
   double _wave(double t, double phase) {
-    // onda 0..1 (sin negativo recortado para que parezca “barrido”)
     final s = math.sin((t * math.pi * 2) + phase);
-    final v = (s + 1) * 0.5; // 0..1
-    // curva suave tipo teclado RGB
-    return v * v * (3 - 2 * v); // smoothstep
+    final v = (s + 1) * 0.5;
+    return v * v * (3 - 2 * v);
   }
 
   @override
@@ -47,8 +47,10 @@ class _CalloutExamenesState extends State<CalloutExamenes>
     return AnimatedBuilder(
       animation: _ctrl,
       builder: (context, _) {
-        final t = _ctrl.value; // 0..1
-        final lift = (math.sin(t * math.pi) * 4.0); // 0..4 px
+        final t = _ctrl.value;
+        final lift = kEnableCalloutExamenesMotion
+            ? (math.sin(t * math.pi) * 4.0)
+            : 0.0;
 
         return Transform.translate(
           offset: Offset(0, -lift),
@@ -91,7 +93,7 @@ class _CalloutExamenesState extends State<CalloutExamenes>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Mesas febrero–marzo 2026',
+                        'Examenes y llamados disponibles',
                         style: theme.textTheme.titleSmall?.copyWith(
                           fontWeight: FontWeight.w700,
                           color: cs.onSurface,
@@ -99,7 +101,7 @@ class _CalloutExamenesState extends State<CalloutExamenes>
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        'Consulta las fechas y no te olvides de anotarte para rendir.',
+                        'Consulta fechas, horarios y materias con mesas publicadas para este turno.',
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: cs.onSurfaceVariant.withValues(
                             alpha: isDark ? 0.86 : 0.82,
@@ -108,8 +110,6 @@ class _CalloutExamenesState extends State<CalloutExamenes>
                         ),
                       ),
                       const SizedBox(height: 10),
-
-                      // botón intacto + flechas a la derecha con “onda” de transparencia horizontal
                       Stack(
                         clipBehavior: Clip.none,
                         children: [
@@ -124,11 +124,10 @@ class _CalloutExamenesState extends State<CalloutExamenes>
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(Icons.calendar_month,
-                                      color: cs.primary, size: 18),
+                                  Icon(Icons.calendar_month, color: cs.primary, size: 18),
                                   const SizedBox(width: 8),
                                   Text(
-                                    'Ir a Exámenes',
+                                    'Ir a Examenes',
                                     style: theme.textTheme.bodyMedium?.copyWith(
                                       color: cs.primary,
                                       fontWeight: FontWeight.w700,
@@ -138,8 +137,6 @@ class _CalloutExamenesState extends State<CalloutExamenes>
                               ),
                             ),
                           ),
-
-                          // ✅ flechas en horizontal con barrido tipo “onda”
                           Positioned(
                             right: -52,
                             top: 10,
@@ -194,7 +191,7 @@ class _WaveArrow extends StatelessWidget {
   final IconData icon;
   final double size;
   final Color color;
-  final double alpha; // 0..1
+  final double alpha;
 
   @override
   Widget build(BuildContext context) {

@@ -2,7 +2,7 @@ name: correlativas_historia
 description: "correlativas"
 publish_to: "none"
 
-version: 1.2.26+414
+version: 1.3.926+729
 
 environment:
   sdk: ">=3.3.0 <4.0.0"
@@ -15,6 +15,8 @@ dependencies:
   google_fonts: ^6.2.1
   cupertino_icons: ^1.0.8
   flutter_animate: ^4.5.0
+  flutter_svg: ^2.1.0
+  video_player: ^2.9.2
 
 dev_dependencies:
   flutter_test:
@@ -48,9 +50,62 @@ flutter:
     - assets/Psicologia.html
     - assets/logo.png
     - assets/icon_fore.png
+    - assets/career_icons/career_logo.png
+    - assets/career_icons/logo_pscs_overlay.png
+    - assets/career_icons/artes_overlay_banner.svg
+    - assets/career_icons/artes_overlay_banner.mp4
+    - assets/career_icons/geografia_overlay_banner.mp4
+    - assets/career_icons/historia_overlay_banner.mp4
+    - assets/career_icons/logo_artes.png
     - assets/examenes_llamado1.json
     - assets/examenes_llamado2.json
     - assets/coloquios_feb_mar_2026.json
+    - assets/banners/historia/1/antiguedad.png
+    - assets/banners/historia/1/antiguedad_ancho.png
+    - assets/banners/historia/1/didactica_general.png
+    - assets/banners/historia/1/didactica_general_ancho.png
+    - assets/banners/historia/1/corporeidad_juego.png
+    - assets/banners/historia/1/corporeidad_juego_ancho.png
+    - assets/banners/historia/1/historia_ideas_1.png
+    - assets/banners/historia/1/historia_ideas_1_ancho.png
+    - assets/banners/historia/1/oralidad_lectura_tic.png
+    - assets/banners/historia/1/oralidad_lectura_tic_ancho.png
+    - assets/banners/historia/1/problematica_conocimiento.png
+    - assets/banners/historia/1/problematica_conocimiento_ancho.png
+    - assets/banners/historia/1/pueblos_originarios.png
+    - assets/banners/historia/1/pueblos_originarios_ancho.png
+    - assets/banners/historia/1/pedagogia.png
+    - assets/banners/historia/1/pedagogia_ancho.png
+    - assets/banners/historia/1/practica_docente_1.png
+    - assets/banners/historia/1/practica_docente_1_ancho.png
+    - assets/banners/historia/2/filosofia.png
+    - assets/banners/historia/2/filosofia_ancho.png
+    - assets/banners/historia/2/didactica_ciencias_sociales.png
+    - assets/banners/historia/2/didactica_ciencias_sociales_ancho.png
+    - assets/banners/historia/2/economia_politica.png
+    - assets/banners/historia/2/economia_politica_ancho.png
+    - assets/banners/historia/2/educacion_sexual_integral.png
+    - assets/banners/historia/2/educacion_sexual_integral_ancho.png
+    - assets/banners/historia/2/mundo_territorialidades.png
+    - assets/banners/historia/2/mundo_territorialidades_ancho.png
+    - assets/banners/historia/2/psicologia_educacional.png
+    - assets/banners/historia/2/psicologia_educacional_ancho.png
+    - assets/banners/historia/2/sujetos_educacion_secundaria.png
+    - assets/banners/historia/2/sujetos_educacion_secundaria_ancho.png
+    - assets/banners/historia/3/instituciones_educativas.png
+    - assets/banners/historia/3/instituciones_educativas_ancho.png
+    - assets/banners/historia/3/epistemologia_historia.png
+    - assets/banners/historia/3/epistemologia_historia_ancho.png
+    - assets/banners/historia/3/historia_politica_educacion_argentina.png
+    - assets/banners/historia/3/historia_politica_educacion_argentina_ancho.png
+    - assets/banners/historia/3/procesos_americanos_ii.png
+    - assets/banners/historia/3/procesos_americanos_ii_ancho.png
+    - assets/banners/historia/3/procesos_contemporaneos_i.png
+    - assets/banners/historia/3/procesos_contemporaneos_i_ancho.png
+    - assets/banners/historia/3/procesos_argentina_i.png
+    - assets/banners/historia/3/procesos_argentina_i_ancho.png
+    - assets/banners/historia/3/sociologia_educacion.png
+    - assets/banners/historia/3/sociologia_educacion_ancho.png
 
   fonts:
     - family: Inter

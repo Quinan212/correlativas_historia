@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'dart:ui' show ImageFilter;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../models/examen_event.dart';
@@ -10,15 +11,19 @@ import 'widgets_sheet_examenes.dart';
 class PaginaSheetExamenes extends StatefulWidget {
   const PaginaSheetExamenes({
     super.key,
+    required this.careerId,
     required this.materia,
-    required this.llamado1,
-    required this.llamado2,
+    required this.llamado1Eventos,
+    required this.llamado2Eventos,
+    required this.coloquioEventos,
     required this.detalleInicial,
   });
 
+  final String careerId;
   final String materia;
-  final ExamenEvent? llamado1;
-  final ExamenEvent? llamado2;
+  final List<ExamenEvent> llamado1Eventos;
+  final List<ExamenEvent> llamado2Eventos;
+  final List<ExamenEvent> coloquioEventos;
   final DetalleArgs? detalleInicial;
 
   @override
@@ -27,65 +32,34 @@ class PaginaSheetExamenes extends StatefulWidget {
 
 class _PaginaSheetExamenesState extends State<PaginaSheetExamenes>
     with TickerProviderStateMixin {
+  static const _sheetRadius = BorderRadius.all(Radius.circular(22));
+  static final bool _disableBackdropBlur =
+      !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+
   double _dragDy = 0.0;
   AnimationController? _settleCtrl;
-
-  DetalleArgs? _detalle;
-
-  late final AnimationController _swapCtrl = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 170),
-  );
-
-  late final Animation<double> _fadeIn = CurvedAnimation(
-    parent: _swapCtrl,
-    curve: Curves.easeOutCubic,
-  );
-
-  late final Animation<double> _fadeOut = CurvedAnimation(
-    parent: ReverseAnimation(_swapCtrl),
-    curve: Curves.easeInCubic,
-  );
-
-  late final Animation<double> _scaleIn =
-  Tween<double>(begin: 0.94, end: 1.0).animate(
-    CurvedAnimation(parent: _swapCtrl, curve: Curves.easeOutCubic),
-  );
-
-  bool _mostrarCapaMateria = true;
-  bool _mostrarCapaDetalle = false;
+  late String _activeTabId;
+  String? _activeDivisionId;
 
   @override
   void initState() {
     super.initState();
-    _detalle = widget.detalleInicial;
-
-    if (_detalle != null) {
-      _mostrarCapaMateria = false;
-      _mostrarCapaDetalle = true;
-      _swapCtrl.value = 1.0;
+    _activeTabId = 'llamado_1';
+    if (widget.detalleInicial?.tabId != null) {
+      _activeTabId = widget.detalleInicial!.tabId;
+    } else if (widget.llamado1Eventos.isEmpty &&
+        widget.llamado2Eventos.isNotEmpty) {
+      _activeTabId = 'llamado_2';
+    } else if (widget.llamado1Eventos.isEmpty &&
+        widget.llamado2Eventos.isEmpty &&
+        widget.coloquioEventos.isNotEmpty) {
+      _activeTabId = 'coloquio';
     }
-
-    _swapCtrl.addStatusListener((s) {
-      if (!mounted) return;
-      if (s == AnimationStatus.completed) {
-        setState(() {
-          if (_detalle == null) {
-            _mostrarCapaDetalle = false;
-            _mostrarCapaMateria = true;
-          } else {
-            _mostrarCapaMateria = false;
-            _mostrarCapaDetalle = true;
-          }
-        });
-      }
-    });
   }
 
   @override
   void dispose() {
     _settleCtrl?.dispose();
-    _swapCtrl.dispose();
     super.dispose();
   }
 
@@ -127,40 +101,6 @@ class _PaginaSheetExamenesState extends State<PaginaSheetExamenes>
     _animarVueltaDelDrag();
   }
 
-  void _abrirDetalle(String titulo, ExamenEvent? e) {
-    setState(() {
-      _detalle = DetalleArgs(titulo: titulo, evento: e);
-      _mostrarCapaDetalle = true;
-      _mostrarCapaMateria = true;
-    });
-    _swapCtrl.forward(from: 0);
-  }
-
-  void _volverAMateria() {
-    setState(() {
-      _detalle = null;
-      _mostrarCapaMateria = true;
-      _mostrarCapaDetalle = true;
-    });
-    _swapCtrl.forward(from: 0);
-  }
-
-  void _tocarX() {
-    if (_detalle != null && widget.detalleInicial == null) {
-      _volverAMateria();
-      return;
-    }
-    Navigator.of(context).pop();
-  }
-
-  void _tocarCerrar() {
-    if (_detalle != null && widget.detalleInicial == null) {
-      _volverAMateria();
-      return;
-    }
-    Navigator.of(context).pop();
-  }
-
   @override
   Widget build(BuildContext context) {
     final routeAnim = ModalRoute.of(context)!.animation!;
@@ -174,10 +114,43 @@ class _PaginaSheetExamenesState extends State<PaginaSheetExamenes>
     final cs = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
 
-    final maxH = MediaQuery.sizeOf(context).height * 0.92;
+    final maxH = MediaQuery.sizeOf(context).height * 0.90;
     final bottomInset = MediaQuery.of(context).viewPadding.bottom;
+    const lift = 1.0;
 
     final panelBg = isDark ? cs.surface : const Color(0xFFF5F7FA);
+    final tabs = <InstanciaTabData>[
+      if (widget.llamado1Eventos.isNotEmpty)
+        InstanciaTabData.fromEventos(
+          id: 'llamado_1',
+          label: 'Primer llamado',
+          materia: widget.materia,
+          eventos: widget.llamado1Eventos,
+        ),
+      if (widget.llamado2Eventos.isNotEmpty)
+        InstanciaTabData.fromEventos(
+          id: 'llamado_2',
+          label: 'Segundo llamado',
+          materia: widget.materia,
+          eventos: widget.llamado2Eventos,
+        ),
+      if (widget.coloquioEventos.isNotEmpty)
+        InstanciaTabData.fromEventos(
+          id: 'coloquio',
+          label: 'Coloquio',
+          materia: widget.materia,
+          eventos: widget.coloquioEventos,
+        ),
+    ];
+
+    final activeId =
+        tabs.any((t) => t.id == _activeTabId) ? _activeTabId : tabs.first.id;
+    final activeTab =
+        tabs.firstWhere((t) => t.id == activeId, orElse: () => tabs.first);
+    final activeDivisionId =
+        activeTab.options.any((o) => o.id == _activeDivisionId)
+            ? _activeDivisionId
+            : (activeTab.options.isEmpty ? null : activeTab.options.first.id);
 
     return Material(
       type: MaterialType.transparency,
@@ -186,15 +159,13 @@ class _PaginaSheetExamenesState extends State<PaginaSheetExamenes>
         builder: (context, _) {
           final t = curved.value;
 
-          final dragT = (_dragDy / 300.0).clamp(0.0, 1.0);
+          final dragT = (_dragDy / 260.0).clamp(0.0, 1.0);
           final focus = (1.0 - dragT);
 
-          final blurSigma = 18.0 * t * focus;
-          final dimA = 0.22 * t * focus;
-          final tintA = 0.08 * t * focus;
-          final vignetteA = 0.10 * t * focus;
-
-          final sheetOffset = (1.0 - t) * 44.0 + _dragDy;
+          final blurSigma = 14.0 * t * focus;
+          final dimA = 0.28 * t * focus;
+          final tintA = 0.10 * t * focus;
+          final sheetOffset = (1.0 - t) * 26.0 + _dragDy;
 
           return Stack(
             children: [
@@ -205,8 +176,12 @@ class _PaginaSheetExamenesState extends State<PaginaSheetExamenes>
                   child: Stack(
                     children: [
                       Container(color: Colors.black.withValues(alpha: dimA)),
-                      ClipRect(
-                        child: BackdropFilter(
+                      if (_disableBackdropBlur)
+                        Container(
+                          color: Colors.black.withValues(alpha: tintA),
+                        )
+                      else
+                        BackdropFilter(
                           filter: ImageFilter.blur(
                             sigmaX: blurSigma,
                             sigmaY: blurSigma,
@@ -215,38 +190,23 @@ class _PaginaSheetExamenesState extends State<PaginaSheetExamenes>
                             color: Colors.black.withValues(alpha: tintA),
                           ),
                         ),
-                      ),
-                      IgnorePointer(
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                Colors.black.withValues(alpha: 0.00),
-                                Colors.black.withValues(alpha: 0.06 * t * focus),
-                                Colors.black.withValues(alpha: 0.12 * t * focus),
-                              ],
-                              stops: const [0.0, 0.55, 1.0],
+                      Align(
+                        alignment: Alignment.bottomCenter,
+                        child: IgnorePointer(
+                          child: Container(
+                            height: 220,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  Colors.transparent,
+                                  Colors.black
+                                      .withValues(alpha: 0.10 * t * focus),
+                                ],
+                              ),
                             ),
                           ),
-                          child: const SizedBox.expand(),
-                        ),
-                      ),
-                      IgnorePointer(
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            gradient: RadialGradient(
-                              center: const Alignment(0.0, -0.35),
-                              radius: 1.05,
-                              colors: [
-                                Colors.transparent,
-                                Colors.black.withValues(alpha: vignetteA),
-                              ],
-                              stops: const [0.55, 1.0],
-                            ),
-                          ),
-                          child: const SizedBox.expand(),
                         ),
                       ),
                     ],
@@ -260,7 +220,8 @@ class _PaginaSheetExamenesState extends State<PaginaSheetExamenes>
                   child: Opacity(
                     opacity: t,
                     child: Padding(
-                      padding: EdgeInsets.fromLTRB(12, 10, 12, 12 + bottomInset),
+                      padding: EdgeInsets.fromLTRB(
+                          12, 12, 12, 12 + bottomInset + lift),
                       child: ConstrainedBox(
                         constraints: BoxConstraints(maxHeight: maxH),
                         child: GestureDetector(
@@ -270,73 +231,69 @@ class _PaginaSheetExamenesState extends State<PaginaSheetExamenes>
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(22),
-                                child: Material(
-                                  color: panelBg,
-                                  child: Padding(
-                                    padding: const EdgeInsets.fromLTRB(12, 10, 12, 14),
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        BarritaYBotonX(
-                                          onTapX: _tocarX,
-                                          colorX: cs.onSurfaceVariant.withValues(
-                                            alpha: isDark ? 0.90 : 0.70,
+                              Flexible(
+                                fit: FlexFit.loose,
+                                child: RepaintBoundary(
+                                  child: Material(
+                                    color: panelBg,
+                                    shape: const RoundedRectangleBorder(
+                                      borderRadius: _sheetRadius,
+                                    ),
+                                    clipBehavior: Clip.antiAlias,
+                                    child: Padding(
+                                      padding: const EdgeInsets.fromLTRB(
+                                          12, 10, 12, 14),
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          BarritaYBotonX(
+                                            onTapX: () =>
+                                                Navigator.of(context).pop(),
+                                            colorX:
+                                                cs.onSurfaceVariant.withValues(
+                                              alpha: isDark ? 0.90 : 0.70,
+                                            ),
+                                            colorBarrita: cs.onSurfaceVariant
+                                                .withValues(alpha: 0.35),
                                           ),
-                                          colorBarrita: cs.onSurfaceVariant.withValues(alpha: 0.35),
-                                        ),
-                                        const SizedBox(height: 12),
-                                        ClipRect(
-                                          child: Stack(
-                                            children: [
-                                              Positioned.fill(child: ColoredBox(color: panelBg)),
-                                              if (_mostrarCapaMateria)
-                                                IgnorePointer(
-                                                  ignoring: _detalle != null,
-                                                  child: FadeTransition(
-                                                    opacity: _detalle == null
-                                                        ? kAlwaysCompleteAnimation
-                                                        : _fadeOut,
-                                                    child: RepaintBoundary(
-                                                      child: CajaMateria(
-                                                        materia: widget.materia,
-                                                        llamado1: widget.llamado1,
-                                                        llamado2: widget.llamado2,
-                                                        onTapDetalle: _abrirDetalle,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                              if (_mostrarCapaDetalle)
-                                                IgnorePointer(
-                                                  ignoring: _detalle == null,
-                                                  child: FadeTransition(
-                                                    opacity: _detalle != null
-                                                        ? _fadeIn
-                                                        : kAlwaysDismissedAnimation,
-                                                    child: ScaleTransition(
-                                                      scale: _scaleIn,
-                                                      child: RepaintBoundary(
-                                                        child: CajaDetalle(
-                                                          titulo: _detalle?.titulo ?? '',
-                                                          materia: widget.materia,
-                                                          evento: _detalle?.evento,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                            ],
+                                          const SizedBox(height: 12),
+                                          Flexible(
+                                            fit: FlexFit.loose,
+                                            child: SingleChildScrollView(
+                                              child: PanelExamenMateria(
+                                                careerId: widget.careerId,
+                                                materia: widget.materia,
+                                                tabs: tabs,
+                                                activeTabId: activeId,
+                                                activeDivisionId:
+                                                    activeDivisionId,
+                                                onTabChanged: (id) =>
+                                                    setState(() {
+                                                  _activeTabId = id;
+                                                  final tab = tabs.firstWhere(
+                                                    (t) => t.id == id,
+                                                    orElse: () => tabs.first,
+                                                  );
+                                                  _activeDivisionId = tab
+                                                          .options.isEmpty
+                                                      ? null
+                                                      : tab.options.first.id;
+                                                }),
+                                                onDivisionChanged: (id) =>
+                                                    setState(() =>
+                                                        _activeDivisionId = id),
+                                              ),
+                                            ),
                                           ),
-                                        ),
-                                      ],
+                                        ],
+                                      ),
                                     ),
                                   ),
                                 ),
                               ),
                               const SizedBox(height: 10),
-                              TarjetaCerrar(onTap: _tocarCerrar),
+                              TarjetaCerrar(
+                                  onTap: () => Navigator.of(context).pop()),
                             ],
                           ),
                         ),

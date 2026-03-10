@@ -33,10 +33,10 @@ android {
         targetSdk = 35
 
         // ✅ CLAVE: mayor que 413
-        versionCode = 414
+        versionCode = 729
 
         // ✅ lo que ve el usuario
-        versionName = "1.2.26"
+        versionName = "1.3.926"
     }
 
     signingConfigs {

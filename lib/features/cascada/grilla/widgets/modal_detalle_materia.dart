@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'dart:ui' show ImageFilter;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -44,20 +45,20 @@ class _DetalleMateriaRoute extends PageRoute<void> {
 
   @override
   Widget buildPage(
-      BuildContext context,
-      Animation<double> animation,
-      Animation<double> secondaryAnimation,
-      ) {
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+  ) {
     return _DetalleMateriaPage(key: ValueKey('det_$heroId'));
   }
 
   @override
   Widget buildTransitions(
-      BuildContext context,
-      Animation<double> animation,
-      Animation<double> secondaryAnimation,
-      Widget child,
-      ) {
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
     return child;
   }
 }
@@ -66,11 +67,14 @@ class _DetalleMateriaPage extends ConsumerStatefulWidget {
   const _DetalleMateriaPage({super.key});
 
   @override
-  ConsumerState<_DetalleMateriaPage> createState() => _DetalleMateriaPageState();
+  ConsumerState<_DetalleMateriaPage> createState() =>
+      _DetalleMateriaPageState();
 }
 
 class _DetalleMateriaPageState extends ConsumerState<_DetalleMateriaPage>
     with TickerProviderStateMixin {
+  static final bool _disableBackdropBlur =
+      !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
   final ScrollController _scrollCtrl = ScrollController();
 
   double _dragDy = 0.0;
@@ -178,15 +182,20 @@ class _DetalleMateriaPageState extends ConsumerState<_DetalleMateriaPage>
                   child: Stack(
                     children: [
                       Container(color: Colors.black.withValues(alpha: dimA)),
-                      BackdropFilter(
-                        filter: ImageFilter.blur(
-                          sigmaX: blurSigma,
-                          sigmaY: blurSigma,
-                        ),
-                        child: Container(
+                      if (_disableBackdropBlur)
+                        Container(
                           color: Colors.black.withValues(alpha: tintA),
+                        )
+                      else
+                        BackdropFilter(
+                          filter: ImageFilter.blur(
+                            sigmaX: blurSigma,
+                            sigmaY: blurSigma,
+                          ),
+                          child: Container(
+                            color: Colors.black.withValues(alpha: tintA),
+                          ),
                         ),
-                      ),
                       Align(
                         alignment: Alignment.bottomCenter,
                         child: IgnorePointer(
@@ -343,12 +352,12 @@ class _PremiumGrabHandle extends StatelessWidget {
                   boxShadow: isDark
                       ? const []
                       : [
-                    BoxShadow(
-                      blurRadius: 10,
-                      offset: const Offset(0, 6),
-                      color: Colors.black.withValues(alpha: 0.08),
-                    ),
-                  ],
+                          BoxShadow(
+                            blurRadius: 10,
+                            offset: const Offset(0, 6),
+                            color: Colors.black.withValues(alpha: 0.08),
+                          ),
+                        ],
                 ),
               ),
               Positioned(

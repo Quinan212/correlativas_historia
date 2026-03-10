@@ -194,12 +194,6 @@ class _TarjetaMateriaGrillaState extends ConsumerState<TarjetaMateriaGrilla> {
       ),
     );
 
-    return card;(
-      tag: 'mat_${m.id}',
-      child: Material(
-        color: Colors.transparent,
-        child: card,
-      ),
-    );
+    return card;
   }
 }
