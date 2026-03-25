@@ -5,3 +5,9 @@
 /build/
 /.dart_tool/
 **/.gradle/
+
+# Generated docs
+*.aux
+*.log
+*.out
+/tmp_docx_pages/

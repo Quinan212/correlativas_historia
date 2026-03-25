@@ -1,0 +1,99 @@
+\definecolor{APADeep}{HTML}{0C386A}
+\definecolor{APAMid}{HTML}{1F5F9A}
+\definecolor{APALight}{HTML}{60A5D7}
+\definecolor{APABg}{HTML}{F7FAFF}
+\definecolor{APABorder}{HTML}{CFDDED}
+\definecolor{APAText}{HTML}{163A5C}
+\definecolor{APATextSoft}{HTML}{2B4E74}
+
+\newcommand{\PageDecor}[1]{
+  \begin{tikzpicture}[remember picture,overlay]
+    \fill[APABg] (current page.south west) rectangle (current page.north east);
+    \fill[APADeep] (current page.north west) rectangle ([yshift=-2.15cm]current page.north east);
+    \fill[APAMid] ([yshift=-2.15cm]current page.north west) rectangle ([yshift=-2.95cm]current page.north east);
+    \fill[APALight!88] ([yshift=-2.95cm]current page.north west) rectangle ([yshift=-3.22cm]current page.north east);
+    \fill[APALight!18] ([xshift=1.05cm]current page.south west) rectangle ([xshift=1.32cm]current page.north west);
+    \fill[APALight!22] ([xshift=-0.75cm,yshift=-5.4cm]current page.east) circle (1.45cm);
+    \fill[APAMid!10] ([xshift=0.95cm,yshift=-8.2cm]current page.west) circle (0.92cm);
+    \fill[white] ([xshift=-1.62cm,yshift=-1.06cm]current page.north east) circle (0.74cm);
+    \node[font=\bfseries\Large,text=APADeep] at ([xshift=-1.62cm,yshift=-1.06cm]current page.north east) {#1};
+    \fill[APADeep!8] (current page.south west) rectangle ([yshift=0.58cm]current page.south east);
+  \end{tikzpicture}
+  \vspace*{0.95cm}
+}
+
+\newcommand{\DocHeading}[1]{
+\begin{tcolorbox}[
+  colback=white,
+  colframe=APABorder,
+  boxrule=0.34mm,
+  arc=1mm,
+  left=3.2mm,right=3.2mm,top=1.6mm,bottom=1.6mm
+]
+{\headingfont\large\bfseries\color{APAText} #1}
+\end{tcolorbox}
+}
+
+\newcommand{\DocSubheading}[1]{
+\vspace{0.1em}
+{\headingfont\bfseries\color{APAText} #1\par}
+\vspace{0.15em}
+}
+
+\newcommand{\DocQuestion}[1]{
+\vspace{0.2em}
+\noindent\begin{tcolorbox}[
+  colback=APALight!11,
+  colframe=APALight!55!APADeep,
+  boxrule=0.24mm,
+  arc=0.7mm,
+  left=2.5mm,right=2.5mm,top=1.2mm,bottom=1.2mm
+]
+{\headingfont\bfseries\color{APAText} #1}
+\end{tcolorbox}
+}
+
+\newcommand{\DocItem}[1]{
+\noindent\begin{tcolorbox}[
+  colback=white,
+  colframe=APABorder,
+  boxrule=0.22mm,
+  arc=0.7mm,
+  left=2.3mm,right=2.3mm,top=1.2mm,bottom=1.2mm
+]
+{\color{APATextSoft} #1}
+\end{tcolorbox}
+}
+
+\newcommand{\DocPara}[1]{
+\par{\color{APATextSoft} #1}\par
+}
+
+\newcommand{\SectionTag}[1]{
+\begin{tcolorbox}[
+  colback=APADeep,
+  colframe=APADeep,
+  boxrule=0pt,
+  arc=0.8mm,
+  left=3mm,right=3mm,top=1.1mm,bottom=1.1mm
+]
+{\headingfont\small\bfseries\color{white} #1}
+\end{tcolorbox}
+}
+
+\newcommand{\IndexEntry}[2]{
+\noindent{\color{APATextSoft}\begin{tabular*}{\linewidth}{@{}p{0.86\linewidth}@{\extracolsep{\fill}}r@{}}
+#1 & \textbf{#2}
+\end{tabular*}\par}
+}
+
+\newcommand{\CoverTitleThree}[3]{
+\vspace*{0.58cm}
+{\color{white}\displayfont\fontsize{30}{32}\selectfont #1\par}
+{\color{white}\displayfont\fontsize{30}{32}\selectfont #2\par}
+\vspace{0.16cm}
+{\color{white}\headingfont\Large\itshape #3\par}
+\vspace{0.82cm}
+}
+
+\newcommand{\CorrPageNo}{6}
