@@ -47,7 +47,7 @@ class InicioMapaScreen extends ConsumerWidget {
               context,
               maxW: kMaxWGeneral,
               child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16),
+                padding: const EdgeInsets.only(top: 12, bottom: 16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -171,7 +171,7 @@ class _PanelInicio extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Text(
-            'Desde aca podes entender como funciona el mapa, revisar el regimen vigente y despues pasar directo a las herramientas.',
+            'Desde aca podes entender como leer el mapa, revisar la referencia normativa vigente y pasar directo a las herramientas principales.',
             style: theme.textTheme.bodyMedium?.copyWith(
               color: cs.onSurfaceVariant,
               height: 1.45,
@@ -185,7 +185,7 @@ class _PanelInicio extends StatelessWidget {
               FilledButton.icon(
                 onPressed: onOpenMapa,
                 icon: const Icon(Icons.map_outlined),
-                label: const Text('Abrir plan'),
+                label: const Text('Abrir mapa'),
               ),
               OutlinedButton.icon(
                 onPressed: onOpenCalculadora,

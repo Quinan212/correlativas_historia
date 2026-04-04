@@ -117,7 +117,7 @@ class CascadaScreen extends ConsumerWidget {
             child: _pageContainer(
               context,
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16),
+                padding: const EdgeInsets.only(bottom: 16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -1470,4 +1470,4 @@ class _CollapsingBannerDelegate extends SliverPersistentHeaderDelegate {
   }
 }
 
- */
+*/

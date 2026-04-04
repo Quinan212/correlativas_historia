@@ -172,7 +172,7 @@ class TarjetaLeyendaMapa extends StatelessWidget {
                 Icon(Icons.info_outline_rounded, size: 22, color: cs.primary),
                 const SizedBox(width: 12),
                 Text(
-                  'Guia de referencias',
+                  'Guia del mapa',
                   style: tt.titleMedium?.copyWith(
                     fontWeight: FontWeight.w800,
                     color: cs.onSurface,
@@ -183,7 +183,7 @@ class TarjetaLeyendaMapa extends StatelessWidget {
             subtitle: Padding(
               padding: const EdgeInsets.only(left: 34, top: 2),
               child: Text(
-                'Entende los colores y etiquetas del mapa.',
+                'Entende qué significan los colores y las etiquetas.',
                 style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
               ),
             ),
@@ -243,7 +243,7 @@ class TarjetaLeyendaMapa extends StatelessWidget {
               const SizedBox(height: 16),
               chipRow(
                 'Asignatura',
-                'Materia regular teorica o practica.',
+                'Materia regular, teorica o practica.',
                 asignatura.$1,
                 asignatura.$2,
                 asignatura.$3,
@@ -264,7 +264,7 @@ class TarjetaLeyendaMapa extends StatelessWidget {
               ),
               chipRow(
                 'Sem-Taller',
-                'Combinacion aplicada de seminario.',
+                'Combinacion entre seminario y taller.',
                 semTaller.$1,
                 semTaller.$2,
                 semTaller.$3,
@@ -291,7 +291,7 @@ class TarjetaLeyendaMapa extends StatelessWidget {
               ),
               chipRow(
                 'Especial',
-                'Requisito especial (por ejemplo, tener todas aprobadas).',
+                'Condicion especial (por ejemplo, tener todas aprobadas).',
                 especial.$1,
                 especial.$2,
                 especial.$3,

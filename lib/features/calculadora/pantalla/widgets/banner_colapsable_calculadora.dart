@@ -8,7 +8,6 @@ class BannerColapsableCalculadora extends SliverPersistentHeaderDelegate {
 
   static const double _h1 = 56.0;
   static const double _h2 = 40.0;
-
   static const c1 = Color(0xFF005B7F);
   static const c2 = Color(0xFF004966);
 
@@ -23,59 +22,65 @@ class BannerColapsableCalculadora extends SliverPersistentHeaderDelegate {
     final range = maxExtent - minExtent;
     final t = (maxExtent - shrinkOffset - minExtent) / range;
     final vis = t.clamp(0.0, 1.0);
-
     final smallT = 1.0 - vis;
     final smallOpacity = Curves.easeIn.transform(smallT);
 
     return Material(
+      color: c2,
       elevation: overlapsContent ? 4 : 0,
       child: Column(
         children: [
           SizedBox(
-            height: _h1 * vis,
-            child: Opacity(
-              opacity: Curves.easeOut.transform(vis),
-              child: Transform.translate(
-                offset: Offset(0, (1 - vis) * -8),
-                child: Container(
-                  width: double.infinity,
-                  padding: EdgeInsets.only(top: topInset).add(
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  ),
-                  color: c1,
-                  child: const Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      '¿Puedo Cursar?',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
+            height: topInset + (_h1 * vis),
+            child: ClipRect(
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  const ColoredBox(color: c1),
+                  Positioned(
+                    left: 12,
+                    right: 12,
+                    bottom: 8,
+                    child: Opacity(
+                      opacity: Curves.easeOut.transform(vis),
+                      child: Transform.translate(
+                        offset: Offset(0, (1 - vis) * -8),
+                        child: const Text(
+                          '¿Puedo Cursar?',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ),
                     ),
                   ),
-                ),
+                ],
               ),
             ),
           ),
-          Container(
-            width: double.infinity,
-            color: c2,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            child: Opacity(
-              opacity: smallOpacity,
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  subtitle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
+          SizedBox(
+            height: _h2,
+            child: Container(
+              width: double.infinity,
+              color: c2,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              child: Opacity(
+                opacity: smallOpacity,
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ),

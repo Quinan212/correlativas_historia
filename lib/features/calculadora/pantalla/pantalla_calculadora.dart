@@ -44,11 +44,11 @@ class CalculadoraScreen extends ConsumerWidget {
           SliverToBoxAdapter(
             child: planAsync.when(
               loading: () => const Padding(
-                padding: EdgeInsets.all(24),
+                padding: EdgeInsets.fromLTRB(24, 12, 24, 24),
                 child: Center(child: CircularProgressIndicator()),
               ),
               error: (e, _) => Padding(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
                 child: Center(child: Text('Error cargando plan: $e')),
               ),
               data: (plan) {
@@ -71,7 +71,7 @@ class CalculadoraScreen extends ConsumerWidget {
                 }
 
                 return Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [

@@ -11,9 +11,9 @@ class TarjetaPresentacionMapa extends StatefulWidget {
       title: 'Busca una materia',
       kicker: 'Busqueda puntual',
       summary:
-          'Encuentra rapido la materia que quieres revisar sin recorrer todo el mapa.',
+          'Encuentra rapido la materia que quieres revisar sin recorrer toda la red.',
       detail:
-          'Puedes entrar por nombre o codigo para abrir una consulta concreta y mirar solo la parte del plan que te interesa.',
+          'Puedes buscar por nombre o por codigo para abrir una consulta puntual y mirar solo la parte del plan que te interesa.',
       bullets: [
         'Ahorra tiempo cuando ya sabes que materia quieres revisar.',
         'Sirve para despejar dudas antes de cursar o rendir.',
@@ -24,12 +24,12 @@ class TarjetaPresentacionMapa extends StatefulWidget {
       title: 'Ve requisitos previos',
       kicker: 'Antes de llegar',
       summary:
-          'Mira que condiciones debes cumplir antes de llegar a esa materia.',
+          'Mira que condiciones tienes que cumplir antes de llegar a esa materia.',
       detail:
-          'El mapa muestra las correlativas que la bloquean para que entiendas de inmediato que te falta hoy.',
+          'El mapa muestra las correlativas que la bloquean para que entiendas enseguida que te falta hoy.',
       bullets: [
-        'Distingue si el requisito es por aprobacion o regularidad.',
-        'Evita leer toda la red para entender una sola condicion.',
+        'Distingue si el requisito es por aprobacion o por regularidad.',
+        'Evita recorrer toda la red para entender una sola condicion.',
       ],
     ),
     PremiumAccordionItemData(
@@ -49,12 +49,12 @@ class TarjetaPresentacionMapa extends StatefulWidget {
       icon: Icons.tune_rounded,
       title: 'Filtra el mapa',
       kicker: 'Entrada rapida',
-      summary: 'Ordena la vista por carrera, ano o tipo para ir mas directo.',
+      summary: 'Ordena la vista por carrera, ano o tipo para llegar mas rapido a lo que buscas.',
       detail:
           'Antes de explorar, puedes ajustar los filtros para acotar la consulta y leer solo la parte del plan que te interesa.',
       bullets: [
         'Reduce ruido cuando el plan tiene muchas materias.',
-        'Te deja arrancar desde un tramo mas manejable.',
+        'Te deja empezar desde un tramo mas manejable.',
       ],
     ),
     PremiumAccordionItemData(
@@ -67,7 +67,7 @@ class TarjetaPresentacionMapa extends StatefulWidget {
           'Al tocar una materia puedes moverte por sus conexiones y entender mejor como se encadenan los requisitos dentro del plan.',
       bullets: [
         'Convierte una lista estatica en una lectura mas intuitiva.',
-        'Facilita seguir caminos sin salir de la herramienta.',
+        'Facilita seguir recorridos sin salir de la herramienta.',
       ],
     ),
     PremiumAccordionItemData(
@@ -236,7 +236,9 @@ class _TarjetaPresentacionMapaState extends State<TarjetaPresentacionMapa> {
                                 ? cs.onSurfaceVariant
                                 : cs.onSurfaceVariant.withValues(alpha: 0.92),
                           ),
-                          child: const Text('Consulta, explora y planifica'),
+                          child: const Text(
+                            'Consulta, explora y organiza tu recorrido',
+                          ),
                         ),
                       ],
                     ),

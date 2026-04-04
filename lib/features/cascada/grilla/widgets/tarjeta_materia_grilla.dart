@@ -4,6 +4,9 @@ import 'package:flutter/services.dart';
 
 import '../../../../shared/providers/app_state.dart';
 import '../../../../models/materia.dart';
+import '../../../opiniones/providers/opiniones_review_providers.dart';
+import '../../../verification/models/matter_verification_state.dart';
+import '../../../verification/providers/verification_providers.dart';
 
 import '../utils/estilos_chips.dart';
 import 'modal_detalle_materia.dart';
@@ -37,6 +40,10 @@ class _TarjetaMateriaGrillaState extends ConsumerState<TarjetaMateriaGrilla> {
 
     final selectedId = ref.watch(selectedMateriaIdProvider);
     final isSelected = selectedId == m.id;
+    final careerId = ref.watch(selectedCareerInfoProvider).id;
+    final showHistoriaCommunity = careerId == 'historia';
+    final reviewSummary = ref.watch(matterReviewSummaryProvider(m.id));
+    final verification = ref.watch(matterVerificationStateProvider(m.id));
 
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
@@ -173,6 +180,14 @@ class _TarjetaMateriaGrillaState extends ConsumerState<TarjetaMateriaGrilla> {
                               ),
                             ),
                           ),
+                          if (showHistoriaCommunity &&
+                              (reviewSummary.rating.votos > 0 ||
+                                  verification.status !=
+                                      MatterVerificationStatus.unverified))
+                            _CommunityPill(
+                              verification: verification,
+                              votes: reviewSummary.rating.votos,
+                            ),
                         ],
                       ),
                     ],
@@ -195,5 +210,76 @@ class _TarjetaMateriaGrillaState extends ConsumerState<TarjetaMateriaGrilla> {
     );
 
     return card;
+  }
+}
+
+class _CommunityPill extends StatelessWidget {
+  const _CommunityPill({
+    required this.verification,
+    required this.votes,
+  });
+
+  final MatterVerificationState verification;
+  final int votes;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasCommunity = votes > 0;
+    final verified = verification.status == MatterVerificationStatus.approved;
+
+    final (bg, fg, bd, icon, label) = switch ((verified, hasCommunity)) {
+      (true, true) => (
+          const Color(0xFFECFDF5),
+          const Color(0xFF166534),
+          const Color(0xFFA7F3D0),
+          Icons.forum_rounded,
+          '$votes opiniones',
+        ),
+      (true, false) => (
+          const Color(0xFFECFDF5),
+          const Color(0xFF166534),
+          const Color(0xFFA7F3D0),
+          Icons.verified_rounded,
+          'Habilitada',
+        ),
+      (false, true) => (
+          const Color(0xFFFEF3C7),
+          const Color(0xFF92400E),
+          const Color(0xFFFDE68A),
+          Icons.star_rounded,
+          '$votes opiniones',
+        ),
+      (false, false) => (
+          const Color(0xFFE2E8F0),
+          const Color(0xFF334155),
+          const Color(0xFFCBD5E1),
+          Icons.shield_outlined,
+          verification.label,
+        ),
+    };
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(99),
+        border: Border.all(color: bd),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 13, color: fg),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11.1,
+              fontWeight: FontWeight.w700,
+              color: fg,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

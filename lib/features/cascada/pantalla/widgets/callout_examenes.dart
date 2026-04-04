@@ -93,7 +93,7 @@ class _CalloutExamenesState extends State<CalloutExamenes>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Examenes y llamados disponibles',
+                        'Examenes y llamados',
                         style: theme.textTheme.titleSmall?.copyWith(
                           fontWeight: FontWeight.w700,
                           color: cs.onSurface,
@@ -101,7 +101,7 @@ class _CalloutExamenesState extends State<CalloutExamenes>
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        'Consulta fechas, horarios y materias con mesas publicadas para este turno.',
+                        'Consulta fechas, horarios y materias con mesas publicadas en este turno.',
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: cs.onSurfaceVariant.withValues(
                             alpha: isDark ? 0.86 : 0.82,
@@ -127,7 +127,7 @@ class _CalloutExamenesState extends State<CalloutExamenes>
                                   Icon(Icons.calendar_month, color: cs.primary, size: 18),
                                   const SizedBox(width: 8),
                                   Text(
-                                    'Ir a Examenes',
+                                    'Abrir examenes',
                                     style: theme.textTheme.bodyMedium?.copyWith(
                                       color: cs.primary,
                                       fontWeight: FontWeight.w700,

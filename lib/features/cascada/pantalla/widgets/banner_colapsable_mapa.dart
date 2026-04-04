@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 class BannerColapsableMapa extends SliverPersistentHeaderDelegate {
   BannerColapsableMapa({required this.topInset});
+
   final double topInset;
 
   static const double _h1 = 56.0;
@@ -24,54 +25,61 @@ class BannerColapsableMapa extends SliverPersistentHeaderDelegate {
     final smallOpacity = Curves.easeIn.transform(smallT);
 
     return Material(
+      color: c2,
       elevation: overlapsContent ? 4 : 0,
       child: Column(
         children: [
           SizedBox(
-            height: _h1 * vis,
-            child: Opacity(
-              opacity: Curves.easeOut.transform(vis),
-              child: Transform.translate(
-                offset: Offset(0, (1 - vis) * -8),
-                child: Container(
-                  width: double.infinity,
-                  padding: EdgeInsets.only(top: topInset).add(
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  ),
-                  color: c1,
-                  child: const Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      'Mapa de Correlatividades',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
+            height: topInset + (_h1 * vis),
+            child: ClipRect(
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  const ColoredBox(color: c1),
+                  Positioned(
+                    left: 12,
+                    right: 12,
+                    bottom: 8,
+                    child: Opacity(
+                      opacity: Curves.easeOut.transform(vis),
+                      child: Transform.translate(
+                        offset: Offset(0, (1 - vis) * -8),
+                        child: const Text(
+                          'Mapa de Correlatividades',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                       ),
                     ),
                   ),
-                ),
+                ],
               ),
             ),
           ),
-          Container(
-            width: double.infinity,
-            color: c2,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            child: Opacity(
-              opacity: smallOpacity,
-              child: const Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'Mapa de Correlatividades',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
+          SizedBox(
+            height: _h2,
+            child: Container(
+              width: double.infinity,
+              color: c2,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              child: Opacity(
+                opacity: smallOpacity,
+                child: const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Mapa de Correlatividades',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ),

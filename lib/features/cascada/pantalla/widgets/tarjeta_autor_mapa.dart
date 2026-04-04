@@ -43,7 +43,7 @@ class TarjetaAutorMapa extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Material educativo didáctico, creado con la única intención de facilitarle la vida a los estudiantes.',
+            'Material didactico de apoyo, creado para hacer mas clara la lectura del plan y facilitarle la consulta a los estudiantes.',
             style: tt.bodySmall?.copyWith(color: cs.onSurface),
           ),
         ],

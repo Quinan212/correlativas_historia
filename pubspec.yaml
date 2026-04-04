@@ -15,8 +15,13 @@ dependencies:
   google_fonts: ^6.2.1
   cupertino_icons: ^1.0.8
   flutter_animate: ^4.5.0
+  image_picker: ^1.1.2
+  shared_preferences: ^2.5.5
   flutter_svg: ^2.1.0
+  supabase_flutter: ^2.9.1
   video_player: ^2.9.2
+  device_info_plus: ^12.4.0
+  crop_your_image: ^2.0.0
 
 dev_dependencies:
   flutter_test:
@@ -106,6 +111,7 @@ flutter:
     - assets/banners/historia/3/procesos_argentina_i_ancho.png
     - assets/banners/historia/3/sociologia_educacion.png
     - assets/banners/historia/3/sociologia_educacion_ancho.png
+    - shorebird.yaml
 
   fonts:
     - family: Inter

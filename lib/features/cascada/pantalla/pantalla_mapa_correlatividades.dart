@@ -62,7 +62,7 @@ class CascadaScreen extends ConsumerWidget {
               context,
               maxW: kMaxWGeneral,
               child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16),
+                padding: const EdgeInsets.only(top: 12, bottom: 16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [

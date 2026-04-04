@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 
 import 'package:correlativas_historia/shared/providers/app_state.dart';
+import 'package:correlativas_historia/features/opiniones/widgets/materia_comunidad_section.dart';
 
 import 'utils/reglas_practicas_detalle.dart';
 
@@ -152,7 +153,19 @@ class DetailPanel extends ConsumerWidget {
             },
             child: KeyedSubtree(
               key: ValueKey(m.id),
-              child: body,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  body,
+                  if (careerId == 'historia') ...[
+                    const SizedBox(height: 14),
+                    MateriaComunidadSection(
+                      materia: m,
+                      careerId: careerId,
+                    ),
+                  ],
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 2),

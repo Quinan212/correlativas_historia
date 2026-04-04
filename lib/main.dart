@@ -5,14 +5,24 @@ import 'package:correlativas_historia/features/cascada/cascada_screen.dart';
 import 'package:correlativas_historia/features/cascada/inicio_mapa_screen.dart';
 import 'package:correlativas_historia/features/calculadora/calculadora_screen.dart';
 import 'package:correlativas_historia/features/faq/faq_screen.dart';
+import 'package:correlativas_historia/features/admin_access/screens/admin_access_screen.dart';
 import 'package:correlativas_historia/shared/providers/app_state.dart';
+import 'package:correlativas_historia/shared/supabase/supabase.dart';
 import 'package:correlativas_historia/shared/widgets/bottom_nav.dart';
 import 'package:correlativas_historia/theme/app_theme.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-  runApp(const ProviderScope(child: App()));
+  final supabaseBootstrap = await initializeSupabase();
+  runApp(
+    ProviderScope(
+      overrides: [
+        supabaseBootstrapProvider.overrideWithValue(supabaseBootstrap),
+      ],
+      child: const App(),
+    ),
+  );
 }
 
 class App extends ConsumerWidget {
@@ -41,15 +51,27 @@ class MainScreen extends ConsumerWidget {
     final routerIndex = ref.watch(routerIndexProvider).clamp(0, 3);
 
     return Scaffold(
-      body: SafeArea(
-        child: IndexedStack(
-          index: routerIndex,
-          children: const [
-            InicioMapaScreen(key: ValueKey('inicio_mapa')),
-            CascadaScreen(key: ValueKey('cascada')),
-            CalculadoraScreen(key: ValueKey('calculadora')),
-            FaqScreen(key: ValueKey('faq')),
-          ],
+      body: IndexedStack(
+        index: routerIndex,
+        children: const [
+          InicioMapaScreen(key: ValueKey('inicio_mapa')),
+          CascadaScreen(key: ValueKey('cascada')),
+          CalculadoraScreen(key: ValueKey('calculadora')),
+          FaqScreen(key: ValueKey('faq')),
+        ],
+      ),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 10),
+        child: FloatingActionButton.small(
+          heroTag: 'admin_access_fab',
+          onPressed: () {
+            Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => const AdminAccessScreen(),
+              ),
+            );
+          },
+          child: const Icon(Icons.admin_panel_settings_rounded),
         ),
       ),
       bottomNavigationBar: AppBottomNav(
