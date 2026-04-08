@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../../shared/providers/app_state.dart';
 import 'panel_estilos.dart';
 
@@ -7,15 +8,37 @@ class PanelResultado {
     final cs = Theme.of(context).colorScheme;
     final dark = EstilosPanel.isDark(context);
 
+    String contextLabel(String label) {
+      switch (label) {
+        case 'No puede cursar':
+        case 'Todavía no podés cursar':
+          return 'Con las condiciones formales actuales del plan, esta cursada todavía no aparece habilitada.';
+        case 'Cursada condicional':
+        case 'Cursada condicionada':
+        case 'Cursa con restricciones':
+        case 'Podés cursar con restricciones':
+          return 'Con las condiciones formales actuales del plan, esta cursada aparece habilitada con algunas restricciones.';
+        case 'Puede cursar sin restricciones':
+        case 'Podés cursar':
+          return 'Con las condiciones formales actuales del plan, esta cursada aparece habilitada.';
+        default:
+          return label;
+      }
+    }
+
     Color colorFor(String label) {
       switch (label) {
         case 'No puede cursar':
-          return const Color(0xFFDC2626);
+        case 'Todavía no podés cursar':
+          return const Color(0xFFC96F5D);
         case 'Cursada condicional':
+        case 'Cursada condicionada':
         case 'Cursa con restricciones':
-          return const Color(0xFFF59E0B);
+        case 'Podés cursar con restricciones':
+          return const Color(0xFFD9A35F);
         case 'Puede cursar sin restricciones':
-          return const Color(0xFF16A34A);
+        case 'Podés cursar':
+          return const Color(0xFF005B7F);
         default:
           return dark ? cs.onSurface : const Color(0xFF374151);
       }
@@ -24,16 +47,18 @@ class PanelResultado {
     Widget cap(String title, bool on, {bool restricted = false}) {
       final bg = on
           ? (restricted
-          ? (dark
-          ? EstilosPanel.darken(const Color(0xFFF59E0B), 0.78)
-          : const Color(0xFFFEF3C7))
+              ? (dark
+                  ? EstilosPanel.darken(const Color(0xFFD9A35F), 0.78)
+                  : const Color(0xFFF6E7CC))
+              : (dark
+                  ? EstilosPanel.darken(const Color(0xFF63A8AE), 0.78)
+                  : const Color(0xFFDDECEF)))
           : (dark
-          ? EstilosPanel.darken(const Color(0xFF16A34A), 0.78)
-          : const Color(0xFFD1FAE5)))
-          : (dark ? EstilosPanel.darken(cs.surface, 0.30) : const Color(0xFFF3F4F6));
+              ? EstilosPanel.darken(cs.surface, 0.30)
+              : const Color(0xFFF3F4F6));
 
       final fg = on
-          ? (restricted ? const Color(0xFFF59E0B) : const Color(0xFF16A34A))
+          ? (restricted ? const Color(0xFFD9A35F) : const Color(0xFF005B7F))
           : (dark ? cs.onSurfaceVariant : const Color(0xFF6B7280));
 
       return Container(
@@ -45,7 +70,12 @@ class PanelResultado {
         ),
         child: Text(
           title,
-          style: EstilosPanel.gf(size: 12, weight: FontWeight.w600, color: fg, height: 1.0),
+          style: EstilosPanel.gf(
+            size: 12,
+            weight: FontWeight.w600,
+            color: fg,
+            height: 1.0,
+          ),
         ),
       );
     }
@@ -53,7 +83,7 @@ class PanelResultado {
     String stripLeadBullet(String? s) {
       if (s == null) return '';
       var t = s.trimLeft();
-      while (t.startsWith('•') || t.startsWith('-') || t.startsWith('–') || t.startsWith('—')) {
+      while (t.startsWith('-') || t.startsWith('*')) {
         t = t.substring(1).trimLeft();
       }
       return t;
@@ -79,7 +109,7 @@ class PanelResultado {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '•',
+                '-',
                 style: EstilosPanel.gf(
                   size: 13.5,
                   weight: FontWeight.w600,
@@ -109,22 +139,46 @@ class PanelResultado {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          res.overallLabel,
+          'Lectura del escenario actual',
           style: EstilosPanel.gf(
-            size: 18,
-            weight: FontWeight.w500,
+            size: 12.5,
+            weight: FontWeight.w700,
+            color: muted,
+            height: 1.2,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          contextLabel(res.overallLabel),
+          style: EstilosPanel.gf(
+            size: 17,
+            weight: FontWeight.w600,
             color: colorFor(res.overallLabel),
-            height: 1.1,
+            height: 1.2,
           ),
         ),
         const SizedBox(height: 10),
+        Text(
+          'Esta lectura ordena condiciones formales del plan. Igual, conviene cruzarla con la propuesta de cátedra, los cronogramas y las condiciones institucionales de este año.',
+          style: EstilosPanel.gf(
+            size: 13,
+            weight: FontWeight.w400,
+            color: muted,
+            height: 1.35,
+          ),
+        ),
+        const SizedBox(height: 12),
         Wrap(
           spacing: 10,
           runSpacing: 10,
           children: [
-            cap('Actividades', res.activities, restricted: res.activitiesRestricted),
+            cap(
+              'Actividades de cursada',
+              res.activities,
+              restricted: res.activitiesRestricted,
+            ),
             cap('Parciales', res.exams, restricted: res.examsRestricted),
-            cap('Promoción', res.promotion, restricted: false),
+            cap('Promoción', res.promotion),
           ],
         ),
         if (noteWidgets.isNotEmpty) ...[
@@ -146,7 +200,7 @@ class PanelResultado {
         if (hasStrategy) ...[
           const SizedBox(height: 10),
           Text(
-            'Estrategia: $strategy',
+            'Sugerencia de recorrido: $strategy',
             style: EstilosPanel.gf(
               size: 13.5,
               weight: FontWeight.w600,

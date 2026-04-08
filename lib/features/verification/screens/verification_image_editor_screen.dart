@@ -120,7 +120,6 @@ class _VerificationImageEditorScreenState
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 18),
                   decoration: BoxDecoration(
                     color: const Color(0xFF0A0D14),
                     border: Border(
@@ -129,37 +128,43 @@ class _VerificationImageEditorScreenState
                       ),
                     ),
                   ),
-                  child: Column(
-                    children: [
-                      Text(
-                        'Mueve y acerca la imagen para dejar visible la parte importante.',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: Colors.white70,
+                  child: SafeArea(
+                    top: false,
+                    minimum: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+                    child: Column(
+                      children: [
+                        Text(
+                          'Mueve y acerca la imagen para dejar visible la parte importante.',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: Colors.white70,
+                          ),
+                          textAlign: TextAlign.center,
                         ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 14),
-                      SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          children: _AspectOption.values
-                              .map(
-                                (option) => Padding(
-                                  padding: const EdgeInsets.only(right: 10),
-                                  child: _AspectChip(
-                                    option: option,
-                                    selected: option == _selectedAspect,
-                                    onTap: () {
-                                      setState(() => _selectedAspect = option);
-                                      _cropController.aspectRatio = option.ratio;
-                                    },
+                        const SizedBox(height: 14),
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: _AspectOption.values
+                                .map(
+                                  (option) => Padding(
+                                    padding: const EdgeInsets.only(right: 10),
+                                    child: _AspectChip(
+                                      option: option,
+                                      selected: option == _selectedAspect,
+                                      onTap: () {
+                                        setState(
+                                            () => _selectedAspect = option);
+                                        _cropController.aspectRatio =
+                                            option.ratio;
+                                      },
+                                    ),
                                   ),
-                                ),
-                              )
-                              .toList(growable: false),
+                                )
+                                .toList(growable: false),
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ],
@@ -213,9 +218,8 @@ class _AspectChip extends StatelessWidget {
           color: selected ? Colors.white : Colors.white.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(999),
           border: Border.all(
-            color: selected
-                ? Colors.white
-                : Colors.white.withValues(alpha: 0.14),
+            color:
+                selected ? Colors.white : Colors.white.withValues(alpha: 0.14),
           ),
         ),
         child: Text(

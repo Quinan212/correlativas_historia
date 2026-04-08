@@ -1,11 +1,116 @@
+import 'dart:math' as math;
+
+import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../verification/models/verification_upload_image.dart';
 import '../models/opiniones_rating.dart';
+import '../models/matter_photo_post.dart';
 import '../models/opiniones_review_models.dart';
 import '../utils/referencias_labels.dart';
 
 class OpinionesReviewsRepository {
   const OpinionesReviewsRepository();
+
+  static const String matterPhotosBucketName = 'matter-community-photos';
+  static const int _maxPhotoWidth = 1600;
+  static const int _photoQuality = 70;
+
+  Future<XFile?> pickMatterPhoto() {
+    return ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      maxWidth: _maxPhotoWidth.toDouble(),
+      imageQuality: _photoQuality,
+    );
+  }
+
+  Future<MatterPhotoPost> createMatterPhotoPost({
+    required SupabaseClient client,
+    required String deviceId,
+    required String matterId,
+    required String careerId,
+    required VerificationUploadImage image,
+    String? caption,
+  }) async {
+    final bytes = image.bytes;
+    final ext = _fileExtension(image.fileName);
+    final now = DateTime.now().toUtc().toIso8601String();
+    final path =
+        '$matterId/$deviceId/${DateTime.now().millisecondsSinceEpoch}_${_randHex(6)}.$ext';
+
+    await client.storage.from(matterPhotosBucketName).uploadBinary(
+          path,
+          bytes,
+          fileOptions: FileOptions(
+            contentType: _contentTypeFor(ext),
+            upsert: false,
+          ),
+        );
+
+    final publicUrl = client.storage.from(matterPhotosBucketName).getPublicUrl(
+          path,
+        );
+
+    late final Map<String, dynamic> inserted;
+    try {
+      inserted = await client
+          .from('matter_photo_posts')
+          .insert({
+            'device_id': deviceId,
+            'matter_id': matterId,
+            'career_id': careerId,
+            'image_path': path,
+            'image_url': publicUrl,
+            'caption': _nullIfBlank(caption),
+            'enabled': true,
+            'created_at': now,
+            'updated_at': now,
+          })
+          .select()
+          .single();
+    } catch (error) {
+      try {
+        await client.storage.from(matterPhotosBucketName).remove([path]);
+      } catch (_) {
+        // Ignore cleanup failure, the row insert error is the primary failure.
+      }
+      rethrow;
+    }
+
+    return MatterPhotoPost.fromMap(inserted);
+  }
+
+  Future<void> deleteMatterPhotoPost({
+    required SupabaseClient client,
+    required String adminDeviceId,
+    required String photoId,
+  }) async {
+    await client.functions.invoke(
+      'delete-matter-photo-post',
+      body: {
+        'device_id': adminDeviceId,
+        'photo_id': photoId,
+      },
+    );
+  }
+
+  Stream<List<MatterPhotoPost>> watchMatterPhotoPosts({
+    required SupabaseClient client,
+    required String matterId,
+  }) {
+    return client
+        .from('matter_photo_posts')
+        .stream(primaryKey: ['id'])
+        .eq('matter_id', matterId)
+        .order('created_at', ascending: false)
+        .map(
+          (rows) => rows
+              .cast<Map<String, dynamic>>()
+              .map(MatterPhotoPost.fromMap)
+              .where((post) => post.enabled)
+              .toList(growable: false),
+        );
+  }
 
   Stream<List<MatterReview>> watchMatterReviews({
     required SupabaseClient client,
@@ -39,9 +144,7 @@ class OpinionesReviewsRepository {
                 .cast<Map<String, dynamic>>()
                 .map(MatterReview.fromMap)
                 .where((row) => row.matterId == matterId);
-            return filtered.isEmpty
-              ? null
-              : filtered.first;
+            return filtered.isEmpty ? null : filtered.first;
           },
         );
   }
@@ -124,9 +227,7 @@ class OpinionesReviewsRepository {
                       row.teacherId == scope.teacherId &&
                       row.matterId == scope.matterId,
                 );
-            return filtered.isEmpty
-              ? null
-              : filtered.first;
+            return filtered.isEmpty ? null : filtered.first;
           },
         );
   }
@@ -207,21 +308,18 @@ class OpinionesReviewsRepository {
     for (final key in kMatterDimensionKeys) {
       final values = reviews
           .map((e) => e.dimensions[key] ?? 0)
-          .where((value) => value > 0);
-      dimensions[key] = RatingResumen(
-        promedio: _average(values),
-        votos: values.length,
-      );
+          .where((value) => value > 0)
+          .toList(growable: false);
+      dimensions[key] = _summarizeAxis(values);
     }
 
-    final sortedDimensions = dimensions.entries
-        .where((entry) => entry.value.votos > 0)
-        .toList()
-      ..sort((a, b) {
-        final byAverage = b.value.promedio.compareTo(a.value.promedio);
-        if (byAverage != 0) return byAverage;
-        return b.value.votos.compareTo(a.value.votos);
-      });
+    final sortedDimensions =
+        dimensions.entries.where((entry) => entry.value.votos > 0).toList()
+          ..sort((a, b) {
+            final byAverage = b.value.promedio.compareTo(a.value.promedio);
+            if (byAverage != 0) return byAverage;
+            return b.value.votos.compareTo(a.value.votos);
+          });
 
     final comments = reviews
         .where((e) => (e.comment ?? '').trim().isNotEmpty)
@@ -251,11 +349,9 @@ class OpinionesReviewsRepository {
     for (final key in kTeacherDimensionKeys) {
       final values = reviews
           .map((e) => e.dimensions[key] ?? 0)
-          .where((e) => e > 0);
-      aspectos[key] = RatingResumen(
-        promedio: _average(values),
-        votos: values.length,
-      );
+          .where((e) => e > 0)
+          .toList(growable: false);
+      aspectos[key] = _summarizeAxis(values);
     }
 
     return DocenteRatingResumen(
@@ -272,6 +368,48 @@ class OpinionesReviewsRepository {
     if (list.isEmpty) return 0;
     final total = list.fold<int>(0, (sum, item) => sum + item);
     return total / list.length;
+  }
+
+  RatingResumen _summarizeAxis(List<int> values) {
+    if (values.isEmpty) {
+      return const RatingResumen(promedio: 0, votos: 0);
+    }
+
+    final average = _average(values);
+    final dispersion = _stdDev(values, average);
+    final state = _classifyAxis(
+      average: average,
+      votes: values.length,
+      dispersion: dispersion,
+    );
+
+    return RatingResumen(
+      promedio: average,
+      votos: values.length,
+      dispersion: dispersion,
+      readingState: state,
+    );
+  }
+
+  double _stdDev(List<int> values, double average) {
+    if (values.length <= 1) return 0;
+    final variance = values
+            .map((value) => (value - average) * (value - average))
+            .fold<double>(0, (sum, item) => sum + item) /
+        values.length;
+    return math.sqrt(variance);
+  }
+
+  ReferenceReadingState _classifyAxis({
+    required double average,
+    required int votes,
+    required double dispersion,
+  }) {
+    if (votes < 2) return ReferenceReadingState.insufficientData;
+    if (dispersion <= 0.75) return ReferenceReadingState.consensus;
+    if (dispersion >= 1.15) return ReferenceReadingState.divided;
+    if (average >= 2.6 && average <= 3.4) return ReferenceReadingState.mixed;
+    return ReferenceReadingState.mixed;
   }
 
   String? _nullIfBlank(String? value) {
@@ -291,5 +429,30 @@ class OpinionesReviewsRepository {
       'organizacion': dimensions['evaluation_clarity'] ?? 0,
       'recomendacion': dimensions['support'] ?? 0,
     };
+  }
+
+  String _fileExtension(String name) {
+    final parts = name.toLowerCase().split('.');
+    if (parts.length < 2) return 'jpg';
+    final ext = parts.last.trim();
+    if (ext.isEmpty) return 'jpg';
+    return ext;
+  }
+
+  String _contentTypeFor(String ext) {
+    switch (ext) {
+      case 'png':
+        return 'image/png';
+      case 'webp':
+        return 'image/webp';
+      default:
+        return 'image/jpeg';
+    }
+  }
+
+  String _randHex(int length) {
+    final random = math.Random.secure();
+    final bytes = List<int>.generate(length, (_) => random.nextInt(256));
+    return bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
   }
 }

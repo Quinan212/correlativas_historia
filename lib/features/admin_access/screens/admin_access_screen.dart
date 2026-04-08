@@ -1,19 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../models/materia.dart';
 import '../../../shared/device_identity/device_identity.dart';
+import '../../../shared/notifications/push_notifications.dart';
 import '../../../shared/providers/app_state.dart';
 import '../../../shared/supabase/supabase.dart';
+import '../../../shared/widgets/whats_new_sheet.dart';
 import '../../verification/models/verification_upload_image.dart';
+import '../../verification/models/verification_request.dart';
 import '../../verification/providers/verification_providers.dart';
 import '../../verification/screens/verification_image_editor_screen.dart';
 import '../../verification/widgets/verification_request_card.dart';
 import '../providers/admin_access_providers.dart';
 import 'admin_panel_screen.dart';
 
-class AdminAccessScreen extends ConsumerWidget {
+class AdminAccessScreen extends ConsumerStatefulWidget {
   const AdminAccessScreen({
     super.key,
     this.initialCareerId,
@@ -26,13 +28,26 @@ class AdminAccessScreen extends ConsumerWidget {
   final bool lockMatterSelection;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AdminAccessScreen> createState() => _AdminAccessScreenState();
+}
+
+class _AdminAccessScreenState extends ConsumerState<AdminAccessScreen> {
+  final Set<String> _notifiedReviewedRequestIds = <String>{};
+  bool _reviewedRequestsSeeded = false;
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final adminAsync = ref.watch(adminDeviceStatusProvider);
     final bootstrap = ref.watch(supabaseBootstrapProvider);
     final ownRequestsAsync = ref.watch(ownVerificationRequestsProvider);
     final ownProfileAsync = ref.watch(ownDeviceProfileProvider);
     final deviceLabelAsync = ref.watch(deviceLabelProvider);
+
+    ref.listen<AsyncValue<List<VerificationRequest>>>(
+      ownVerificationRequestsProvider,
+      _handleOwnRequestsUpdate,
+    );
 
     return Scaffold(
       appBar: AppBar(
@@ -49,6 +64,25 @@ class AdminAccessScreen extends ConsumerWidget {
               icon: Icons.verified_user_rounded,
             ),
             const SizedBox(height: 14),
+            _SectionCard(
+              title: 'Novedades',
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Esta versión suma Opiniones, comunidad de la materia, referencias sobre docentes y notificaciones de seguimiento.',
+                    style: theme.textTheme.bodyLarge,
+                  ),
+                  const SizedBox(height: 12),
+                  OutlinedButton.icon(
+                    onPressed: () => WhatsNewSheet.show(context),
+                    icon: const Icon(Icons.auto_awesome_rounded),
+                    label: const Text('Ver novedades de esta versión'),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
             if (!bootstrap.isReady)
               _SectionCard(
                 title: 'Estado de Supabase',
@@ -59,9 +93,9 @@ class AdminAccessScreen extends ConsumerWidget {
               ),
             if (!bootstrap.isReady) const SizedBox(height: 14),
             _VerificationComposerCard(
-              initialCareerId: initialCareerId,
-              initialMatterId: initialMatterId,
-              lockMatterSelection: lockMatterSelection,
+              initialCareerId: widget.initialCareerId,
+              initialMatterId: widget.initialMatterId,
+              lockMatterSelection: widget.lockMatterSelection,
             ),
             const SizedBox(height: 14),
             _SectionCard(
@@ -74,10 +108,16 @@ class AdminAccessScreen extends ConsumerWidget {
                       style: theme.textTheme.bodyLarge,
                     );
                   }
+                  final latestReviewed = _latestReviewedRequest(items);
                   return Column(
-                    children: items
-                        .map((item) => VerificationRequestCard(request: item))
-                        .toList(growable: false),
+                    children: [
+                      if (latestReviewed != null) ...[
+                        _VerificationReadyBanner(request: latestReviewed),
+                        const SizedBox(height: 12),
+                      ],
+                      ...items.map(
+                          (item) => VerificationRequestCard(request: item)),
+                    ],
                   );
                 },
                 loading: () => const Padding(
@@ -105,7 +145,8 @@ class AdminAccessScreen extends ConsumerWidget {
                           profile?.deviceLabel,
                           detectedDeviceLabel,
                         );
-                        final referenceName = (profile?.referenceName ?? '').trim();
+                        final referenceName =
+                            (profile?.referenceName ?? '').trim();
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -138,7 +179,8 @@ class AdminAccessScreen extends ConsumerWidget {
                             Text(
                               profile == null
                                   ? 'Tus referencias publicas se muestran de forma anonima.'
-                                  : profile.publicDisplayLabel == 'Referencia anonima'
+                                  : profile.publicDisplayLabel ==
+                                          'Referencia anonima'
                                       ? 'Tus referencias publicas se muestran de forma anonima.'
                                       : 'Tus referencias publicas usan el alias "${profile.publicDisplayLabel}".',
                               style: theme.textTheme.bodyMedium,
@@ -150,15 +192,8 @@ class AdminAccessScreen extends ConsumerWidget {
                       loading: () => const SizedBox.shrink(),
                       error: (_, __) => const SizedBox.shrink(),
                     ),
-                    SelectableText(
-                      status.deviceId,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        fontFamily: 'monospace',
-                      ),
-                    ),
-                    const SizedBox(height: 10),
                     Text(
-                      status.message,
+                      _adminAccessCopy(status.isAdmin),
                       style: theme.textTheme.bodyLarge,
                     ),
                     const SizedBox(height: 14),
@@ -166,22 +201,6 @@ class AdminAccessScreen extends ConsumerWidget {
                       spacing: 10,
                       runSpacing: 10,
                       children: [
-                        OutlinedButton.icon(
-                          onPressed: () async {
-                            await Clipboard.setData(
-                              ClipboardData(text: status.deviceId),
-                            );
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Device ID copiado'),
-                                ),
-                              );
-                            }
-                          },
-                          icon: const Icon(Icons.copy_rounded),
-                          label: const Text('Copiar ID'),
-                        ),
                         OutlinedButton.icon(
                           onPressed: () {
                             ref.invalidate(adminDeviceStatusProvider);
@@ -248,7 +267,8 @@ class AdminAccessScreen extends ConsumerWidget {
                                 ),
                               );
                             },
-                            icon: const Icon(Icons.admin_panel_settings_rounded),
+                            icon:
+                                const Icon(Icons.admin_panel_settings_rounded),
                             label: const Text('Panel admin'),
                           ),
                       ],
@@ -276,6 +296,117 @@ class AdminAccessScreen extends ConsumerWidget {
       ),
     );
   }
+
+  void _handleOwnRequestsUpdate(
+    AsyncValue<List<VerificationRequest>>? previous,
+    AsyncValue<List<VerificationRequest>> next,
+  ) {
+    final items = next.valueOrNull;
+    if (items == null || !mounted) return;
+
+    final reviewed = items
+        .where((item) => item.status != VerificationRequestStatus.pending)
+        .toList(growable: false);
+
+    if (!_reviewedRequestsSeeded) {
+      _notifiedReviewedRequestIds.addAll(reviewed.map((item) => item.id));
+      _reviewedRequestsSeeded = true;
+      return;
+    }
+
+    for (final item in reviewed) {
+      if (_notifiedReviewedRequestIds.add(item.id)) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          final messenger = ScaffoldMessenger.maybeOf(context);
+          if (messenger == null) return;
+          messenger.showSnackBar(
+            SnackBar(
+              content: Text(_verificationReadyMessage(item)),
+              duration: const Duration(seconds: 5),
+            ),
+          );
+        });
+      }
+    }
+  }
+}
+
+VerificationRequest? _latestReviewedRequest(List<VerificationRequest> items) {
+  final reviewed = items
+      .where((item) => item.status != VerificationRequestStatus.pending)
+      .toList(growable: false);
+  if (reviewed.isEmpty) return null;
+
+  reviewed.sort((a, b) {
+    final aTime = a.reviewedAt ?? a.createdAt;
+    final bTime = b.reviewedAt ?? b.createdAt;
+    return bTime.compareTo(aTime);
+  });
+  return reviewed.first;
+}
+
+String _verificationReadyMessage(VerificationRequest request) {
+  switch (request.status) {
+    case VerificationRequestStatus.approved:
+      return 'La verificación de ${request.matterName} ya quedó lista. Desde ahora podés compartir referencias sobre esta materia y sus docentes.';
+    case VerificationRequestStatus.rejected:
+      final note = (request.reviewNote ?? '').trim();
+      final suffix = note.isEmpty
+          ? ' Revisá la observación en la solicitud y, si hace falta, volvé a enviarla.'
+          : ' Revisá la observación que quedó cargada y, si hace falta, volvé a enviarla.';
+      return 'La revisión de ${request.matterName} ya quedó lista. Esta captura no alcanzó para habilitar la referencia.$suffix';
+    case VerificationRequestStatus.pending:
+      return 'Tu solicitud sigue en revisión.';
+  }
+}
+
+class _VerificationReadyBanner extends StatelessWidget {
+  const _VerificationReadyBanner({
+    required this.request,
+  });
+
+  final VerificationRequest request;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final approved = request.status == VerificationRequestStatus.approved;
+    final background =
+        approved ? const Color(0xFFE6F5F1) : const Color(0xFFF7ECE6);
+    final foreground =
+        approved ? const Color(0xFF195F56) : const Color(0xFF8A4D3A);
+    final icon =
+        approved ? Icons.mark_email_read_rounded : Icons.info_outline_rounded;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: foreground.withValues(alpha: 0.22),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: foreground),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              _verificationReadyMessage(request),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: foreground,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _VerificationComposerCard extends ConsumerStatefulWidget {
@@ -297,6 +428,7 @@ class _VerificationComposerCard extends ConsumerStatefulWidget {
 class _VerificationComposerCardState
     extends ConsumerState<_VerificationComposerCard> {
   String? _selectedMatterId;
+  int? _selectedYear;
   VerificationUploadImage? _selectedImage;
   bool _submitting = false;
 
@@ -391,9 +523,38 @@ class _VerificationComposerCardState
               }
 
               _selectedMatterId ??= widget.initialMatterId ?? options.first.id;
-              final selected = options.firstWhere(
+              final selectedFromAll = options.firstWhere(
                 (m) => m.id == _selectedMatterId,
                 orElse: () => options.first,
+              );
+              _selectedYear ??= selectedFromAll.anio;
+
+              final availableYears = options
+                  .map((m) => m.anio)
+                  .toSet()
+                  .toList(growable: false)
+                ..sort();
+              if (!availableYears.contains(_selectedYear)) {
+                _selectedYear = availableYears.first;
+              }
+
+              final yearOptions = options
+                  .where((m) => m.anio == _selectedYear)
+                  .toList(growable: false);
+              if (yearOptions.isEmpty) {
+                return Text(
+                  'No hay materias cargadas para el año seleccionado.',
+                  style: theme.textTheme.bodyLarge,
+                );
+              }
+
+              if (!yearOptions.any((m) => m.id == _selectedMatterId)) {
+                _selectedMatterId = yearOptions.first.id;
+              }
+
+              final selected = yearOptions.firstWhere(
+                (m) => m.id == _selectedMatterId,
+                orElse: () => yearOptions.first,
               );
 
               return Column(
@@ -404,30 +565,62 @@ class _VerificationComposerCardState
                     style: theme.textTheme.bodyLarge,
                   ),
                   const SizedBox(height: 14),
+                  DropdownButtonFormField<int>(
+                    isExpanded: true,
+                    initialValue: _selectedYear,
+                    menuMaxHeight: 420,
+                    decoration: const InputDecoration(
+                      labelText: 'Año',
+                    ),
+                    items: availableYears
+                        .map(
+                          (year) => DropdownMenuItem<int>(
+                            value: year,
+                            child: Text('$year° año'),
+                          ),
+                        )
+                        .toList(growable: false),
+                    onChanged: (_submitting || widget.lockMatterSelection)
+                        ? null
+                        : (value) {
+                            if (value == null) return;
+                            setState(() {
+                              _selectedYear = value;
+                              _selectedMatterId = options
+                                  .firstWhere(
+                                    (m) => m.anio == value,
+                                    orElse: () => options.first,
+                                  )
+                                  .id;
+                            });
+                          },
+                  ),
+                  const SizedBox(height: 14),
                   DropdownButtonFormField<String>(
                     isExpanded: true,
                     initialValue: selected.id,
+                    menuMaxHeight: 420,
                     decoration: const InputDecoration(
                       labelText: 'Materia',
                     ),
-                    items: options
+                    items: yearOptions
                         .map(
                           (m) => DropdownMenuItem<String>(
                             value: m.id,
                             child: Text(
-                              '${m.anio}° · ${m.displayNombre}',
+                              _verificationMatterLabel(matter: m),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         )
                         .toList(growable: false),
-                    selectedItemBuilder: (context) => options
+                    selectedItemBuilder: (context) => yearOptions
                         .map(
                           (m) => Align(
                             alignment: Alignment.centerLeft,
                             child: Text(
-                              '${m.anio}° · ${m.displayNombre}',
+                              _verificationMatterLabel(matter: m),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -544,6 +737,11 @@ class _VerificationComposerCardState
       final deviceId = await ref.read(deviceIdProvider.future);
       final profileReady = await _ensureDeviceProfile(deviceId: deviceId);
       if (!profileReady) return;
+      if (!mounted) return;
+      await PushNotificationsService.instance.ensurePermissionForVerification(
+        context: context,
+      );
+      if (!mounted) return;
       await repo.submitRequest(
         client: client,
         deviceId: deviceId,
@@ -636,6 +834,41 @@ String _resolveDeviceLabel(String? storedLabel, String detectedLabel) {
   if (stored.isEmpty) return detected;
   if (stored == 'Dispositivo Android') return detected;
   return stored;
+}
+
+String _adminAccessCopy(bool isAdmin) {
+  if (isAdmin) {
+    return 'Desde este dispositivo también puedes acompañar las solicitudes que llegan, revisar la evidencia y dejar una devolución cuando haga falta.';
+  }
+  return 'Desde aquí puedes enviar tu verificación y seguir la devolución cuando esté lista. Si hace falta volver a enviar una captura o ampliar alguna evidencia, también lo vas a ver en esta pantalla.';
+}
+
+String _verificationMatterLabel({required Materia matter}) {
+  final raw = matter.displayNombre;
+  switch (matter.id) {
+    case 'procesos-antiguedad':
+      return 'Antigüedad';
+    case 'pueblos-originarios':
+      return 'Pueblos originarios de América';
+    case 'procesos-feudalismo-modernidad':
+      return 'Feudalismo y modernidad';
+    case 'procesos-americanos-1':
+      return 'Americanos I';
+    case 'procesos-contemporaneos-1':
+      return 'Contemporáneos I';
+    case 'procesos-americanos-2':
+      return 'Americanos II';
+    case 'procesos-argentina-1':
+      return 'Argentina I';
+    case 'procesos-contemporaneos-2':
+      return 'Contemporáneos II';
+    case 'procesos-americanos-3':
+      return 'Americanos III';
+    case 'procesos-argentina-2':
+      return 'Argentina II';
+    default:
+      return raw;
+  }
 }
 
 class _HeroCard extends StatelessWidget {

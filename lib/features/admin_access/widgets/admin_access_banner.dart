@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/admin_access_providers.dart';
@@ -40,13 +39,6 @@ class AdminAccessBanner extends ConsumerWidget {
                       fontWeight: FontWeight.w800,
                     ),
               ),
-              const SizedBox(height: 6),
-              SelectableText(
-                'device_id: ${status.deviceId}',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      fontFamily: 'monospace',
-                    ),
-              ),
               const SizedBox(height: 8),
               Text(
                 status.message,
@@ -57,22 +49,6 @@ class AdminAccessBanner extends ConsumerWidget {
                 spacing: 8,
                 runSpacing: 8,
                 children: [
-                  OutlinedButton.icon(
-                    onPressed: () async {
-                      await Clipboard.setData(
-                        ClipboardData(text: status.deviceId),
-                      );
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Device ID copiado'),
-                          ),
-                        );
-                      }
-                    },
-                    icon: const Icon(Icons.copy_rounded),
-                    label: const Text('Copiar ID'),
-                  ),
                   OutlinedButton.icon(
                     onPressed: () {
                       ref.invalidate(adminDeviceStatusProvider);

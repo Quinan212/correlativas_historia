@@ -38,7 +38,7 @@ class CalculadoraScreen extends ConsumerWidget {
             pinned: true,
             delegate: BannerColapsableCalculadora(
               topInset: topInset,
-              subtitle: '¿Puedo Cursar?',
+              subtitle: 'Condiciones y posibilidades',
             ),
           ),
           SliverToBoxAdapter(
@@ -79,23 +79,23 @@ class CalculadoraScreen extends ConsumerWidget {
                       const SizedBox(height: 12),
                       const TarjetaPasoCalculadora(
                         numero: 1,
-                        titulo: 'Seleccioná la Carrera',
+                        titulo: 'Elegí la carrera de referencia',
                         subtitulo:
-                            'Elegí primero la carrera (p. ej., Profesorado en Geografía o Profesorado de Historia).',
+                            'La lectura cambia según el plan y la institución que tomás como referencia.',
                       ),
                       const SizedBox(height: 12),
                       const TarjetaPasoCalculadora(
                         numero: 2,
-                        titulo: 'Seleccioná el Año',
+                        titulo: 'Ubica el tramo del plan',
                         subtitulo:
-                            'Elegí el año de la materia que querés saber si podés cursar.',
+                            'Elegí el año donde se ubica la materia para leer sus condiciones de cursada.',
                       ),
                       const SizedBox(height: 12),
                       const TarjetaPasoCalculadora(
                         numero: 3,
-                        titulo: 'Seleccioná la Materia',
+                        titulo: 'Pon la materia en contexto',
                         subtitulo:
-                            'Ahora, elegí la materia específica que te interesa.',
+                            'Seleccioná la materia que querés revisar para ver qué escenario se abre hoy.',
                       ),
                       const SizedBox(height: 16),
                       BloqueSelectoresCalculadora(materiasYear: materiasYear),
@@ -103,8 +103,8 @@ class CalculadoraScreen extends ConsumerWidget {
                       if (course == null)
                         TarjetaPlaceholderCalculadora(
                           texto: hasSelectedCareer
-                              ? 'Selecciona un año y una materia para ver tus opciones de cursada.'
-                              : 'Selecciona una carrera para habilitar el resto de la calculadora.',
+                              ? 'Seleccioná un año y una materia para leer las condiciones de cursada de ese tramo.'
+                              : 'Seleccioná una carrera para habilitar esta lectura situada del plan.',
                         )
                       else ...[
                         ResumenMateriaCalculadora(materia: course),

@@ -30,10 +30,23 @@ class RatingResumen {
   const RatingResumen({
     required this.promedio,
     required this.votos,
+    this.dispersion = 0,
+    this.readingState = ReferenceReadingState.insufficientData,
   });
 
   final double promedio;
   final int votos;
+  final double dispersion;
+  final ReferenceReadingState readingState;
+
+  bool get hasInterpretiveSignal => votos >= 2;
+}
+
+enum ReferenceReadingState {
+  insufficientData,
+  consensus,
+  mixed,
+  divided,
 }
 
 class DocenteRatingResumen {

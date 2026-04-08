@@ -166,6 +166,7 @@ const List<CareerInfo> kCareers = [
     assetHtml: 'assets/contador_publico.html',
     downloadUrl: 'https://drive.google.com/tu_link_oficial_de_contador',
     categoria: 'grado',
+    hidden: true,
   ),
 ];
 
@@ -242,7 +243,7 @@ final hasSelectedCareerProvider = Provider<bool>((ref) {
   return ref.watch(selectedCareerInfoOrNullProvider) != null;
 });
 
-// Compatibilidad para consumidores que todavia esperan una carrera no nula.
+// Compatibilidad para consumidores que todavía esperan una carrera no nula.
 final selectedCareerInfoProvider = Provider<CareerInfo>((ref) {
   final selected = ref.watch(selectedCareerInfoOrNullProvider);
   if (selected != null) return selected;
@@ -468,30 +469,30 @@ class EvalResult {
   });
 }
 
-const _noPuede = 'No puede cursar';
-const _condicional = 'Cursada condicional';
-const _restricciones = 'Cursa con restricciones';
-const _sinRestricciones = 'Puede cursar sin restricciones';
+const _noPuede = 'Todavía no podés cursar';
+const _condicional = 'Cursada condicionada';
+const _restricciones = 'Podés cursar con restricciones';
+const _sinRestricciones = 'Podés cursar';
 
 const _notaNoPuede = [
-  'Debes, como mínimo, regularizar o aprobar las correlativas pendientes para habilitar la cursada.'
+  'Para habilitar esta cursada, primero tenés que regularizar o aprobar las correlativas pendientes.'
 ];
 
 const _notasCondicional = [
-  'Puedes cursar y realizar actividades y trabajos prácticos solo si el/la docente lo permite.',
-  'Parciales y promoción no habilitados hasta aprobar previamente las correlativas pendientes en mesa extraordinaria (u otra habilitada).',
+  'Podés cursar y hacer actividades o trabajos prácticos si la cátedra lo habilita.',
+  'Los parciales y la promoción no quedan habilitados hasta que apruebes las correlativas pendientes en una mesa de examen.',
 ];
 
 const _notasSinRestr = [
-  'Puedes hacer actividades, rendir parciales y promocionar directamente.',
-  'Si cumples asistencia y notas mínimas, no necesitas rendir final.',
+  'Podés hacer actividades, rendir parciales y acceder a la promoción.',
+  'Si cumplís con la asistencia y las notas requeridas, no hace falta rendir final.',
 ];
 
 const _notasRestr = [
-  'Puedes cursar y realizar actividades y trabajos prácticos.',
-  'Para rendir parciales o promocionar, primero debes APROBAR las correlativas que tienes regularizadas.',
-  'Si no las apruebas a tiempo en una mesa de examen, no podrás promocionar y quedarás en condición "Regular" (si cumples los requisitos de la cursada).',
-  'Podrás rendir el examen final de esta materia una vez que hayas aprobado todas las correlativas pendientes.',
+  'Podés cursar y hacer actividades o trabajos prácticos.',
+  'Para rendir parciales o acceder a la promoción, primero tenés que aprobar las correlativas que hoy figuran regularizadas.',
+  'Si no las aprobás a tiempo en una mesa de examen, no vas a poder promocionar y vas a quedar en condición regular si cumplís los requisitos de la cursada.',
+  'El final de esta materia queda habilitado una vez que apruebes todas las correlativas pendientes.',
 ];
 
 EvalResult evaluateCourse(
@@ -502,13 +503,13 @@ EvalResult evaluateCourse(
   if (course == null) {
     return const EvalResult(
       canEnroll: false,
-      overallLabel: 'Selecciona una materia',
+      overallLabel: 'Seleccioná una materia',
       activities: false,
       activitiesRestricted: false,
       exams: false,
       examsRestricted: false,
       promotion: false,
-      notes: ['Selecciona una materia para comenzar.'],
+      notes: ['Seleccioná una materia para empezar.'],
     );
   }
 
@@ -529,17 +530,17 @@ EvalResult evaluateCourse(
 
     return EvalResult(
       canEnroll: false,
-      overallLabel: 'Selecciona estados',
+      overallLabel: 'Seleccioná estados',
       activities: false,
       activitiesRestricted: false,
       exams: false,
       examsRestricted: false,
       promotion: false,
       notes: [
-        'Debes seleccionar el estado de las correlativas: $nombresPend.',
-        'Marca para cada una si está no-regularizada, regularizada o aprobada.',
+        'Tenés que marcar el estado de estas correlativas: $nombresPend.',
+        'Marca cada una como no regularizada, regularizada o aprobada.',
       ],
-      strategy: 'Completa los estados y vuelve a evaluar.',
+      strategy: 'Completá los estados y volvé a revisar el escenario.',
     );
   }
 
@@ -567,7 +568,7 @@ EvalResult evaluateCourse(
       promotion: false,
       notes: _notaNoPuede,
       strategy:
-          'Regulariza/aprueba las correlativas faltantes antes de inscribirte.',
+          'Regularizá o aprobá las correlativas que faltan antes de inscribirte.',
     );
   }
 
@@ -589,9 +590,9 @@ EvalResult evaluateCourse(
       promotion: false,
       notes: _notasCondicional,
       detailedExplanation:
-          'Según el reglamento, no deberías poder cursar hasta aprobar todas las (A) pendientes: $missingNames. Algunxs docentes pueden permitir cursada condicional si te comprometes a aprobar pronto en mesa/instancia habilitada.',
+          'Según el reglamento, esta cursada no debería quedar plenamente habilitada hasta que apruebes todas las (A) pendientes: $missingNames. En algunos casos la cátedra puede permitir una cursada condicionada si te comprometés a aprobarlas pronto en una mesa habilitada.',
       strategy:
-          'Gestiona autorización y prioriza aprobar las (A) en la próxima mesa.',
+          'Hablá con la cátedra y priorizá aprobar las (A) en la próxima mesa.',
     );
   }
 
@@ -606,7 +607,8 @@ EvalResult evaluateCourse(
         examsRestricted: false,
         promotion: true,
         notes: _notasSinRestr,
-        strategy: 'Mantén calificaciones y asistencia para promocionar.',
+        strategy:
+            'Sostené las notas y la asistencia para llegar a la promoción.',
       );
     } else {
       return const EvalResult(
@@ -619,7 +621,7 @@ EvalResult evaluateCourse(
         promotion: false,
         notes: _notasRestr,
         strategy:
-            'Aprobá las (R) cuanto antes para habilitar evaluación completa y la posibilidad de promocionar.',
+            'Aprobá las (R) cuanto antes para habilitar la evaluación completa y la posibilidad de promocionar.',
       );
     }
   }
@@ -632,6 +634,6 @@ EvalResult evaluateCourse(
     exams: false,
     examsRestricted: false,
     promotion: false,
-    notes: ['Debes revisar y completar el estado de las correlativas.'],
+    notes: ['Revisa y completa el estado de las correlativas.'],
   );
 }

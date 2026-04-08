@@ -11,12 +11,12 @@ class TarjetaPresentacionMapa extends StatefulWidget {
       title: 'Busca una materia',
       kicker: 'Busqueda puntual',
       summary:
-          'Encuentra rapido la materia que quieres revisar sin recorrer toda la red.',
+          'Ubica rapido una materia cuando quieres revisar un tramo puntual del plan.',
       detail:
-          'Puedes buscar por nombre o por codigo para abrir una consulta puntual y mirar solo la parte del plan que te interesa.',
+          'Puedes buscar por nombre o por codigo para abrir una consulta puntual y mirar con mas detalle la parte del recorrido formativo que te interesa.',
       bullets: [
-        'Ahorra tiempo cuando ya sabes que materia quieres revisar.',
-        'Sirve para despejar dudas antes de cursar o rendir.',
+        'Ayuda a entrar por una duda concreta sin perder el resto del contexto.',
+        'Sirve para revisar decisiones de cursada, regularidad o examen.',
       ],
     ),
     PremiumAccordionItemData(
@@ -26,10 +26,10 @@ class TarjetaPresentacionMapa extends StatefulWidget {
       summary:
           'Mira que condiciones tienes que cumplir antes de llegar a esa materia.',
       detail:
-          'El mapa muestra las correlativas que la bloquean para que entiendas enseguida que te falta hoy.',
+          'El mapa muestra las correlativas que la condicionan para que puedas leer que te falta hoy y por que ese recorrido aparece ordenado de ese modo.',
       bullets: [
         'Distingue si el requisito es por aprobacion o por regularidad.',
-        'Evita recorrer toda la red para entender una sola condicion.',
+        'Hace visible que el avance no depende solo de una materia aislada.',
       ],
     ),
     PremiumAccordionItemData(
@@ -37,24 +37,25 @@ class TarjetaPresentacionMapa extends StatefulWidget {
       title: 'Entiende que habilita',
       kicker: 'Despues de aprobar',
       summary:
-          'Descubre que materias se destraban cuando apruebas una correlativa importante.',
+          'Descubre que nuevas posibilidades se abren cuando apruebas una correlativa importante.',
       detail:
-          'No solo ves lo que falta hacia atras. Tambien puedes mirar el efecto que una materia tiene sobre las que vienen despues.',
+          'No solo ves lo que falta hacia atras. Tambien puedes mirar como una materia reorganiza lo que viene despues dentro del plan.',
       bullets: [
         'Ayuda a detectar materias clave dentro del plan.',
-        'Hace visible el impacto real de aprobar una correlativa.',
+        'Permite pensar el avance como una trama y no como una lista suelta.',
       ],
     ),
     PremiumAccordionItemData(
       icon: Icons.tune_rounded,
       title: 'Filtra el mapa',
       kicker: 'Entrada rapida',
-      summary: 'Ordena la vista por carrera, ano o tipo para llegar mas rapido a lo que buscas.',
+      summary:
+          'Ordena la vista por carrera, ano o tipo para leer el plan desde un recorte mas manejable.',
       detail:
-          'Antes de explorar, puedes ajustar los filtros para acotar la consulta y leer solo la parte del plan que te interesa.',
+          'Antes de explorar, puedes ajustar los filtros para acotar la consulta y leer solo el tramo del plan que necesitas en este momento.',
       bullets: [
         'Reduce ruido cuando el plan tiene muchas materias.',
-        'Te deja empezar desde un tramo mas manejable.',
+        'Te deja empezar desde un recorte situado y no desde el mapa entero.',
       ],
     ),
     PremiumAccordionItemData(
@@ -62,11 +63,11 @@ class TarjetaPresentacionMapa extends StatefulWidget {
       title: 'Toca y explora',
       kicker: 'Recorrido visual',
       summary:
-          'Cada materia abre su red para que sigas relaciones sin perder contexto.',
+          'Cada materia abre su red para que sigas relaciones sin perder el contexto del plan.',
       detail:
-          'Al tocar una materia puedes moverte por sus conexiones y entender mejor como se encadenan los requisitos dentro del plan.',
+          'Al tocar una materia puedes moverte por sus conexiones y entender mejor como se encadenan las condiciones de cursada, aprobacion y avance.',
       bullets: [
-        'Convierte una lista estatica en una lectura mas intuitiva.',
+        'Convierte una lista estatica en una lectura mas relacional.',
         'Facilita seguir recorridos sin salir de la herramienta.',
       ],
     ),
@@ -75,12 +76,12 @@ class TarjetaPresentacionMapa extends StatefulWidget {
       title: 'Planea la cursada',
       kicker: 'Decision siguiente',
       summary:
-          'Usa lo que ves para decidir que conviene cursar, regularizar o rendir despues.',
+          'Usa lo que ves para decidir que conviene cursar, regularizar o rendir en el siguiente tramo.',
       detail:
-          'La herramienta no solo responde una duda puntual. Tambien sirve para ordenar tu proximo paso con mas criterio.',
+          'La herramienta no solo responde una duda puntual. Tambien sirve para ordenar decisiones reales de cursada con mas criterio y menos intuicion aislada.',
       bullets: [
         'Ayuda a priorizar materias con mayor efecto sobre el resto.',
-        'Te da una base mas clara para planear la siguiente cursada.',
+        'Te da una base mas clara para conversar y planear la siguiente cursada.',
       ],
     ),
   ];
@@ -177,7 +178,7 @@ class _TarjetaPresentacionMapaState extends State<TarjetaPresentacionMapa> {
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(
-                                'Herramienta interactiva',
+                                'Lectura interactiva del plan',
                                 style: tt.labelLarge?.copyWith(
                                   fontWeight: FontWeight.w700,
                                   color: cs.primary.withValues(alpha: 0.92),
@@ -237,7 +238,7 @@ class _TarjetaPresentacionMapaState extends State<TarjetaPresentacionMapa> {
                                 : cs.onSurfaceVariant.withValues(alpha: 0.92),
                           ),
                           child: const Text(
-                            'Consulta, explora y organiza tu recorrido',
+                            'Consulta, interpreta y ordena tu recorrido de cursada',
                           ),
                         ),
                       ],

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 
 class BannerColapsableCalculadora extends SliverPersistentHeaderDelegate {
-  BannerColapsableCalculadora({required this.topInset, required this.subtitle});
+  BannerColapsableCalculadora({
+    required this.topInset,
+    required this.subtitle,
+  });
 
   final double topInset;
   final String subtitle;
@@ -18,7 +21,11 @@ class BannerColapsableCalculadora extends SliverPersistentHeaderDelegate {
   double get maxExtent => topInset + _h1 + _h2;
 
   @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
     final range = maxExtent - minExtent;
     final t = (maxExtent - shrinkOffset - minExtent) / range;
     final vis = t.clamp(0.0, 1.0);
@@ -46,7 +53,7 @@ class BannerColapsableCalculadora extends SliverPersistentHeaderDelegate {
                       child: Transform.translate(
                         offset: Offset(0, (1 - vis) * -8),
                         child: const Text(
-                          '¿Puedo Cursar?',
+                          'Escenarios de cursada',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(

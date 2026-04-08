@@ -32,12 +32,12 @@ class BotonCerrarDetalle extends StatelessWidget {
               boxShadow: isDark
                   ? const []
                   : [
-                BoxShadow(
-                  blurRadius: 10,
-                  offset: const Offset(0, 6),
-                  color: Colors.black.withValues(alpha: 0.08),
-                ),
-              ],
+                      BoxShadow(
+                        blurRadius: 10,
+                        offset: const Offset(0, 6),
+                        color: Colors.black.withValues(alpha: 0.08),
+                      ),
+                    ],
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -54,6 +54,73 @@ class BotonCerrarDetalle extends StatelessWidget {
                   ),
                 ),
               ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class BarraInferiorDetalle extends StatelessWidget {
+  const BarraInferiorDetalle({
+    required this.onTap,
+    this.label = 'Volver',
+    this.icon = Icons.arrow_back_rounded,
+    super.key,
+  });
+
+  final VoidCallback onTap;
+  final String label;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final bg = isDark ? const Color(0xFF111827) : Colors.white;
+    final border = isDark ? const Color(0xFF243041) : const Color(0xFFE5E7EB);
+    final fg = isDark ? const Color(0xFFE5E7EB) : const Color(0xFF111827);
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: border),
+          boxShadow: isDark
+              ? const []
+              : [
+                  BoxShadow(
+                    blurRadius: 6,
+                    offset: const Offset(0, 3),
+                    color: Colors.black.withValues(alpha: 0.04),
+                  ),
+                ],
+        ),
+        child: SizedBox(
+          height: 56,
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: onTap,
+              borderRadius: BorderRadius.circular(18),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(icon, size: 18, color: fg),
+                  const SizedBox(width: 8),
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      color: fg,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -94,18 +161,19 @@ class AgarreDetalle extends StatelessWidget {
                   color: base,
                   borderRadius: BorderRadius.circular(999),
                   border: Border.all(
-                    color: cs.outlineVariant.withValues(alpha: isDark ? 0.35 : 0.55),
+                    color: cs.outlineVariant
+                        .withValues(alpha: isDark ? 0.35 : 0.55),
                     width: 1,
                   ),
                   boxShadow: isDark
                       ? const []
                       : [
-                    BoxShadow(
-                      blurRadius: 10,
-                      offset: const Offset(0, 6),
-                      color: Colors.black.withValues(alpha: 0.08),
-                    ),
-                  ],
+                          BoxShadow(
+                            blurRadius: 10,
+                            offset: const Offset(0, 6),
+                            color: Colors.black.withValues(alpha: 0.08),
+                          ),
+                        ],
                 ),
               ),
               Positioned(

@@ -30,7 +30,7 @@ class TarjetaAutorMapa extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Autor',
+            'Proyecto',
             style: tt.titleSmall?.copyWith(
               fontWeight: FontWeight.w700,
               color: cs.onSurface,
@@ -38,12 +38,12 @@ class TarjetaAutorMapa extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            '© 2025 Alan Gabriel Maillet — Autor original\nTodos los derechos reservados.',
+            'Desarrollo y curaduria inicial: Alan Gabriel Maillet.',
             style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
           ),
           const SizedBox(height: 8),
           Text(
-            'Material didactico de apoyo, creado para hacer mas clara la lectura del plan y facilitarle la consulta a los estudiantes.',
+            'Material didactico de apoyo, pensado para hacer mas clara la lectura del plan y acompanar decisiones concretas de cursada desde una mirada estudiantil.',
             style: tt.bodySmall?.copyWith(color: cs.onSurface),
           ),
         ],

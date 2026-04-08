@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../tema/estilos_calculadora.dart';
 
 class BloqueAutorCalculadora extends StatelessWidget {
@@ -13,7 +14,7 @@ class BloqueAutorCalculadora extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Autor',
+            'Proyecto',
             style: TextStyle(
               fontWeight: FontWeight.w700,
               color: EstilosCalculadora.textoPrincipal(context),
@@ -21,7 +22,7 @@ class BloqueAutorCalculadora extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            '© 2025 Alan Gabriel Maillet — Autor original\nTodos los derechos reservados.',
+            'Desarrollo y curaduría inicial: Alan Gabriel Maillet.',
             style: TextStyle(
               fontSize: 12,
               color: EstilosCalculadora.textoSecundario(context),
@@ -29,7 +30,7 @@ class BloqueAutorCalculadora extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Material educativo didáctico, creado con la única intención de facilitarle la vida a los estudiantes.',
+            'Material didáctico de apoyo, pensado para leer condiciones reales de cursada y acompañar decisiones concretas desde una mirada estudiantil.',
             style: TextStyle(
               fontSize: 13,
               color: EstilosCalculadora.textoSecundario(context),

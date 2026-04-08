@@ -44,18 +44,27 @@ class VerificationRequestCard extends StatelessWidget {
                 ClipRRect(
                   borderRadius:
                       const BorderRadius.vertical(top: Radius.circular(17)),
-                  child: AspectRatio(
-                    aspectRatio: 16 / 9,
-                    child: Image.network(
-                      request.imageUrl,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => const ColoredBox(
-                        color: Color(0xFFE2E8F0),
-                        child: Center(
-                          child: Icon(Icons.broken_image_outlined, size: 34),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final pixelRatio = MediaQuery.devicePixelRatioOf(context);
+                      final cacheWidth =
+                          (constraints.maxWidth * pixelRatio).round();
+                      return AspectRatio(
+                        aspectRatio: 16 / 9,
+                        child: Image.network(
+                          request.imageUrl,
+                          fit: BoxFit.cover,
+                          cacheWidth: cacheWidth,
+                          filterQuality: FilterQuality.low,
+                          errorBuilder: (_, __, ___) => const ColoredBox(
+                            color: Color(0xFFE2E8F0),
+                            child: Center(
+                              child: Icon(Icons.broken_image_outlined, size: 34),
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
+                      );
+                    },
                   ),
                 ),
                 Positioned(

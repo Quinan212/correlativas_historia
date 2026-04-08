@@ -1,6 +1,6 @@
 import 'dart:math';
-import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -45,22 +45,40 @@ class VerificationRepository {
         );
 
     final publicUrl = client.storage.from(bucketName).getPublicUrl(path);
+    late final Map<String, dynamic> inserted;
+    try {
+      inserted = await client
+          .from('verification_requests')
+          .insert({
+            'device_id': deviceId,
+            'matter_id': matterId,
+            'matter_name': matterName,
+            'career_id': careerId,
+            'image_path': path,
+            'image_url': publicUrl,
+            'status': VerificationRequestStatus.pending.value,
+          })
+          .select()
+          .single();
+    } catch (error) {
+      try {
+        await client.storage.from(bucketName).remove([path]);
+      } catch (cleanupError, cleanupStackTrace) {
+        debugPrint(
+          'No se pudo limpiar la evidencia subida tras fallar la solicitud: $cleanupError',
+        );
+        debugPrintStack(stackTrace: cleanupStackTrace);
+      }
+      rethrow;
+    }
 
-    final inserted = await client
-        .from('verification_requests')
-        .insert({
-          'device_id': deviceId,
-          'matter_id': matterId,
-          'matter_name': matterName,
-          'career_id': careerId,
-          'image_path': path,
-          'image_url': publicUrl,
-          'status': VerificationRequestStatus.pending.value,
-        })
-        .select()
-        .single();
+    final request = VerificationRequest.fromMap(inserted);
+    await notifySubmittedRequest(
+      client: client,
+      requestId: request.id,
+    );
 
-    return VerificationRequest.fromMap(inserted);
+    return request;
   }
 
   Future<List<VerificationRequest>> fetchOwnRequests({
@@ -182,6 +200,11 @@ class VerificationRepository {
       'granted_by_device_id': adminDeviceId,
       'created_at': now,
     }, onConflict: 'device_id,matter_id');
+
+    await notifyReviewedRequest(
+      client: client,
+      requestId: request.id,
+    );
   }
 
   Future<void> rejectRequest({
@@ -199,6 +222,49 @@ class VerificationRepository {
       'reviewed_at': now,
       'updated_at': now,
     }).eq('id', requestId);
+
+    await notifyReviewedRequest(
+      client: client,
+      requestId: requestId,
+    );
+  }
+
+  Future<void> notifyReviewedRequest({
+    required SupabaseClient client,
+    required String requestId,
+  }) async {
+    try {
+      await client.functions.invoke(
+        'notify-verification-reviewed',
+        body: {
+          'requestId': requestId,
+        },
+      );
+    } catch (error, stackTrace) {
+      debugPrint(
+        'No se pudo disparar la notificación push para $requestId: $error',
+      );
+      debugPrintStack(stackTrace: stackTrace);
+    }
+  }
+
+  Future<void> notifySubmittedRequest({
+    required SupabaseClient client,
+    required String requestId,
+  }) async {
+    try {
+      await client.functions.invoke(
+        'notify-verification-submitted',
+        body: {
+          'requestId': requestId,
+        },
+      );
+    } catch (error, stackTrace) {
+      debugPrint(
+        'No se pudo disparar la notificación admin para $requestId: $error',
+      );
+      debugPrintStack(stackTrace: stackTrace);
+    }
   }
 
   String _fileExtension(String name) {

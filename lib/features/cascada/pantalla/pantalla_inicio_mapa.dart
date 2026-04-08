@@ -162,7 +162,7 @@ class _PanelInicio extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           Text(
-            'Todo el contexto y las referencias en un solo lugar',
+            'Una lectura situada del recorrido de cursada',
             style: theme.textTheme.headlineSmall?.copyWith(
               color: cs.onSurface,
               fontWeight: FontWeight.w800,
@@ -171,7 +171,7 @@ class _PanelInicio extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Text(
-            'Desde aca podes entender como leer el mapa, revisar la referencia normativa vigente y pasar directo a las herramientas principales.',
+            'Desde aca podes ubicarte en el plan, leer la referencia normativa que acompana cada carrera y entrar a las herramientas principales con mas contexto.',
             style: theme.textTheme.bodyMedium?.copyWith(
               color: cs.onSurfaceVariant,
               height: 1.45,

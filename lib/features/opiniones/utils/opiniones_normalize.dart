@@ -41,7 +41,8 @@ final Map<String, HistoriaDocenteCanon> _historiaDocenteAliasIndex = () {
 }();
 
 String canonicalizeHistoriaDocenteNombre(String rawNombre) {
-  final cleaned = sanitizeText(rawNombre).replaceAll(RegExp(r'\s+'), ' ').trim();
+  final cleaned =
+      sanitizeText(rawNombre).replaceAll(RegExp(r'\s+'), ' ').trim();
   if (cleaned.isEmpty) return cleaned;
 
   final normalized = _normalizeDocenteForMatch(cleaned);
@@ -282,7 +283,7 @@ String _stripDivisionNoise(String value) {
   var text = sanitizeText(value).trim();
   text = text.replaceAll(
     RegExp(
-      r'\s*[-â€“â€”]?\s*(comision|comisión|division|división|grupo)\s+([ab])\b',
+      r'\s*[-–—]?\s*(comision|comisión|division|división|grupo)\s+([ab])\b',
       caseSensitive: false,
     ),
     '',

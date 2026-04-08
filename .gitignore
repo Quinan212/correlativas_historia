@@ -1,4 +1,4 @@
-﻿/android/key.properties
+/android/key.properties
 /android/app/upload-keystore.jks
 /android/local.properties
 /upload_certificate.pem
@@ -11,3 +11,4 @@
 *.log
 *.out
 /tmp_docx_pages/
+/RUIDO/

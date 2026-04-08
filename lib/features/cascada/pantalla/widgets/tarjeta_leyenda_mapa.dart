@@ -12,7 +12,8 @@ class TarjetaLeyendaMapa extends StatelessWidget {
     final tt = theme.textTheme;
     final isDark = theme.brightness == Brightness.dark;
 
-    Widget colorCard(String label, String desc, Color bg, Color border, Color textC) {
+    Widget colorCard(
+        String label, String desc, Color bg, Color border, Color textC) {
       return Expanded(
         child: Container(
           margin: const EdgeInsets.symmetric(horizontal: 4),
@@ -155,7 +156,8 @@ class TarjetaLeyendaMapa extends StatelessWidget {
           child: ExpansionTile(
             initiallyExpanded: false,
             maintainState: true,
-            tilePadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            tilePadding:
+                const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             childrenPadding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
             backgroundColor: isDark ? cs.surface : Colors.white,
             collapsedBackgroundColor: isDark ? cs.surface : Colors.white,
@@ -183,7 +185,7 @@ class TarjetaLeyendaMapa extends StatelessWidget {
             subtitle: Padding(
               padding: const EdgeInsets.only(left: 34, top: 2),
               child: Text(
-                'Entende qué significan los colores y las etiquetas.',
+                'Lee los colores y las etiquetas dentro del contexto del plan.',
                 style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
               ),
             ),
@@ -284,14 +286,14 @@ class TarjetaLeyendaMapa extends StatelessWidget {
               const SizedBox(height: 16),
               chipRow(
                 'ABC',
-                'Abreviatura del nombre de la materia.',
+                'Abreviatura usada para hacer más legible la materia dentro del mapa.',
                 abreviatura.$1,
                 abreviatura.$2,
                 abreviatura.$3,
               ),
               chipRow(
                 'Especial',
-                'Condicion especial (por ejemplo, tener todas aprobadas).',
+                'Condición especial que no se explica solo por una correlativa puntual.',
                 especial.$1,
                 especial.$2,
                 especial.$3,

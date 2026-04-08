@@ -48,9 +48,8 @@ class _CalloutExamenesState extends State<CalloutExamenes>
       animation: _ctrl,
       builder: (context, _) {
         final t = _ctrl.value;
-        final lift = kEnableCalloutExamenesMotion
-            ? (math.sin(t * math.pi) * 4.0)
-            : 0.0;
+        final lift =
+            kEnableCalloutExamenesMotion ? (math.sin(t * math.pi) * 4.0) : 0.0;
 
         return Transform.translate(
           offset: Offset(0, -lift),
@@ -93,7 +92,7 @@ class _CalloutExamenesState extends State<CalloutExamenes>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Examenes y llamados',
+                        'Mesas y fechas de examen',
                         style: theme.textTheme.titleSmall?.copyWith(
                           fontWeight: FontWeight.w700,
                           color: cs.onSurface,
@@ -101,7 +100,7 @@ class _CalloutExamenesState extends State<CalloutExamenes>
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        'Consulta fechas, horarios y materias con mesas publicadas en este turno.',
+                        'Cruza la lectura del plan con fechas, llamados y coloquios para tomar decisiones concretas sobre inscripción, correlativas pendientes y próximos movimientos de cursada.',
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: cs.onSurfaceVariant.withValues(
                             alpha: isDark ? 0.86 : 0.82,
@@ -124,10 +123,11 @@ class _CalloutExamenesState extends State<CalloutExamenes>
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(Icons.calendar_month, color: cs.primary, size: 18),
+                                  Icon(Icons.calendar_month,
+                                      color: cs.primary, size: 18),
                                   const SizedBox(width: 8),
                                   Text(
-                                    'Abrir examenes',
+                                    'Ver mesas y exámenes',
                                     style: theme.textTheme.bodyMedium?.copyWith(
                                       color: cs.primary,
                                       fontWeight: FontWeight.w700,

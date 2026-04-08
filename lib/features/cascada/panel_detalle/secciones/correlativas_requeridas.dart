@@ -1,7 +1,6 @@
 // secciones/correlativas_requeridas.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 
 import 'package:correlativas_historia/models/materia.dart';
 
@@ -55,9 +54,8 @@ Widget seccionCorrelativasRequeridas({
 
   if (esPracticaIII(m)) {
     final baseDet = det.where((c) => c.isSpecial != true).toList();
-    final ov = overridesPd3Ids(careerId, all)
-        .where((rec) => rec.$1 != m.id)
-        .toList();
+    final ov =
+        overridesPd3Ids(careerId, all).where((rec) => rec.$1 != m.id).toList();
     final entries = mergePd3(baseDet, ov);
 
     final items = entries.map((tuple) {
@@ -65,7 +63,7 @@ Widget seccionCorrelativasRequeridas({
       final type = tuple.$2;
 
       final mat = all.firstWhere(
-            (x) => x.id == id,
+        (x) => x.id == id,
         orElse: () => Materia(
           id: id,
           codigo: id,
@@ -85,7 +83,6 @@ Widget seccionCorrelativasRequeridas({
       children: [
         header(),
         ...items.asMap().entries.map((entry) {
-          final i = entry.key;
           final e = entry.value;
 
           final mat = e.$1;
@@ -100,15 +97,6 @@ Widget seccionCorrelativasRequeridas({
             name: nombreDetalleTexto(mat.nombre),
             statusType: type,
             isYellow: true,
-          )
-              .animate()
-              .fadeIn(delay: (i * 18).ms, duration: 200.ms)
-              .slideY(
-            begin: 0.05,
-            end: 0,
-            delay: (i * 18).ms,
-            duration: 240.ms,
-            curve: Curves.easeOutCubic,
           );
         }),
         if (items.isEmpty)
@@ -125,10 +113,10 @@ Widget seccionCorrelativasRequeridas({
     final tipo = stype.isEmpty
         ? ''
         : stype == 'A'
-        ? ' (APROBADAS)'
-        : stype == 'R'
-        ? ' (REGULARIZADAS)'
-        : ' ($stype)';
+            ? ' (APROBADAS)'
+            : stype == 'R'
+                ? ' (REGULARIZADAS)'
+                : ' ($stype)';
     final texto = (s.nombre?.trim().isNotEmpty ?? false)
         ? s.nombre!.trim()
         : 'Requisito especial';
@@ -152,14 +140,13 @@ Widget seccionCorrelativasRequeridas({
     children: [
       header(),
       ...entries.asMap().entries.map((entry) {
-        final i = entry.key;
         final tuple = entry.value;
 
         final id = tuple.$1;
         final type = tuple.$2;
 
         final mat = all.firstWhere(
-              (x) => x.id == id,
+          (x) => x.id == id,
           orElse: () => Materia(
             id: id,
             codigo: id,
@@ -180,15 +167,6 @@ Widget seccionCorrelativasRequeridas({
           name: nombreDetalleTexto(mat.nombre),
           statusType: type,
           isYellow: true,
-        )
-            .animate()
-            .fadeIn(delay: (i * 18).ms, duration: 200.ms)
-            .slideY(
-          begin: 0.05,
-          end: 0,
-          delay: (i * 18).ms,
-          duration: 240.ms,
-          curve: Curves.easeOutCubic,
         );
       }),
       if (entries.isEmpty)

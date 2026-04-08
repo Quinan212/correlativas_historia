@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart' show compute;
 import 'package:flutter/services.dart' show rootBundle;
 
 import '../models/materia.dart';
@@ -25,27 +26,37 @@ Future<PlanData> loadPlanFromHtmlAsset(String assetPath) =>
 
 Future<PlanData> loadPlanFromHtml(String assetPath) async {
   final html = await rootBundle.loadString(assetPath);
+  final parsed = await compute(_parsePlanHtmlPayload, html);
+  final materias = (parsed['materias'] as List<dynamic>)
+      .map((e) => Materia.fromMap(Map<String, dynamic>.from(e as Map)))
+      .toList(growable: false);
+  final pdfRaw = parsed['pdfUrl'] as String?;
+  final pdfUrl = pdfRaw == null ? null : Uri.tryParse(pdfRaw);
 
+  return PlanData(materias: materias, pdfUrl: pdfUrl);
+}
+
+Map<String, dynamic> _parsePlanHtmlPayload(String html) {
   final jsArray = _extractMateriasArray(html);
   if (jsArray == null) {
-    throw StateError('No se encontró el array "materias" en $assetPath');
+    throw StateError('No se encontró el array "materias" en el HTML');
   }
 
   final jsonText = _jsArrayToJson(jsArray);
-  final dynamicList = json.decode(jsonText) as List;
+  final dynamicList = (json.decode(jsonText) as List<dynamic>)
+      .map((e) => Map<String, dynamic>.from(e as Map))
+      .toList(growable: false);
 
   _applyReqsToCorrelativasDetalladas(dynamicList);
   _applyFixPracticaIV(dynamicList);
 
-  final materias = dynamicList
-      .map((e) => Materia.fromMap(e as Map<String, dynamic>))
-      .toList();
-
   final pdfMatch = RegExp(r"const\s+pdfUrl\s*=\s*'([^']+)'", multiLine: true)
       .firstMatch(html);
-  final pdfUrl = pdfMatch != null ? Uri.tryParse(pdfMatch.group(1)!) : null;
 
-  return PlanData(materias: materias, pdfUrl: pdfUrl);
+  return <String, dynamic>{
+    'materias': dynamicList,
+    'pdfUrl': pdfMatch?.group(1),
+  };
 }
 
 String? _extractMateriasArray(String html) {

@@ -73,29 +73,26 @@ class _PantallaExamenesState extends ConsumerState<PantallaExamenes> {
     return s
         .toLowerCase()
         .replaceAll('á', 'a')
+        .replaceAll('à', 'a')
+        .replaceAll('ä', 'a')
+        .replaceAll('â', 'a')
         .replaceAll('é', 'e')
+        .replaceAll('è', 'e')
+        .replaceAll('ë', 'e')
+        .replaceAll('ê', 'e')
         .replaceAll('í', 'i')
+        .replaceAll('ì', 'i')
+        .replaceAll('ï', 'i')
+        .replaceAll('î', 'i')
         .replaceAll('ó', 'o')
+        .replaceAll('ò', 'o')
+        .replaceAll('ö', 'o')
+        .replaceAll('ô', 'o')
         .replaceAll('ú', 'u')
+        .replaceAll('ù', 'u')
         .replaceAll('ü', 'u')
-        .replaceAll('ã¡', 'a')
-        .replaceAll('ã©', 'e')
-        .replaceAll('ã­', 'i')
-        .replaceAll('ã³', 'o')
-        .replaceAll('ãº', 'u')
-        .replaceAll('ã¼', 'u')
-        .replaceAll('ãƒâ¡', 'a')
-        .replaceAll('ãƒâ©', 'e')
-        .replaceAll('ãƒâ­', 'i')
-        .replaceAll('ãƒâ³', 'o')
-        .replaceAll('ãƒâº', 'u')
-        .replaceAll('ãƒâ¼', 'u')
-        .replaceAll('ãƒæ’ã‚â¡', 'a')
-        .replaceAll('ãƒæ’ã‚â©', 'e')
-        .replaceAll('ãƒæ’ã‚â­', 'i')
-        .replaceAll('ãƒæ’ã‚â³', 'o')
-        .replaceAll('ãƒæ’ã‚âº', 'u')
-        .replaceAll('ãƒæ’ã‚â¼', 'u')
+        .replaceAll('û', 'u')
+        .replaceAll('ñ', 'n')
         .replaceAll(RegExp(r'\s+'), ' ')
         .trim();
   }
@@ -201,24 +198,42 @@ class _PantallaExamenesState extends ConsumerState<PantallaExamenes> {
     final planMapaAsync = ref.watch(planMapaMateriasProvider(careerId));
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Exámenes próximos')),
+      appBar: AppBar(title: const Text('Mesas y exámenes')),
       backgroundColor: isDark ? cs.surface : const Color(0xFFF5F7FA),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
-            child: Container(
-              decoration: BoxDecoration(
-                color: isDark ? cs.surface : Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: isDark ? cs.outlineVariant : const Color(0xFFD1D5DB),
+      body: CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: isDark ? cs.surface : Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: isDark ? cs.outlineVariant : const Color(0xFFD1D5DB),
+                  ),
                 ),
-              ),
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                children: [
-                  DropdownButtonFormField<String>(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Lectura situada de mesas y llamados',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: cs.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Esta pantalla no reemplaza cronogramas de cátedra ni avisos institucionales. Sirve para cruzar el plan con fechas publicadas, coloquios y movimientos concretos de cursada.',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: cs.onSurfaceVariant,
+                        height: 1.35,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String>(
                     initialValue: careerId,
                     itemHeight: 56,
                     decoration: InputDecoration(
@@ -261,7 +276,7 @@ class _PantallaExamenesState extends ConsumerState<PantallaExamenes> {
                     onChanged: (_) => setState(() {}),
                     decoration: InputDecoration(
                       isDense: true,
-                      hintText: 'Buscar materia, código o tipo...',
+                      hintText: 'Buscar materia, código o tramo...',
                       prefixIcon: const Icon(Icons.search_rounded),
                       suffixIcon: _searchCtrl.text.isEmpty
                           ? null
@@ -322,13 +337,15 @@ class _PantallaExamenesState extends ConsumerState<PantallaExamenes> {
                       ],
                     ),
                   ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
-          Expanded(
-            key: ValueKey('examenes-body-$careerId'),
-            child: planMapaAsync.when(
+          SliverToBoxAdapter(
+            child: SizedBox(
+              key: ValueKey('examenes-body-$careerId'),
+              child: planMapaAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (e, _) => Center(child: Text('Error cargando plan: $e')),
               data: (mapaPlan) {
@@ -341,7 +358,7 @@ class _PantallaExamenesState extends ConsumerState<PantallaExamenes> {
                     if (eventos.isEmpty) {
                       return Center(
                         child: Text(
-                          'No hay eventos cargados para ${labelCarrera(careerId)}.',
+                          'Todavía no hay mesas cargadas para ${labelCarrera(careerId)}.',
                           style: theme.textTheme.bodyMedium,
                         ),
                       );
@@ -382,6 +399,7 @@ class _PantallaExamenesState extends ConsumerState<PantallaExamenes> {
                 );
               },
             ),
+          ),
           ),
         ],
       ),

@@ -45,6 +45,7 @@ class CascadaScreen extends ConsumerWidget {
       backgroundColor: isDark ? cs.surface : kPageBgLight,
       floatingActionButton: !isDesktop
           ? FloatingActionButton(
+              heroTag: 'fab_examenes_cascada',
               onPressed: () => _openExamenes(context, ref),
               tooltip: 'Examenes',
               child: const Icon(Icons.calendar_month),
@@ -174,7 +175,7 @@ class _PanelHerramientaMapa extends ConsumerWidget {
           Row(
             children: [
               Text(
-                'Herramienta activa',
+                'Marco de lectura',
                 style: theme.textTheme.labelLarge?.copyWith(
                   color: cs.primary,
                   fontWeight: FontWeight.w800,
@@ -204,8 +205,8 @@ class _PanelHerramientaMapa extends ConsumerWidget {
           const SizedBox(height: 14),
           Text(
             hasSelectedCareer
-                ? 'Mapa de correlatividades'
-                : 'Selecciona una carrera para empezar',
+                ? 'Mapa de correlatividades y recorrido'
+                : 'Elegí una carrera para abrir el mapa',
             style: theme.textTheme.headlineSmall?.copyWith(
               color: cs.onSurface,
               fontWeight: FontWeight.w800,
@@ -215,8 +216,8 @@ class _PanelHerramientaMapa extends ConsumerWidget {
           const SizedBox(height: 10),
           Text(
             hasSelectedCareer
-                ? 'Selecciona tu carrera, filtra por ano o tipo y recorre la grilla para ver requisitos, bloqueos y materias relacionadas.'
-                : 'Primero elegi una carrera. En cuanto la selecciones, se van a abrir la referencia normativa, los filtros y la grilla completa del mapa.',
+                ? 'Esta pantalla organiza correlatividades, bloqueos y habilitaciones del plan, pero no agota el sentido formativo de cada materia. Sirve para leer relaciones, ubicar tramos y preparar decisiones concretas de cursada con más contexto.'
+                : 'Primero elegí una carrera. Cuando la selecciones, se abren la referencia normativa, los filtros y la grilla para empezar a leer ese recorrido en contexto.',
             style: theme.textTheme.bodyMedium?.copyWith(
               color: cs.onSurfaceVariant,
               height: 1.45,

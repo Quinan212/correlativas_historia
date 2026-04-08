@@ -221,7 +221,8 @@ Map<String, int> teacherDimensionsFromLegacyAspectos(Map<String, int> legacy) {
   }..removeWhere((_, value) => value <= 0);
 }
 
-int _maxOf(int? current, int next) => current == null ? next : (current > next ? current : next);
+int _maxOf(int? current, int next) =>
+    current == null ? next : (current > next ? current : next);
 
 String _presenceLabel(int value) {
   switch (value) {
@@ -325,19 +326,32 @@ String _formativeValueLabel(int value) {
   }
 }
 
-List<String> buildMatterReferenceInsights(Map<String, RatingResumen> dimensions) {
+String referenceReadingStateLabel(RatingResumen rating) {
+  switch (rating.readingState) {
+    case ReferenceReadingState.consensus:
+      return 'Hay acuerdo';
+    case ReferenceReadingState.divided:
+      return 'Referencias divididas';
+    case ReferenceReadingState.mixed:
+      return 'Lectura mixta';
+    case ReferenceReadingState.insufficientData:
+      return 'Pocas referencias';
+  }
+}
+
+List<String> buildMatterReferenceInsights(
+    Map<String, RatingResumen> dimensions) {
   final entries = dimensions.entries
       .where((entry) => entry.value.votos > 0)
       .toList(growable: false);
   if (entries.isEmpty) return const <String>[];
 
-  final sorted = [...entries]
-    ..sort((a, b) {
+  final sorted = [...entries]..sort((a, b) {
       final byVotes = b.value.votos.compareTo(a.value.votos);
       if (byVotes != 0) return byVotes;
       final byDistance = (b.value.promedio - 3).abs().compareTo(
-        (a.value.promedio - 3).abs(),
-      );
+            (a.value.promedio - 3).abs(),
+          );
       if (byDistance != 0) return byDistance;
       return a.key.compareTo(b.key);
     });
@@ -355,13 +369,12 @@ List<String> buildTeacherReferenceInsights(Map<String, RatingResumen> aspects) {
       .toList(growable: false);
   if (entries.isEmpty) return const <String>[];
 
-  final sorted = [...entries]
-    ..sort((a, b) {
+  final sorted = [...entries]..sort((a, b) {
       final byVotes = b.value.votos.compareTo(a.value.votos);
       if (byVotes != 0) return byVotes;
       final byDistance = (b.value.promedio - 3).abs().compareTo(
-        (a.value.promedio - 3).abs(),
-      );
+            (a.value.promedio - 3).abs(),
+          );
       if (byDistance != 0) return byDistance;
       return a.key.compareTo(b.key);
     });
@@ -375,82 +388,141 @@ List<String> buildTeacherReferenceInsights(Map<String, RatingResumen> aspects) {
 
 String? _buildMatterInsight(String key, RatingResumen rating) {
   final average = rating.promedio;
-  final mixed = _isMixed(average);
   switch (key) {
     case 'reading_load':
-      return mixed
-          ? 'Hay referencias mixtas sobre la carga de lectura.'
-          : 'Predomina una percepcion de carga de lectura ${_intensityLabel(_roundScale(average)).toLowerCase()}.';
+      return _framedInsight(
+        rating,
+        dominant:
+            'Hay acuerdo en una percepción de carga de lectura ${_intensityLabel(_roundScale(average)).toLowerCase()}.',
+        mixed:
+            'Las experiencias son mixtas respecto de la carga de lectura que exige esta cursada.',
+        divided:
+            'Las referencias aparecen divididas sobre la carga de lectura que exige esta cursada.',
+        scarce:
+            'Todavía hay pocas referencias para leer con claridad la carga de lectura.',
+      );
     case 'demand_level':
-      return mixed
-          ? 'Hay referencias mixtas sobre el nivel de exigencia.'
-          : 'Predomina una percepcion de exigencia ${_intensityLabel(_roundScale(average)).toLowerCase()}.';
+      return _framedInsight(
+        rating,
+        dominant:
+            'Hay acuerdo en una percepción de exigencia ${_intensityLabel(_roundScale(average)).toLowerCase()}.',
+        mixed: 'Las experiencias son mixtas respecto del nivel de exigencia.',
+        divided:
+            'Las referencias aparecen divididas sobre el nivel de exigencia.',
+        scarce:
+            'Todavía hay pocas referencias para leer con claridad el nivel de exigencia.',
+      );
     case 'classroom_climate':
-      return mixed
-          ? 'Las referencias muestran un clima de cursada mas bien variable.'
-          : 'El clima general de cursada aparece como ${_climateLabel(_roundScale(average)).toLowerCase()}.';
+      return _framedInsight(
+        rating,
+        dominant:
+            'Hay acuerdo en un clima de cursada ${_climateLabel(_roundScale(average)).toLowerCase()}.',
+        mixed:
+            'Las referencias muestran un clima de cursada más bien variable.',
+        divided:
+            'Las referencias aparecen divididas sobre el clima general de cursada.',
+        scarce:
+            'Todavía hay pocas referencias para leer con claridad el clima de cursada.',
+      );
     case 'course_clarity':
-      return mixed
-          ? 'Hay referencias divididas sobre la claridad de la cursada.'
-          : 'La cursada suele describirse como ${_clarityLabel(_roundScale(average)).toLowerCase()}.';
+      return _framedInsight(
+        rating,
+        dominant:
+            'Hay acuerdo en una lectura ${_clarityLabel(_roundScale(average)).toLowerCase()} de la cursada.',
+        mixed:
+            'Predomina una lectura sobre la claridad de la cursada, aunque no de forma homogénea.',
+        divided:
+            'Las referencias aparecen divididas sobre la claridad de la cursada.',
+        scarce:
+            'Todavía hay pocas referencias para leer con claridad este eje.',
+      );
     case 'formative_value':
-      return mixed
-          ? 'Las referencias son mixtas respecto de su valor formativo.'
-          : 'Se la describe como ${_formativeValueLabel(_roundScale(average)).toLowerCase()} para la formacion.';
+      return _framedInsight(
+        rating,
+        dominant:
+            'Hay acuerdo en que aparece como una materia ${_formativeValueLabel(_roundScale(average)).toLowerCase()} para la formación.',
+        mixed: 'Las referencias son mixtas respecto de su valor formativo.',
+        divided: 'Las referencias aparecen divididas sobre su valor formativo.',
+        scarce:
+            'Todavía hay pocas referencias para leer con claridad su valor formativo.',
+      );
     case 'problematization':
       return _presenceInsight(
-        average: average,
-        presentLabel: 'Aparece con fuerza la problematizacion de los temas.',
+        rating: rating,
+        strongLabel:
+            'Hay acuerdo en que aparece con fuerza la problematización de los temas.',
         intermediateLabel:
-            'La problematizacion aparece de manera intermedia en las referencias.',
+            'Predomina una lectura intermedia de la problematización.',
         lowLabel:
-            'La problematizacion aparece con poca fuerza en las referencias.',
-        mixedLabel: 'Hay referencias mixtas sobre el nivel de problematizacion.',
+            'Predomina una lectura de baja problematización en las referencias.',
+        mixedLabel:
+            'Las referencias son mixtas sobre el nivel de problematización.',
+        dividedLabel:
+            'Las referencias aparecen divididas sobre la problematización de los temas.',
+        scarceLabel:
+            'Todavía hay pocas referencias para leer con claridad la problematización.',
       );
     case 'source_work':
       return _presenceInsight(
-        average: average,
-        presentLabel: 'Aparece con fuerza el trabajo con fuentes.',
+        rating: rating,
+        strongLabel:
+            'Hay acuerdo en que aparece con fuerza el trabajo con fuentes.',
         intermediateLabel:
-            'El trabajo con fuentes aparece de manera intermedia.',
+            'Predomina una lectura intermedia del trabajo con fuentes.',
         lowLabel:
-            'El trabajo con fuentes aparece con poca fuerza en las referencias.',
-        mixedLabel: 'Hay referencias mixtas sobre el trabajo con fuentes.',
+            'Predomina una lectura de baja presencia del trabajo con fuentes.',
+        mixedLabel: 'Las referencias son mixtas sobre el trabajo con fuentes.',
+        dividedLabel:
+            'Las referencias aparecen divididas sobre el trabajo con fuentes.',
+        scarceLabel:
+            'Todavía hay pocas referencias para leer con claridad el trabajo con fuentes.',
       );
     case 'past_present_link':
       return _presenceInsight(
-        average: average,
-        presentLabel:
-            'Aparece con fuerza la relacion entre pasado y presente.',
+        rating: rating,
+        strongLabel:
+            'Hay acuerdo en que aparece con fuerza la relación entre pasado y presente.',
         intermediateLabel:
-            'La relacion entre pasado y presente aparece de manera intermedia.',
+            'Predomina una lectura intermedia de la relación entre pasado y presente.',
         lowLabel:
-            'La relacion entre pasado y presente aparece con poca fuerza en las referencias.',
+            'Predomina una lectura de baja presencia de la relación entre pasado y presente.',
         mixedLabel:
-            'Hay referencias mixtas sobre la relacion entre pasado y presente.',
+            'Las referencias son mixtas sobre la relación entre pasado y presente.',
+        dividedLabel:
+            'Las referencias aparecen divididas sobre la relación entre pasado y presente.',
+        scarceLabel:
+            'Todavía hay pocas referencias para leer con claridad la relación entre pasado y presente.',
       );
     case 'theory_practice':
       return _presenceInsight(
-        average: average,
-        presentLabel:
-            'Aparece con fuerza la articulacion entre teoria y practica.',
+        rating: rating,
+        strongLabel:
+            'Hay acuerdo en que aparece con fuerza la articulación entre teoría y práctica.',
         intermediateLabel:
-            'La articulacion entre teoria y practica aparece de manera intermedia.',
+            'Predomina una lectura intermedia de la articulación entre teoría y práctica.',
         lowLabel:
-            'La articulacion entre teoria y practica aparece con poca fuerza en las referencias.',
+            'Predomina una lectura de baja articulación entre teoría y práctica.',
         mixedLabel:
-            'Hay referencias mixtas sobre la articulacion entre teoria y practica.',
+            'Las referencias son mixtas sobre la articulación entre teoría y práctica.',
+        dividedLabel:
+            'Las referencias aparecen divididas sobre la articulación entre teoría y práctica.',
+        scarceLabel:
+            'Todavía hay pocas referencias para leer con claridad la articulación entre teoría y práctica.',
       );
     case 'course_support':
       return _presenceInsight(
-        average: average,
-        presentLabel: 'Aparece con fuerza el acompanamiento en la cursada.',
+        rating: rating,
+        strongLabel:
+            'Hay acuerdo en que aparece con fuerza el acompañamiento en la cursada.',
         intermediateLabel:
-            'El acompanamiento en la cursada aparece de manera intermedia.',
-        lowLabel:
-            'El acompanamiento en la cursada aparece con poca fuerza en las referencias.',
+            'Predomina una lectura intermedia del acompañamiento en la cursada.',
+        lowLabel: 'Predomina una lectura de bajo acompañamiento en la cursada.',
         mixedLabel:
-            'Hay referencias mixtas sobre el acompanamiento en la cursada.',
+            'Las referencias son mixtas sobre el acompañamiento en la cursada.',
+        dividedLabel:
+            'Las referencias aparecen divididas sobre el acompañamiento en la cursada.',
+        scarceLabel:
+            'Todavía hay pocas referencias para leer con claridad el acompañamiento en la cursada.',
       );
     default:
       return null;
@@ -459,61 +531,121 @@ String? _buildMatterInsight(String key, RatingResumen rating) {
 
 String? _buildTeacherInsight(String key, RatingResumen rating) {
   final average = rating.promedio;
-  final mixed = _isMixed(average);
   switch (key) {
     case 'clarity_exposition':
-      return mixed
-          ? 'Hay referencias mixtas sobre la claridad expositiva.'
-          : 'La claridad expositiva suele describirse como ${_clarityLabel(_roundScale(average)).toLowerCase()}.';
+      return _framedInsight(
+        rating,
+        dominant:
+            'Hay acuerdo en una lectura ${_clarityLabel(_roundScale(average)).toLowerCase()} de la claridad expositiva.',
+        mixed:
+            'Predomina una lectura sobre la claridad expositiva, aunque no de forma homogénea.',
+        divided:
+            'Las referencias aparecen divididas sobre la claridad expositiva.',
+        scarce:
+            'Todavía hay pocas referencias para leer con claridad la claridad expositiva.',
+      );
     case 'evaluation_clarity':
-      return mixed
-          ? 'Hay referencias divididas sobre los criterios de evaluacion.'
-          : 'Los criterios de evaluacion suelen describirse como ${_clarityLabel(_roundScale(average)).toLowerCase()}.';
+      return _framedInsight(
+        rating,
+        dominant:
+            'Hay acuerdo en una lectura ${_clarityLabel(_roundScale(average)).toLowerCase()} de los criterios de evaluación.',
+        mixed:
+            'Predomina una lectura sobre los criterios de evaluación, aunque no de forma homogénea.',
+        divided:
+            'Las referencias aparecen divididas sobre los criterios de evaluación.',
+        scarce:
+            'Todavía hay pocas referencias para leer con claridad los criterios de evaluación.',
+      );
     case 'classroom_climate':
-      return mixed
-          ? 'Las referencias muestran un clima de aula mas bien variable.'
-          : 'El clima en el aula aparece como ${_climateLabel(_roundScale(average)).toLowerCase()}.';
+      return _framedInsight(
+        rating,
+        dominant:
+            'Hay acuerdo en un clima de aula ${_climateLabel(_roundScale(average)).toLowerCase()}.',
+        mixed: 'Las referencias muestran un clima de aula más bien variable.',
+        divided:
+            'Las referencias aparecen divididas sobre el clima en el aula.',
+        scarce:
+            'Todavía hay pocas referencias para leer con claridad el clima en el aula.',
+      );
     case 'word_circulation':
-      return mixed
-          ? 'Hay referencias mixtas sobre la circulacion de la palabra.'
-          : 'La circulacion de la palabra se describe como ${_opennessLabel(_roundScale(average)).toLowerCase()}.';
+      return _framedInsight(
+        rating,
+        dominant:
+            'Hay acuerdo en una circulación de la palabra ${_opennessLabel(_roundScale(average)).toLowerCase()}.',
+        mixed:
+            'Predomina una lectura sobre la circulación de la palabra, aunque no de forma homogénea.',
+        divided:
+            'Las referencias aparecen divididas sobre la circulación de la palabra.',
+        scarce:
+            'Todavía hay pocas referencias para leer con claridad la circulación de la palabra.',
+      );
     case 'interpretation_openness':
-      return mixed
-          ? 'Hay referencias mixtas sobre la apertura a otras interpretaciones.'
-          : 'La apertura a otras interpretaciones aparece como ${_opennessLabel(_roundScale(average)).toLowerCase()}.';
+      return _framedInsight(
+        rating,
+        dominant:
+            'Hay acuerdo en una apertura ${_opennessLabel(_roundScale(average)).toLowerCase()} a otras interpretaciones.',
+        mixed:
+            'Predomina una lectura sobre la apertura a otras interpretaciones, aunque no de forma homogénea.',
+        divided:
+            'Las referencias aparecen divididas sobre la apertura a otras interpretaciones.',
+        scarce:
+            'Todavía hay pocas referencias para leer con claridad la apertura a otras interpretaciones.',
+      );
     case 'question_space':
-      return mixed
-          ? 'Hay referencias mixtas sobre el lugar para preguntas.'
-          : 'El lugar para preguntas se describe como ${_opennessLabel(_roundScale(average)).toLowerCase()}.';
+      return _framedInsight(
+        rating,
+        dominant:
+            'Hay acuerdo en un lugar para preguntas ${_opennessLabel(_roundScale(average)).toLowerCase()}.',
+        mixed:
+            'Predomina una lectura sobre el lugar para preguntas, aunque no de forma homogénea.',
+        divided:
+            'Las referencias aparecen divididas sobre el lugar para preguntas.',
+        scarce:
+            'Todavía hay pocas referencias para leer con claridad el lugar para preguntas.',
+      );
     case 'problematization':
       return _presenceInsight(
-        average: average,
-        presentLabel: 'Aparece con fuerza la problematizacion en clase.',
+        rating: rating,
+        strongLabel:
+            'Hay acuerdo en que aparece con fuerza la problematización en clase.',
         intermediateLabel:
-            'La problematizacion aparece de manera intermedia en las referencias.',
-        lowLabel:
-            'La problematizacion aparece con poca fuerza en las referencias.',
-        mixedLabel: 'Hay referencias mixtas sobre la problematizacion.',
+            'Predomina una lectura intermedia de la problematización en clase.',
+        lowLabel: 'Predomina una lectura de baja problematización en clase.',
+        mixedLabel: 'Las referencias son mixtas sobre la problematización.',
+        dividedLabel:
+            'Las referencias aparecen divididas sobre la problematización en clase.',
+        scarceLabel:
+            'Todavía hay pocas referencias para leer con claridad la problematización en clase.',
       );
     case 'source_work':
       return _presenceInsight(
-        average: average,
-        presentLabel: 'Aparece con fuerza el trabajo con fuentes.',
+        rating: rating,
+        strongLabel:
+            'Hay acuerdo en que aparece con fuerza el trabajo con fuentes.',
         intermediateLabel:
-            'El trabajo con fuentes aparece de manera intermedia.',
+            'Predomina una lectura intermedia del trabajo con fuentes.',
         lowLabel:
-            'El trabajo con fuentes aparece con poca fuerza en las referencias.',
-        mixedLabel: 'Hay referencias mixtas sobre el trabajo con fuentes.',
+            'Predomina una lectura de baja presencia del trabajo con fuentes.',
+        mixedLabel: 'Las referencias son mixtas sobre el trabajo con fuentes.',
+        dividedLabel:
+            'Las referencias aparecen divididas sobre el trabajo con fuentes.',
+        scarceLabel:
+            'Todavía hay pocas referencias para leer con claridad el trabajo con fuentes.',
       );
     case 'support':
       return _presenceInsight(
-        average: average,
-        presentLabel: 'Aparece con fuerza el acompanamiento docente.',
+        rating: rating,
+        strongLabel:
+            'Hay acuerdo en que aparece con fuerza el acompañamiento docente.',
         intermediateLabel:
-            'El acompanamiento docente aparece de manera intermedia.',
-        lowLabel:
-            'El acompanamiento docente aparece con poca fuerza en las referencias.',
-        mixedLabel: 'Hay referencias mixtas sobre el acompanamiento docente.',
+            'Predomina una lectura intermedia del acompañamiento docente.',
+        lowLabel: 'Predomina una lectura de bajo acompañamiento docente.',
+        mixedLabel:
+            'Las referencias son mixtas sobre el acompañamiento docente.',
+        dividedLabel:
+            'Las referencias aparecen divididas sobre el acompañamiento docente.',
+        scarceLabel:
+            'Todavía hay pocas referencias para leer con claridad el acompañamiento docente.',
       );
     default:
       return null;
@@ -521,18 +653,46 @@ String? _buildTeacherInsight(String key, RatingResumen rating) {
 }
 
 String _presenceInsight({
-  required double average,
-  required String presentLabel,
+  required RatingResumen rating,
+  required String strongLabel,
   required String intermediateLabel,
   required String lowLabel,
   required String mixedLabel,
+  required String dividedLabel,
+  required String scarceLabel,
 }) {
-  if (_isMixed(average)) return mixedLabel;
-  if (average >= 3.6) return presentLabel;
-  if (average <= 2.4) return lowLabel;
+  switch (rating.readingState) {
+    case ReferenceReadingState.insufficientData:
+      return scarceLabel;
+    case ReferenceReadingState.divided:
+      return dividedLabel;
+    case ReferenceReadingState.mixed:
+      return mixedLabel;
+    case ReferenceReadingState.consensus:
+      break;
+  }
+  if (rating.promedio >= 3.6) return strongLabel;
+  if (rating.promedio <= 2.4) return lowLabel;
   return intermediateLabel;
 }
 
-bool _isMixed(double average) => average >= 2.7 && average <= 3.3;
+String _framedInsight(
+  RatingResumen rating, {
+  required String dominant,
+  required String mixed,
+  required String divided,
+  required String scarce,
+}) {
+  switch (rating.readingState) {
+    case ReferenceReadingState.consensus:
+      return dominant;
+    case ReferenceReadingState.divided:
+      return divided;
+    case ReferenceReadingState.mixed:
+      return mixed;
+    case ReferenceReadingState.insufficientData:
+      return scarce;
+  }
+}
 
 int _roundScale(double average) => average.round().clamp(1, 5);

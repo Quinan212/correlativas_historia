@@ -277,7 +277,6 @@ String _normalize(String s) {
     'Á': 'a',
     'À': 'a',
     'Ä': 'a',
-    'Â': 'a',
     'é': 'e',
     'è': 'e',
     'ë': 'e',
@@ -397,7 +396,7 @@ class FaqScreen extends ConsumerWidget {
           pinned: true,
           delegate: _CollapsingBannerDelegate(
             topInset: topInset,
-            subtitle: 'Preguntas Frecuentes',
+            subtitle: 'Normativa y trayectorias',
           ),
         ),
         const SliverToBoxAdapter(
@@ -453,8 +452,8 @@ class _FaqHero extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Buscá por palabra clave (ej.: "promoción", "correlativa", "mesa"). '
-            'El buscador es tolerante a acentos y errores pequeños.',
+            'Este espacio reune respuestas frecuentes sobre ingreso, correlatividades, cursado, evaluacion y egreso. '
+            'No reemplaza la normativa, pero ayuda a leerla en contexto para tomar decisiones concretas de cursada.',
             style: TextStyle(
               fontSize: 15,
               height: 1.6,
@@ -510,7 +509,7 @@ class _SearchBar extends ConsumerWidget {
         ..selection = TextSelection.collapsed(offset: term.length),
       decoration: _dec(
         context,
-        hint: 'Escribí algo: promoción, correlativa, mesa…',
+        hint: 'Busca por tema o situacion: promocion, correlativa, mesa...',
       ).copyWith(
         prefixIcon: Icon(
           Icons.search,
@@ -558,7 +557,7 @@ class _FaqList extends ConsumerWidget {
           boxShadow: const [BoxShadow(blurRadius: 4, color: Color(0x0F000000))],
         ),
         child: Text(
-          'No encontramos resultados para tu búsqueda. Probá con otra palabra o menos términos.',
+          'No encontramos respuestas para esa busqueda. Proba con otra palabra o un tema mas general.',
           textAlign: TextAlign.center,
           style: TextStyle(
             color: isDark ? cs.onSurfaceVariant : const Color(0xFF6B7280),
@@ -720,12 +719,12 @@ class _AutorBlock extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Autor',
+            'Proyecto',
             style: TextStyle(fontWeight: FontWeight.w700, color: cs.onSurface),
           ),
           const SizedBox(height: 6),
           Text(
-            '© 2025 Alan Gabriel Maillet — Autor original\nTodos los derechos reservados.',
+            'Curaduria y desarrollo inicial: Alan Gabriel Maillet.',
             style: TextStyle(
               fontSize: 12,
               color: isDark ? cs.onSurfaceVariant : const Color(0xFF6B7280),
@@ -733,7 +732,7 @@ class _AutorBlock extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Material educativo didáctico, creado con la única intención de facilitarle la vida a los estudiantes.',
+            'Material didactico de apoyo para leer la normativa desde problemas concretos de cursada y acompanar trayectorias estudiantiles.',
             style: TextStyle(
               fontSize: 13,
               color: isDark ? cs.onSurfaceVariant : const Color(0xFF4B5563),

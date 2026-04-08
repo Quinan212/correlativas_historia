@@ -73,6 +73,8 @@ class _TarjetaMateriaGrillaState extends ConsumerState<TarjetaMateriaGrilla> {
       child: InkWell(
         onTap: () async {
           HapticFeedback.lightImpact();
+          debugPrint(
+              'Abrir detalle: setting selectedId=${m.id} and pushing route');
           ref.read(selectedMateriaIdProvider.notifier).state = m.id;
           await mostrarModalDetalleMateria(
             context: context,
@@ -99,12 +101,12 @@ class _TarjetaMateriaGrillaState extends ConsumerState<TarjetaMateriaGrilla> {
               boxShadow: isDark || widget.borderless
                   ? const []
                   : [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 2,
-                  offset: const Offset(0, 1),
-                )
-              ],
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.05),
+                        blurRadius: 2,
+                        offset: const Offset(0, 1),
+                      )
+                    ],
             ),
             padding: const EdgeInsets.all(14),
             child: Row(

@@ -16,7 +16,7 @@ class TarjetaHeroCalculadora extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '¿Puedo Cursar?',
+            'Escenarios de cursada',
             style: TextStyle(
               fontSize: 30,
               height: 1.10,
@@ -26,9 +26,9 @@ class TarjetaHeroCalculadora extends ConsumerWidget {
           ),
           const SizedBox(height: 10),
           Text(
-            'Ya sabés qué te falta... ahora, ¿Podés Cursar?\n'
-            'Con Puedo Cursar descubrís en segundos si podés avanzar en tu carrera. '
-            'Un par de clics y sabrás exactamente qué camino seguir para llegar a tu meta académica.',
+            'Esta pantalla no busca reducir el recorrido a un sí o un no aislado. '
+            'Te ayuda a leer, en contexto, qué condiciones ya cumpliste, cuáles siguen pendientes '
+            'y qué escenario de cursada se abre hoy para la materia que estás mirando.',
             style: TextStyle(
               fontSize: 14.5,
               height: 1.45,
@@ -42,20 +42,23 @@ class TarjetaHeroCalculadora extends ConsumerWidget {
             child: OutlinedButton(
               onPressed: () => ref.read(routerIndexProvider.notifier).state = 1,
               style: OutlinedButton.styleFrom(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 12,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
-                side:
-                    BorderSide(color: EstilosCalculadora.bordeTarjeta(context)),
+                side: BorderSide(
+                  color: EstilosCalculadora.bordeTarjeta(context),
+                ),
                 foregroundColor: EstilosCalculadora.textoPrincipal(context),
                 textStyle: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w400,
                 ),
               ),
-              child: const Text('Volver al Mapa'),
+              child: const Text('Volver al mapa'),
             ),
           ),
         ],

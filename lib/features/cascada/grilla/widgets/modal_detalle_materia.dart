@@ -1,12 +1,11 @@
-import 'dart:math' as math;
-import 'dart:ui' show ImageFilter;
-
-import 'package:flutter/foundation.dart';
+import 'package:firebase_performance/firebase_performance.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../shared/performance/app_performance.dart';
 import '../../../../shared/providers/app_state.dart';
-import '../../detail_panel.dart';
+import '../../panel_detalle/componentes/controles_superiores.dart';
+import '../../panel_detalle/panel_detalle_materia.dart';
 
 Future<void> mostrarModalDetalleMateria({
   required BuildContext context,
@@ -23,7 +22,7 @@ class _DetalleMateriaRoute extends PageRoute<void> {
   final String heroId;
 
   @override
-  bool get opaque => false;
+  bool get opaque => true;
 
   @override
   bool get maintainState => true;
@@ -35,13 +34,13 @@ class _DetalleMateriaRoute extends PageRoute<void> {
   Color? get barrierColor => null;
 
   @override
-  String? get barrierLabel => 'Detalle';
+  String? get barrierLabel => null;
 
   @override
-  Duration get transitionDuration => const Duration(milliseconds: 320);
+  Duration get transitionDuration => const Duration(milliseconds: 240);
 
   @override
-  Duration get reverseTransitionDuration => const Duration(milliseconds: 260);
+  Duration get reverseTransitionDuration => const Duration(milliseconds: 200);
 
   @override
   Widget buildPage(
@@ -49,7 +48,10 @@ class _DetalleMateriaRoute extends PageRoute<void> {
     Animation<double> animation,
     Animation<double> secondaryAnimation,
   ) {
-    return _DetalleMateriaPage(key: ValueKey('det_$heroId'));
+    return _DetalleMateriaPage(
+      key: ValueKey('det_$heroId'),
+      initialMateriaId: heroId,
+    );
   }
 
   @override
@@ -59,315 +61,132 @@ class _DetalleMateriaRoute extends PageRoute<void> {
     Animation<double> secondaryAnimation,
     Widget child,
   ) {
-    return child;
+    final curved = CurvedAnimation(
+      parent: animation,
+      curve: Curves.easeOutCubic,
+      reverseCurve: Curves.easeInCubic,
+    );
+    return FadeTransition(
+      opacity: curved,
+      child: SlideTransition(
+        position: Tween<Offset>(
+          begin: const Offset(0.025, 0),
+          end: Offset.zero,
+        ).animate(curved),
+        child: child,
+      ),
+    );
   }
 }
 
 class _DetalleMateriaPage extends ConsumerStatefulWidget {
-  const _DetalleMateriaPage({super.key});
+  const _DetalleMateriaPage({
+    super.key,
+    required this.initialMateriaId,
+  });
+
+  final String initialMateriaId;
 
   @override
   ConsumerState<_DetalleMateriaPage> createState() =>
       _DetalleMateriaPageState();
 }
 
-class _DetalleMateriaPageState extends ConsumerState<_DetalleMateriaPage>
-    with TickerProviderStateMixin {
-  static final bool _disableBackdropBlur =
-      !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+class _DetalleMateriaPageState extends ConsumerState<_DetalleMateriaPage> {
   final ScrollController _scrollCtrl = ScrollController();
+  ProviderSubscription<String?>? _selectedMateriaSubscription;
+  late final Future<Trace?> _detailOpenTrace;
 
-  double _dragDy = 0.0;
-  AnimationController? _settleCtrl;
+  @override
+  void initState() {
+    super.initState();
+    ref.read(selectedMateriaIdProvider.notifier).state =
+        widget.initialMateriaId;
+    _detailOpenTrace = AppPerformance.startTrace(
+      'detail_sheet_open',
+      attributes: const {'surface': 'matter_detail_page'},
+    );
+    _selectedMateriaSubscription = ref.listenManual<String?>(
+      selectedMateriaIdProvider,
+      (prev, next) {
+        if (prev == next) return;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!_scrollCtrl.hasClients) return;
+          _scrollCtrl.animateTo(
+            0,
+            duration: const Duration(milliseconds: 180),
+            curve: Curves.easeOutCubic,
+          );
+        });
+      },
+    );
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await AppPerformance.stopTrace(await _detailOpenTrace);
+    });
+  }
 
   @override
   void dispose() {
-    _settleCtrl?.dispose();
+    _selectedMateriaSubscription?.close();
     _scrollCtrl.dispose();
     super.dispose();
   }
 
-  void _animateDragBack() {
-    _settleCtrl?.dispose();
-    _settleCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 200),
-    );
-
-    final start = _dragDy;
-    final anim = Tween<double>(begin: start, end: 0).animate(
-      CurvedAnimation(parent: _settleCtrl!, curve: Curves.easeOutCubic),
-    );
-
-    _settleCtrl!.addListener(() {
-      setState(() => _dragDy = anim.value);
-    });
-
-    _settleCtrl!.forward();
-  }
-
-  void _onDragUpdate(DragUpdateDetails d) {
-    if (_scrollCtrl.hasClients && _scrollCtrl.offset > 0) return;
-
-    final dy = d.delta.dy;
-    if (dy <= 0 && _dragDy <= 0) return;
-
-    setState(() {
-      _dragDy = math.max(0.0, _dragDy + dy);
-      _dragDy = math.min(_dragDy, 420.0);
-    });
-  }
-
-  void _onDragEnd(DragEndDetails d) {
-    final v = d.velocity.pixelsPerSecond.dy;
-    if (_dragDy > 140 || v > 1400) {
-      Navigator.of(context).pop();
-      return;
-    }
-    _animateDragBack();
+  void _close() {
+    if (!mounted) return;
+    Navigator.of(context).pop();
   }
 
   @override
   Widget build(BuildContext context) {
-    ref.listen<String?>(selectedMateriaIdProvider, (prev, next) {
-      if (prev == next) return;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!_scrollCtrl.hasClients) return;
-        _scrollCtrl.animateTo(
-          0,
-          duration: const Duration(milliseconds: 220),
-          curve: Curves.easeOutCubic,
-        );
-      });
-    });
-
-    final routeAnim = ModalRoute.of(context)!.animation!;
-    final curved = CurvedAnimation(
-      parent: routeAnim,
-      curve: Curves.easeOutCubic,
-      reverseCurve: Curves.easeInCubic,
-    );
-
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-
-    // un toque más alto, más "flotante"
-    final maxH = MediaQuery.sizeOf(context).height * 0.90;
-    final bottomSafe = MediaQuery.viewPaddingOf(context).bottom;
-    const lift = 1.0;
-
-    return Material(
-      type: MaterialType.transparency,
-      child: AnimatedBuilder(
-        animation: curved,
-        builder: (context, _) {
-          final t = curved.value;
-
-          final dragT = (_dragDy / 260.0).clamp(0.0, 1.0);
-          final focus = (1.0 - dragT);
-
-          final blurSigma = 14.0 * t * focus;
-          final dimA = 0.28 * t * focus;
-          final tintA = 0.10 * t * focus;
-
-          // entra desde un poco menos abajo
-          final sheetOffset = (1.0 - t) * 26.0 + _dragDy;
-
-          return Stack(
-            children: [
-              Positioned.fill(
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () => Navigator.of(context).pop(),
-                  child: Stack(
-                    children: [
-                      Container(color: Colors.black.withValues(alpha: dimA)),
-                      if (_disableBackdropBlur)
-                        Container(
-                          color: Colors.black.withValues(alpha: tintA),
-                        )
-                      else
-                        BackdropFilter(
-                          filter: ImageFilter.blur(
-                            sigmaX: blurSigma,
-                            sigmaY: blurSigma,
-                          ),
-                          child: Container(
-                            color: Colors.black.withValues(alpha: tintA),
-                          ),
-                        ),
-                      Align(
-                        alignment: Alignment.bottomCenter,
-                        child: IgnorePointer(
-                          child: Container(
-                            height: 220,
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                                colors: [
-                                  Colors.transparent,
-                                  Colors.black.withValues(
-                                    alpha: 0.10 * t * focus,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              Align(
-                alignment: Alignment.bottomCenter,
-                child: Transform.translate(
-                  offset: Offset(0, sheetOffset),
-                  child: Opacity(
-                    opacity: t,
-                    child: Padding(
-                      padding: EdgeInsets.fromLTRB(
-                        12,
-                        12,
-                        12,
-                        12 + bottomSafe + lift,
-                      ),
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(maxHeight: maxH),
-                        child: GestureDetector(
-                          behavior: HitTestBehavior.translucent,
-                          onVerticalDragUpdate: _onDragUpdate,
-                          onVerticalDragEnd: _onDragEnd,
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Flexible(
-                                fit: FlexFit.loose,
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(24),
-                                  child: Material(
-                                    color: isDark
-                                        ? const Color(0xFF1F2937)
-                                        : Colors.white,
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        const SizedBox(height: 6),
-                                        const _PremiumGrabHandle(),
-                                        Flexible(
-                                          fit: FlexFit.loose,
-                                          child: SingleChildScrollView(
-                                            controller: _scrollCtrl,
-                                            padding: EdgeInsets.zero,
-                                            child: const RepaintBoundary(
-                                              child: DetailPanel(),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(18),
-                                child: Material(
-                                  color: isDark
-                                      ? const Color(0xFF111827)
-                                      : Colors.white,
-                                  child: InkWell(
-                                    onTap: () => Navigator.of(context).pop(),
-                                    child: Container(
-                                      height: 54,
-                                      alignment: Alignment.center,
-                                      child: Text(
-                                        'Cerrar',
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w700,
-                                          color: isDark
-                                              ? const Color(0xFFE5E7EB)
-                                              : const Color(0xFF111827),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+    final backgroundTop =
+        isDark ? const Color(0xFF0B1220) : const Color(0xFFF5F7FB);
+    final backgroundBottom =
+        isDark ? const Color(0xFF111827) : const Color(0xFFE9EEF5);
+    return Scaffold(
+      backgroundColor: backgroundTop,
+      body: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              backgroundTop,
+              Color.lerp(backgroundTop, backgroundBottom, 0.65) ??
+                  backgroundBottom,
             ],
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _PremiumGrabHandle extends StatelessWidget {
-  const _PremiumGrabHandle();
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
-
-    final base = isDark
-        ? Colors.white.withValues(alpha: 0.18)
-        : Colors.black.withValues(alpha: 0.12);
-
-    final highlight = isDark
-        ? Colors.white.withValues(alpha: 0.22)
-        : Colors.white.withValues(alpha: 0.55);
-
-    return Padding(
-      padding: const EdgeInsets.only(top: 2, bottom: 10),
-      child: Center(
-        child: SizedBox(
-          height: 18,
-          child: Stack(
-            alignment: Alignment.center,
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
             children: [
-              Container(
-                width: 72,
-                height: 7,
-                decoration: BoxDecoration(
-                  color: base,
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(
-                    color: cs.outlineVariant.withValues(
-                      alpha: isDark ? 0.35 : 0.55,
+              Expanded(
+                child: SingleChildScrollView(
+                  controller: _scrollCtrl,
+                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+                  child: Align(
+                    alignment: Alignment.topCenter,
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 980),
+                      child: RepaintBoundary(
+                        child: DetailPanel(
+                          showHeaderCloseButton: false,
+                          initialMateriaId: widget.initialMateriaId,
+                        ),
+                      ),
                     ),
-                    width: 1,
                   ),
-                  boxShadow: isDark
-                      ? const []
-                      : [
-                          BoxShadow(
-                            blurRadius: 10,
-                            offset: const Offset(0, 6),
-                            color: Colors.black.withValues(alpha: 0.08),
-                          ),
-                        ],
                 ),
               ),
-              Positioned(
-                top: 6,
-                child: Container(
-                  width: 52,
-                  height: 2,
-                  decoration: BoxDecoration(
-                    color: highlight,
-                    borderRadius: BorderRadius.circular(999),
+              SafeArea(
+                top: false,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 980),
+                  child: BarraInferiorDetalle(
+                    onTap: _close,
+                    label: 'Cerrar y volver',
                   ),
                 ),
               ),

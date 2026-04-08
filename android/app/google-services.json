@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "243551909774",
+    "firebase_url": "https://correlativas-pscs-default-rtdb.firebaseio.com",
+    "project_id": "correlativas-pscs",
+    "storage_bucket": "correlativas-pscs.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:243551909774:android:a5fabda11ca12935afd6df",
+        "android_client_info": {
+          "package_name": "ar.maillet.correlativas_historia"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "243551909774-a9icoah667gibcg7k8vo9ttacvskev9b.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "ar.maillet.correlativas_historia",
+            "certificate_hash": "f8871cde03eefc94733a75408dee32cc990c04f5"
+          }
+        },
+        {
+          "client_id": "243551909774-t8n850gi7182nhst5msnv7a48ilef03m.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBFSZgberDFSVg-xw9Ci2nhnKd9udZd8MQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "243551909774-t8n850gi7182nhst5msnv7a48ilef03m.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "243551909774-eo1r6qp820khuqd29vam81vgrffdmodn.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.correlativasHistoria"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

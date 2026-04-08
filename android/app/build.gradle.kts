@@ -3,6 +3,8 @@ import java.io.FileInputStream
 
 plugins {
     id("com.android.application")
+    id("com.google.gms.google-services")
+    id("com.google.firebase.firebase-perf")
     id("kotlin-android")
     id("dev.flutter.flutter-gradle-plugin")
 }
@@ -20,6 +22,7 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+        isCoreLibraryDesugaringEnabled = true
     }
     kotlinOptions { jvmTarget = JavaVersion.VERSION_11.toString() }
 
@@ -32,11 +35,8 @@ android {
         // ✅ requerido por Play
         targetSdk = 35
 
-        // ✅ CLAVE: mayor que 413
-        versionCode = 729
-
-        // ✅ lo que ve el usuario
-        versionName = "1.3.926"
+        versionCode = flutter.versionCode
+        versionName = flutter.versionName
     }
 
     signingConfigs {
@@ -65,4 +65,8 @@ android {
             isUniversalApk = false
         }
     }
+}
+
+dependencies {
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
 }

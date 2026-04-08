@@ -37,6 +37,8 @@ class ListaMaterias extends StatelessWidget {
     }
 
     return ListView(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 16),
       children: [
         if (proximos.isNotEmpty && !examsHiddenMode) ...[

@@ -37,11 +37,11 @@ class TarjetaRegimenCorrelatividades extends ConsumerWidget {
                 : null,
             eyebrow: compact ? 'Norma activa' : 'Regimen vigente',
             title: compact
-                ? 'La referencia cambia con la carrera que estes viendo'
+                ? 'El marco de lectura cambia con la carrera que estes viendo'
                 : 'Base normativa de la carrera activa',
             summary: compact
-                ? 'Aqui ves la referencia normativa de la carrera seleccionada, junto con la grilla y los filtros que se aplican a esa vista.'
-                : 'Esta referencia acompaña la carrera que estas viendo para interpretar correlativas, avance y alcance del plan.',
+                ? 'Aqui ves la referencia normativa de la carrera seleccionada, junto con el recorte del plan que se esta leyendo en esta vista.'
+                : 'Esta referencia acompaña la carrera que estas viendo para interpretar correlativas, avance y alcance del plan sin mezclar marcos de otra carrera o institución.',
             initiallyExpanded: false,
             child: compact
                 ? _compactExpandedBody(context, data!)
@@ -116,8 +116,8 @@ class TarjetaRegimenCorrelatividades extends ConsumerWidget {
                     const SizedBox(height: 4),
                     Text(
                       compact
-                          ? 'Seleccioná una carrera para ver la referencia'
-                          : 'Seleccioná una carrera para cargar la referencia normativa',
+                          ? 'Selecciona una carrera para ver la referencia'
+                          : 'Selecciona una carrera para cargar la referencia normativa',
                       style: theme.textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.w800,
                         color: cs.onSurface,
@@ -128,7 +128,7 @@ class TarjetaRegimenCorrelatividades extends ConsumerWidget {
                     Text(
                       compact
                           ? 'Cuando elijas una carrera, este bloque mostrará la institución y la norma que corresponden a esa vista.'
-                          : 'Este panel se actualiza con la carrera elegida para mostrar la institución, el alcance y la norma de referencia correspondientes.',
+                          : 'Este panel se actualiza con la carrera elegida para mostrar la institución, el alcance y la norma de referencia que ordenan esa lectura.',
                       style: theme.textTheme.bodyMedium?.copyWith(
                         height: 1.5,
                         color: cs.onSurfaceVariant,
@@ -259,7 +259,7 @@ class TarjetaRegimenCorrelatividades extends ConsumerWidget {
           data.resolucion ?? 'Referencia normativa en actualizacion.',
           data.resolucion == null
               ? 'Mientras tanto, el mapa sigue tomando la carrera activa como contexto.'
-              : 'Te sirve para reconocer rapido que resolucion o expediente corresponde.',
+              : 'Te sirve para contrastar la lectura visual con su respaldo documental.',
         ],
       ),
       const PremiumAccordionItemData(

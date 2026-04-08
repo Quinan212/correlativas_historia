@@ -1,0 +1,28 @@
+€ Verificación
+>
+Tus solicitudes
+No se pudieron cargar tus solicitudes:
+ClientException with SocketException:
+Failed host lookup:
+'drluybtivmnggleqcbgf.supabase.co' (OS
+Error: No address associated with
+hostname, errno = 7), uri=https://
+drluybtivmnggleqcbgf.supabase.co/rest/v1/
+verification_requests?select=%2A8device_i
+d=eq.and_2bcd01d6ca7005798o0rder=creat
+ed_at.desc.nullslast
+Este dispositivo
+and_2bcd01d6ca700579
+Fallo la verificacion admin: ClientException
+with SocketException: Failed host lookup:
+'drluybtivmnggleqcbgf.supabase.co' (OS
+Error: No address associated with
+hostname, errno = 7), uri=https://
+drluybtivmnggleqgcbgf.supabase.co/rest/v1/
+admin_devices?select=device_id%2Cenable
+d%2Clabel8device_id=eq.and_2bcd01d6ca7
+00579
+
+1D Copiar ID C Refrescar
+
+YET

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 
+import 'package:correlativas_historia/models/materia.dart';
 import 'package:correlativas_historia/shared/providers/app_state.dart';
 import 'package:correlativas_historia/features/opiniones/widgets/materia_comunidad_section.dart';
 
@@ -14,20 +15,57 @@ import 'ui/chips_detalle.dart';
 import 'componentes/controles_superiores.dart';
 
 class DetailPanel extends ConsumerWidget {
-  const DetailPanel({super.key});
+  const DetailPanel({
+    super.key,
+    this.showHeaderCloseButton = true,
+    this.initialMateriaId,
+  });
+
+  final bool showHeaderCloseButton;
+  final String? initialMateriaId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final plan = ref.watch(planProvider).valueOrNull;
-    final selectedId = ref.watch(selectedMateriaIdProvider);
-    if (plan == null || selectedId == null) return const SizedBox.shrink();
+    final planAsync = ref.watch(planProvider);
+    final plan = planAsync.valueOrNull;
+    final selectedId = ref.watch(selectedMateriaIdProvider) ?? initialMateriaId;
+    if (selectedId == null) {
+      debugPrint('DetailPanel: selectedId null');
+      return const _DeferredSectionPlaceholder(
+        title: 'Detalle de materia',
+        body: 'No pudimos recuperar la materia seleccionada.',
+      );
+    }
+    if (plan == null) {
+      debugPrint('DetailPanel: plan null for selectedId=$selectedId');
+      return const _DeferredSectionPlaceholder(
+        title: 'Detalle de materia',
+        body: 'Cargando correlativas, comunidad y referencias...',
+      );
+    }
 
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
 
     final all = plan.materias;
-    final m = all.firstWhere((x) => x.id == selectedId);
+    Materia? selectedMateria;
+    for (final materia in all) {
+      if (materia.id == selectedId) {
+        selectedMateria = materia;
+        break;
+      }
+    }
+    if (selectedMateria == null) {
+      debugPrint(
+        'DetailPanel: materia $selectedId no encontrada en plan (len=${all.length})',
+      );
+      return const _DeferredSectionPlaceholder(
+        title: 'Detalle de materia',
+        body: 'No encontramos esa materia en el plan cargado.',
+      );
+    }
+    final m = selectedMateria;
     final careerId = ref.watch(selectedCareerInfoProvider).id;
 
     final dependents = dependientesDeMateria(all, m, careerId);
@@ -84,12 +122,15 @@ class DetailPanel extends ConsumerWidget {
     );
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 14),
+      padding: const EdgeInsets.fromLTRB(0, 10, 0, 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _HeaderBox(
             title: nombreDetalleMateria(m),
+            subtitle:
+                'Esta ficha reúne relaciones formales del plan y referencias de cursada. Conviene leerla junto con la propuesta de cátedra y las condiciones concretas de este tramo.',
+            showCloseButton: showHeaderCloseButton,
             chips: Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -159,7 +200,7 @@ class DetailPanel extends ConsumerWidget {
                   body,
                   if (careerId == 'historia') ...[
                     const SizedBox(height: 14),
-                    MateriaComunidadSection(
+                    _DeferredMatterCommunitySection(
                       materia: m,
                       careerId: careerId,
                     ),
@@ -181,14 +222,136 @@ class DetailPanel extends ConsumerWidget {
   }
 }
 
+class _DeferredMatterCommunitySection extends StatefulWidget {
+  const _DeferredMatterCommunitySection({
+    required this.materia,
+    required this.careerId,
+  });
+
+  final Materia materia;
+  final String careerId;
+
+  @override
+  State<_DeferredMatterCommunitySection> createState() =>
+      _DeferredMatterCommunitySectionState();
+}
+
+class _DeferredMatterCommunitySectionState
+    extends State<_DeferredMatterCommunitySection> {
+  bool _ready = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      setState(() => _ready = true);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_ready) {
+      return const RepaintBoundary(
+        child: _DeferredSectionPlaceholder(
+          title: 'Comunidad de la materia',
+          body: 'Cargando referencias, fotos y docentes vinculados...',
+        ),
+      );
+    }
+
+    return RepaintBoundary(
+      child: MateriaComunidadSection(
+        materia: widget.materia,
+        careerId: widget.careerId,
+      ),
+    );
+  }
+}
+
+class _DeferredSectionPlaceholder extends StatelessWidget {
+  const _DeferredSectionPlaceholder({
+    required this.title,
+    required this.body,
+  });
+
+  final String title;
+  final String body;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return RepaintBoundary(
+      child: Container(
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF0B1220) : Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: isDark ? const Color(0xFF243041) : const Color(0xFFE5E7EB),
+            width: 1,
+          ),
+          boxShadow: isDark
+              ? const []
+              : [
+                  BoxShadow(
+                    blurRadius: 6,
+                    offset: const Offset(0, 3),
+                    color: Colors.black.withValues(alpha: 0.035),
+                  ),
+                ],
+        ),
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(
+                strokeWidth: 2.3,
+                color: theme.colorScheme.primary,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    body,
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _HeaderBox extends StatelessWidget {
   const _HeaderBox({
     required this.title,
+    required this.subtitle,
+    required this.showCloseButton,
     required this.chips,
     required this.onClose,
   });
 
   final String title;
+  final String subtitle;
+  final bool showCloseButton;
   final Widget chips;
   final VoidCallback onClose;
 
@@ -201,46 +364,60 @@ class _HeaderBox extends StatelessWidget {
     final bg = isDark ? const Color(0xFF111827) : Colors.white;
     final border = isDark ? const Color(0xFF243041) : const Color(0xFFE5E7EB);
 
-    return Container(
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: border, width: 1),
-        boxShadow: isDark
-            ? const []
-            : [
-          BoxShadow(
-            blurRadius: 10,
-            offset: const Offset(0, 6),
-            color: Colors.black.withValues(alpha: 0.06),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 22,
-                    height: 1.15,
-                    fontWeight: FontWeight.w800,
-                    color: isDark ? cs.onSurface : const Color(0xFF111827),
+    return RepaintBoundary(
+      child: Container(
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: border, width: 1),
+          boxShadow: isDark
+              ? const []
+              : [
+                  BoxShadow(
+                    blurRadius: 6,
+                    offset: const Offset(0, 3),
+                    color: Colors.black.withValues(alpha: 0.04),
+                  ),
+                ],
+        ),
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 22,
+                      height: 1.15,
+                      fontWeight: FontWeight.w800,
+                      color: isDark ? cs.onSurface : const Color(0xFF111827),
+                    ),
                   ),
                 ),
+                if (showCloseButton) ...[
+                  const SizedBox(width: 10),
+                  BotonCerrarDetalle(onTap: onClose),
+                ],
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(
+              subtitle,
+              style: TextStyle(
+                fontSize: 13.5,
+                height: 1.35,
+                fontWeight: FontWeight.w400,
+                color: isDark ? cs.onSurfaceVariant : const Color(0xFF4B5563),
               ),
-              const SizedBox(width: 10),
-              BotonCerrarDetalle(onTap: onClose),
-            ],
-          ),
-          const SizedBox(height: 10),
-          chips,
-        ],
+            ),
+            const SizedBox(height: 10),
+            chips,
+          ],
+        ),
       ),
     );
   }
@@ -260,37 +437,40 @@ class _SectionBox extends StatelessWidget {
     final bg = isDark ? const Color(0xFF0B1220) : Colors.white;
     final border = isDark ? const Color(0xFF243041) : const Color(0xFFE5E7EB);
 
-    return Container(
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: border, width: 1),
-        boxShadow: isDark
-            ? const []
-            : [
-          BoxShadow(
-            blurRadius: 10,
-            offset: const Offset(0, 6),
-            color: Colors.black.withValues(alpha: 0.05),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w900,
-              color: isDark ? const Color(0xFFE5E7EB) : const Color(0xFF111827),
-              letterSpacing: 0.2,
+    return RepaintBoundary(
+      child: Container(
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: border, width: 1),
+          boxShadow: isDark
+              ? const []
+              : [
+                  BoxShadow(
+                    blurRadius: 6,
+                    offset: const Offset(0, 3),
+                    color: Colors.black.withValues(alpha: 0.035),
+                  ),
+                ],
+        ),
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w900,
+                color:
+                    isDark ? const Color(0xFFE5E7EB) : const Color(0xFF111827),
+                letterSpacing: 0.2,
+              ),
             ),
-          ),
-          const SizedBox(height: 10),
-          child,
-        ],
+            const SizedBox(height: 10),
+            child,
+          ],
+        ),
       ),
     );
   }

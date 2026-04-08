@@ -14,7 +14,7 @@ class EvaluationPanel extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final plan =
-    ref.watch(planProvider).maybeWhen(data: (p) => p, orElse: () => null);
+        ref.watch(planProvider).maybeWhen(data: (p) => p, orElse: () => null);
     final selId = ref.watch(selectedCalcMateriaIdProvider);
     final statusMap = ref.watch(correlativaStatusMapProvider);
 
@@ -61,7 +61,7 @@ class EvaluationPanel extends ConsumerWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              EstilosPanel.sectionHeader(context, 'Resultado'),
+              EstilosPanel.sectionHeader(context, 'Escenario actual'),
               const SizedBox(height: 10),
               PanelResultado.build(context, res),
             ],

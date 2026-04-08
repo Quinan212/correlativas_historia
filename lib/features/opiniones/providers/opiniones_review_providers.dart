@@ -4,16 +4,16 @@ import '../../../shared/device_identity/device_identity.dart';
 import '../../../shared/supabase/supabase.dart';
 import '../../verification/providers/verification_providers.dart';
 import '../data/opiniones_reviews_repository.dart';
+import '../models/matter_photo_post.dart';
 import '../models/opiniones_rating.dart';
 import '../models/opiniones_review_models.dart';
 
-final opinionesReviewsRepositoryProvider =
-    Provider<OpinionesReviewsRepository>(
+final opinionesReviewsRepositoryProvider = Provider<OpinionesReviewsRepository>(
   (ref) => const OpinionesReviewsRepository(),
 );
 
-final matterReviewsProvider =
-    StreamProvider.family<List<MatterReview>, String>((ref, matterId) async* {
+final matterReviewsProvider = StreamProvider.autoDispose
+    .family<List<MatterReview>, String>((ref, matterId) async* {
   final client = ref.watch(supabaseClientProvider);
   if (client == null) {
     yield const <MatterReview>[];
@@ -24,8 +24,8 @@ final matterReviewsProvider =
   yield* repo.watchMatterReviews(client: client, matterId: matterId);
 });
 
-final ownMatterReviewProvider =
-    FutureProvider.autoDispose.family<MatterReview?, String>((ref, matterId) async {
+final ownMatterReviewProvider = FutureProvider.autoDispose
+    .family<MatterReview?, String>((ref, matterId) async {
   final client = ref.watch(supabaseClientProvider);
   if (client == null) {
     return null;
@@ -41,15 +41,27 @@ final ownMatterReviewProvider =
 });
 
 final matterReviewSummaryProvider =
-    Provider.family<MatterReviewSummary, String>((ref, matterId) {
+    Provider.autoDispose.family<MatterReviewSummary, String>((ref, matterId) {
   final repo = ref.watch(opinionesReviewsRepositoryProvider);
   final reviews = ref.watch(matterReviewsProvider(matterId)).valueOrNull ??
       const <MatterReview>[];
   return repo.summarizeMatter(reviews);
 });
 
-final teacherReviewsProvider =
-    StreamProvider.family<List<TeacherReview>, String>((ref, teacherId) async* {
+final matterPhotoPostsProvider = StreamProvider.autoDispose
+    .family<List<MatterPhotoPost>, String>((ref, matterId) async* {
+  final client = ref.watch(supabaseClientProvider);
+  if (client == null) {
+    yield const <MatterPhotoPost>[];
+    return;
+  }
+
+  final repo = ref.watch(opinionesReviewsRepositoryProvider);
+  yield* repo.watchMatterPhotoPosts(client: client, matterId: matterId);
+});
+
+final teacherReviewsProvider = StreamProvider.autoDispose
+    .family<List<TeacherReview>, String>((ref, teacherId) async* {
   final client = ref.watch(supabaseClientProvider);
   if (client == null) {
     yield const <TeacherReview>[];
@@ -62,9 +74,9 @@ final teacherReviewsProvider =
 
 final ownTeacherReviewsForMatterProvider =
     FutureProvider.autoDispose.family<Map<String, TeacherReview>, String>((
-      ref,
-      matterId,
-    ) async {
+  ref,
+  matterId,
+) async {
   final client = ref.watch(supabaseClientProvider);
   if (client == null) {
     return const <String, TeacherReview>{};
@@ -80,13 +92,15 @@ final ownTeacherReviewsForMatterProvider =
 });
 
 final ownTeacherReviewProvider =
-    Provider.family<AsyncValue<TeacherReview?>, TeacherReviewScope>((ref, scope) {
-  final reviewsAsync = ref.watch(ownTeacherReviewsForMatterProvider(scope.matterId));
+    Provider.family<AsyncValue<TeacherReview?>, TeacherReviewScope>(
+        (ref, scope) {
+  final reviewsAsync =
+      ref.watch(ownTeacherReviewsForMatterProvider(scope.matterId));
   return reviewsAsync.whenData((reviews) => reviews[scope.teacherId]);
 });
 
 final teacherReviewSummaryProvider =
-    Provider.family<DocenteRatingResumen, String>((ref, teacherId) {
+    Provider.autoDispose.family<DocenteRatingResumen, String>((ref, teacherId) {
   final repo = ref.watch(opinionesReviewsRepositoryProvider);
   final reviews = ref.watch(teacherReviewsProvider(teacherId)).valueOrNull ??
       const <TeacherReview>[];

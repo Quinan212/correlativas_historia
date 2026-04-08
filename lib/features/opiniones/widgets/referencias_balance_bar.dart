@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../models/opiniones_rating.dart';
+import '../utils/referencias_labels.dart';
+
 enum ReferenciasBalanceTone {
   veryCritical,
   critical,
@@ -216,6 +219,42 @@ class ReferenciasBalanceBadge extends StatelessWidget {
   }
 }
 
+class ReferenciasReadingBadge extends StatelessWidget {
+  const ReferenciasReadingBadge({
+    super.key,
+    required this.rating,
+  });
+
+  final RatingResumen rating;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final palette = _ReferenciasReadingPalette.colorsFor(
+      rating.readingState,
+      theme,
+    );
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: palette.background,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: palette.border,
+        ),
+      ),
+      child: Text(
+        referenceReadingStateLabel(rating),
+        style: theme.textTheme.labelMedium?.copyWith(
+          color: palette.foreground,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+    );
+  }
+}
+
 class _ReferenciasBalanceBadgeColors {
   const _ReferenciasBalanceBadgeColors({
     required this.background,
@@ -224,6 +263,18 @@ class _ReferenciasBalanceBadgeColors {
 
   final Color background;
   final Color foreground;
+}
+
+class _ReferenciasReadingBadgeColors {
+  const _ReferenciasReadingBadgeColors({
+    required this.background,
+    required this.foreground,
+    required this.border,
+  });
+
+  final Color background;
+  final Color foreground;
+  final Color border;
 }
 
 class _ReferenciasBalancePalette {
@@ -244,7 +295,8 @@ class _ReferenciasBalancePalette {
     ThemeData theme,
   ) {
     return switch (tone) {
-      ReferenciasBalanceTone.veryCritical => const _ReferenciasBalanceBadgeColors(
+      ReferenciasBalanceTone.veryCritical =>
+        const _ReferenciasBalanceBadgeColors(
           background: Color(0xFFF6E0DB),
           foreground: Color(0xFF8D463A),
         ),
@@ -260,13 +312,46 @@ class _ReferenciasBalancePalette {
           background: Color(0xFFDCEFF0),
           foreground: Color(0xFF246C71),
         ),
-      ReferenciasBalanceTone.veryFavorable => const _ReferenciasBalanceBadgeColors(
+      ReferenciasBalanceTone.veryFavorable =>
+        const _ReferenciasBalanceBadgeColors(
           background: Color(0xFFD7ECF4),
           foreground: Color(0xFF0A5673),
         ),
       ReferenciasBalanceTone.empty => _ReferenciasBalanceBadgeColors(
           background: theme.colorScheme.surfaceContainerHighest,
           foreground: theme.colorScheme.onSurfaceVariant,
+        ),
+    };
+  }
+}
+
+class _ReferenciasReadingPalette {
+  const _ReferenciasReadingPalette();
+
+  static _ReferenciasReadingBadgeColors colorsFor(
+    ReferenceReadingState state,
+    ThemeData theme,
+  ) {
+    return switch (state) {
+      ReferenceReadingState.consensus => const _ReferenciasReadingBadgeColors(
+          background: Color(0xFFDCEFF0),
+          foreground: Color(0xFF215E62),
+          border: Color(0xFF9DCFD2),
+        ),
+      ReferenceReadingState.divided => const _ReferenciasReadingBadgeColors(
+          background: Color(0xFFF6E4DE),
+          foreground: Color(0xFF8D4E41),
+          border: Color(0xFFE3B5A8),
+        ),
+      ReferenceReadingState.mixed => const _ReferenciasReadingBadgeColors(
+          background: Color(0xFFF3ECE2),
+          foreground: Color(0xFF6D6458),
+          border: Color(0xFFDCCEBB),
+        ),
+      ReferenceReadingState.insufficientData => _ReferenciasReadingBadgeColors(
+          background: theme.colorScheme.surfaceContainerHighest,
+          foreground: theme.colorScheme.onSurfaceVariant,
+          border: theme.colorScheme.outlineVariant,
         ),
     };
   }
