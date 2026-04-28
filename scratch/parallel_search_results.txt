@@ -1,0 +1,41 @@
+﻿
+--- MATERIAS ENCONTRADAS POR COLUMNA ---
+
+COLUMNA D:
+  [Fila 6]: Did├íctica General
+  [Fila 20]: Procesos Sociales, Pol├¡ticos, Econ├│micos y Culturales de la Antig├╝edad
+  [Fila 27]: Procesos Sociales, Pol├¡ticos, Econ├│micos y Culturales de los Pueblos Originarios de Am├®rica
+  [Fila 34]: Problem├ítica del Conocimiento Hist├│rico
+  [Fila 48]: Procesos Sociales, Pol├¡ticos, Econ├│micos y Culturales Americanos I
+  [Fila 55]: Procesos Sociales, Pol├¡ticos, Econ├│micos y Culturales del Feudalismo y la Modernidad
+  [Fila 62]: Psicolog├¡a Educacional
+  [Fila 69]: Did├íctica de la Historia
+  [Fila 72]: Horacio, Velazque Pens
+  [Fila 76]: Historia y Pol├¡tica de la Educaci├│n Argentina
+  [Fila 83]: Procesos Sociales, Pol├¡ticos, Econ├│micos y Culturales Contempor├íneos I
+  [Fila 90]: Procesos Sociales, Pol├¡ticos, Econ├│micos y Culturales Americanos II
+  [Fila 93]: Carmar├ín, Rosana
+  [Fila 97]: Sociolog├¡a de la Educaci├│n
+  [Fila 104]: Derechos Humanos: ├ëtica y Ciudadan├¡a
+  [Fila 107]: Stadelman, Patricia
+  [Fila 111]: Procesos Sociales, Pol├¡ticos, Econ├│micos y Culturales Americanos III
+  [Fila 118]: Procesos Sociales, Pol├¡ticos, Econ├│micos y Culturales Contempor├íneos II
+
+COLUMNA I:
+  [Fila 11]: Sin Inscripciones
+  [Fila 18]: Sin Inscripciones
+  [Fila 25]: Sin Inscripciones
+  [Fila 32]: Sin Inscripciones
+  [Fila 39]: Sin Inscripciones
+  [Fila 46]: Sin Inscripciones
+  [Fila 53]: Sin Inscripciones
+  [Fila 60]: Sin Inscripciones
+  [Fila 67]: Sin Inscripciones
+  [Fila 74]: Sin Inscripciones
+  [Fila 81]: Sin Inscripciones
+  [Fila 88]: Sin Inscripciones
+  [Fila 95]: Sin Inscripciones
+  [Fila 102]: Sin Inscripciones
+  [Fila 109]: Sin Inscripciones
+  [Fila 116]: Sin Inscripciones
+  [Fila 123]: Sin Inscripciones

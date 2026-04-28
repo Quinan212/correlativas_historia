@@ -9,6 +9,9 @@ class WhatsNewSheet {
   static const String _prefsKey = 'whats_new.last_seen_version';
 
   static Future<void> maybeShow(BuildContext context) async {
+    // TEMPORALMENTE DESACTIVADO — reactivar cuando se actualice el contenido
+    return;
+    // ignore: dead_code
     final prefs = await SharedPreferences.getInstance();
     final lastSeen = prefs.getString(_prefsKey)?.trim();
     if (lastSeen == currentWhatsNewVersion) return;
@@ -39,6 +42,8 @@ class _WhatsNewSheetBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return const SizedBox.shrink(); // RADICAL: no mostrar nada hasta nuevo aviso
+    // ignore: dead_code
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final media = MediaQuery.of(context);

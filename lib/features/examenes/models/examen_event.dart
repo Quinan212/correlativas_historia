@@ -10,6 +10,7 @@ class ExamenEvent {
   final String materia;
   final String instancia;
   final List<String> docentes;
+  final String? actaUrl;
 
   const ExamenEvent({
     required this.careerId,
@@ -19,6 +20,7 @@ class ExamenEvent {
     required this.materia,
     required this.instancia,
     required this.docentes,
+    required this.actaUrl,
   });
 
   DateTime? get fechaHora {
@@ -55,8 +57,17 @@ class ExamenEvent {
   }
 
   factory ExamenEvent.fromJson(Map<String, dynamic> j) {
+    dynamic rawValue(List<String> keys) {
+      for (final key in keys) {
+        if (j.containsKey(key) && j[key] != null) {
+          return j[key];
+        }
+      }
+      return null;
+    }
+
     String reqString(String key) {
-      final value = j[key];
+      final value = rawValue([key, _snakeCase(key)]);
       if (value == null) {
         throw FormatException('Falta "$key" en evento: $j');
       }
@@ -68,14 +79,14 @@ class ExamenEvent {
     }
 
     String optString(String key, String fallback) {
-      final value = j[key];
+      final value = rawValue([key, _snakeCase(key)]);
       if (value == null) return fallback;
       final text = sanitizeText(value.toString());
       return text.isEmpty ? fallback : text;
     }
 
     int? optInt(String key) {
-      final value = j[key];
+      final value = rawValue([key, _snakeCase(key)]);
       if (value == null) return null;
       if (value is num) return value.toInt();
       final text = value.toString().trim();
@@ -84,7 +95,7 @@ class ExamenEvent {
     }
 
     DateTime? optFecha(String key) {
-      final value = j[key];
+      final value = rawValue([key, _snakeCase(key)]);
       if (value == null) return null;
       final text = value.toString().trim();
       if (text.isEmpty || text.toLowerCase() == 'null') return null;
@@ -92,11 +103,18 @@ class ExamenEvent {
     }
 
     String? optHora(String key) {
-      final value = j[key];
+      final value = rawValue([key, _snakeCase(key)]);
       if (value == null) return null;
       final text = value.toString().trim();
       if (text.isEmpty || text.toLowerCase() == 'null') return null;
       return _normalizeHora(text);
+    }
+
+    String? optActaUrl() {
+      final value = rawValue(['actaUrl', 'acta_url']);
+      if (value == null) return null;
+      final text = sanitizeText(value.toString()).trim();
+      return text.isEmpty ? null : text;
     }
 
     List<String> optDocentes() {
@@ -104,12 +122,12 @@ class ExamenEvent {
       if (value is List) {
         return value
             .where((e) => e != null)
-            .map((e) => sanitizeText(e.toString()))
+            .map((e) => normalizeDocenteDisplayName(e.toString()))
             .where((s) => s.isNotEmpty)
             .toList();
       }
       if (value == null) return const <String>[];
-      final text = sanitizeText(value.toString());
+      final text = normalizeDocenteDisplayName(value.toString());
       if (text.isEmpty) return const <String>[];
       return [text];
     }
@@ -122,6 +140,7 @@ class ExamenEvent {
       materia: reqString('materia'),
       instancia: optString('instancia', 'llamado_1'),
       docentes: optDocentes(),
+      actaUrl: optActaUrl(),
     );
   }
 
@@ -165,4 +184,19 @@ class ExamenEvent {
 
     throw FormatException('JSON invalido para eventos');
   }
+}
+
+String _snakeCase(String input) {
+  final out = <String>[];
+  for (var i = 0; i < input.length; i++) {
+    final ch = input[i];
+    final isUpper = ch.toUpperCase() == ch && ch.toLowerCase() != ch;
+    if (isUpper && i > 0) {
+      out.add('_');
+      out.add(ch.toLowerCase());
+    } else {
+      out.add(ch.toLowerCase());
+    }
+  }
+  return out.join();
 }

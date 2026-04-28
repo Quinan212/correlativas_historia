@@ -13,6 +13,7 @@ class ListaMaterias extends StatelessWidget {
     required this.proximos,
     required this.examsHiddenMode,
     required this.hiddenModeMessage,
+    required this.isZeus,
     required this.onTapMateria,
   });
 
@@ -21,6 +22,7 @@ class ListaMaterias extends StatelessWidget {
   final List<MateriaParaLista> proximos;
   final bool examsHiddenMode;
   final String hiddenModeMessage;
+  final bool isZeus;
   final void Function(String materia, bool fromColoquios) onTapMateria;
 
   @override
@@ -39,15 +41,21 @@ class ListaMaterias extends StatelessWidget {
     return ListView(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 16),
+      padding: EdgeInsets.fromLTRB(
+        isZeus ? 14 : 12,
+        isZeus ? 12 : 10,
+        isZeus ? 14 : 12,
+        isZeus ? 20 : 16,
+      ),
       children: [
         if (proximos.isNotEmpty && !examsHiddenMode) ...[
           _ProximosStrip(
             careerId: careerId,
             proximos: proximos,
+            isZeus: isZeus,
             onTapMateria: onTapMateria,
           ),
-          const SizedBox(height: 14),
+          SizedBox(height: isZeus ? 16 : 14),
         ],
         for (var i = 0; i < secciones.length; i++) ...[
           _Seccion(
@@ -58,10 +66,10 @@ class ListaMaterias extends StatelessWidget {
             esColoquios: secciones[i].esColoquios,
             examsHiddenMode: examsHiddenMode,
             hiddenModeMessage: hiddenModeMessage,
+            isZeus: isZeus,
             onTapMateria: onTapMateria,
-            initiallyExpanded: i == 0,
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: isZeus ? 14 : 10),
         ],
       ],
     );
@@ -72,11 +80,13 @@ class _ProximosStrip extends StatelessWidget {
   const _ProximosStrip({
     required this.careerId,
     required this.proximos,
+    required this.isZeus,
     required this.onTapMateria,
   });
 
   final String careerId;
   final List<MateriaParaLista> proximos;
+  final bool isZeus;
   final void Function(String materia, bool fromColoquios) onTapMateria;
 
   @override
@@ -88,12 +98,26 @@ class _ProximosStrip extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: isDark ? cs.surface : Colors.white,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(isZeus ? 22 : 18),
         border: Border.all(
-          color: isDark ? cs.outlineVariant : const Color(0xFFD1D5DB),
+          color: isZeus
+              ? cs.primary.withValues(alpha: isDark ? 0.35 : 0.18)
+              : (isDark ? cs.outlineVariant : const Color(0xFFD1D5DB)),
         ),
+        boxShadow: [
+          BoxShadow(
+            blurRadius: isZeus ? 16 : 6,
+            offset: Offset(0, isZeus ? 8 : 3),
+            color: theme.shadowColor.withValues(alpha: isZeus ? 0.12 : 0.08),
+          ),
+        ],
       ),
-      padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+      padding: EdgeInsets.fromLTRB(
+        isZeus ? 14 : 12,
+        isZeus ? 14 : 12,
+        isZeus ? 14 : 12,
+        isZeus ? 14 : 12,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -101,6 +125,7 @@ class _ProximosStrip extends StatelessWidget {
             'Próximos exámenes',
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w900,
+              letterSpacing: isZeus ? 0.1 : 0,
             ),
           ),
           const SizedBox(height: 10),
@@ -224,8 +249,8 @@ class _Seccion extends StatelessWidget {
     required this.esColoquios,
     required this.examsHiddenMode,
     required this.hiddenModeMessage,
+    required this.isZeus,
     required this.onTapMateria,
-    required this.initiallyExpanded,
   });
 
   final String careerId;
@@ -234,8 +259,8 @@ class _Seccion extends StatelessWidget {
   final bool esColoquios;
   final bool examsHiddenMode;
   final String hiddenModeMessage;
+  final bool isZeus;
   final void Function(String materia, bool fromColoquios) onTapMateria;
-  final bool initiallyExpanded;
 
   @override
   Widget build(BuildContext context) {
@@ -246,56 +271,81 @@ class _Seccion extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: isDark ? cs.surface : Colors.white,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(isZeus ? 22 : 18),
         border: Border.all(
-          color: isDark ? cs.outlineVariant : const Color(0xFFD1D5DB),
+          color: isZeus
+              ? cs.primary.withValues(alpha: isDark ? 0.35 : 0.16)
+              : (isDark ? cs.outlineVariant : const Color(0xFFD1D5DB)),
+          width: isZeus ? 1.2 : 1,
         ),
+        boxShadow: [
+          BoxShadow(
+            blurRadius: isZeus ? 14 : 6,
+            offset: Offset(0, isZeus ? 8 : 3),
+            color: theme.shadowColor.withValues(alpha: isZeus ? 0.10 : 0.06),
+          ),
+        ],
       ),
-      child: Theme(
-        data: theme.copyWith(dividerColor: Colors.transparent),
-        child: ExpansionTile(
-          key: PageStorageKey('sec-$titulo'),
-          initiallyExpanded: initiallyExpanded,
-          tilePadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
-          childrenPadding: const EdgeInsets.fromLTRB(12, 2, 12, 12),
-          title: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  titulo,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ),
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(
+          isZeus ? 16 : 14,
+          isZeus ? 16 : 14,
+          isZeus ? 16 : 14,
+          isZeus ? 14 : 12,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (isZeus)
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 12),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(999),
-                  color: isDark
-                      ? cs.primary.withValues(alpha: 0.18)
-                      : const Color(0xFFDBEAFE),
-                ),
-                child: Text(
-                  '${materias.length}',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: isDark ? cs.onSurface : const Color(0xFF1D4ED8),
+                  gradient: LinearGradient(
+                    colors: [cs.primary, cs.secondary],
                   ),
                 ),
               ),
-            ],
-          ),
-          children: [
-            for (final m in materias) ...[
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    titulo,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(999),
+                    color: isDark
+                        ? cs.primary.withValues(alpha: 0.18)
+                        : const Color(0xFFDBEAFE),
+                  ),
+                  child: Text(
+                    '${materias.length}',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      color: isDark ? cs.onSurface : const Color(0xFF1D4ED8),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: isZeus ? 14 : 12),
+            for (var i = 0; i < materias.length; i++) ...[
               _TarjetaMateria(
                 careerId: careerId,
-                item: m,
+                item: materias[i],
                 examsHiddenMode: examsHiddenMode,
                 hiddenModeMessage: hiddenModeMessage,
-                onTap: () => onTapMateria(m.nombreEvento, esColoquios),
+                isZeus: isZeus,
+                onTap: () => onTapMateria(materias[i].nombreEvento, esColoquios),
               ),
-              if (m != materias.last) const SizedBox(height: 10),
+              if (i != materias.length - 1) SizedBox(height: isZeus ? 12 : 10),
             ],
           ],
         ),
@@ -310,6 +360,7 @@ class _TarjetaMateria extends StatelessWidget {
     required this.item,
     required this.examsHiddenMode,
     required this.hiddenModeMessage,
+    required this.isZeus,
     required this.onTap,
   });
 
@@ -317,6 +368,7 @@ class _TarjetaMateria extends StatelessWidget {
   final MateriaParaLista item;
   final bool examsHiddenMode;
   final String hiddenModeMessage;
+  final bool isZeus;
   final VoidCallback onTap;
 
   @override
@@ -353,23 +405,26 @@ class _TarjetaMateria extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: examsHiddenMode ? null : onTap,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(isZeus ? 18 : 16),
         child: Ink(
           decoration: BoxDecoration(
             color: isDark ? cs.surface : Colors.white,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(isZeus ? 18 : 16),
             border: Border.all(
-              color: isDark ? cs.outlineVariant : const Color(0xFFD1D5DB),
+              color: isZeus
+                  ? cs.primary.withValues(alpha: isDark ? 0.28 : 0.14)
+                  : (isDark ? cs.outlineVariant : const Color(0xFFD1D5DB)),
             ),
             boxShadow: [
               BoxShadow(
-                blurRadius: 6,
-                color: theme.shadowColor.withValues(alpha: 0.08),
+                blurRadius: isZeus ? 12 : 6,
+                offset: Offset(0, isZeus ? 6 : 3),
+                color: theme.shadowColor.withValues(alpha: isZeus ? 0.12 : 0.08),
               ),
             ],
           ),
           child: Padding(
-            padding: const EdgeInsets.all(12),
+            padding: EdgeInsets.all(isZeus ? 14 : 12),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

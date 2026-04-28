@@ -197,7 +197,10 @@ class TarjetaRegimenCorrelatividades extends ConsumerWidget {
           institutionText: data.institucionCorta,
         ),
         const SizedBox(height: 16),
-        PremiumFeatureAccordion(items: _buildAccordionItems(data)),
+        PremiumFeatureAccordion(
+          items: _buildAccordionItems(data),
+          lightweight: true,
+        ),
       ],
     );
   }
@@ -490,94 +493,25 @@ class _AnimatedBadgeGroup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final shouldStack = _shouldStackBadges(context, constraints);
-        return AnimatedSize(
-          duration: const Duration(milliseconds: 320),
-          curve: Curves.easeOutCubic,
-          alignment: Alignment.topLeft,
-          child: KeyedSubtree(
-            key: ValueKey<bool>(shouldStack),
-            child: shouldStack
-                ? Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _AnimatedInlineBadge(
-                        icon: careerIcon,
-                        text: careerText,
-                      ),
-                      const SizedBox(height: 10),
-                      _AnimatedInlineBadge(
-                        icon: institutionIcon,
-                        text: institutionText,
-                      ),
-                    ],
-                  )
-                : Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _AnimatedInlineBadge(
-                        icon: careerIcon,
-                        text: careerText,
-                      ),
-                      const SizedBox(width: 10),
-                      _AnimatedInlineBadge(
-                        icon: institutionIcon,
-                        text: institutionText,
-                      ),
-                    ],
-                  ),
+    return AnimatedSize(
+      duration: const Duration(milliseconds: 320),
+      curve: Curves.easeOutCubic,
+      alignment: Alignment.topLeft,
+      child: Wrap(
+        spacing: 10,
+        runSpacing: 10,
+        children: [
+          _AnimatedInlineBadge(
+            icon: careerIcon,
+            text: careerText,
           ),
-        );
-      },
+          _AnimatedInlineBadge(
+            icon: institutionIcon,
+            text: institutionText,
+          ),
+        ],
+      ),
     );
-  }
-
-  bool _shouldStackBadges(BuildContext context, BoxConstraints constraints) {
-    if (!constraints.hasBoundedWidth) return false;
-
-    final availableWidth = constraints.maxWidth;
-    final careerWidth = _estimateBadgeWidth(context, text: careerText);
-    final institutionWidth = _estimateBadgeWidth(
-      context,
-      text: institutionText,
-    );
-
-    return careerWidth + 10 + institutionWidth > availableWidth;
-  }
-
-  double _estimateBadgeWidth(
-    BuildContext context, {
-    required String text,
-  }) {
-    final theme = Theme.of(context);
-    final style = theme.textTheme.labelLarge?.copyWith(
-          fontWeight: FontWeight.w700,
-          color: theme.colorScheme.onSurface,
-        ) ??
-        const TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w700,
-        );
-
-    final painter = TextPainter(
-      text: TextSpan(text: text, style: style),
-      textDirection: Directionality.of(context),
-      textScaler: MediaQuery.textScalerOf(context),
-      maxLines: 1,
-    )..layout();
-
-    const horizontalPadding = 22.0;
-    const iconWidth = 15.0;
-    const iconGap = 7.0;
-    const containerSlack = 4.0;
-
-    return painter.width +
-        horizontalPadding +
-        iconWidth +
-        iconGap +
-        containerSlack;
   }
 }
 

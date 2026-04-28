@@ -1,11 +1,8 @@
 create extension if not exists pg_trgm;
-
 create index if not exists assistant_chunks_chunk_text_trgm_idx
   on public.assistant_chunks using gin (chunk_text gin_trgm_ops);
-
 create index if not exists assistant_queries_status_created_idx
   on public.assistant_queries(status, created_at desc);
-
 do $$
 begin
   if not exists (
@@ -20,7 +17,6 @@ begin
   end if;
 end
 $$;
-
 do $$
 begin
   if not exists (

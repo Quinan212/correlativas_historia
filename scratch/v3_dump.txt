@@ -1,0 +1,185 @@
+﻿
+--- DUMP TOTAL DE CELDAS CON TEXTO (VERSION 3) ---
+[B2]: Mesas Trivunal
+[C6]: 1┬░ 
+A├æO | [D6]: Did├íctica General
+[D7]: A├▒o 1┬░ | | [J7]: Asignatura
+[D8]: Docentes | [L8]: Lunes | [N8]: En 2 d├¡as
+[D9]: Medina, Jorge | [G9]: --------------- | [J9]: Fecha: | [L9]: 2026-04-20 00:00:00
+[D10]: --------------- | [G10]: --------------- | [J10]: Horario: | [L10]: ┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á06:00 p.ÔÇ»m.┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á
+[D11]: Acta Volante:  | [I11]: Sin Inscripciones
+[D13]: Pedagog├¡a
+[D14]: A├▒o 1┬░ | | [J14]: Asignatura
+[D15]: Docentes | [L15]: Mi├®rcoles | [N15]: En 4 d├¡as
+[D16]: Igual, In├®s | [G16]: --------------- | [J16]: Fecha: | [L16]: 2026-04-22 00:00:00
+[D17]: --------------- | [G17]: --------------- | [J17]: Horario: | [L17]: ┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á06:00 p.ÔÇ»m.┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á
+[D18]: Acta Volante:  | [I18]: Sin Inscripciones
+[D20]: Procesos Sociales, Pol├¡ticos, Econ├│micos y Culturales de la Antig├╝edad
+[D21]: A├▒o 1┬░ | | [J21]: Asignatura
+[D22]: Docentes | [L22]: Mi├®rcoles | [N22]: En 4 d├¡as
+[D23]: Borche, Javier | [G23]: --------------- | [J23]: Fecha: | [L23]: 2026-04-22 00:00:00
+[D24]: --------------- | [G24]: --------------- | [J24]: Horario: | [L24]: ┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á06:00 p.ÔÇ»m.┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á
+[D25]: Acta Volante:  | [I25]: Sin Inscripciones
+[D27]: Procesos Sociales, Pol├¡ticos, Econ├│micos y Culturales de los Pueblos Originarios de Am├®rica
+[D28]: A├▒o 1┬░ | | [J28]: Asignatura
+[D29]: Docentes | [L29]: S├íbado | [N29]: En 7 d├¡as
+[D30]: Frigo, Flavia | [G30]: --------------- | [J30]: Fecha: | [L30]: 2026-04-25 00:00:00
+[D31]: --------------- | [G31]: --------------- | [J31]: Horario: | [L31]: ┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á06:00 p.ÔÇ»m.┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á
+[D32]: Acta Volante:  | [I32]: Sin Inscripciones
+[D34]: Problem├ítica del Conocimiento Hist├│rico
+[D35]: A├▒o 1┬░ | | [J35]: Asignatura
+[D36]: Docentes | [L36]: Jueves | [N36]: En 5 d├¡as
+[D37]: Borche, Javier | [G37]: --------------- | [J37]: Fecha: | [L37]: 2026-04-23 00:00:00
+[D38]: --------------- | [G38]: --------------- | [J38]: Horario: | [L38]: ┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á06:00 p.ÔÇ»m.┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á
+[D39]: Acta Volante:  | [I39]: Sin Inscripciones
+[C41]: 2┬░ 
+A├æO | [D41]: Filosof├¡a
+[D42]: A├▒o 2┬░ | | [J42]: Asignatura
+[D43]: Docentes | [L43]: Jueves | [N43]: En 12 d├¡as
+[D44]: Leiva, Carina | [G44]: --------------- | [J44]: Fecha: | [L44]: 2026-04-30 00:00:00
+[D45]: --------------- | [G45]: --------------- | [J45]: Horario: | [L45]: ┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á06:00 p.ÔÇ»m.┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á
+[D46]: Acta Volante:  | [I46]: Sin Inscripciones
+[D48]: Procesos Sociales, Pol├¡ticos, Econ├│micos y Culturales Americanos I
+[D49]: A├▒o 2┬░ | | [J49]: Asignatura
+[D50]: Docentes | [L50]: Jueves | [N50]: En 12 d├¡as
+[D51]: Frigo, Flavia | [G51]: --------------- | [J51]: Fecha: | [L51]: 2026-04-30 00:00:00
+[D52]: --------------- | [G52]: --------------- | [J52]: Horario: | [L52]: ┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á06:00 p.ÔÇ»m.┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á
+[D53]: Acta Volante:  | [I53]: Sin Inscripciones
+[D55]: Procesos Sociales, Pol├¡ticos, Econ├│micos y Culturales del Feudalismo y la Modernidad
+[D56]: A├▒o 2┬░ | | [J56]: Asignatura
+[D57]: Docentes | [L57]: Jueves | [N57]: En 5 d├¡as
+[D58]: Frigo, Flavia | [G58]: --------------- | [J58]: Fecha: | [L58]: 2026-04-23 00:00:00
+[D59]: --------------- | [G59]: --------------- | [J59]: Horario: | [L59]: ┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á06:00 p.ÔÇ»m.┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á
+[D60]: Acta Volante:  | [I60]: Sin Inscripciones
+[D62]: Psicolog├¡a Educacional
+[D63]: A├▒o 2┬░ | | [J63]: Asignatura
+[D64]: Docentes | [L64]: Mi├®rcoles | [N64]: En 11 d├¡as
+[D65]: Gay, Giuliana | [G65]: --------------- | [J65]: Fecha: | [L65]: 2026-04-29 00:00:00
+[D66]: --------------- | [G66]: --------------- | [J66]: Horario: | [L66]: ┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á06:00 p.ÔÇ»m.┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á
+[D67]: Acta Volante:  | [I67]: Sin Inscripciones
+[C69]: 3┬░ 
+A├æO | [D69]: Did├íctica de la Historia
+[D70]: A├▒o 3┬░ | | [J70]: Asignatura
+[D71]: Docentes | [L71]: Viernes | [N71]: En 13 d├¡as
+[D72]: Horacio, Velazque Pens | [G72]: --------------- | [J72]: Fecha: | [L72]: 2026-05-01 00:00:00
+[D73]: --------------- | [G73]: --------------- | [J73]: Horario: | [L73]: ┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á06:00 p.ÔÇ»m.┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á
+[D74]: Acta Volante:  | [I74]: Sin Inscripciones
+[D76]: Historia y Pol├¡tica de la Educaci├│n Argentina
+[D77]: A├▒o 3┬░ | | [J77]: Asignatura
+[D78]: Docentes | [L78]: Jueves | [N78]: En 12 d├¡as
+[D79]: Borche, Javier | [G79]: --------------- | [J79]: Fecha: | [L79]: 2026-04-30 00:00:00
+[D80]: --------------- | [G80]: --------------- | [J80]: Horario: | [L80]: ┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á06:00 p.ÔÇ»m.┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á
+[D81]: Acta Volante:  | [I81]: Sin Inscripciones
+[D83]: Procesos Sociales, Pol├¡ticos, Econ├│micos y Culturales Contempor├íneos I
+[D84]: A├▒o 3┬░ | | [J84]: Asignatura
+[D85]: Docentes | [L85]: S├íbado | [N85]: En 21 d├¡as
+[D86]: Frigo, Flavia | [G86]: --------------- | [J86]: Fecha: | [L86]: 2026-05-09 00:00:00
+[D87]: --------------- | [G87]: --------------- | [J87]: Horario: | [L87]: ┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á06:00 p.ÔÇ»m.┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á
+[D88]: Acta Volante:  | [I88]: Sin Inscripciones
+[D90]: Procesos Sociales, Pol├¡ticos, Econ├│micos y Culturales Americanos II
+[D91]: A├▒o 3┬░ | | [J91]: Asignatura
+[D92]: Docentes | [L92]: Domingo | [N92]: En 22 d├¡as
+[D93]: Carmar├ín, Rosana | [G93]: --------------- | [J93]: Fecha: | [L93]: 2026-05-10 00:00:00
+[D94]: --------------- | [G94]: --------------- | [J94]: Horario: | [L94]: ┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á06:00 p.ÔÇ»m.┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á
+[D95]: Acta Volante:  | [I95]: Sin Inscripciones
+[D97]: Sociolog├¡a de la Educaci├│n
+[D98]: A├▒o 3┬░ | | [J98]: Asignatura
+[D99]: Docentes | [L99]: Viernes | [N99]: En 20 d├¡as
+[D100]: Dri, Gabriela | [G100]: --------------- | [J100]: Fecha: | [L100]: 2026-05-08 00:00:00
+[D101]: --------------- | [G101]: --------------- | [J101]: Horario: | [L101]: ┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á06:00 p.ÔÇ»m.┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á
+[D102]: Acta Volante:  | [I102]: Sin Inscripciones
+[C104]: 4┬░ 
+A├æO | [D104]: Derechos Humanos: ├ëtica y Ciudadan├¡a
+[D105]: A├▒o 4┬░ | | [J105]: Asignatura
+[D106]: Docentes | [L106]: Mi├®rcoles | [N106]: En 18 d├¡as
+[D107]: Stadelman, Patricia | [G107]: --------------- | [J107]: Fecha: | [L107]: 2026-05-06 00:00:00
+[D108]: --------------- | [G108]: --------------- | [J108]: Horario: | [L108]: ┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á06:00 p.ÔÇ»m.┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á
+[D109]: Acta Volante:  | [I109]: Sin Inscripciones
+[D111]: Procesos Sociales, Pol├¡ticos, Econ├│micos y Culturales Americanos III
+[D112]: A├▒o 4┬░ | | [J112]: Asignatura
+[D113]: Docentes | [L113]: Jueves | [N113]: En 12 d├¡as
+[D114]: Frigo, Flavia | [G114]: --------------- | [J114]: Fecha: | [L114]: 2026-04-30 00:00:00
+[D115]: --------------- | [G115]: --------------- | [J115]: Horario: | [L115]: ┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á06:00 p.ÔÇ»m.┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á
+[D116]: Acta Volante:  | [I116]: Sin Inscripciones
+[D118]: Procesos Sociales, Pol├¡ticos, Econ├│micos y Culturales Contempor├íneos II
+[D119]: A├▒o 4┬░ | | [J119]: Asignatura
+[D120]: Docentes | [L120]: Jueves | [N120]: En 19 d├¡as
+[D121]: Frigo, Flavia | [G121]: --------------- | [J121]: Fecha: | [L121]: 2026-05-07 00:00:00
+[D122]: --------------- | [G122]: --------------- | [J122]: Horario: | [L122]: ┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á06:00 p.ÔÇ»m.┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á
+[D123]: Acta Volante:  | [I123]: Sin Inscripciones
+[B125]: Coloquios
+[C129]: Pedagog├¡a
+[C130]: 1┬░ 
+A├æO | [D130]: Divisi├│n: 
+A | [E130]: A├▒o 1┬░ | | [I130]: Division: A | [K130]: Seminario-Taller
+[E131]: Docentes | [M131]: Martes | [O131]: En 3 d├¡as
+[E132]: Medina, Jorge | [H132]: --------------- | [K132]: Fecha: | [M132]: 2026-04-21 00:00:00
+[E133]: --------------- | [H133]: --------------- | [K133]: Horario: | [M133]: ┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á06:00 p.ÔÇ»m.┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á
+[D134]: Divisi├│n: 
+B | [E134]: A├▒o 1┬░ | | [I134]: Division: B | [K134]: Seminario-Taller
+[E135]: Docentes | [M135]: Mi├®rcoles | [O135]: En 4 d├¡as
+[E136]: --------------- | [H136]: --------------- | [K136]: Fecha: | [M136]: 2026-04-22 00:00:00
+[E137]: --------------- | [H137]: --------------- | [K137]: Horario: | [M137]: ┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á06:00 p.ÔÇ»m.┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á
+[D138]: Acta Volante:  | [I138]: Sin Inscripciones
+[C140]: Did├íctica de las Ciencias Sociales
+[C141]: 2┬░ 
+A├æO | [D141]: Divisi├│n: 
+A | [E141]: A├▒o 1┬░ | | [I141]: Division: A | [K141]: Seminario-Taller
+[E142]: Docentes | [M142]: Jueves | [O142]: En 26 d├¡as
+[E143]: Palavicini, Patricia | [H143]: --------------- | [K143]: Fecha: | [M143]: 2026-05-14 00:00:00
+[E144]: --------------- | [H144]: --------------- | [K144]: Horario: | [M144]: ┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á06:00 p.ÔÇ»m.┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á
+[D145]: Divisi├│n: 
+B | [E145]: A├▒o 1┬░ | | [I145]: Division: B | [K145]: Seminario-Taller
+[E146]: Docentes | [M146]: Jueves | [O146]: En 26 d├¡as
+[E147]: --------------- | [H147]: --------------- | [K147]: Fecha: | [M147]: 2026-05-14 00:00:00
+[E148]: --------------- | [H148]: --------------- | [K148]: Horario: | [M148]: ┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á06:00 p.ÔÇ»m.┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á
+[D149]: Acta Volante:  | [I149]: Sin Inscripciones
+[D151]: Sujetos de la Educaci├│n Secundaria
+[D152]: Divisi├│n: 
+A | [E152]: A├▒o 1┬░ | | [I152]: Division: A | [K152]: Seminario-Taller
+[E153]: Docentes | [M153]: ------- | [O153]: No Planificado
+[E154]: Pizzio, Marcos | [H154]: --------------- | [K154]: Fecha:
+[E155]: --------------- | [H155]: --------------- | [K155]: Horario: | [M155]: ┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á---------------┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á
+[D156]: Divisi├│n: 
+B | [E156]: A├▒o 1┬░ | | [I156]: Division: B | [K156]: Seminario-Taller
+[E157]: Llamado de Mayo | [M157]: ------- | [O157]: No Planificado
+[E158]: --------------- | [H158]: --------------- | [K158]: Fecha:
+[E159]: --------------- | [H159]: --------------- | [K159]: Horario: | [M159]: ┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á---------------┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á
+[D160]: Acta Volante:  | [I160]: Sin Inscripciones
+[D162]: Pr├íctica Docente II
+[D163]: Divisi├│n: 
+A | [E163]: A├▒o 1┬░ | | [I163]: Division: A | [K163]: Seminario-Taller
+[E164]: Docentes | [M164]: Jueves | [O164]: En 26 d├¡as
+[E165]: Medina, Jorge | [H165]: --------------- | [K165]: Fecha: | [M165]: 2026-05-14 00:00:00
+[E166]: --------------- | [H166]: --------------- | [K166]: Horario: | [M166]: ┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á---------------┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á
+[D167]: Divisi├│n: 
+B | [E167]: A├▒o 1┬░ | | [I167]: Division: B | [K167]: Seminario-Taller
+[E168]: Docentes | [M168]: Jueves | [O168]: En 26 d├¡as
+[E169]: --------------- | [H169]: --------------- | [K169]: Fecha: | [M169]: 2026-05-14 00:00:00
+[E170]: --------------- | [H170]: --------------- | [K170]: Horario: | [M170]: ┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á---------------┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á
+[D171]: Acta Volante:  | [I171]: Sin Inscripciones
+[C173]: Epistemolog├¡a de la Historia
+[C174]: 3┬░ 
+A├æO | [D174]: Divisi├│n: 
+A | [E174]: A├▒o 1┬░ | | [I174]: Division: A | [K174]: Seminario-Taller
+[E175]: Docentes | [M175]: S├íbado | [O175]: Hoy
+[E176]: Borche, Javier | [H176]: --------------- | [K176]: Fecha: | [M176]: 2026-04-18 00:00:00
+[E177]: --------------- | [H177]: --------------- | [K177]: Horario: | [M177]: ┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á06:00 p.ÔÇ»m.┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á
+[D178]: Divisi├│n: 
+B | [E178]: A├▒o 1┬░ | | [I178]: Division: B | [K178]: Seminario-Taller
+[E179]: Docentes | [M179]: Mi├®rcoles | [O179]: En 4 d├¡as
+[E180]: --------------- | [H180]: --------------- | [K180]: Fecha: | [M180]: 2026-04-22 00:00:00
+[E181]: --------------- | [H181]: --------------- | [K181]: Horario: | [M181]: ┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á06:00 p.ÔÇ»m.┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á
+[D182]: Acta Volante:  | [I182]: Sin Inscripciones
+[D184]: Pr├íctica Docente III
+[D185]: Divisi├│n: 
+A | [E185]: A├▒o 1┬░ | | [I185]: Division: A | [K185]: Seminario-Taller
+[E186]: Docentes | [M186]: ------- | [O186]: No Planificado
+[E187]: Medina, Jorge | [H187]: --------------- | [K187]: Fecha:
+[E188]: --------------- | [H188]: --------------- | [K188]: Horario: | [M188]: ┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á---------------┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á
+[D189]: Divisi├│n: 
+B | [E189]: A├▒o 1┬░ | | [I189]: Division: B | [K189]: Seminario-Taller
+[E190]: Docentes | [M190]: Jueves | [O190]: En 26 d├¡as
+[E191]: --------------- | [H191]: --------------- | [K191]: Fecha: | [M191]: 2026-05-14 00:00:00
+[E192]: --------------- | [H192]: --------------- | [K192]: Horario: | [M192]: ┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á06:00 p.ÔÇ»m.┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á
+[D193]: Acta Volante:  | [I193]: Sin Inscripciones

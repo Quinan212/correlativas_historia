@@ -13,7 +13,6 @@ import 'package:correlativas_historia/shared/notifications/push_notifications.da
 import 'package:correlativas_historia/shared/performance/app_performance.dart';
 import 'package:correlativas_historia/shared/supabase/supabase.dart';
 import 'package:correlativas_historia/shared/widgets/bottom_nav.dart';
-import 'package:correlativas_historia/shared/widgets/whats_new_sheet.dart';
 import 'package:correlativas_historia/theme/app_theme.dart';
 
 Future<void> main() async {
@@ -73,7 +72,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
     _checkedWhatsNew = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      WhatsNewSheet.maybeShow(context);
+      // WhatsNewSheet.maybeShow(context); // Desactivado por ahora
     });
   }
 

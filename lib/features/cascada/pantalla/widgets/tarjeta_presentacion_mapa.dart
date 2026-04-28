@@ -92,7 +92,7 @@ class TarjetaPresentacionMapa extends StatefulWidget {
 }
 
 class _TarjetaPresentacionMapaState extends State<TarjetaPresentacionMapa> {
-  bool _expanded = true;
+  bool _expanded = false;
 
   @override
   Widget build(BuildContext context) {
@@ -100,9 +100,14 @@ class _TarjetaPresentacionMapaState extends State<TarjetaPresentacionMapa> {
     final cs = theme.colorScheme;
     final tt = theme.textTheme;
     final isDark = theme.brightness == Brightness.dark;
+    final reduceMotion =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    final baseDuration = reduceMotion
+        ? const Duration(milliseconds: 1)
+        : const Duration(milliseconds: 260);
 
     return AnimatedContainer(
-      duration: const Duration(milliseconds: 260),
+      duration: baseDuration,
       curve: Curves.easeOutCubic,
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -125,9 +130,9 @@ class _TarjetaPresentacionMapaState extends State<TarjetaPresentacionMapa> {
         ),
         boxShadow: [
           BoxShadow(
-            blurRadius: _expanded ? (isDark ? 26 : 18) : (isDark ? 20 : 14),
-            offset: const Offset(0, 12),
-            color: theme.shadowColor.withValues(alpha: isDark ? 0.18 : 0.08),
+            blurRadius: _expanded ? (isDark ? 18 : 12) : (isDark ? 14 : 9),
+            offset: const Offset(0, 8),
+            color: theme.shadowColor.withValues(alpha: isDark ? 0.14 : 0.06),
           ),
         ],
       ),
@@ -189,7 +194,9 @@ class _TarjetaPresentacionMapaState extends State<TarjetaPresentacionMapa> {
                             const SizedBox(width: 10),
                             AnimatedRotation(
                               turns: _expanded ? 0.125 : 0,
-                              duration: const Duration(milliseconds: 240),
+                              duration: reduceMotion
+                                  ? const Duration(milliseconds: 1)
+                                  : const Duration(milliseconds: 240),
                               curve: Curves.easeOutCubic,
                               child: Container(
                                 width: 34,
@@ -229,7 +236,9 @@ class _TarjetaPresentacionMapaState extends State<TarjetaPresentacionMapa> {
                         ),
                         const SizedBox(height: 10),
                         AnimatedDefaultTextStyle(
-                          duration: const Duration(milliseconds: 220),
+                          duration: reduceMotion
+                              ? const Duration(milliseconds: 1)
+                              : const Duration(milliseconds: 220),
                           curve: Curves.easeOutCubic,
                           style: tt.bodyMedium!.copyWith(
                             height: 1.55,
@@ -246,7 +255,9 @@ class _TarjetaPresentacionMapaState extends State<TarjetaPresentacionMapa> {
                   ),
                 ),
                 AnimatedSize(
-                  duration: const Duration(milliseconds: 320),
+                  duration: reduceMotion
+                      ? const Duration(milliseconds: 1)
+                      : const Duration(milliseconds: 320),
                   curve: Curves.easeOutCubic,
                   alignment: Alignment.topCenter,
                   child: _expanded
@@ -256,7 +267,9 @@ class _TarjetaPresentacionMapaState extends State<TarjetaPresentacionMapa> {
                             const SizedBox(height: 20),
                             TweenAnimationBuilder<double>(
                               tween: Tween(begin: 0, end: 1),
-                              duration: const Duration(milliseconds: 240),
+                              duration: reduceMotion
+                                  ? const Duration(milliseconds: 1)
+                                  : const Duration(milliseconds: 240),
                               curve: Curves.easeOutCubic,
                               builder: (context, value, child) {
                                 return Opacity(
@@ -269,6 +282,7 @@ class _TarjetaPresentacionMapaState extends State<TarjetaPresentacionMapa> {
                               },
                               child: const PremiumFeatureAccordion(
                                 items: TarjetaPresentacionMapa._items,
+                                lightweight: true,
                               ),
                             ),
                           ],

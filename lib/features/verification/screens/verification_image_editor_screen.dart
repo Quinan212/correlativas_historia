@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'dart:ui' as ui;
 
 import 'package:crop_your_image/crop_your_image.dart';
 import 'package:flutter/material.dart';
@@ -24,7 +25,11 @@ class _VerificationImageEditorScreenState
   final CropController _cropController = CropController();
 
   Uint8List? _imageBytes;
-  _AspectOption _selectedAspect = _AspectOption.feedPortrait;
+  double? _originalRatio; 
+  // false = ratio original (Instagram style: ver toda la foto al entrar)
+  // true = ratio 2:3 (formato de referencia)
+  bool _useDefault = false; 
+  static const double _defaultRatio = 210 / 320; 
   bool _cropping = false;
 
   @override
@@ -36,62 +41,79 @@ class _VerificationImageEditorScreenState
   Future<void> _loadImage() async {
     final bytes = await widget.sourceImage.readAsBytes();
     if (!mounted) return;
-    setState(() => _imageBytes = bytes);
+
+    final codec = await ui.instantiateImageCodec(bytes, targetWidth: 200);
+    final frame = await codec.getNextFrame();
+    final w = frame.image.width;
+    final h = frame.image.height;
+    frame.image.dispose();
+    codec.dispose();
+
+    if (!mounted) return;
+    setState(() {
+      _imageBytes = bytes;
+      _originalRatio = w / h;
+    });
   }
+
+  double get _currentRatio =>
+      _useDefault ? _defaultRatio : (_originalRatio ?? 1.0);
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final imageBytes = _imageBytes;
+    final originalRatio = _originalRatio;
+    
+    // Botón visible si la foto no es ya un 2:3 portrait
+    final showExpandButton = originalRatio != null &&
+        (originalRatio - _defaultRatio).abs() > 0.05;
 
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
         foregroundColor: Colors.white,
+        elevation: 0,
         title: const Text('Editar imagen'),
         actions: [
           TextButton(
             onPressed: (_cropping || imageBytes == null) ? null : _cropImage,
             child: Text(
-              _cropping ? 'Procesando...' : 'Usar',
+              _cropping ? '...' : 'LISTO',
               style: const TextStyle(
                 color: Colors.white,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 1.2,
               ),
             ),
           ),
         ],
       ),
       body: imageBytes == null
-          ? const Center(
-              child: CircularProgressIndicator(),
-            )
+          ? const Center(child: CircularProgressIndicator(color: Colors.white24))
           : Column(
               children: [
                 Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-                    child: ColoredBox(
-                      color: const Color(0xFF05070B),
-                      child: Crop(
+                  child: Stack(
+                    children: [
+                      // Eliminamos padding para que se vea grande
+                      Crop(
                         image: imageBytes,
                         controller: _cropController,
-                        aspectRatio: _selectedAspect.ratio,
+                        aspectRatio: _currentRatio,
                         initialRectBuilder: InitialRectBuilder.withSizeAndRatio(
-                          size: 0.92,
-                          aspectRatio: _selectedAspect.ratio,
+                          size: 1.0, // Ocupar todo el espacio
+                          aspectRatio: _currentRatio,
                         ),
                         interactive: true,
                         fixCropRect: true,
-                        radius: 12,
-                        baseColor: const Color(0xFF05070B),
-                        maskColor: Colors.black.withValues(alpha: 0.66),
-                        progressIndicator: const CircularProgressIndicator(),
-                        cornerDotBuilder: (size, edgeAlignment) =>
-                            const SizedBox.shrink(),
-                        overlayBuilder: (context, rect) =>
-                            const _CleanFrameOverlay(radius: 12),
+                        radius: 0, // Bordes rectos para máxima visibilidad
+                        baseColor: Colors.black,
+                        maskColor: Colors.black.withValues(alpha: 0.75),
+                        progressIndicator: const CircularProgressIndicator(color: Colors.white),
+                        cornerDotBuilder: (size, edgeAlignment) => const SizedBox.shrink(),
+                        overlayBuilder: (context, rect) => const _CleanFrameOverlay(),
                         onCropped: (result) {
                           if (!mounted) return;
                           switch (result) {
@@ -107,63 +129,56 @@ class _VerificationImageEditorScreenState
                             case CropFailure(:final cause):
                               setState(() => _cropping = false);
                               ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    'No se pudo recortar la imagen: $cause',
-                                  ),
-                                ),
+                                SnackBar(content: Text('Error: $cause')),
                               );
                           }
                         },
                       ),
-                    ),
+                      // Botón estilo Instagram para alternar ratio
+                      if (showExpandButton)
+                        Positioned(
+                          left: 16,
+                          bottom: 16,
+                          child: GestureDetector(
+                            onTap: () {
+                              final next = !_useDefault;
+                              setState(() => _useDefault = next);
+                              _cropController.aspectRatio =
+                                  next ? _defaultRatio : originalRatio;
+                            },
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.7),
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.5),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Icon(
+                                _useDefault 
+                                  ? Icons.expand_rounded 
+                                  : Icons.unfold_less_rounded,
+                                size: 22,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
                 Container(
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF0A0D14),
-                    border: Border(
-                      top: BorderSide(
-                        color: Colors.white.withValues(alpha: 0.08),
-                      ),
-                    ),
-                  ),
+                  color: Colors.black,
+                  padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 24),
                   child: SafeArea(
                     top: false,
-                    minimum: const EdgeInsets.fromLTRB(16, 10, 16, 12),
-                    child: Column(
-                      children: [
-                        Text(
-                          'Mueve y acerca la imagen para dejar visible la parte importante.',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: Colors.white70,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 14),
-                        SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Row(
-                            children: _AspectOption.values
-                                .map(
-                                  (option) => Padding(
-                                    padding: const EdgeInsets.only(right: 10),
-                                    child: _AspectChip(
-                                      option: option,
-                                      selected: option == _selectedAspect,
-                                      onTap: () {
-                                        setState(
-                                            () => _selectedAspect = option);
-                                        _cropController.aspectRatio =
-                                            option.ratio;
-                                      },
-                                    ),
-                                  ),
-                                )
-                                .toList(growable: false),
-                          ),
-                        ),
-                      ],
+                    child: Text(
+                      'Pellizcá para hacer zoom o arrastrá para encuadrar.',
+                      style: theme.textTheme.bodySmall?.copyWith(color: Colors.white54),
+                      textAlign: TextAlign.center,
                     ),
                   ),
                 ),
@@ -180,100 +195,21 @@ class _VerificationImageEditorScreenState
   String _buildCroppedName(String sourceName) {
     final parts = sourceName.split('.');
     final ext = parts.length > 1 ? parts.last.toLowerCase() : 'jpg';
-    final safeExt = ext.isEmpty ? 'jpg' : ext;
-    return 'verification_crop_${DateTime.now().millisecondsSinceEpoch}.$safeExt';
-  }
-}
-
-enum _AspectOption {
-  square('1:1', 1),
-  feedPortrait('4:5', 4 / 5),
-  wide('16:9', 16 / 9);
-
-  const _AspectOption(this.label, this.ratio);
-
-  final String label;
-  final double ratio;
-}
-
-class _AspectChip extends StatelessWidget {
-  const _AspectChip({
-    required this.option,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final _AspectOption option;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          color: selected ? Colors.white : Colors.white.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(
-            color:
-                selected ? Colors.white : Colors.white.withValues(alpha: 0.14),
-          ),
-        ),
-        child: Text(
-          option.label,
-          style: TextStyle(
-            color: selected ? Colors.black : Colors.white,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-      ),
-    );
+    return 'crop_${DateTime.now().millisecondsSinceEpoch}.$ext';
   }
 }
 
 class _CleanFrameOverlay extends StatelessWidget {
-  const _CleanFrameOverlay({
-    required this.radius,
-  });
-
-  final double radius;
+  const _CleanFrameOverlay();
 
   @override
   Widget build(BuildContext context) {
     return IgnorePointer(
-      child: CustomPaint(
-        painter: _FrameOverlayPainter(radius),
-        size: Size.infinite,
+      child: Container(
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 0.5),
+        ),
       ),
     );
-  }
-}
-
-class _FrameOverlayPainter extends CustomPainter {
-  const _FrameOverlayPainter(this.radius);
-
-  final double radius;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final cropRect = Offset.zero & size;
-
-    final borderPaint = Paint()
-      ..color = Colors.white
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2;
-
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(cropRect, Radius.circular(radius)),
-      borderPaint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant _FrameOverlayPainter oldDelegate) {
-    return oldDelegate.radius != radius;
   }
 }

@@ -24,8 +24,7 @@ class TarjetaAcordeonInicio extends StatefulWidget {
   State<TarjetaAcordeonInicio> createState() => _TarjetaAcordeonInicioState();
 }
 
-class _TarjetaAcordeonInicioState extends State<TarjetaAcordeonInicio>
-    with SingleTickerProviderStateMixin {
+class _TarjetaAcordeonInicioState extends State<TarjetaAcordeonInicio> {
   late bool _expanded;
 
   @override
@@ -39,9 +38,14 @@ class _TarjetaAcordeonInicioState extends State<TarjetaAcordeonInicio>
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
+    final reduceMotion =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    final baseDuration = reduceMotion
+        ? const Duration(milliseconds: 1)
+        : const Duration(milliseconds: 260);
 
     return AnimatedContainer(
-      duration: const Duration(milliseconds: 260),
+      duration: baseDuration,
       curve: Curves.easeOutCubic,
       decoration: BoxDecoration(
         color: isDark ? cs.surface : Colors.white,
@@ -52,9 +56,9 @@ class _TarjetaAcordeonInicioState extends State<TarjetaAcordeonInicio>
         ),
         boxShadow: [
           BoxShadow(
-            blurRadius: _expanded ? 14 : 8,
-            offset: const Offset(0, 8),
-            color: theme.shadowColor.withValues(alpha: _expanded ? 0.14 : 0.1),
+            blurRadius: _expanded ? 10 : 6,
+            offset: const Offset(0, 6),
+            color: theme.shadowColor.withValues(alpha: _expanded ? 0.10 : 0.07),
           ),
         ],
       ),
@@ -121,7 +125,9 @@ class _TarjetaAcordeonInicioState extends State<TarjetaAcordeonInicio>
                             const SizedBox(width: 10),
                             AnimatedRotation(
                               turns: _expanded ? 0.125 : 0,
-                              duration: const Duration(milliseconds: 240),
+                              duration: reduceMotion
+                                  ? const Duration(milliseconds: 1)
+                                  : const Duration(milliseconds: 240),
                               curve: Curves.easeOutCubic,
                               child: Container(
                                 width: 34,
@@ -152,7 +158,9 @@ class _TarjetaAcordeonInicioState extends State<TarjetaAcordeonInicio>
                         ),
                         const SizedBox(height: 12),
                         AnimatedDefaultTextStyle(
-                          duration: const Duration(milliseconds: 220),
+                          duration: reduceMotion
+                              ? const Duration(milliseconds: 1)
+                              : const Duration(milliseconds: 220),
                           curve: Curves.easeOutCubic,
                           style: theme.textTheme.bodyMedium!.copyWith(
                             height: 1.5,
@@ -167,7 +175,9 @@ class _TarjetaAcordeonInicioState extends State<TarjetaAcordeonInicio>
                   ),
                 ),
                 AnimatedSize(
-                  duration: const Duration(milliseconds: 320),
+                  duration: reduceMotion
+                      ? const Duration(milliseconds: 1)
+                      : const Duration(milliseconds: 320),
                   curve: Curves.easeOutCubic,
                   alignment: Alignment.topCenter,
                   child: _expanded
@@ -177,7 +187,9 @@ class _TarjetaAcordeonInicioState extends State<TarjetaAcordeonInicio>
                             const SizedBox(height: 16),
                             TweenAnimationBuilder<double>(
                               tween: Tween(begin: 0, end: 1),
-                              duration: const Duration(milliseconds: 240),
+                              duration: reduceMotion
+                                  ? const Duration(milliseconds: 1)
+                                  : const Duration(milliseconds: 240),
                               curve: Curves.easeOutCubic,
                               builder: (context, value, child) {
                                 return Opacity(

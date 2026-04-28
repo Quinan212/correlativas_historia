@@ -25,8 +25,21 @@ Future<PlanData> loadPlanFromHtmlAsset(String assetPath) =>
     loadPlanFromHtml(assetPath);
 
 Future<PlanData> loadPlanFromHtml(String assetPath) async {
-  final html = await rootBundle.loadString(assetPath);
-  final parsed = await compute(_parsePlanHtmlPayload, html);
+  final content = await rootBundle.loadString(assetPath);
+
+  if (assetPath.endsWith('.json')) {
+    // NUEVA LÓGICA ULTRA-RÁPIDA NATIVA (Fase 1)
+    final parsed = await compute(jsonDecode, content) as Map<String, dynamic>;
+    final materias = (parsed['materias'] as List<dynamic>)
+        .map((e) => Materia.fromMap(Map<String, dynamic>.from(e as Map)))
+        .toList(growable: false);
+    final pdfRaw = parsed['pdfUrl'] as String?;
+    final pdfUrl = pdfRaw == null ? null : Uri.tryParse(pdfRaw);
+    return PlanData(materias: materias, pdfUrl: pdfUrl);
+  }
+
+  // VIEJA LÓGICA HTML LENTA (Legado)
+  final parsed = await compute(_parsePlanHtmlPayload, content);
   final materias = (parsed['materias'] as List<dynamic>)
       .map((e) => Materia.fromMap(Map<String, dynamic>.from(e as Map)))
       .toList(growable: false);

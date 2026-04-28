@@ -1,6 +1,7 @@
 import '../../../models/materia.dart';
 import '../../../shared/utils/text_sanitize.dart';
 import '../models/examen_event.dart';
+import 'examenes_visibility.dart';
 
 const _emdash = '\u2014';
 
@@ -256,7 +257,20 @@ String _claveVisualMateria({
     anioEvento: evento.anio,
     mapaPlan: mapaPlan,
   );
-  return sanitizeText(plan?.displayNombre ?? _stripDivisionNoise(evento.materia));
+  return sanitizeText(
+      plan?.displayNombre ?? _stripDivisionNoise(evento.materia));
+}
+
+int? anioPlanParaEvento(
+  ExamenEvent evento,
+  Map<String, Materia> mapaPlan,
+) {
+  final plan = _resolverMateriaPlan(
+    nombreEvento: evento.materia,
+    anioEvento: evento.anio,
+    mapaPlan: mapaPlan,
+  );
+  return plan?.anio ?? evento.anio;
 }
 
 class SeccionDeLista {
@@ -318,21 +332,33 @@ List<SeccionDeLista> armarSeccionesConPlan({
   required List<ExamenEvent> eventos,
   required Map<String, Materia> mapaPlan,
 }) {
+  // ✅ INTERRUPTOR GENERAL: si esta activado devolvemos lista vacia DIRECTAMENTE
+  // Funciona en TODAS las pantallas, TODAS las vistas, absolutamente todo
+  if (OCULTAR_TODO_EXAMENES) {
+    return const [];
+  }
+
   final porAnio = <int, Map<String, _ResumenFechasMateria>>{};
   final coloquios = <String, _ResumenFechasMateria>{};
   final sinAnioOtros = <String, _ResumenFechasMateria>{};
 
-  void setFechas(Map<String, _ResumenFechasMateria> map, String key, DateTime? dt) {
+  void setFechas(
+      Map<String, _ResumenFechasMateria> map, String key, DateTime? dt) {
     final prev = map.putIfAbsent(key, () => _ResumenFechasMateria());
     prev.add(dt);
   }
 
+  // Ahora tenemos mapas separados para mesas y coloquios POR AÑO
+  final porAnioMesas = <int, Map<String, _ResumenFechasMateria>>{};
+  final porAnioColoquios = <int, Map<String, _ResumenFechasMateria>>{};
+
   for (final evento in eventos) {
     final clave = _claveVisualMateria(evento: evento, mapaPlan: mapaPlan);
     final dt = evento.fechaHora;
+    final esColoquio = evento.instancia == 'coloquio';
 
     if (evento.anio == null) {
-      if (evento.instancia == 'coloquio') {
+      if (esColoquio) {
         setFechas(coloquios, clave, dt);
       } else {
         setFechas(sinAnioOtros, clave, dt);
@@ -341,7 +367,12 @@ List<SeccionDeLista> armarSeccionesConPlan({
     }
 
     final year = evento.anio!;
-    final map = porAnio.putIfAbsent(year, () => <String, _ResumenFechasMateria>{});
+    final map = esColoquio
+        ? porAnioColoquios.putIfAbsent(
+            year, () => <String, _ResumenFechasMateria>{})
+        : porAnioMesas.putIfAbsent(
+            year, () => <String, _ResumenFechasMateria>{});
+
     setFechas(map, clave, dt);
   }
 
@@ -360,8 +391,8 @@ List<SeccionDeLista> armarSeccionesConPlan({
 
   List<MateriaParaLista> toMateriaList(
     List<MapEntry<String, _ResumenFechasMateria>> entries, {
-      required bool esColoquio,
-      required int? anioEvento,
+    required bool esColoquio,
+    required int? anioEvento,
   }) {
     return entries.map((entry) {
       final tap = sanitizeText(entry.key);
@@ -384,17 +415,38 @@ List<SeccionDeLista> armarSeccionesConPlan({
   }
 
   final out = <SeccionDeLista>[];
-  final years = porAnio.keys.toList()..sort();
 
-  for (final year in years) {
-    final entries = porAnio[year]!.entries.toList()..sort(cmp);
-    out.add(
-      SeccionDeLista(
-        titulo: '$year\u00ba A\u00f1o',
-        materias: toMateriaList(entries, esColoquio: false, anioEvento: year),
-        esColoquios: false,
-      ),
-    );
+  // Unimos todos los años que existen tanto en mesas como en coloquios
+  final allYears = {...porAnioMesas.keys, ...porAnioColoquios.keys}.toList()
+    ..sort();
+
+  for (final year in allYears) {
+    // Primero agregamos las MESAS de este año
+    if (porAnioMesas.containsKey(year) && !OCULTAR_TODO_EXAMENES) {
+      final entriesMesas = porAnioMesas[year]!.entries.toList()..sort(cmp);
+      out.add(
+        SeccionDeLista(
+          titulo: '$year\u00ba Año',
+          materias:
+              toMateriaList(entriesMesas, esColoquio: false, anioEvento: year),
+          esColoquios: false,
+        ),
+      );
+    }
+
+    // Despues agregamos los COLOQUIOS de este mismo año
+    if (porAnioColoquios.containsKey(year) && !OCULTAR_TODO_EXAMENES) {
+      final entriesColoquios = porAnioColoquios[year]!.entries.toList()
+        ..sort(cmp);
+      out.add(
+        SeccionDeLista(
+          titulo: '📌 Coloquios $year\u00ba Año',
+          materias: toMateriaList(entriesColoquios,
+              esColoquio: true, anioEvento: year),
+          esColoquios: true,
+        ),
+      );
+    }
   }
 
   if (coloquios.isNotEmpty) {
@@ -540,12 +592,14 @@ PickParaSheet prepararPickParaSheet({
     sameMateria.where((e) => e.instancia == 'coloquio').toList(),
   );
 
-  final isColoquioOnly = fromColoquios || (ec.isNotEmpty && e1.isEmpty && e2.isEmpty);
+  final isColoquioOnly =
+      fromColoquios || (ec.isNotEmpty && e1.isEmpty && e2.isEmpty);
 
   return PickParaSheet(
     llamado1Eventos: e1,
     llamado2Eventos: e2,
     coloquioEventos: ec,
-    detalleInicial: isColoquioOnly ? const DetalleArgs(tabId: 'coloquio') : null,
+    detalleInicial:
+        isColoquioOnly ? const DetalleArgs(tabId: 'coloquio') : null,
   );
 }

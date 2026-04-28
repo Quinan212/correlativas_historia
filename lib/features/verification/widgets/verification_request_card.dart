@@ -226,16 +226,30 @@ class _VerificationImagePreviewScreen extends StatelessWidget {
           minScale: 1,
           maxScale: 5,
           child: Center(
-            child: Image.network(
-              imageUrl,
-              fit: BoxFit.contain,
-              errorBuilder: (_, __, ___) => const Center(
-                child: Icon(
-                  Icons.broken_image_outlined,
-                  color: Colors.white70,
-                  size: 40,
-                ),
-              ),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final dpr = MediaQuery.devicePixelRatioOf(context);
+                final cacheW = (constraints.maxWidth * dpr).round();
+                return Image.network(
+                  imageUrl,
+                  fit: BoxFit.contain,
+                  cacheWidth: cacheW,
+                  filterQuality: FilterQuality.medium,
+                  loadingBuilder: (context, child, progress) {
+                    if (progress == null) return child;
+                    return const Center(
+                      child: CircularProgressIndicator(color: Colors.white54),
+                    );
+                  },
+                  errorBuilder: (_, __, ___) => const Center(
+                    child: Icon(
+                      Icons.broken_image_outlined,
+                      color: Colors.white70,
+                      size: 40,
+                    ),
+                  ),
+                );
+              },
             ),
           ),
         ),

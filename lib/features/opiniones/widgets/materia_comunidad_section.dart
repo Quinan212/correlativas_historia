@@ -11,6 +11,7 @@ import '../../verification/models/matter_verification_state.dart';
 import '../../verification/models/verification_upload_image.dart';
 import '../../verification/providers/verification_providers.dart';
 import '../../verification/screens/verification_image_editor_screen.dart';
+import '../config/opiniones_visibility.dart';
 import '../models/opiniones_catalog.dart';
 import '../models/matter_photo_post.dart';
 import '../models/opiniones_review_models.dart';
@@ -62,6 +63,19 @@ class _MatterReferencesCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    if (!kShowOpinionUi) {
+      final verification = ref.watch(matterVerificationStateProvider(materia.id));
+      return RepaintBoundary(
+        child: _ComunidadCard(
+          title: 'Fotos de cursada',
+          child: _MatterPhotoGallerySection(
+            matter: materia,
+            careerId: careerId,
+            verification: verification,
+          ),
+        ),
+      );
+    }
     final summary = ref.watch(matterReviewSummaryProvider(materia.id));
     final tendencyTexts = buildMatterReferenceInsights(summary.dimensions);
     final ownReview =
@@ -353,6 +367,9 @@ class _MatterTeachersCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    if (!kShowOpinionUi) {
+      return const SizedBox.shrink();
+    }
     final theme = Theme.of(context);
     final docentes = ref.watch(docentesPorMateriaProvider(materia.id));
 
@@ -704,10 +721,8 @@ class _MatterPhotoGalleryState extends ConsumerState<_MatterPhotoGallery> {
                 return _MatterPhotoAddCard(
                   width: _MatterPhotoGallery._tileWidth,
                   height: _MatterPhotoGallery._tileHeight,
-                  enabled: widget.verification.canReview,
-                  onTap: widget.verification.canReview
-                      ? () => _handleAddPhoto(context)
-                      : null,
+                  enabled: true,
+                  onTap: () => _handleAddPhoto(context),
                 );
               }
 
@@ -914,7 +929,6 @@ class _MatterPhotoTile extends StatelessWidget {
     final theme = Theme.of(context);
     final pixelRatio = MediaQuery.devicePixelRatioOf(context);
     final cacheWidth = (width * pixelRatio).round();
-    final cacheHeight = (height * pixelRatio).round();
     return RepaintBoundary(
       child: _MatterPhotoTileFrame(
         width: width,
@@ -939,7 +953,7 @@ class _MatterPhotoTile extends StatelessWidget {
             width: width,
             height: height,
             cacheWidth: cacheWidth,
-            cacheHeight: cacheHeight,
+            // cacheHeight eliminado: especificar ambas distorsiona la imagen.
             filterQuality: FilterQuality.low,
             errorBuilder: (_, __, ___) => ColoredBox(
               color: theme.colorScheme.surfaceContainerHighest,
@@ -1239,7 +1253,6 @@ class _ZoomableMatterPhotoState extends State<_ZoomableMatterPhoto> {
     final size = MediaQuery.sizeOf(context);
     final pixelRatio = MediaQuery.devicePixelRatioOf(context);
     final cacheWidth = (size.width * pixelRatio * 1.2).round();
-    final cacheHeight = (size.height * pixelRatio * 1.2).round();
 
     return GestureDetector(
       onDoubleTapDown: (details) => _doubleTapDetails = details,
@@ -1255,7 +1268,7 @@ class _ZoomableMatterPhotoState extends State<_ZoomableMatterPhoto> {
             widget.imageUrl,
             fit: BoxFit.contain,
             cacheWidth: cacheWidth,
-            cacheHeight: cacheHeight,
+            // cacheHeight eliminado: especificar ambas distorsiona la imagen.
             filterQuality: FilterQuality.medium,
             errorBuilder: (_, __, ___) => const Icon(
               Icons.broken_image_outlined,
@@ -1281,6 +1294,9 @@ class _DocenteTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    if (!kShowOpinionUi) {
+      return const SizedBox.shrink();
+    }
     final theme = Theme.of(context);
     final summary = ref.watch(teacherReviewSummaryProvider(docente.id));
     final ownReview = ref

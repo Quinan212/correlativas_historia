@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 
 import '../../../../shared/providers/app_state.dart';
 import '../../../../models/materia.dart';
+import '../../../opiniones/config/opiniones_visibility.dart';
 import '../../../opiniones/providers/opiniones_review_providers.dart';
 import '../../../verification/models/matter_verification_state.dart';
 import '../../../verification/providers/verification_providers.dart';
@@ -38,8 +39,7 @@ class _TarjetaMateriaGrillaState extends ConsumerState<TarjetaMateriaGrilla> {
   Widget build(BuildContext context) {
     final m = widget.m;
 
-    final selectedId = ref.watch(selectedMateriaIdProvider);
-    final isSelected = selectedId == m.id;
+    final isSelected = ref.watch(selectedMateriaIdProvider.select((id) => id == m.id));
     final careerId = ref.watch(selectedCareerInfoProvider).id;
     final showHistoriaCommunity = careerId == 'historia';
     final reviewSummary = ref.watch(matterReviewSummaryProvider(m.id));
@@ -72,6 +72,11 @@ class _TarjetaMateriaGrillaState extends ConsumerState<TarjetaMateriaGrilla> {
       color: Colors.transparent,
       child: InkWell(
         onTap: () async {
+          // Bloquear doble tap: Si ya hay una materia abriéndose, ignoramos
+          // los clicks siguientes para no ahogar al procesador abriendo dos
+          // paneles gigantes superpuestos.
+          if (ref.read(selectedMateriaIdProvider) != null) return;
+
           HapticFeedback.lightImpact();
           debugPrint(
               'Abrir detalle: setting selectedId=${m.id} and pushing route');
@@ -182,7 +187,8 @@ class _TarjetaMateriaGrillaState extends ConsumerState<TarjetaMateriaGrilla> {
                               ),
                             ),
                           ),
-                          if (showHistoriaCommunity &&
+                          if (kShowOpinionUi &&
+                              showHistoriaCommunity &&
                               (reviewSummary.rating.votos > 0 ||
                                   verification.status !=
                                       MatterVerificationStatus.unverified))

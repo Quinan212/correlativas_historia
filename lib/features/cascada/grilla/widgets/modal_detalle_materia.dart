@@ -1,9 +1,15 @@
 import 'package:firebase_performance/firebase_performance.dart';
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../models/materia.dart';
 import '../../../../shared/performance/app_performance.dart';
+import '../../../../shared/device_identity/device_identity.dart';
 import '../../../../shared/providers/app_state.dart';
+import '../../../../shared/supabase/supabase.dart';
+import '../../providers/matter_navigation_analytics_repository.dart';
 import '../../panel_detalle/componentes/controles_superiores.dart';
 import '../../panel_detalle/panel_detalle_materia.dart';
 
@@ -12,71 +18,37 @@ Future<void> mostrarModalDetalleMateria({
   required WidgetRef ref,
   required String heroId,
 }) async {
-  await Navigator.of(context).push(_DetalleMateriaRoute(heroId: heroId));
+  await Navigator.of(context).push(
+    PageRouteBuilder(
+      transitionDuration: const Duration(milliseconds: 250),
+      reverseTransitionDuration: Duration.zero, // <-- Anulación de la salida
+      pageBuilder: (context, animation, secondaryAnimation) {
+        return _DetalleMateriaPage(
+          key: ValueKey('det_$heroId'),
+          initialMateriaId: heroId,
+        );
+      },
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        // Solo aplica animación suave cuando está ENTRANDO.
+        // Al cerrarse (reverse), como el tiempo es cero, este código ni se ve.
+        final curve = CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOutCubic,
+        );
+        return FadeTransition(
+          opacity: curve,
+          child: SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(0.025, 0),
+              end: Offset.zero,
+            ).animate(curve),
+            child: child,
+          ),
+        );
+      },
+    ),
+  );
   ref.read(selectedMateriaIdProvider.notifier).state = null;
-}
-
-class _DetalleMateriaRoute extends PageRoute<void> {
-  _DetalleMateriaRoute({required this.heroId});
-
-  final String heroId;
-
-  @override
-  bool get opaque => true;
-
-  @override
-  bool get maintainState => true;
-
-  @override
-  bool get barrierDismissible => false;
-
-  @override
-  Color? get barrierColor => null;
-
-  @override
-  String? get barrierLabel => null;
-
-  @override
-  Duration get transitionDuration => const Duration(milliseconds: 240);
-
-  @override
-  Duration get reverseTransitionDuration => const Duration(milliseconds: 200);
-
-  @override
-  Widget buildPage(
-    BuildContext context,
-    Animation<double> animation,
-    Animation<double> secondaryAnimation,
-  ) {
-    return _DetalleMateriaPage(
-      key: ValueKey('det_$heroId'),
-      initialMateriaId: heroId,
-    );
-  }
-
-  @override
-  Widget buildTransitions(
-    BuildContext context,
-    Animation<double> animation,
-    Animation<double> secondaryAnimation,
-    Widget child,
-  ) {
-    final curved = CurvedAnimation(
-      parent: animation,
-      curve: Curves.easeOutCubic,
-      reverseCurve: Curves.easeInCubic,
-    );
-    return FadeTransition(
-      opacity: curved,
-      child: SlideTransition(
-        position: Tween<Offset>(
-          begin: const Offset(0.025, 0),
-          end: Offset.zero,
-        ).animate(curved),
-        child: child,
-      ),
-    );
-  }
 }
 
 class _DetalleMateriaPage extends ConsumerStatefulWidget {
@@ -96,6 +68,9 @@ class _DetalleMateriaPageState extends ConsumerState<_DetalleMateriaPage> {
   final ScrollController _scrollCtrl = ScrollController();
   ProviderSubscription<String?>? _selectedMateriaSubscription;
   late final Future<Trace?> _detailOpenTrace;
+  final MatterNavigationAnalyticsRepository _analytics =
+      const MatterNavigationAnalyticsRepository();
+  bool _initialViewTracked = false;
 
   @override
   void initState() {
@@ -110,6 +85,9 @@ class _DetalleMateriaPageState extends ConsumerState<_DetalleMateriaPage> {
       selectedMateriaIdProvider,
       (prev, next) {
         if (prev == next) return;
+        if (prev != null && next != null) {
+          unawaited(_trackTransition(prev: prev, next: next));
+        }
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!_scrollCtrl.hasClients) return;
           _scrollCtrl.animateTo(
@@ -137,8 +115,63 @@ class _DetalleMateriaPageState extends ConsumerState<_DetalleMateriaPage> {
     Navigator.of(context).pop();
   }
 
+  Future<void> _trackInitialView() async {
+    final matterId = widget.initialMateriaId;
+    final matter = _findMatterById(matterId);
+    if (matter == null) return;
+    final client = ref.read(supabaseClientProvider);
+    final deviceId = await ref.read(deviceIdProvider.future);
+    await _analytics.trackDetailView(
+      client: client,
+      deviceId: deviceId,
+      careerId: ref.read(selectedCareerInfoProvider).id,
+      matterId: matter.id,
+      matterName: matter.nombre,
+    );
+  }
+
+  Future<void> _trackTransition({
+    required String prev,
+    required String next,
+  }) async {
+    final source = _findMatterById(prev);
+    final target = _findMatterById(next);
+    if (source == null || target == null) return;
+
+    final client = ref.read(supabaseClientProvider);
+    final deviceId = await ref.read(deviceIdProvider.future);
+    await _analytics.trackTransition(
+      client: client,
+      deviceId: deviceId,
+      sourceCareerId: ref.read(selectedCareerInfoProvider).id,
+      sourceMatterId: source.id,
+      sourceMatterName: source.nombre,
+      targetCareerId: ref.read(selectedCareerInfoProvider).id,
+      targetMatterId: target.id,
+      targetMatterName: target.nombre,
+    );
+  }
+
+  Materia? _findMatterById(String id) {
+    final plan = ref.read(planProvider).valueOrNull;
+    if (plan == null) return null;
+    for (final matter in plan.materias) {
+      if (matter.id == id) return matter;
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final planReady = ref.watch(planProvider).valueOrNull != null;
+    if (planReady && !_initialViewTracked) {
+      _initialViewTracked = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        unawaited(_trackInitialView());
+      });
+    }
+
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final backgroundTop =

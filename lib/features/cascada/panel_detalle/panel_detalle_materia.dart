@@ -243,7 +243,10 @@ class _DeferredMatterCommunitySectionState
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    // Esperamos 280ms para que la animación de entrada del modal (240ms)
+    // termine antes de reavivar el árbol gigantesco de la comunidad
+    // y evitar los tirones de compilación de Shaders.
+    Future.delayed(const Duration(milliseconds: 280), () {
       if (!mounted) return;
       setState(() => _ready = true);
     });

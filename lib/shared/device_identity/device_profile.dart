@@ -39,8 +39,8 @@ class DeviceProfile {
   bool get needsReferenceName => (referenceName ?? '').trim().isEmpty;
 
   String get adminDisplayLabel {
-    final name = (referenceName ?? '').trim();
-    final label = deviceLabel.trim();
+    final name = _cleanDisplayText(referenceName);
+    final label = _cleanDisplayText(deviceLabel);
     if (name.isNotEmpty && label.isNotEmpty) return '$name - $label';
     if (name.isNotEmpty) return name;
     if (label.isNotEmpty) return label;
@@ -49,7 +49,7 @@ class DeviceProfile {
 
   String get publicDisplayLabel {
     if (publicMode == DeviceProfilePublicMode.alias) {
-      final alias = (publicAlias ?? '').trim();
+      final alias = _cleanDisplayText(publicAlias);
       if (alias.isNotEmpty) return alias;
     }
     return 'Referencia anonima';
@@ -77,5 +77,12 @@ class DeviceProfile {
       updatedAt: parseDate('updated_at'),
     );
   }
-}
 
+  static String _cleanDisplayText(String? value) {
+    final cleaned = (value ?? '').trim();
+    if (cleaned.isEmpty) return '';
+    final normalized = cleaned.toLowerCase();
+    if (normalized == 'undefined' || normalized == 'null') return '';
+    return cleaned;
+  }
+}

@@ -127,8 +127,17 @@ class _InstitutionSelectionOverlayState
     );
     _pulseController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1100),
-    )..repeat(reverse: true);
+      duration: const Duration(milliseconds: 2400),
+    );
+
+    // Retrasamos el inicio de la animación de pulso un segundo exacto.
+    // Durante este intervalo ocurrirá la paralización de inicialización del
+    // decodificador de video (a los 700ms). Como nada se estará moviendo
+    // gráficamente en pantalla, la congelación del Thread UI será 100%
+    // indetectable por el usuario.
+    Future.delayed(const Duration(milliseconds: 1000), () {
+      if (mounted) _pulseController.repeat(reverse: true);
+    });
     _checkController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 420),
@@ -707,7 +716,11 @@ class _AnimatedInstitutionArtworkState
   @override
   void initState() {
     super.initState();
-    _initializeVideoIfNeeded();
+    // Retrasar la instanciación de Texture/MediaCodec 700ms para asegurar
+    // que la animación de entrada de 650ms termine por completo.
+    Future.delayed(const Duration(milliseconds: 700), () {
+      if (mounted) _initializeVideoIfNeeded();
+    });
   }
 
   @override
@@ -978,6 +991,7 @@ class _AnimatedInstitutionArtworkState
       }
       return FittedBox(
         fit: BoxFit.cover,
+        alignment: Alignment.center,
         clipBehavior: Clip.hardEdge,
         child: SizedBox(
           width: controller.value.size.width,

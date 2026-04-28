@@ -1,6 +1,8 @@
 import 'dart:convert';
+import 'dart:async';
 
 import 'package:flutter/services.dart' show rootBundle;
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../models/materia.dart';
 import '../../../shared/utils/text_sanitize.dart';
@@ -11,14 +13,51 @@ class ExamenesRepo {
 
   static final Map<String, Future<List<ExamenEvent>>> _eventCache = {};
 
-  Future<List<ExamenEvent>> loadLlamado1() =>
-      _loadJson('assets/examenes_llamado1.json');
+  Future<List<ExamenEvent>> loadLlamado1() => _loadSupabaseOrAsset(
+      instancia: 'llamado_1', assetPath: 'assets/examenes_mayo_2026.json');
 
-  Future<List<ExamenEvent>> loadLlamado2() =>
-      _loadJson('assets/examenes_llamado2.json');
+  Future<List<ExamenEvent>> loadLlamado2() => _loadSupabaseOrAsset(
+      instancia: 'llamado_2', assetPath: 'assets/examenes_llamado2.json');
 
-  Future<List<ExamenEvent>> loadColoquios() =>
-      _loadJson('assets/coloquios_feb_mar_2026.json');
+  Future<List<ExamenEvent>> loadColoquios() => _loadSupabaseOrAsset(
+      instancia: 'coloquio', assetPath: 'assets/coloquios_mayo_2026.json');
+
+  Future<List<ExamenEvent>> _loadSupabaseOrAsset({
+    required String instancia,
+    required String assetPath,
+  }) async {
+    final supabaseEvents = await _loadSupabase(instancia: instancia);
+    if (supabaseEvents != null) {
+      return supabaseEvents;
+    }
+    return _loadJson(assetPath);
+  }
+
+  Future<List<ExamenEvent>?> _loadSupabase({required String instancia}) async {
+    try {
+      final client = Supabase.instance.client;
+      final rows = await client
+          .from('exam_events')
+          .select(
+            'career_id, anio, fecha, hora, materia, instancia, docentes, acta_url',
+          )
+          .eq('instancia', instancia)
+          .order('fecha')
+          .order('career_id')
+          .order('anio')
+          .order('materia')
+          .timeout(const Duration(seconds: 25));
+
+      final list = rows.cast<Map<String, dynamic>>();
+      return List<ExamenEvent>.unmodifiable(
+        list.map((row) => ExamenEvent.fromJson(row)),
+      );
+    } on TimeoutException {
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
 
   Future<List<ExamenEvent>> _loadJson(String assetPath) {
     return _eventCache.putIfAbsent(assetPath, () async {

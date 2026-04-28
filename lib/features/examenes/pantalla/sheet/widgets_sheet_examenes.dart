@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../models/examen_event.dart';
 import '../examenes_visibility.dart';
@@ -304,6 +305,21 @@ class PanelExamenMateria extends StatelessWidget {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Datos copiados')),
     );
+  }
+
+  Future<void> _openActa(BuildContext context) async {
+    final raw = _activeOption?.evento.actaUrl;
+    final uri = raw == null || raw.trim().isEmpty ? null : Uri.tryParse(raw);
+    if (uri == null) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Acta no disponible para esta materia')),
+      );
+      return;
+    }
+
+    final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!ok || !context.mounted) return;
   }
 
   Widget _headerMateria(
@@ -636,16 +652,29 @@ class PanelExamenMateria extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        SizedBox(
-          width: double.infinity,
-          child: FilledButton.icon(
-            onPressed:
-                examsHiddenMode ? null : () => _copyInfo(context, active, activeOption),
-            icon: Icon(examsHiddenMode
-                ? Icons.schedule_send_rounded
-                : Icons.copy_all_rounded),
-            label: Text(examsHiddenMode ? 'Proximamente' : 'Copiar datos'),
-          ),
+        Row(
+          children: [
+            Expanded(
+              child: FilledButton.icon(
+                onPressed: examsHiddenMode
+                    ? null
+                    : () => _copyInfo(context, active, activeOption),
+                icon: Icon(examsHiddenMode
+                    ? Icons.schedule_send_rounded
+                    : Icons.copy_all_rounded),
+                label: Text(examsHiddenMode ? 'Proximamente' : 'Copiar datos'),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed:
+                    examsHiddenMode ? null : () => _openActa(context),
+                icon: const Icon(Icons.description_rounded),
+                label: const Text('Acta'),
+              ),
+            ),
+          ],
         ),
       ],
     );

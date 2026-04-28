@@ -1,0 +1,6 @@
+﻿--- ANALISIS DE FUNCIONES (FILA 6 a 11) ---
+Celda D6: Didßctica General
+Celda D7: A±o 1░ |
+Celda J7: Asignatura
+Celda L8: =IF(OR(L9="", L9="------"), "-------", PROPER(TEXT(L9, "dddd")))
+Celda L9: 2026-04-21 00:00:00

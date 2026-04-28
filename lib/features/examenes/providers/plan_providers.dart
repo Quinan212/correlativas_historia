@@ -25,7 +25,7 @@ final planMapaMateriasProvider =
       break;
   }
 
-  final plan = await load.timeout(const Duration(seconds: 10));
+  final plan = await load;
 
   final map = <String, Materia>{};
   for (final materia in plan.materias) {

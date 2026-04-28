@@ -6,6 +6,7 @@ import '../../../shared/device_identity/device_identity.dart';
 import '../../../shared/providers/app_state.dart';
 import '../../cascada/panel_detalle/componentes/controles_superiores.dart';
 import '../../verification/providers/verification_providers.dart';
+import '../config/opiniones_visibility.dart';
 import '../models/opiniones_catalog.dart';
 import '../models/opiniones_review_models.dart';
 import '../providers/opiniones_providers.dart';
@@ -22,6 +23,9 @@ Future<void> showDocenteDetailSheet({
   required String matterName,
   required String careerId,
 }) {
+  if (!kShowOpinionUi) {
+    return Future<void>.value();
+  }
   return Navigator.of(context).push(
     MaterialPageRoute<void>(
       builder: (_) => _DocenteDetailPage(

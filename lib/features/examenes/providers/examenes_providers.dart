@@ -6,21 +6,44 @@ import '../models/examen_event.dart';
 final examenesRepoProvider =
     Provider<ExamenesRepo>((ref) => const ExamenesRepo());
 
+enum ExamenesViewMode {
+  resumen,
+  jerarquico,
+}
+
+final examenesViewModeProvider =
+    StateProvider<ExamenesViewMode>((_) => ExamenesViewMode.resumen);
+
+enum ExamenesStyleMode {
+  clasico,
+  zeus,
+}
+
+final examenesStyleModeProvider =
+    StateProvider<ExamenesStyleMode>((_) => ExamenesStyleMode.clasico);
+
+void toggleExamenesStyle(WidgetRef ref) {
+  final cur = ref.read(examenesStyleModeProvider);
+  ref.read(examenesStyleModeProvider.notifier).state =
+      cur == ExamenesStyleMode.clasico
+          ? ExamenesStyleMode.zeus
+          : ExamenesStyleMode.clasico;
+}
+
 final examenesAllProvider = FutureProvider<List<ExamenEvent>>((ref) async {
   final repo = ref.watch(examenesRepoProvider);
 
   final results = await Future.wait<List<ExamenEvent>>([
-    repo.loadLlamado1().timeout(const Duration(seconds: 10)),
-    repo.loadLlamado2().timeout(const Duration(seconds: 10)),
-    repo.loadColoquios().timeout(const Duration(seconds: 10)),
+    repo.loadLlamado1(),
+    repo.loadLlamado2(),
+    repo.loadColoquios(),
   ]);
 
   final l1 = results[0];
   final l2 = results[1];
   final col = results[2];
 
-  final all = <ExamenEvent>[...l1, ...l2, ...col]
-    ..sort((a, b) {
+  final all = <ExamenEvent>[...l1, ...l2, ...col]..sort((a, b) {
       final da = a.fechaHora;
       final db = b.fechaHora;
 
@@ -36,7 +59,8 @@ final examenesAllProvider = FutureProvider<List<ExamenEvent>>((ref) async {
 final examenesCareerIdProvider = StateProvider<String>((ref) => 'historia');
 final examenesInstanciaProvider = StateProvider<String>((ref) => 'todos');
 
-final examenesFiltradosProvider = FutureProvider<List<ExamenEvent>>((ref) async {
+final examenesFiltradosProvider =
+    FutureProvider<List<ExamenEvent>>((ref) async {
   final careerId = ref.watch(examenesCareerIdProvider);
   final instancia = ref.watch(examenesInstanciaProvider);
 

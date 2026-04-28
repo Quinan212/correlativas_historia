@@ -1,10 +1,8 @@
-
 import 'package:flutter/material.dart';
 
 class AppTheme {
   static const _seed = Color(0xFF005B7F);
 
-  // tokens que ya venís usando en tus pantallas
   static const _bgLight = Color(0xFFF5F7FA);
   static const _bgDark = Color(0xFF060B14);
 
@@ -36,19 +34,14 @@ class AppTheme {
       useMaterial3: true,
       colorScheme: cs,
       scaffoldBackgroundColor: _bgLight,
-
       fontFamily: 'Inter_24pt-Regular',
-
       dividerColor: Colors.transparent,
-
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.transparent,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
       ),
-
       iconTheme: const IconThemeData(color: _textMutedLight),
-
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: _surfaceLight,
@@ -66,7 +59,6 @@ class AppTheme {
           borderSide: BorderSide(color: cs.primary),
         ),
       ),
-
       cardTheme: const CardThemeData(surfaceTintColor: Colors.transparent),
     );
 
@@ -93,19 +85,14 @@ class AppTheme {
       useMaterial3: true,
       colorScheme: cs,
       scaffoldBackgroundColor: _bgDark,
-
       fontFamily: 'Inter_24pt-Regular',
-
       dividerColor: Colors.transparent,
-
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.transparent,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
       ),
-
       iconTheme: const IconThemeData(color: _textMutedDark),
-
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: const Color(0xFF0A1728),
@@ -123,7 +110,6 @@ class AppTheme {
           borderSide: BorderSide(color: cs.primary),
         ),
       ),
-
       cardTheme: const CardThemeData(surfaceTintColor: Colors.transparent),
     );
 

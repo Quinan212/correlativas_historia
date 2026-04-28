@@ -1,14 +1,17 @@
+import 'dart:async';
 import 'dart:math' as math;
-import 'dart:ui' show ImageFilter;
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../models/examen_event.dart';
 import '../../pantalla/logica_examenes.dart';
+import '../../../../shared/device_identity/device_identity.dart';
+import '../../../../shared/supabase/supabase.dart';
+import '../../providers/exam_navigation_analytics_repository.dart';
 import 'widgets_sheet_examenes.dart';
 
-class PaginaSheetExamenes extends StatefulWidget {
+class PaginaSheetExamenes extends ConsumerStatefulWidget {
   const PaginaSheetExamenes({
     super.key,
     required this.careerId,
@@ -27,19 +30,25 @@ class PaginaSheetExamenes extends StatefulWidget {
   final DetalleArgs? detalleInicial;
 
   @override
-  State<PaginaSheetExamenes> createState() => _PaginaSheetExamenesState();
+  ConsumerState<PaginaSheetExamenes> createState() =>
+      _PaginaSheetExamenesState();
 }
 
-class _PaginaSheetExamenesState extends State<PaginaSheetExamenes>
+class _PaginaSheetExamenesState extends ConsumerState<PaginaSheetExamenes>
     with TickerProviderStateMixin {
   static const _sheetRadius = BorderRadius.all(Radius.circular(22));
-  static final bool _disableBackdropBlur =
-      !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
 
   double _dragDy = 0.0;
   AnimationController? _settleCtrl;
   late String _activeTabId;
   String? _activeDivisionId;
+  final ExamNavigationAnalyticsRepository _analytics =
+      const ExamNavigationAnalyticsRepository();
+
+  // Carga diferida: el contenido pesado se monta DESPUÉS de la animación de entrada
+  bool _contentReady = false;
+  bool _initialViewTracked = false;
+  Timer? _contentTimer;
 
   @override
   void initState() {
@@ -55,10 +64,15 @@ class _PaginaSheetExamenesState extends State<PaginaSheetExamenes>
         widget.coloquioEventos.isNotEmpty) {
       _activeTabId = 'coloquio';
     }
+    // Diferir el contenido pesado hasta que termine la animación de entrada
+    _contentTimer = Timer(const Duration(milliseconds: 330), () {
+      if (mounted) setState(() => _contentReady = true);
+    });
   }
 
   @override
   void dispose() {
+    _contentTimer?.cancel();
     _settleCtrl?.dispose();
     super.dispose();
   }
@@ -82,6 +96,59 @@ class _PaginaSheetExamenesState extends State<PaginaSheetExamenes>
     _settleCtrl!.forward();
   }
 
+  Future<void> _trackInitialView({
+    required InstanciaTabData tab,
+    required DivisionOptionData? option,
+  }) async {
+    final client = ref.read(supabaseClientProvider);
+    final deviceId = await ref.read(deviceIdProvider.future);
+    await _analytics.trackView(
+      client: client,
+      deviceId: deviceId,
+      careerId: widget.careerId,
+      matterName: widget.materia,
+      tabId: tab.id,
+      tabLabel: tab.label,
+      divisionId: option?.id,
+      divisionLabel: option?.label,
+    );
+  }
+
+  Future<void> _trackTransition({
+    required InstanciaTabData sourceTab,
+    required DivisionOptionData? sourceOption,
+    required InstanciaTabData targetTab,
+    required DivisionOptionData? targetOption,
+  }) async {
+    final client = ref.read(supabaseClientProvider);
+    final deviceId = await ref.read(deviceIdProvider.future);
+    await _analytics.trackTransition(
+      client: client,
+      deviceId: deviceId,
+      sourceCareerId: widget.careerId,
+      sourceMatterName: widget.materia,
+      sourceTabId: sourceTab.id,
+      sourceTabLabel: sourceTab.label,
+      sourceDivisionId: sourceOption?.id,
+      sourceDivisionLabel: sourceOption?.label,
+      targetCareerId: widget.careerId,
+      targetMatterName: widget.materia,
+      targetTabId: targetTab.id,
+      targetTabLabel: targetTab.label,
+      targetDivisionId: targetOption?.id,
+      targetDivisionLabel: targetOption?.label,
+    );
+  }
+
+  DivisionOptionData? _optionFor(InstanciaTabData tab, String? optionId) {
+    if (tab.options.isEmpty) return null;
+    if (optionId == null) return tab.options.first;
+    for (final option in tab.options) {
+      if (option.id == optionId) return option;
+    }
+    return tab.options.first;
+  }
+
   void _cuandoArrastras(DragUpdateDetails d) {
     final dy = d.delta.dy;
     if (dy <= 0 && _dragDy <= 0) return;
@@ -99,6 +166,22 @@ class _PaginaSheetExamenesState extends State<PaginaSheetExamenes>
       return;
     }
     _animarVueltaDelDrag();
+  }
+
+  double _estimateHeight() {
+    // Estimación rápida para evitar saltos bruscos
+    int items = 0;
+    if (_activeTabId == 'llamado_1') {
+      items = widget.llamado1Eventos.length;
+    } else if (_activeTabId == 'llamado_2') {
+      items = widget.llamado2Eventos.length;
+    } else {
+      items = widget.coloquioEventos.length;
+    }
+
+    // Cabezal/Tabs ~150px + ~95px por cada fecha de examen
+    final h = 150.0 + (items * 95.0);
+    return h.clamp(200.0, 520.0);
   }
 
   @override
@@ -123,7 +206,7 @@ class _PaginaSheetExamenesState extends State<PaginaSheetExamenes>
       if (widget.llamado1Eventos.isNotEmpty)
         InstanciaTabData.fromEventos(
           id: 'llamado_1',
-          label: 'Primer llamado',
+          label: 'Mesas extraordinarias',
           materia: widget.materia,
           eventos: widget.llamado1Eventos,
         ),
@@ -151,6 +234,20 @@ class _PaginaSheetExamenesState extends State<PaginaSheetExamenes>
         activeTab.options.any((o) => o.id == _activeDivisionId)
             ? _activeDivisionId
             : (activeTab.options.isEmpty ? null : activeTab.options.first.id);
+    final activeDivision = _optionFor(activeTab, activeDivisionId);
+
+    if (_contentReady && !_initialViewTracked) {
+      _initialViewTracked = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        unawaited(
+          _trackInitialView(
+            tab: activeTab,
+            option: activeDivisionId == null ? null : activeDivision,
+          ),
+        );
+      });
+    }
 
     return Material(
       type: MaterialType.transparency,
@@ -162,9 +259,6 @@ class _PaginaSheetExamenesState extends State<PaginaSheetExamenes>
           final dragT = (_dragDy / 260.0).clamp(0.0, 1.0);
           final focus = (1.0 - dragT);
 
-          final blurSigma = 14.0 * t * focus;
-          final dimA = 0.28 * t * focus;
-          final tintA = 0.10 * t * focus;
           final sheetOffset = (1.0 - t) * 26.0 + _dragDy;
 
           return Stack(
@@ -175,21 +269,11 @@ class _PaginaSheetExamenesState extends State<PaginaSheetExamenes>
                   onTap: () => Navigator.of(context).pop(),
                   child: Stack(
                     children: [
-                      Container(color: Colors.black.withValues(alpha: dimA)),
-                      if (_disableBackdropBlur)
-                        Container(
-                          color: Colors.black.withValues(alpha: tintA),
-                        )
-                      else
-                        BackdropFilter(
-                          filter: ImageFilter.blur(
-                            sigmaX: blurSigma,
-                            sigmaY: blurSigma,
-                          ),
-                          child: Container(
-                            color: Colors.black.withValues(alpha: tintA),
-                          ),
+                      Container(
+                        color: Colors.black.withValues(
+                          alpha: (0.65 * t * focus).clamp(0.0, 1.0),
                         ),
+                      ),
                       Align(
                         alignment: Alignment.bottomCenter,
                         child: IgnorePointer(
@@ -228,12 +312,11 @@ class _PaginaSheetExamenesState extends State<PaginaSheetExamenes>
                           behavior: HitTestBehavior.translucent,
                           onVerticalDragUpdate: _cuandoArrastras,
                           onVerticalDragEnd: _cuandoSoltas,
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Flexible(
-                                fit: FlexFit.loose,
-                                child: RepaintBoundary(
+                          child: SingleChildScrollView(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                RepaintBoundary(
                                   child: Material(
                                     color: panelBg,
                                     shape: const RoundedRectangleBorder(
@@ -257,44 +340,100 @@ class _PaginaSheetExamenesState extends State<PaginaSheetExamenes>
                                                 .withValues(alpha: 0.35),
                                           ),
                                           const SizedBox(height: 12),
-                                          Flexible(
-                                            fit: FlexFit.loose,
-                                            child: SingleChildScrollView(
-                                              child: PanelExamenMateria(
-                                                careerId: widget.careerId,
-                                                materia: widget.materia,
-                                                tabs: tabs,
-                                                activeTabId: activeId,
-                                                activeDivisionId:
-                                                    activeDivisionId,
-                                                onTabChanged: (id) =>
-                                                    setState(() {
-                                                  _activeTabId = id;
-                                                  final tab = tabs.firstWhere(
-                                                    (t) => t.id == id,
-                                                    orElse: () => tabs.first,
-                                                  );
-                                                  _activeDivisionId = tab
-                                                          .options.isEmpty
-                                                      ? null
-                                                      : tab.options.first.id;
-                                                }),
-                                                onDivisionChanged: (id) =>
-                                                    setState(() =>
-                                                        _activeDivisionId = id),
-                                              ),
-                                            ),
+                                          AnimatedSize(
+                                            duration: const Duration(milliseconds: 250),
+                                            curve: Curves.easeInOutCubic,
+                                            alignment: Alignment.topCenter,
+                                            child: _contentReady
+                                                ? PanelExamenMateria(
+                                                    careerId: widget.careerId,
+                                                    materia: widget.materia,
+                                                    tabs: tabs,
+                                                    activeTabId: activeId,
+                                                    activeDivisionId:
+                                                        activeDivisionId,
+                                                    onTabChanged: (id) {
+                                                      if (id == _activeTabId) return;
+                                                      final sourceTab = activeTab;
+                                                      final sourceOption =
+                                                          _optionFor(activeTab, activeDivisionId);
+                                                      final targetTab = tabs.firstWhere(
+                                                        (t) => t.id == id,
+                                                        orElse: () => tabs.first,
+                                                      );
+                                                      final targetOption =
+                                                          _optionFor(targetTab, null);
+                                                      setState(() {
+                                                        _activeTabId = id;
+                                                        _activeDivisionId =
+                                                            targetOption?.id;
+                                                      });
+                                                      unawaited(
+                                                        _trackTransition(
+                                                          sourceTab: sourceTab,
+                                                          sourceOption: sourceOption,
+                                                          targetTab: targetTab,
+                                                          targetOption: targetOption,
+                                                        ),
+                                                      );
+                                                    },
+                                                    onDivisionChanged: (id) {
+                                                      if (id == _activeDivisionId) {
+                                                        return;
+                                                      }
+                                                      final sourceOption =
+                                                          _optionFor(activeTab, activeDivisionId);
+                                                      final targetOption =
+                                                          _optionFor(activeTab, id);
+                                                      setState(() =>
+                                                          _activeDivisionId = id);
+                                                      unawaited(
+                                                        _trackTransition(
+                                                          sourceTab: activeTab,
+                                                          sourceOption: sourceOption,
+                                                          targetTab: activeTab,
+                                                          targetOption: targetOption,
+                                                        ),
+                                                      );
+                                                    },
+                                                  )
+                                                : ConstrainedBox(
+                                                    constraints: BoxConstraints(
+                                                      minHeight: _estimateHeight(),
+                                                      minWidth: double.infinity,
+                                                    ),
+                                                    child: Padding(
+                                                      padding: const EdgeInsets.symmetric(
+                                                          vertical: 48),
+                                                      child: Center(
+                                                        child: Text(
+                                                          widget.materia,
+                                                          style: theme
+                                                              .textTheme.titleMedium
+                                                              ?.copyWith(
+                                                            fontWeight: FontWeight.w700,
+                                                            color:
+                                                                cs.onSurfaceVariant,
+                                                          ),
+                                                          textAlign: TextAlign.center,
+                                                          maxLines: 2,
+                                                          overflow:
+                                                              TextOverflow.ellipsis,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
                                           ),
                                         ],
                                       ),
                                     ),
                                   ),
                                 ),
-                              ),
-                              const SizedBox(height: 10),
-                              TarjetaCerrar(
-                                  onTap: () => Navigator.of(context).pop()),
-                            ],
+                                const SizedBox(height: 10),
+                                TarjetaCerrar(
+                                    onTap: () => Navigator.of(context).pop()),
+                              ],
+                            ),
                           ),
                         ),
                       ),

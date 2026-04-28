@@ -35,7 +35,6 @@ class _AutoScrollingHorizontalStripState
     with SingleTickerProviderStateMixin {
   static const double _autoScrollPixelsPerSecond = 22.0;
   static const Duration _resumeDelay = Duration(seconds: 2);
-  static const double _fadeInset = 5.0;
 
   final ScrollController _scrollController = ScrollController();
   late final Ticker _ticker;
@@ -161,50 +160,53 @@ class _AutoScrollingHorizontalStripState
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final width = constraints.maxWidth <= 0 ? 1.0 : constraints.maxWidth;
-        final fadeFraction = (fadeWidth / width).clamp(0.0, 0.18);
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        // Approximation of the background color
+        final bgColor = isDark ? const Color(0xFF111827) : Colors.white;
 
         return NotificationListener<ScrollNotification>(
           onNotification: _handleScrollNotification,
           child: ClipRect(
-            child: ShaderMask(
-              blendMode: BlendMode.dstIn,
-              shaderCallback: (bounds) {
-                final insetFraction =
-                    (bounds.width <= 0 ? 0.0 : (_fadeInset / bounds.width)).clamp(0.0, 0.05);
-                final leadingStart = _showLeadingFade ? insetFraction : 0.0;
-                final leadingEnd = _showLeadingFade
-                    ? (insetFraction + fadeFraction).clamp(0.0, 0.25)
-                    : 0.0;
-                final trailingStart = _showTrailingFade
-                    ? (1.0 - fadeFraction - insetFraction).clamp(0.75, 1.0)
-                    : 1.0;
-                final trailingEnd = _showTrailingFade
-                    ? (1.0 - insetFraction).clamp(0.0, 1.0)
-                    : 1.0;
-
-                return LinearGradient(
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                  stops: [
-                    leadingStart,
-                    leadingEnd,
-                    trailingStart,
-                    trailingEnd,
-                  ],
-                  colors: [
-                    _showLeadingFade ? Colors.transparent : Colors.white,
-                    Colors.white,
-                    Colors.white,
-                    _showTrailingFade ? Colors.transparent : Colors.white,
-                  ],
-                ).createShader(bounds);
-              },
-              child: SingleChildScrollView(
-                controller: _scrollController,
-                scrollDirection: Axis.horizontal,
-                child: widget.child,
-              ),
+            child: Stack(
+              children: [
+                SingleChildScrollView(
+                  controller: _scrollController,
+                  scrollDirection: Axis.horizontal,
+                  child: widget.child,
+                ),
+                if (_showLeadingFade)
+                  Positioned(
+                    left: 0,
+                    top: 0,
+                    bottom: 0,
+                    width: fadeWidth,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
+                          colors: [bgColor, bgColor.withValues(alpha: 0.0)],
+                        ),
+                      ),
+                    ),
+                  ),
+                if (_showTrailingFade)
+                  Positioned(
+                    right: 0,
+                    top: 0,
+                    bottom: 0,
+                    width: fadeWidth,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.centerRight,
+                          end: Alignment.centerLeft,
+                          colors: [bgColor, bgColor.withValues(alpha: 0.0)],
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
         );

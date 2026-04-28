@@ -80,7 +80,7 @@ const List<CareerInfo> kCareers = [
   CareerInfo(
     id: 'historia',
     nombre: 'Profesorado de Historia',
-    assetHtml: 'assets/historia.html',
+    assetHtml: 'assets/data/historia.json',
     downloadUrl:
         'https://drive.google.com/file/d/13znCaPZBl00OHVRLZhJ6Fh8CQaGIKi63/view?usp=sharing',
     categoria: 'profesorado',
@@ -89,7 +89,7 @@ const List<CareerInfo> kCareers = [
   CareerInfo(
     id: 'geografia',
     nombre: 'Profesorado en Geografía',
-    assetHtml: 'assets/geografia.html',
+    assetHtml: 'assets/data/geografia.json',
     downloadUrl:
         'https://drive.google.com/file/d/1Sj91vNoBMlo_0ZPOAvLEJciPsjaWH4S9/view',
     categoria: 'profesorado',
@@ -98,7 +98,7 @@ const List<CareerInfo> kCareers = [
   CareerInfo(
     id: 'politica',
     nombre: 'Profesorado en Ciencia Política',
-    assetHtml: 'assets/politica.html',
+    assetHtml: 'assets/data/politica.json',
     downloadUrl:
         'https://drive.google.com/file/d/1UjXaF41TL5AKRpOaE9YJOIdtAguPUJ83/view?usp=sharing',
     categoria: 'profesorado',
@@ -107,7 +107,7 @@ const List<CareerInfo> kCareers = [
   CareerInfo(
     id: 'artes_visuales',
     nombre: 'Profesorado en Artes Visuales',
-    assetHtml: 'assets/Artes_visuales.html',
+    assetHtml: 'assets/data/artes_visuales.json',
     downloadUrl: 'https://drive.google.com/tu_link_oficial_de_artes_visuales',
     categoria: 'profesorado',
   ),

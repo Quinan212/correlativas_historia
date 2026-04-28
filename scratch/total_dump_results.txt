@@ -1,0 +1,454 @@
+﻿
+===== VOLCADO TOTAL DE TEXTOS: Mesas Trivunal =====
+Mesas Trivunal [B2]: Mesas Trivunal
+Mesas Trivunal [C6]: 1┬░  A├æO
+Mesas Trivunal [D6]: Did├íctica General
+Mesas Trivunal [D7]: A├▒o 1┬░ |
+Mesas Trivunal [J7]: Asignatura
+Mesas Trivunal [D8]: Docentes
+Mesas Trivunal [L8]: Martes
+Mesas Trivunal [N8]: En 3 d├¡as
+Mesas Trivunal [D9]: Medina, Jorge
+Mesas Trivunal [G9]: ---------------
+Mesas Trivunal [J9]: Fecha:
+Mesas Trivunal [D10]: ---------------
+Mesas Trivunal [G10]: ---------------
+Mesas Trivunal [J10]: Horario:
+Mesas Trivunal [L10]: 06:00 p.ÔÇ»m.
+Mesas Trivunal [D11]: Acta Volante:
+Mesas Trivunal [I11]: Sin Inscripciones
+Mesas Trivunal [D13]: Pedagog├¡a
+Mesas Trivunal [D14]: A├▒o 1┬░ |
+Mesas Trivunal [J14]: Asignatura
+Mesas Trivunal [D15]: Docentes
+Mesas Trivunal [L15]: Mi├®rcoles
+Mesas Trivunal [N15]: En 4 d├¡as
+Mesas Trivunal [D16]: Igual, In├®s
+Mesas Trivunal [G16]: ---------------
+Mesas Trivunal [J16]: Fecha:
+Mesas Trivunal [D17]: ---------------
+Mesas Trivunal [G17]: ---------------
+Mesas Trivunal [J17]: Horario:
+Mesas Trivunal [L17]: 06:00 p.ÔÇ»m.
+Mesas Trivunal [D18]: Acta Volante:
+Mesas Trivunal [I18]: Sin Inscripciones
+Mesas Trivunal [D20]: Procesos Sociales, Pol├¡ticos, Econ├│micos y Culturales de la Antig├╝edad
+Mesas Trivunal [D21]: A├▒o 1┬░ |
+Mesas Trivunal [J21]: Asignatura
+Mesas Trivunal [D22]: Docentes
+Mesas Trivunal [L22]: Mi├®rcoles
+Mesas Trivunal [N22]: En 4 d├¡as
+Mesas Trivunal [D23]: Borche, Javier
+Mesas Trivunal [G23]: ---------------
+Mesas Trivunal [J23]: Fecha:
+Mesas Trivunal [D24]: ---------------
+Mesas Trivunal [G24]: ---------------
+Mesas Trivunal [J24]: Horario:
+Mesas Trivunal [L24]: 06:00 p.ÔÇ»m.
+Mesas Trivunal [D25]: Acta Volante:
+Mesas Trivunal [I25]: Sin Inscripciones
+Mesas Trivunal [D27]: Procesos Sociales, Pol├¡ticos, Econ├│micos y Culturales de los Pueblos Originarios de Am├®rica
+Mesas Trivunal [D28]: A├▒o 1┬░ |
+Mesas Trivunal [J28]: Asignatura
+Mesas Trivunal [D29]: Docentes
+Mesas Trivunal [L29]: S├íbado
+Mesas Trivunal [N29]: En 7 d├¡as
+Mesas Trivunal [D30]: Frigo, Flavia
+Mesas Trivunal [G30]: ---------------
+Mesas Trivunal [J30]: Fecha:
+Mesas Trivunal [D31]: ---------------
+Mesas Trivunal [G31]: ---------------
+Mesas Trivunal [J31]: Horario:
+Mesas Trivunal [L31]: 06:00 p.ÔÇ»m.
+Mesas Trivunal [D32]: Acta Volante:
+Mesas Trivunal [I32]: Sin Inscripciones
+Mesas Trivunal [D34]: Problem├ítica del Conocimiento Hist├│rico
+Mesas Trivunal [D35]: A├▒o 1┬░ |
+Mesas Trivunal [J35]: Asignatura
+Mesas Trivunal [D36]: Docentes
+Mesas Trivunal [L36]: Jueves
+Mesas Trivunal [N36]: En 5 d├¡as
+Mesas Trivunal [D37]: Borche, Javier
+Mesas Trivunal [G37]: ---------------
+Mesas Trivunal [J37]: Fecha:
+Mesas Trivunal [D38]: ---------------
+Mesas Trivunal [G38]: ---------------
+Mesas Trivunal [J38]: Horario:
+Mesas Trivunal [L38]: 06:00 p.ÔÇ»m.
+Mesas Trivunal [D39]: Acta Volante:
+Mesas Trivunal [I39]: Sin Inscripciones
+Mesas Trivunal [C41]: 2┬░  A├æO
+Mesas Trivunal [D41]: Filosof├¡a
+Mesas Trivunal [D42]: A├▒o 2┬░ |
+Mesas Trivunal [J42]: Asignatura
+Mesas Trivunal [D43]: Docentes
+Mesas Trivunal [L43]: Jueves
+Mesas Trivunal [N43]: En 12 d├¡as
+Mesas Trivunal [D44]: Leiva, Carina
+Mesas Trivunal [G44]: ---------------
+Mesas Trivunal [J44]: Fecha:
+Mesas Trivunal [D45]: ---------------
+Mesas Trivunal [G45]: ---------------
+Mesas Trivunal [J45]: Horario:
+Mesas Trivunal [L45]: 06:00 p.ÔÇ»m.
+Mesas Trivunal [D46]: Acta Volante:
+Mesas Trivunal [I46]: Sin Inscripciones
+Mesas Trivunal [D48]: Procesos Sociales, Pol├¡ticos, Econ├│micos y Culturales Americanos I
+Mesas Trivunal [D49]: A├▒o 2┬░ |
+Mesas Trivunal [J49]: Asignatura
+Mesas Trivunal [D50]: Docentes
+Mesas Trivunal [L50]: Jueves
+Mesas Trivunal [N50]: En 12 d├¡as
+Mesas Trivunal [D51]: Frigo, Flavia
+Mesas Trivunal [G51]: ---------------
+Mesas Trivunal [J51]: Fecha:
+Mesas Trivunal [D52]: ---------------
+Mesas Trivunal [G52]: ---------------
+Mesas Trivunal [J52]: Horario:
+Mesas Trivunal [L52]: 06:00 p.ÔÇ»m.
+Mesas Trivunal [D53]: Acta Volante:
+Mesas Trivunal [I53]: Sin Inscripciones
+Mesas Trivunal [D55]: Procesos Sociales, Pol├¡ticos, Econ├│micos y Culturales del Feudalismo y la Modernidad
+Mesas Trivunal [D56]: A├▒o 2┬░ |
+Mesas Trivunal [J56]: Asignatura
+Mesas Trivunal [D57]: Docentes
+Mesas Trivunal [L57]: Jueves
+Mesas Trivunal [N57]: En 5 d├¡as
+Mesas Trivunal [D58]: Frigo, Flavia
+Mesas Trivunal [G58]: ---------------
+Mesas Trivunal [J58]: Fecha:
+Mesas Trivunal [D59]: ---------------
+Mesas Trivunal [G59]: ---------------
+Mesas Trivunal [J59]: Horario:
+Mesas Trivunal [L59]: 06:00 p.ÔÇ»m.
+Mesas Trivunal [D60]: Acta Volante:
+Mesas Trivunal [I60]: Sin Inscripciones
+Mesas Trivunal [D62]: Psicolog├¡a Educacional
+Mesas Trivunal [D63]: A├▒o 2┬░ |
+Mesas Trivunal [J63]: Asignatura
+Mesas Trivunal [D64]: Docentes
+Mesas Trivunal [L64]: Mi├®rcoles
+Mesas Trivunal [N64]: En 11 d├¡as
+Mesas Trivunal [D65]: Gay, Giuliana
+Mesas Trivunal [G65]: ---------------
+Mesas Trivunal [J65]: Fecha:
+Mesas Trivunal [D66]: ---------------
+Mesas Trivunal [G66]: ---------------
+Mesas Trivunal [J66]: Horario:
+Mesas Trivunal [L66]: 06:00 p.ÔÇ»m.
+Mesas Trivunal [D67]: Acta Volante:
+Mesas Trivunal [I67]: Sin Inscripciones
+Mesas Trivunal [C69]: 3┬░  A├æO
+Mesas Trivunal [D69]: Did├íctica de la Historia
+Mesas Trivunal [D70]: A├▒o 3┬░ |
+Mesas Trivunal [J70]: Asignatura
+Mesas Trivunal [D71]: Docentes
+Mesas Trivunal [L71]: Viernes
+Mesas Trivunal [N71]: En 13 d├¡as
+Mesas Trivunal [D72]: Horacio, Velazque Pens
+Mesas Trivunal [G72]: ---------------
+Mesas Trivunal [J72]: Fecha:
+Mesas Trivunal [D73]: ---------------
+Mesas Trivunal [G73]: ---------------
+Mesas Trivunal [J73]: Horario:
+Mesas Trivunal [L73]: 06:00 p.ÔÇ»m.
+Mesas Trivunal [D74]: Acta Volante:
+Mesas Trivunal [I74]: Sin Inscripciones
+Mesas Trivunal [D76]: Historia y Pol├¡tica de la Educaci├│n Argentina
+Mesas Trivunal [D77]: A├▒o 3┬░ |
+Mesas Trivunal [J77]: Asignatura
+Mesas Trivunal [D78]: Docentes
+Mesas Trivunal [L78]: Jueves
+Mesas Trivunal [N78]: En 12 d├¡as
+Mesas Trivunal [D79]: Borche, Javier
+Mesas Trivunal [G79]: ---------------
+Mesas Trivunal [J79]: Fecha:
+Mesas Trivunal [D80]: ---------------
+Mesas Trivunal [G80]: ---------------
+Mesas Trivunal [J80]: Horario:
+Mesas Trivunal [L80]: 06:00 p.ÔÇ»m.
+Mesas Trivunal [D81]: Acta Volante:
+Mesas Trivunal [I81]: Sin Inscripciones
+Mesas Trivunal [D83]: Procesos Sociales, Pol├¡ticos, Econ├│micos y Culturales Contempor├íneos I
+Mesas Trivunal [D84]: A├▒o 3┬░ |
+Mesas Trivunal [J84]: Asignatura
+Mesas Trivunal [D85]: Docentes
+Mesas Trivunal [L85]: S├íbado
+Mesas Trivunal [N85]: En 21 d├¡as
+Mesas Trivunal [D86]: Frigo, Flavia
+Mesas Trivunal [G86]: ---------------
+Mesas Trivunal [J86]: Fecha:
+Mesas Trivunal [D87]: ---------------
+Mesas Trivunal [G87]: ---------------
+Mesas Trivunal [J87]: Horario:
+Mesas Trivunal [L87]: 06:00 p.ÔÇ»m.
+Mesas Trivunal [D88]: Acta Volante:
+Mesas Trivunal [I88]: Sin Inscripciones
+Mesas Trivunal [D90]: Procesos Sociales, Pol├¡ticos, Econ├│micos y Culturales Americanos II
+Mesas Trivunal [D91]: A├▒o 3┬░ |
+Mesas Trivunal [J91]: Asignatura
+Mesas Trivunal [D92]: Docentes
+Mesas Trivunal [L92]: Domingo
+Mesas Trivunal [N92]: En 22 d├¡as
+Mesas Trivunal [D93]: Carmar├ín, Rosana
+Mesas Trivunal [G93]: ---------------
+Mesas Trivunal [J93]: Fecha:
+Mesas Trivunal [D94]: ---------------
+Mesas Trivunal [G94]: ---------------
+Mesas Trivunal [J94]: Horario:
+Mesas Trivunal [L94]: 06:00 p.ÔÇ»m.
+Mesas Trivunal [D95]: Acta Volante:
+Mesas Trivunal [I95]: Sin Inscripciones
+Mesas Trivunal [D97]: Sociolog├¡a de la Educaci├│n
+Mesas Trivunal [D98]: A├▒o 3┬░ |
+Mesas Trivunal [J98]: Asignatura
+Mesas Trivunal [D99]: Docentes
+Mesas Trivunal [L99]: Viernes
+Mesas Trivunal [N99]: En 20 d├¡as
+Mesas Trivunal [D100]: Dri, Gabriela
+Mesas Trivunal [G100]: ---------------
+Mesas Trivunal [J100]: Fecha:
+Mesas Trivunal [D101]: ---------------
+Mesas Trivunal [G101]: ---------------
+Mesas Trivunal [J101]: Horario:
+Mesas Trivunal [L101]: 06:00 p.ÔÇ»m.
+Mesas Trivunal [D102]: Acta Volante:
+Mesas Trivunal [I102]: Sin Inscripciones
+Mesas Trivunal [C104]: 4┬░  A├æO
+Mesas Trivunal [D104]: Derechos Humanos: ├ëtica y Ciudadan├¡a
+Mesas Trivunal [D105]: A├▒o 4┬░ |
+Mesas Trivunal [J105]: Asignatura
+Mesas Trivunal [D106]: Docentes
+Mesas Trivunal [L106]: Mi├®rcoles
+Mesas Trivunal [N106]: En 18 d├¡as
+Mesas Trivunal [D107]: Stadelman, Patricia
+Mesas Trivunal [G107]: ---------------
+Mesas Trivunal [J107]: Fecha:
+Mesas Trivunal [D108]: ---------------
+Mesas Trivunal [G108]: ---------------
+Mesas Trivunal [J108]: Horario:
+Mesas Trivunal [L108]: 06:00 p.ÔÇ»m.
+Mesas Trivunal [D109]: Acta Volante:
+Mesas Trivunal [I109]: Sin Inscripciones
+Mesas Trivunal [D111]: Procesos Sociales, Pol├¡ticos, Econ├│micos y Culturales Americanos III
+Mesas Trivunal [D112]: A├▒o 4┬░ |
+Mesas Trivunal [J112]: Asignatura
+Mesas Trivunal [D113]: Docentes
+Mesas Trivunal [L113]: Jueves
+Mesas Trivunal [N113]: En 12 d├¡as
+Mesas Trivunal [D114]: Frigo, Flavia
+Mesas Trivunal [G114]: ---------------
+Mesas Trivunal [J114]: Fecha:
+Mesas Trivunal [D115]: ---------------
+Mesas Trivunal [G115]: ---------------
+Mesas Trivunal [J115]: Horario:
+Mesas Trivunal [L115]: 06:00 p.ÔÇ»m.
+Mesas Trivunal [D116]: Acta Volante:
+Mesas Trivunal [I116]: Sin Inscripciones
+Mesas Trivunal [D118]: Procesos Sociales, Pol├¡ticos, Econ├│micos y Culturales Contempor├íneos II
+Mesas Trivunal [D119]: A├▒o 4┬░ |
+Mesas Trivunal [J119]: Asignatura
+Mesas Trivunal [D120]: Docentes
+Mesas Trivunal [L120]: Jueves
+Mesas Trivunal [N120]: En 19 d├¡as
+Mesas Trivunal [D121]: Frigo, Flavia
+Mesas Trivunal [G121]: ---------------
+Mesas Trivunal [J121]: Fecha:
+Mesas Trivunal [D122]: ---------------
+Mesas Trivunal [G122]: ---------------
+Mesas Trivunal [J122]: Horario:
+Mesas Trivunal [L122]: 06:00 p.ÔÇ»m.
+Mesas Trivunal [D123]: Acta Volante:
+Mesas Trivunal [I123]: Sin Inscripciones
+
+===== VOLCADO TOTAL DE TEXTOS: Coloquios =====
+Coloquios [B2]: Coloquios
+Coloquios [C6]: Pedagog├¡a
+Coloquios [C7]: 1┬░  A├æO
+Coloquios [D7]: Divisi├│n:  A
+Coloquios [E7]: A├▒o 1┬░ |
+Coloquios [I7]: Division: A
+Coloquios [K7]: Seminario-Taller
+Coloquios [E8]: Docentes
+Coloquios [M8]: Martes
+Coloquios [O8]: En 3 d├¡as
+Coloquios [E9]: Medina, Jorge
+Coloquios [H9]: ---------------
+Coloquios [K9]: Fecha:
+Coloquios [E10]: ---------------
+Coloquios [H10]: ---------------
+Coloquios [K10]: Horario:
+Coloquios [M10]: 06:00 p.ÔÇ»m.
+Coloquios [D11]: Divisi├│n:  B
+Coloquios [E11]: A├▒o 1┬░ |
+Coloquios [I11]: Division: B
+Coloquios [K11]: Seminario-Taller
+Coloquios [E12]: Docentes
+Coloquios [M12]: Mi├®rcoles
+Coloquios [O12]: En 4 d├¡as
+Coloquios [E13]: ---------------
+Coloquios [H13]: ---------------
+Coloquios [K13]: Fecha:
+Coloquios [E14]: ---------------
+Coloquios [H14]: ---------------
+Coloquios [K14]: Horario:
+Coloquios [M14]: 06:00 p.ÔÇ»m.
+Coloquios [D15]: Acta Volante:
+Coloquios [I15]: Sin Inscripciones
+Coloquios [C17]: Did├íctica de las Ciencias Sociales
+Coloquios [C18]: 2┬░  A├æO
+Coloquios [D18]: Divisi├│n:  A
+Coloquios [E18]: A├▒o 1┬░ |
+Coloquios [I18]: Division: A
+Coloquios [K18]: Seminario-Taller
+Coloquios [E19]: Docentes
+Coloquios [M19]: Jueves
+Coloquios [O19]: En 26 d├¡as
+Coloquios [E20]: Palavicini, Patricia
+Coloquios [H20]: ---------------
+Coloquios [K20]: Fecha:
+Coloquios [E21]: ---------------
+Coloquios [H21]: ---------------
+Coloquios [K21]: Horario:
+Coloquios [M21]: 06:00 p.ÔÇ»m.
+Coloquios [D22]: Divisi├│n:  B
+Coloquios [E22]: A├▒o 1┬░ |
+Coloquios [I22]: Division: B
+Coloquios [K22]: Seminario-Taller
+Coloquios [E23]: Docentes
+Coloquios [M23]: Jueves
+Coloquios [O23]: En 26 d├¡as
+Coloquios [E24]: ---------------
+Coloquios [H24]: ---------------
+Coloquios [K24]: Fecha:
+Coloquios [E25]: ---------------
+Coloquios [H25]: ---------------
+Coloquios [K25]: Horario:
+Coloquios [M25]: 06:00 p.ÔÇ»m.
+Coloquios [D26]: Acta Volante:
+Coloquios [I26]: Sin Inscripciones
+Coloquios [D28]: Sujetos de la Educaci├│n Secundaria
+Coloquios [D29]: Divisi├│n:  A
+Coloquios [E29]: A├▒o 1┬░ |
+Coloquios [I29]: Division: A
+Coloquios [K29]: Seminario-Taller
+Coloquios [E30]: Docentes
+Coloquios [M30]: -------
+Coloquios [O30]: No Planificado
+Coloquios [E31]: Pizzio, Marcos
+Coloquios [H31]: ---------------
+Coloquios [K31]: Fecha:
+Coloquios [E32]: ---------------
+Coloquios [H32]: ---------------
+Coloquios [K32]: Horario:
+Coloquios [M32]: ---------------
+Coloquios [D33]: Divisi├│n:  B
+Coloquios [E33]: A├▒o 1┬░ |
+Coloquios [I33]: Division: B
+Coloquios [K33]: Seminario-Taller
+Coloquios [E34]: Llamado de Mayo
+Coloquios [M34]: -------
+Coloquios [O34]: No Planificado
+Coloquios [E35]: ---------------
+Coloquios [H35]: ---------------
+Coloquios [K35]: Fecha:
+Coloquios [E36]: ---------------
+Coloquios [H36]: ---------------
+Coloquios [K36]: Horario:
+Coloquios [M36]: ---------------
+Coloquios [D37]: Acta Volante:
+Coloquios [I37]: Sin Inscripciones
+Coloquios [D39]: Pr├íctica Docente II
+Coloquios [D40]: Divisi├│n:  A
+Coloquios [E40]: A├▒o 1┬░ |
+Coloquios [I40]: Division: A
+Coloquios [K40]: Seminario-Taller
+Coloquios [E41]: Docentes
+Coloquios [M41]: Jueves
+Coloquios [O41]: En 26 d├¡as
+Coloquios [E42]: Medina, Jorge
+Coloquios [H42]: ---------------
+Coloquios [K42]: Fecha:
+Coloquios [E43]: ---------------
+Coloquios [H43]: ---------------
+Coloquios [K43]: Horario:
+Coloquios [M43]: ---------------
+Coloquios [D44]: Divisi├│n:  B
+Coloquios [E44]: A├▒o 1┬░ |
+Coloquios [I44]: Division: B
+Coloquios [K44]: Seminario-Taller
+Coloquios [E45]: Docentes
+Coloquios [M45]: Jueves
+Coloquios [O45]: En 26 d├¡as
+Coloquios [E46]: ---------------
+Coloquios [H46]: ---------------
+Coloquios [K46]: Fecha:
+Coloquios [E47]: ---------------
+Coloquios [H47]: ---------------
+Coloquios [K47]: Horario:
+Coloquios [M47]: ---------------
+Coloquios [D48]: Acta Volante:
+Coloquios [I48]: Sin Inscripciones
+Coloquios [C50]: Epistemolog├¡a de la Historia
+Coloquios [C51]: 3┬░  A├æO
+Coloquios [D51]: Divisi├│n:  A
+Coloquios [E51]: A├▒o 1┬░ |
+Coloquios [I51]: Division: A
+Coloquios [K51]: Seminario-Taller
+Coloquios [E52]: Docentes
+Coloquios [M52]: S├íbado
+Coloquios [O52]: Hoy
+Coloquios [E53]: Borche, Javier
+Coloquios [H53]: ---------------
+Coloquios [K53]: Fecha:
+Coloquios [E54]: ---------------
+Coloquios [H54]: ---------------
+Coloquios [K54]: Horario:
+Coloquios [M54]: 06:00 p.ÔÇ»m.
+Coloquios [D55]: Divisi├│n:  B
+Coloquios [E55]: A├▒o 1┬░ |
+Coloquios [I55]: Division: B
+Coloquios [K55]: Seminario-Taller
+Coloquios [E56]: Docentes
+Coloquios [M56]: Mi├®rcoles
+Coloquios [O56]: En 4 d├¡as
+Coloquios [E57]: ---------------
+Coloquios [H57]: ---------------
+Coloquios [K57]: Fecha:
+Coloquios [E58]: ---------------
+Coloquios [H58]: ---------------
+Coloquios [K58]: Horario:
+Coloquios [M58]: 06:00 p.ÔÇ»m.
+Coloquios [D59]: Acta Volante:
+Coloquios [I59]: Sin Inscripciones
+Coloquios [D61]: Pr├íctica Docente III
+Coloquios [D62]: Divisi├│n:  A
+Coloquios [E62]: A├▒o 1┬░ |
+Coloquios [I62]: Division: A
+Coloquios [K62]: Seminario-Taller
+Coloquios [E63]: Docentes
+Coloquios [M63]: -------
+Coloquios [O63]: No Planificado
+Coloquios [E64]: Medina, Jorge
+Coloquios [H64]: ---------------
+Coloquios [K64]: Fecha:
+Coloquios [E65]: ---------------
+Coloquios [H65]: ---------------
+Coloquios [K65]: Horario:
+Coloquios [M65]: ---------------
+Coloquios [D66]: Divisi├│n:  B
+Coloquios [E66]: A├▒o 1┬░ |
+Coloquios [I66]: Division: B
+Coloquios [K66]: Seminario-Taller
+Coloquios [E67]: Docentes
+Coloquios [M67]: Jueves
+Coloquios [O67]: En 26 d├¡as
+Coloquios [E68]: ---------------
+Coloquios [H68]: ---------------
+Coloquios [K68]: Fecha:
+Coloquios [E69]: ---------------
+Coloquios [H69]: ---------------
+Coloquios [K69]: Horario:
+Coloquios [M69]: 06:00 p.ÔÇ»m.
+Coloquios [D70]: Acta Volante:
+Coloquios [I70]: Sin Inscripciones

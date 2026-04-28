@@ -25,6 +25,8 @@ class _PushNotificationsBootstrapperState
   bool _bootstrapped = false;
   final DevicePresenceRepository _presenceRepository =
       const DevicePresenceRepository();
+  final DeviceProfileRepository _profileRepository =
+      const DeviceProfileRepository();
   String? _deviceId;
 
   @override
@@ -39,7 +41,15 @@ class _PushNotificationsBootstrapperState
   Future<void> _bootstrap() async {
     final client = ref.read(supabaseClientProvider);
     final deviceId = await ref.read(deviceIdProvider.future);
+    final deviceLabel = await ref.read(deviceLabelProvider.future);
     _deviceId = deviceId;
+    if (client != null) {
+      await _profileRepository.ensureProfileShell(
+        client: client,
+        deviceId: deviceId,
+        deviceLabel: deviceLabel,
+      );
+    }
     await PushNotificationsService.instance.initialize(
       deviceId: deviceId,
       client: client,

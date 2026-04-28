@@ -1,0 +1,11 @@
+﻿
+--- MOLDE DE FUNCIONES (Bloque de Did├íctica General) ---
+Celda D6: Did├íctica General
+Celda D7: A├▒o 1┬░ |
+Celda J7: Asignatura
+Celda L8: =IF(OR(L9="", L9="------"), "-------", PROPER(TEXT(L9, "dddd")))
+Celda L9: 2026-04-21 00:00:00
+Celda L10: ┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á06:00 p.ÔÇ»m.┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á┬á
+Celda N8: =IF(OR(L9="", L9="------"), "No Planificado", IF(L9-TODAY()=0, "Hoy", IF(L9-TODAY()=1, "Ma├▒ana", IF(L9-TODAY()<0, "Finalizado", "En " & (L9-TODAY()) & " d├¡as"))))
+Celda D9: Medina, Jorge
+Celda G9: ---------------

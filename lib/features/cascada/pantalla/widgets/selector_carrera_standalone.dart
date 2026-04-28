@@ -47,6 +47,7 @@ class _SelectorCarreraStandaloneState
     ref.read(selectedInstitutionIdProvider.notifier).state =
         institutions.isEmpty ? null : institutions.first.id;
     _resetMapState();
+
     if (institutions.isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;

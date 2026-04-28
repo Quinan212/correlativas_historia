@@ -113,7 +113,7 @@ final adminObservedDevicesProvider =
 
   final profileRows = await client
       .from('device_profiles')
-      .select('device_id, public_alias, reference_name')
+      .select('device_id, device_label, public_alias, reference_name')
       .inFilter('device_id', deviceIds);
 
   final profileByDevice = <String, Map<String, dynamic>>{};
@@ -146,18 +146,20 @@ final adminObservedDevicesProvider =
     (row) {
       final deviceId = (row['device_id'] ?? '').toString().trim();
       final profile = profileByDevice[deviceId];
-      final alias = (profile?['public_alias'] ?? '').toString().trim();
-      final referenceName =
-          (profile?['reference_name'] ?? '').toString().trim();
-      final registryLabel = (row['label'] ?? '').toString().trim();
+      final deviceLabel = _cleanDisplayText(profile?['device_label']);
+      final alias = _cleanDisplayText(profile?['public_alias']);
+      final referenceName = _cleanDisplayText(profile?['reference_name']);
+      final registryLabel = _cleanDisplayText(row['label']);
 
-      final resolvedLabel = alias.isNotEmpty
+      final resolvedLabel = deviceLabel.isNotEmpty
+          ? deviceLabel
+          : alias.isNotEmpty
           ? alias
           : referenceName.isNotEmpty
               ? referenceName
               : registryLabel.isNotEmpty
                   ? registryLabel
-                  : deviceId;
+                  : _friendlyDeviceFallback(deviceId);
 
       return AdminObservedDevice(
         deviceId: deviceId,
@@ -180,3 +182,20 @@ final adminObservedDevicesProvider =
 
   return items;
 });
+
+String _cleanDisplayText(dynamic value) {
+  final cleaned = (value ?? '').toString().trim();
+  if (cleaned.isEmpty) return '';
+  final normalized = cleaned.toLowerCase();
+  if (normalized == 'undefined' || normalized == 'null') return '';
+  return cleaned;
+}
+
+String _friendlyDeviceFallback(String deviceId) {
+  final cleaned = deviceId.trim();
+  if (cleaned.isEmpty) return 'Dispositivo';
+  final suffix = cleaned.length <= 4
+      ? cleaned.toUpperCase()
+      : cleaned.substring(cleaned.length - 4).toUpperCase();
+  return 'Dispositivo $suffix';
+}

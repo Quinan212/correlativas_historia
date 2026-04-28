@@ -53,3 +53,16 @@ String sanitizeLowerNoAccents(String input) {
       .replaceAll('\u00fc', 'u')
       .replaceAll('\u00f1', 'n');
 }
+
+String normalizeDocenteDisplayName(String input) {
+  final value = sanitizeText(input);
+  if (value.isEmpty) return value;
+
+  final commaIndex = value.indexOf(',');
+  if (commaIndex <= 0) return value;
+
+  final surname = value.substring(0, commaIndex).trim().toUpperCase();
+  final rest = value.substring(commaIndex + 1).trimLeft();
+  if (rest.isEmpty) return surname;
+  return '$surname, $rest';
+}

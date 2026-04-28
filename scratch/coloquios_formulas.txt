@@ -1,0 +1,5 @@
+﻿--- FORMULAS EN COLOQUIOS ---
+Celda M8: =IF(OR(M9="", M9="------"), "-------", PROPER(TEXT(M9, "dddd")))
+Celda O8: =IF(OR(M9="", M9="------"), "No Planificado", IF(M9-TODAY()=0, "Hoy", IF(M9-TODAY()=1, "Ma├▒ana", IF(M9-TODAY()<0, "Finalizado", "En " & (M9-TODAY()) & " d├¡as"))))
+Celda M12: =IF(OR(M13="", M13="------"), "-------", PROPER(TEXT(M13, "dddd")))
+Celda O12: =IF(OR(M13="", M13="------"), "No Planificado", IF(M13-TODAY()=0, "Hoy", IF(M13-TODAY()=1, "Ma├▒ana", IF(M13-TODAY()<0, "Finalizado", "En " & (M13-TODAY()) & " d├¡as"))))

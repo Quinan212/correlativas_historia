@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../shared/device_identity/device_identity.dart';
 import '../../../shared/supabase/supabase.dart';
+import '../config/opiniones_visibility.dart';
 import '../models/opiniones_review_models.dart';
 import '../providers/opiniones_review_providers.dart';
 import '../utils/referencias_labels.dart';
@@ -16,6 +17,7 @@ Future<void> showMatterReviewComposerSheet({
   required String careerId,
   MatterReview? initialReview,
 }) async {
+  if (!kShowOpinionUi) return;
   MatterReview? resolvedInitialReview = initialReview;
   final client = ref.read(supabaseClientProvider);
   if (client != null) {
@@ -54,6 +56,7 @@ Future<void> showTeacherReviewComposerSheet({
   required String matterName,
   TeacherReview? initialReview,
 }) async {
+  if (!kShowOpinionUi) return;
   TeacherReview? resolvedInitialReview = initialReview;
   final client = ref.read(supabaseClientProvider);
   if (client != null) {

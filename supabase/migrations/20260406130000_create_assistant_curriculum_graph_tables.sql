@@ -9,7 +9,6 @@ create table if not exists public.assistant_curriculum_nodes (
   created_at timestamptz not null default timezone('utc', now()),
   unique (career_id, materia_id)
 );
-
 create table if not exists public.assistant_curriculum_edges (
   id bigserial primary key,
   career_id text not null,
@@ -22,19 +21,14 @@ create table if not exists public.assistant_curriculum_edges (
   created_at timestamptz not null default timezone('utc', now()),
   unique (career_id, from_materia_id, to_materia_id)
 );
-
 create index if not exists assistant_curriculum_nodes_career_idx
   on public.assistant_curriculum_nodes(career_id);
-
 create index if not exists assistant_curriculum_nodes_normalized_idx
   on public.assistant_curriculum_nodes(career_id, materia_normalized);
-
 create index if not exists assistant_curriculum_edges_from_idx
   on public.assistant_curriculum_edges(career_id, from_materia_id);
-
 create index if not exists assistant_curriculum_edges_to_idx
   on public.assistant_curriculum_edges(career_id, to_materia_id);
-
 do $$
 begin
   if not exists (
@@ -46,7 +40,6 @@ begin
   end if;
 end
 $$;
-
 do $$
 begin
   if not exists (
@@ -58,7 +51,6 @@ begin
   end if;
 end
 $$;
-
 do $$
 begin
   if not exists (
