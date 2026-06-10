@@ -1,17 +1,18 @@
-import 'package:firebase_performance/firebase_performance.dart';
 import 'dart:async';
 
+import 'package:firebase_performance/firebase_performance.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../models/materia.dart';
-import '../../../../shared/performance/app_performance.dart';
 import '../../../../shared/device_identity/device_identity.dart';
+import '../../../../shared/nav/smooth_route.dart';
+import '../../../../shared/performance/app_performance.dart';
 import '../../../../shared/providers/app_state.dart';
 import '../../../../shared/supabase/supabase.dart';
-import '../../providers/matter_navigation_analytics_repository.dart';
 import '../../panel_detalle/componentes/controles_superiores.dart';
 import '../../panel_detalle/panel_detalle_materia.dart';
+import '../../providers/matter_navigation_analytics_repository.dart';
 
 Future<void> mostrarModalDetalleMateria({
   required BuildContext context,
@@ -19,33 +20,11 @@ Future<void> mostrarModalDetalleMateria({
   required String heroId,
 }) async {
   await Navigator.of(context).push(
-    PageRouteBuilder(
-      transitionDuration: const Duration(milliseconds: 250),
-      reverseTransitionDuration: Duration.zero, // <-- Anulación de la salida
-      pageBuilder: (context, animation, secondaryAnimation) {
-        return _DetalleMateriaPage(
-          key: ValueKey('det_$heroId'),
-          initialMateriaId: heroId,
-        );
-      },
-      transitionsBuilder: (context, animation, secondaryAnimation, child) {
-        // Solo aplica animación suave cuando está ENTRANDO.
-        // Al cerrarse (reverse), como el tiempo es cero, este código ni se ve.
-        final curve = CurvedAnimation(
-          parent: animation,
-          curve: Curves.easeOutCubic,
-        );
-        return FadeTransition(
-          opacity: curve,
-          child: SlideTransition(
-            position: Tween<Offset>(
-              begin: const Offset(0.025, 0),
-              end: Offset.zero,
-            ).animate(curve),
-            child: child,
-          ),
-        );
-      },
+    smoothRoute<void>(
+      _DetalleMateriaPage(
+        key: ValueKey('det_$heroId'),
+        initialMateriaId: heroId,
+      ),
     ),
   );
   ref.read(selectedMateriaIdProvider.notifier).state = null;

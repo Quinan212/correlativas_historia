@@ -111,7 +111,7 @@ class _VisualizationGridState extends ConsumerState<VisualizationGrid> {
           : [
         BoxShadow(
           blurRadius: 6,
-          color: theme.shadowColor.withValues(alpha: 0.07),
+          color: theme.shadowColor.withOpacity(0.07),
         )
       ],
     );
@@ -628,7 +628,7 @@ class _MateriaCard extends ConsumerWidget {
                 ? []
                 : [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
+                color: Colors.black.withOpacity(0.05),
                 blurRadius: 2,
                 offset: const Offset(0, 1),
               )

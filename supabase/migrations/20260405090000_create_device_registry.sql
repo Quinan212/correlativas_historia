@@ -1,6 +1,6 @@
 create table if not exists public.device_registry (
   device_id text primary key,
-  device_kind text not null check (device_kind in ('real', 'emulator')),
+  device_kind text not null check (device_kind in ('real', 'emulator', 'tester')),
   lifecycle_status text not null check (lifecycle_status in ('active', 'legacy')),
   label text not null,
   notes text,

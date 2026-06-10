@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../models/examen_event.dart';
+import '../../../../models/materia.dart';
 import '../../pantalla/logica_examenes.dart';
 import '../../../../shared/device_identity/device_identity.dart';
 import '../../../../shared/supabase/supabase.dart';
@@ -20,6 +21,7 @@ class PaginaSheetExamenes extends ConsumerStatefulWidget {
     required this.llamado2Eventos,
     required this.coloquioEventos,
     required this.detalleInicial,
+    required this.mapaPlan,
   });
 
   final String careerId;
@@ -28,6 +30,7 @@ class PaginaSheetExamenes extends ConsumerStatefulWidget {
   final List<ExamenEvent> llamado2Eventos;
   final List<ExamenEvent> coloquioEventos;
   final DetalleArgs? detalleInicial;
+  final Map<String, Materia> mapaPlan;
 
   @override
   ConsumerState<PaginaSheetExamenes> createState() =>
@@ -184,6 +187,204 @@ class _PaginaSheetExamenesState extends ConsumerState<PaginaSheetExamenes>
     return h.clamp(200.0, 520.0);
   }
 
+  Widget _buildDesktopPanel(
+    BuildContext context, {
+    required Animation<double> curved,
+    required ThemeData theme,
+    required ColorScheme cs,
+    required bool isDark,
+    required double panelWidth,
+    required double panelHeight,
+    required List<InstanciaTabData> tabs,
+    required String activeId,
+    required InstanciaTabData activeTab,
+    required String? activeDivisionId,
+    required DivisionOptionData? activeDivision,
+  }) {
+    final panelBg = isDark ? cs.surface : const Color(0xFFF5F7FA);
+
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => Navigator.of(context).pop(),
+            child: Container(
+              color: Colors.black.withValues(alpha: 0.48 * curved.value),
+            ),
+          ),
+        ),
+        Align(
+          alignment: Alignment.centerRight,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
+            child: Opacity(
+              opacity: curved.value,
+              child: Transform.translate(
+                offset: Offset((1.0 - curved.value) * 42, 0),
+                child: SizedBox(
+                  width: panelWidth,
+                  height: panelHeight,
+                  child: Material(
+                    color: panelBg,
+                    elevation: 10,
+                    shadowColor: Colors.black.withValues(alpha: 0.18),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(28),
+                        bottomLeft: Radius.circular(28),
+                      ),
+                      side: BorderSide(
+                        color: isDark
+                            ? cs.outlineVariant
+                            : const Color(0xFFD1D5DB),
+                      ),
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: Column(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
+                          decoration: BoxDecoration(
+                            color: isDark ? cs.surface : Colors.white,
+                            border: Border(
+                              bottom: BorderSide(
+                                color: isDark
+                                    ? cs.outlineVariant
+                                    : const Color(0xFFE5E7EB),
+                              ),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  widget.materia,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: theme.textTheme.titleLarge?.copyWith(
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              IconButton.filledTonal(
+                                onPressed: () => Navigator.of(context).pop(),
+                                icon: const Icon(Icons.close_rounded),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Expanded(
+                          child: SingleChildScrollView(
+                            padding: const EdgeInsets.fromLTRB(
+                              16,
+                              16,
+                              16,
+                              20,
+                            ),
+                            child: AnimatedSize(
+                              duration: const Duration(milliseconds: 250),
+                              curve: Curves.easeInOutCubic,
+                              alignment: Alignment.topCenter,
+                              child: _contentReady
+                                    ? PanelExamenMateria(
+                                        careerId: widget.careerId,
+                                        materia: widget.materia,
+                                        tabs: tabs,
+                                        activeTabId: activeId,
+                                        activeDivisionId: activeDivisionId,
+                                        mapaPlan: widget.mapaPlan,
+                                        onTabChanged: (id) {
+                                        if (id == _activeTabId) return;
+                                        final sourceTab = activeTab;
+                                        final sourceOption = _optionFor(
+                                          activeTab,
+                                          activeDivisionId,
+                                        );
+                                        final targetTab = tabs.firstWhere(
+                                          (t) => t.id == id,
+                                          orElse: () => tabs.first,
+                                        );
+                                        final targetOption = _optionFor(
+                                          targetTab,
+                                          null,
+                                        );
+                                        setState(() {
+                                          _activeTabId = id;
+                                          _activeDivisionId = targetOption?.id;
+                                        });
+                                        unawaited(
+                                          _trackTransition(
+                                            sourceTab: sourceTab,
+                                            sourceOption: sourceOption,
+                                            targetTab: targetTab,
+                                            targetOption: targetOption,
+                                          ),
+                                        );
+                                      },
+                                      onDivisionChanged: (id) {
+                                        if (id == _activeDivisionId) {
+                                          return;
+                                        }
+                                        final sourceOption = _optionFor(
+                                          activeTab,
+                                          activeDivisionId,
+                                        );
+                                        final targetOption = _optionFor(
+                                          activeTab,
+                                          id,
+                                        );
+                                        setState(() => _activeDivisionId = id);
+                                        unawaited(
+                                          _trackTransition(
+                                            sourceTab: activeTab,
+                                            sourceOption: sourceOption,
+                                            targetTab: activeTab,
+                                            targetOption: targetOption,
+                                          ),
+                                        );
+                                      },
+                                    )
+                                  : ConstrainedBox(
+                                      constraints: BoxConstraints(
+                                        minHeight: _estimateHeight(),
+                                        minWidth: double.infinity,
+                                      ),
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 48,
+                                        ),
+                                        child: Center(
+                                          child: Text(
+                                            widget.materia,
+                                            style: theme.textTheme.titleMedium
+                                                ?.copyWith(
+                                              fontWeight: FontWeight.w700,
+                                              color: cs.onSurfaceVariant,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final routeAnim = ModalRoute.of(context)!.animation!;
@@ -196,24 +397,29 @@ class _PaginaSheetExamenesState extends ConsumerState<PaginaSheetExamenes>
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
+    final screenSize = MediaQuery.sizeOf(context);
+    final isDesktop = screenSize.width >= 1000;
 
     final maxH = MediaQuery.sizeOf(context).height * 0.90;
     final bottomInset = MediaQuery.of(context).viewPadding.bottom;
     const lift = 1.0;
+    final sheetMaxWidth =
+        isDesktop ? math.min(screenSize.width - 56.0, 1320.0) : double.infinity;
+    final sheetMaxHeight = isDesktop ? screenSize.height * 0.88 : maxH;
 
     final panelBg = isDark ? cs.surface : const Color(0xFFF5F7FA);
     final tabs = <InstanciaTabData>[
       if (widget.llamado1Eventos.isNotEmpty)
         InstanciaTabData.fromEventos(
           id: 'llamado_1',
-          label: 'Mesas extraordinarias',
+          label: 'Mesa Tribunal',
           materia: widget.materia,
           eventos: widget.llamado1Eventos,
         ),
       if (widget.llamado2Eventos.isNotEmpty)
         InstanciaTabData.fromEventos(
           id: 'llamado_2',
-          label: 'Segundo llamado',
+          label: 'Llamado 2',
           materia: widget.materia,
           eventos: widget.llamado2Eventos,
         ),
@@ -255,6 +461,25 @@ class _PaginaSheetExamenesState extends ConsumerState<PaginaSheetExamenes>
         animation: curved,
         builder: (context, _) {
           final t = curved.value;
+          if (isDesktop) {
+            final panelWidth =
+                math.min(screenSize.width * 0.58, 980.0).clamp(760.0, 980.0);
+            final panelHeight = screenSize.height * 0.92;
+            return _buildDesktopPanel(
+              context,
+              curved: curved,
+              theme: theme,
+              cs: cs,
+              isDark: isDark,
+              panelWidth: panelWidth,
+              panelHeight: panelHeight,
+              tabs: tabs,
+              activeId: activeId,
+              activeTab: activeTab,
+              activeDivisionId: activeDivisionId,
+              activeDivision: activeDivision,
+            );
+          }
 
           final dragT = (_dragDy / 260.0).clamp(0.0, 1.0);
           final focus = (1.0 - dragT);
@@ -271,7 +496,7 @@ class _PaginaSheetExamenesState extends ConsumerState<PaginaSheetExamenes>
                     children: [
                       Container(
                         color: Colors.black.withValues(
-                          alpha: (0.65 * t * focus).clamp(0.0, 1.0),
+                          alpha: (isDesktop ? 0.48 : 0.65) * t * focus,
                         ),
                       ),
                       Align(
@@ -285,8 +510,9 @@ class _PaginaSheetExamenesState extends ConsumerState<PaginaSheetExamenes>
                                 end: Alignment.bottomCenter,
                                 colors: [
                                   Colors.transparent,
-                                  Colors.black
-                                      .withValues(alpha: 0.10 * t * focus),
+                                  Colors.black.withValues(
+                                    alpha: 0.10 * t * focus,
+                                  ),
                                 ],
                               ),
                             ),
@@ -298,16 +524,24 @@ class _PaginaSheetExamenesState extends ConsumerState<PaginaSheetExamenes>
                 ),
               ),
               Align(
-                alignment: Alignment.bottomCenter,
+                alignment:
+                    isDesktop ? Alignment.center : Alignment.bottomCenter,
                 child: Transform.translate(
                   offset: Offset(0, sheetOffset),
                   child: Opacity(
                     opacity: t,
                     child: Padding(
                       padding: EdgeInsets.fromLTRB(
-                          12, 12, 12, 12 + bottomInset + lift),
+                        isDesktop ? 28 : 12,
+                        isDesktop ? 24 : 12,
+                        isDesktop ? 28 : 12,
+                        isDesktop ? 24 : 12 + bottomInset + lift,
+                      ),
                       child: ConstrainedBox(
-                        constraints: BoxConstraints(maxHeight: maxH),
+                        constraints: BoxConstraints(
+                          maxWidth: sheetMaxWidth,
+                          maxHeight: sheetMaxHeight,
+                        ),
                         child: GestureDetector(
                           behavior: HitTestBehavior.translucent,
                           onVerticalDragUpdate: _cuandoArrastras,
@@ -341,7 +575,8 @@ class _PaginaSheetExamenesState extends ConsumerState<PaginaSheetExamenes>
                                           ),
                                           const SizedBox(height: 12),
                                           AnimatedSize(
-                                            duration: const Duration(milliseconds: 250),
+                                            duration: const Duration(
+                                                milliseconds: 250),
                                             curve: Curves.easeInOutCubic,
                                             alignment: Alignment.topCenter,
                                             child: _contentReady
@@ -352,17 +587,25 @@ class _PaginaSheetExamenesState extends ConsumerState<PaginaSheetExamenes>
                                                     activeTabId: activeId,
                                                     activeDivisionId:
                                                         activeDivisionId,
+                                                    mapaPlan: widget.mapaPlan,
                                                     onTabChanged: (id) {
-                                                      if (id == _activeTabId) return;
-                                                      final sourceTab = activeTab;
+                                                      if (id == _activeTabId) {
+                                                        return;
+                                                      }
+                                                      final sourceTab =
+                                                          activeTab;
                                                       final sourceOption =
-                                                          _optionFor(activeTab, activeDivisionId);
-                                                      final targetTab = tabs.firstWhere(
+                                                          _optionFor(activeTab,
+                                                              activeDivisionId);
+                                                      final targetTab =
+                                                          tabs.firstWhere(
                                                         (t) => t.id == id,
-                                                        orElse: () => tabs.first,
+                                                        orElse: () =>
+                                                            tabs.first,
                                                       );
                                                       final targetOption =
-                                                          _optionFor(targetTab, null);
+                                                          _optionFor(
+                                                              targetTab, null);
                                                       setState(() {
                                                         _activeTabId = id;
                                                         _activeDivisionId =
@@ -371,54 +614,66 @@ class _PaginaSheetExamenesState extends ConsumerState<PaginaSheetExamenes>
                                                       unawaited(
                                                         _trackTransition(
                                                           sourceTab: sourceTab,
-                                                          sourceOption: sourceOption,
+                                                          sourceOption:
+                                                              sourceOption,
                                                           targetTab: targetTab,
-                                                          targetOption: targetOption,
+                                                          targetOption:
+                                                              targetOption,
                                                         ),
                                                       );
                                                     },
                                                     onDivisionChanged: (id) {
-                                                      if (id == _activeDivisionId) {
+                                                      if (id ==
+                                                          _activeDivisionId) {
                                                         return;
                                                       }
                                                       final sourceOption =
-                                                          _optionFor(activeTab, activeDivisionId);
+                                                          _optionFor(activeTab,
+                                                              activeDivisionId);
                                                       final targetOption =
-                                                          _optionFor(activeTab, id);
+                                                          _optionFor(
+                                                              activeTab, id);
                                                       setState(() =>
-                                                          _activeDivisionId = id);
+                                                          _activeDivisionId =
+                                                              id);
                                                       unawaited(
                                                         _trackTransition(
                                                           sourceTab: activeTab,
-                                                          sourceOption: sourceOption,
+                                                          sourceOption:
+                                                              sourceOption,
                                                           targetTab: activeTab,
-                                                          targetOption: targetOption,
+                                                          targetOption:
+                                                              targetOption,
                                                         ),
                                                       );
                                                     },
                                                   )
                                                 : ConstrainedBox(
                                                     constraints: BoxConstraints(
-                                                      minHeight: _estimateHeight(),
+                                                      minHeight:
+                                                          _estimateHeight(),
                                                       minWidth: double.infinity,
                                                     ),
                                                     child: Padding(
-                                                      padding: const EdgeInsets.symmetric(
+                                                      padding: const EdgeInsets
+                                                          .symmetric(
                                                           vertical: 48),
                                                       child: Center(
                                                         child: Text(
                                                           widget.materia,
-                                                          style: theme
-                                                              .textTheme.titleMedium
+                                                          style: theme.textTheme
+                                                              .titleMedium
                                                               ?.copyWith(
-                                                            fontWeight: FontWeight.w700,
-                                                            color:
-                                                                cs.onSurfaceVariant,
+                                                            fontWeight:
+                                                                FontWeight.w700,
+                                                            color: cs
+                                                                .onSurfaceVariant,
                                                           ),
-                                                          textAlign: TextAlign.center,
+                                                          textAlign:
+                                                              TextAlign.center,
                                                           maxLines: 2,
-                                                          overflow:
-                                                              TextOverflow.ellipsis,
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
                                                         ),
                                                       ),
                                                     ),

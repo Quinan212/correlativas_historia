@@ -42,7 +42,7 @@ class _AdminExamEventsSectionState extends ConsumerState<AdminExamEventsSection>
                 BoxShadow(
                   blurRadius: 10,
                   offset: const Offset(0, 6),
-                  color: Colors.black.withValues(alpha: 0.05),
+                  color: Colors.black.withOpacity(0.05),
                 ),
               ],
       ),
@@ -885,10 +885,10 @@ class _ExamEventCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.22),
+        color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.22),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.55),
+          color: theme.colorScheme.outlineVariant.withOpacity(0.55),
         ),
       ),
       child: Column(
@@ -957,7 +957,7 @@ class _Badge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: theme.colorScheme.primary.withValues(alpha: 0.10),
+        color: theme.colorScheme.primary.withOpacity(0.10),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
@@ -1016,4 +1016,5 @@ String _careerLabel(String careerId) {
   }
   return careerId;
 }
+
 

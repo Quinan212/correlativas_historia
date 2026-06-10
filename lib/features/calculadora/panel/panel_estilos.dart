@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class EstilosPanel {
   static bool isDark(BuildContext c) =>
@@ -14,7 +13,7 @@ class EstilosPanel {
     required Color color,
     double height = 1.2,
   }) {
-    return GoogleFonts.inter(
+    return TextStyle(
       fontSize: size,
       fontWeight: weight,
       color: color,

@@ -492,7 +492,7 @@ class _SectionCard extends StatelessWidget {
                 BoxShadow(
                   blurRadius: 6,
                   offset: const Offset(0, 3),
-                  color: Colors.black.withValues(alpha: 0.035),
+                  color: Colors.black.withOpacity(0.035),
                 ),
               ],
       ),
@@ -531,3 +531,4 @@ String _formatDate(DateTime value) {
   final year = value.year.toString();
   return '$day/$month/$year';
 }
+

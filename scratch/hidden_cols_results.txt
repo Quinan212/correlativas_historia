@@ -1,6 +1,0 @@
-﻿
---- COLUMNAS A y B DE Mesas Trivunal ---
-R2: [A]: None | [B]: Mesas Trivunal
-
---- COLUMNAS A y B DE Coloquios ---
-R2: [A]: None | [B]: Coloquios

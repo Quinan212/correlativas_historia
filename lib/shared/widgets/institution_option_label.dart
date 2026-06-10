@@ -91,7 +91,7 @@ class InstitutionOptionLabel extends StatelessWidget {
   Widget _fallbackIcon(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     return Container(
-      color: cs.primary.withValues(alpha: 0.14),
+      color: cs.primary.withOpacity(0.14),
       alignment: Alignment.center,
       child: Icon(
         Icons.domain_rounded,
@@ -101,3 +101,4 @@ class InstitutionOptionLabel extends StatelessWidget {
     );
   }
 }
+

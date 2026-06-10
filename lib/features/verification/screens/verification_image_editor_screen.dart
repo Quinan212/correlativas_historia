@@ -110,7 +110,7 @@ class _VerificationImageEditorScreenState
                         fixCropRect: true,
                         radius: 0, // Bordes rectos para máxima visibilidad
                         baseColor: Colors.black,
-                        maskColor: Colors.black.withValues(alpha: 0.75),
+                        maskColor: Colors.black.withOpacity(0.75),
                         progressIndicator: const CircularProgressIndicator(color: Colors.white),
                         cornerDotBuilder: (size, edgeAlignment) => const SizedBox.shrink(),
                         overlayBuilder: (context, rect) => const _CleanFrameOverlay(),
@@ -150,10 +150,10 @@ class _VerificationImageEditorScreenState
                               duration: const Duration(milliseconds: 200),
                               padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
-                                color: Colors.black.withValues(alpha: 0.7),
+                                color: Colors.black.withOpacity(0.7),
                                 shape: BoxShape.circle,
                                 border: Border.all(
-                                  color: Colors.white.withValues(alpha: 0.5),
+                                  color: Colors.white.withOpacity(0.5),
                                   width: 1,
                                 ),
                               ),
@@ -207,9 +207,10 @@ class _CleanFrameOverlay extends StatelessWidget {
     return IgnorePointer(
       child: Container(
         decoration: BoxDecoration(
-          border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 0.5),
+          border: Border.all(color: Colors.white.withOpacity(0.3), width: 0.5),
         ),
       ),
     );
   }
 }
+

@@ -73,7 +73,7 @@ class _WhatsNewSheetBody extends StatelessWidget {
                         BoxShadow(
                           blurRadius: 18,
                           offset: const Offset(0, 10),
-                          color: Colors.black.withValues(alpha: 0.10),
+                          color: Colors.black.withOpacity(0.10),
                         ),
                       ],
               ),
@@ -88,8 +88,8 @@ class _WhatsNewSheetBody extends StatelessWidget {
                         height: 6,
                         decoration: BoxDecoration(
                           color: isDark
-                              ? Colors.white.withValues(alpha: 0.18)
-                              : Colors.black.withValues(alpha: 0.12),
+                              ? Colors.white.withOpacity(0.18)
+                              : Colors.black.withOpacity(0.12),
                           borderRadius: BorderRadius.circular(999),
                         ),
                       ),
@@ -205,7 +205,7 @@ class _WhatsNewItem extends StatelessWidget {
             width: 42,
             height: 42,
             decoration: BoxDecoration(
-              color: const Color(0xFF005B7F).withValues(alpha: 0.12),
+              color: const Color(0xFF005B7F).withOpacity(0.12),
               borderRadius: BorderRadius.circular(14),
             ),
             child: Icon(icon, color: const Color(0xFF005B7F)),
@@ -234,3 +234,4 @@ class _WhatsNewItem extends StatelessWidget {
     );
   }
 }
+

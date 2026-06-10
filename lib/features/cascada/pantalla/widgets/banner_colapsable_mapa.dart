@@ -1,14 +1,30 @@
 import 'package:flutter/material.dart';
 
 class BannerColapsableMapa extends SliverPersistentHeaderDelegate {
-  BannerColapsableMapa({required this.topInset});
+  BannerColapsableMapa({
+    required this.topInset,
+    this.expandedTitle,
+    this.collapsedTitle,
+  });
 
   final double topInset;
+  final String? expandedTitle;
+  final String? collapsedTitle;
 
   static const double _h1 = 56.0;
   static const double _h2 = 40.0;
   static const c1 = Color(0xFF005B7F);
   static const c2 = Color(0xFF004966);
+
+  String get _expandedTitleSafe =>
+      (expandedTitle == null || expandedTitle!.trim().isEmpty)
+          ? 'Mapa de Correlatividades'
+          : expandedTitle!;
+
+  String get _collapsedTitleSafe =>
+      (collapsedTitle == null || collapsedTitle!.trim().isEmpty)
+          ? 'MAPA DE CORRELATIVIDADES'
+          : collapsedTitle!;
 
   @override
   double get minExtent => topInset + _h2;
@@ -32,7 +48,7 @@ class BannerColapsableMapa extends SliverPersistentHeaderDelegate {
     return Material(
       color: c2,
       elevation: overlapsContent ? 2 : 0,
-      shadowColor: Colors.black.withValues(alpha: 0.25),
+      shadowColor: Colors.black.withOpacity(0.25),
       child: Column(
         children: [
           SizedBox(
@@ -59,7 +75,7 @@ class BannerColapsableMapa extends SliverPersistentHeaderDelegate {
                           child: Transform.translate(
                             offset:
                                 Offset(0, reduceMotion ? 0 : (1 - vis) * 12),
-                            child: const _ExpandedBannerText(),
+                            child: _ExpandedBannerText(title: _expandedTitleSafe),
                           ),
                         ),
                       ),
@@ -79,8 +95,8 @@ class BannerColapsableMapa extends SliverPersistentHeaderDelegate {
                   ? const SizedBox.shrink()
                   : Opacity(
                       opacity: easedSmallT,
-                      child: const Text(
-                        'MAPA DE CORRELATIVIDADES',
+                      child: Text(
+                        _collapsedTitleSafe,
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 12,
@@ -98,12 +114,16 @@ class BannerColapsableMapa extends SliverPersistentHeaderDelegate {
 
   @override
   bool shouldRebuild(covariant BannerColapsableMapa oldDelegate) {
-    return oldDelegate.topInset != topInset;
+    return oldDelegate.topInset != topInset ||
+        oldDelegate.expandedTitle != expandedTitle ||
+        oldDelegate.collapsedTitle != collapsedTitle;
   }
 }
 
 class _ExpandedBannerText extends StatelessWidget {
-  const _ExpandedBannerText();
+  const _ExpandedBannerText({required this.title});
+
+  final String title;
 
   @override
   Widget build(BuildContext context) {
@@ -111,8 +131,8 @@ class _ExpandedBannerText extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Mapa de Correlatividades',
+        Text(
+          title,
           style: TextStyle(
             color: Colors.white,
             fontSize: 22,
@@ -124,3 +144,4 @@ class _ExpandedBannerText extends StatelessWidget {
     );
   }
 }
+

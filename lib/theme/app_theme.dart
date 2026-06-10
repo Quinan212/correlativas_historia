@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../shared/nav/app_page_transitions.dart';
+
 class AppTheme {
   static const _seed = Color(0xFF005B7F);
 
@@ -42,6 +44,7 @@ class AppTheme {
         surfaceTintColor: Colors.transparent,
       ),
       iconTheme: const IconThemeData(color: _textMutedLight),
+      pageTransitionsTheme: buildAppPageTransitionsTheme(),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: _surfaceLight,
@@ -93,6 +96,7 @@ class AppTheme {
         surfaceTintColor: Colors.transparent,
       ),
       iconTheme: const IconThemeData(color: _textMutedDark),
+      pageTransitionsTheme: buildAppPageTransitionsTheme(),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: const Color(0xFF0A1728),

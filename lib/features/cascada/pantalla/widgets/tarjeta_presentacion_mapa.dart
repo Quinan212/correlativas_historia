@@ -132,7 +132,7 @@ class _TarjetaPresentacionMapaState extends State<TarjetaPresentacionMapa> {
           BoxShadow(
             blurRadius: _expanded ? (isDark ? 18 : 12) : (isDark ? 14 : 9),
             offset: const Offset(0, 8),
-            color: theme.shadowColor.withValues(alpha: isDark ? 0.14 : 0.06),
+            color: theme.shadowColor.withOpacity(isDark ? 0.14 : 0.06),
           ),
         ],
       ),
@@ -186,7 +186,7 @@ class _TarjetaPresentacionMapaState extends State<TarjetaPresentacionMapa> {
                                 'Lectura interactiva del plan',
                                 style: tt.labelLarge?.copyWith(
                                   fontWeight: FontWeight.w700,
-                                  color: cs.primary.withValues(alpha: 0.92),
+                                  color: cs.primary.withOpacity(0.92),
                                   letterSpacing: 0.3,
                                 ),
                               ),
@@ -202,11 +202,9 @@ class _TarjetaPresentacionMapaState extends State<TarjetaPresentacionMapa> {
                                 width: 34,
                                 height: 34,
                                 decoration: BoxDecoration(
-                                  color: isDark
-                                      ? cs.surfaceContainerHighest.withValues(
-                                          alpha: 0.20,
-                                        )
-                                      : Colors.white.withValues(alpha: 0.72),
+                                    color: isDark
+                                        ? cs.surfaceContainerHighest.withOpacity(0.20)
+                                        : Colors.white.withOpacity(0.72),
                                   shape: BoxShape.circle,
                                   border: Border.all(
                                     color: isDark
@@ -244,7 +242,7 @@ class _TarjetaPresentacionMapaState extends State<TarjetaPresentacionMapa> {
                             height: 1.55,
                             color: _expanded
                                 ? cs.onSurfaceVariant
-                                : cs.onSurfaceVariant.withValues(alpha: 0.92),
+                                : cs.onSurfaceVariant.withOpacity(0.92),
                           ),
                           child: const Text(
                             'Consulta, interpreta y ordena tu recorrido de cursada',

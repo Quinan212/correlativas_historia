@@ -1,3 +1,9 @@
 {
-    "cmake.sourceDirectory": "C:/Users/alanm/StudioProjects/correlativas_historia/linux"
+    "cmake.sourceDirectory": "C:/Users/alanm/Desktop/StudioProjects/correlativas_historia/windows",
+    "deno.enable": true,
+    "deno.enablePaths": [
+        "supabase/functions"
+    ],
+    "deno.lint": true,
+    "deno.unstable": true
 }

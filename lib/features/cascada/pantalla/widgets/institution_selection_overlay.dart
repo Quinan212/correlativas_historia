@@ -396,11 +396,11 @@ class _PremiumSelectionCard extends StatelessWidget {
             : colorScheme.surface;
     final surfaceEnd = (enforceWhiteCompactSurface || enforceWhiteBannerSurface)
         ? Colors.white
-        : colorScheme.surfaceContainerHighest.withValues(alpha: 0.94);
+        : colorScheme.surfaceContainerHighest.withOpacity(0.94);
     final borderColor =
         (enforceWhiteCompactSurface || enforceWhiteBannerSurface)
             ? Colors.white
-            : colorScheme.outlineVariant.withValues(alpha: 0.40);
+            : colorScheme.outlineVariant.withOpacity(0.40);
 
     return AnimatedContainer(
       duration: _bannerCollapseDuration,
@@ -468,7 +468,7 @@ class _PremiumSelectionCard extends StatelessWidget {
                               colors: [
                                 colorScheme.surface,
                                 colorScheme.surfaceContainerHighest
-                                    .withValues(alpha: 0.94),
+                                    .withOpacity(0.94),
                               ],
                             ),
                           ),
@@ -486,7 +486,7 @@ class _PremiumSelectionCard extends StatelessWidget {
                           ? contentHeight * 1.08
                           : contentHeight * 1.06),
                   decoration: BoxDecoration(
-                    color: checkHaloColor.withValues(alpha: haloOpacity),
+                    color: checkHaloColor.withOpacity(haloOpacity),
                     borderRadius: compactCheckMode || !useBanner
                         ? null
                         : BorderRadius.circular(24),
@@ -506,7 +506,7 @@ class _PremiumSelectionCard extends StatelessWidget {
                       height: contentWidth * 0.22,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: checkHaloColor.withValues(alpha: 0.14),
+                        color: checkHaloColor.withOpacity(0.14),
                       ),
                     ),
                   ),
@@ -631,7 +631,7 @@ class _AnimatedSuccessCheck extends StatelessWidget {
                   height: size,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: color.withValues(alpha: 0.18),
+                    color: color.withOpacity(0.18),
                   ),
                 ),
               ),
@@ -652,7 +652,7 @@ class _AnimatedSuccessCheck extends StatelessWidget {
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-              color: color.withValues(alpha: 0.26),
+              color: color.withOpacity(0.26),
               blurRadius: 18,
               spreadRadius: 1.5,
             ),
@@ -882,7 +882,7 @@ class _AnimatedInstitutionArtworkState
                                 end: Alignment.bottomRight,
                                 colors: [
                                   widget.colorScheme.surface
-                                      .withValues(alpha: 0.02),
+                                      .withOpacity(0.02),
                                   widget.colorScheme.primary.withValues(
                                     alpha: 0.05 + (widget.glow * 0.04),
                                   ),
@@ -902,9 +902,9 @@ class _AnimatedInstitutionArtworkState
                                 begin: Alignment.centerLeft,
                                 end: Alignment.centerRight,
                                 colors: [
-                                  Colors.white.withValues(alpha: 0),
-                                  Colors.white.withValues(alpha: 0.22),
-                                  Colors.white.withValues(alpha: 0),
+                                  Colors.white.withOpacity(0),
+                                  Colors.white.withOpacity(0.22),
+                                  Colors.white.withOpacity(0),
                                 ],
                               ),
                             ),
@@ -924,7 +924,7 @@ class _AnimatedInstitutionArtworkState
                                     begin: Alignment.topCenter,
                                     end: Alignment.bottomCenter,
                                     colors: [
-                                      Colors.black.withValues(alpha: 0),
+                                      Colors.black.withOpacity(0),
                                       Colors.black.withValues(
                                         alpha: 0.10,
                                       ),
@@ -957,9 +957,9 @@ class _AnimatedInstitutionArtworkState
                                 begin: Alignment.centerLeft,
                                 end: Alignment.centerRight,
                                 colors: [
-                                  Colors.white.withValues(alpha: 0),
-                                  Colors.white.withValues(alpha: 0.22),
-                                  Colors.white.withValues(alpha: 0),
+                                  Colors.white.withOpacity(0),
+                                  Colors.white.withOpacity(0.22),
+                                  Colors.white.withOpacity(0),
                                 ],
                               ),
                             ),
@@ -1041,3 +1041,4 @@ class _AnimatedInstitutionArtworkState
     );
   }
 }
+

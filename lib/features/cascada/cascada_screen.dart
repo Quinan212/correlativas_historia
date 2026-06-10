@@ -218,7 +218,7 @@ class CascadaScreen extends ConsumerWidget {
         boxShadow: [
           BoxShadow(
             blurRadius: 6,
-            color: theme.shadowColor.withValues(alpha: 0.12),
+            color: theme.shadowColor.withOpacity(0.12),
           ),
         ],
       ),
@@ -325,7 +325,7 @@ class CascadaScreen extends ConsumerWidget {
         boxShadow: [
           BoxShadow(
             blurRadius: 6,
-            color: theme.shadowColor.withValues(alpha: 0.12),
+            color: theme.shadowColor.withOpacity(0.12),
           ),
         ],
       ),
@@ -469,7 +469,7 @@ class CascadaScreen extends ConsumerWidget {
                 desc,
                 textAlign: TextAlign.center,
                 style: tt.bodySmall?.copyWith(
-                  color: textC.withValues(alpha: 0.8),
+                  color: textC.withOpacity(0.8),
                   fontSize: 10,
                   height: 1.2,
                 ),
@@ -536,7 +536,7 @@ class CascadaScreen extends ConsumerWidget {
         boxShadow: [
           BoxShadow(
             blurRadius: 6,
-            color: theme.shadowColor.withValues(alpha: 0.12),
+            color: theme.shadowColor.withOpacity(0.12),
           ),
         ],
       ),
@@ -601,7 +601,7 @@ class CascadaScreen extends ConsumerWidget {
                   style: tt.labelSmall?.copyWith(
                     fontWeight: FontWeight.w900,
                     letterSpacing: 1,
-                    color: cs.onSurface.withValues(alpha: 0.6),
+                    color: cs.onSurface.withOpacity(0.6),
                   ),
                 ),
               ),
@@ -640,7 +640,7 @@ class CascadaScreen extends ConsumerWidget {
                   style: tt.labelSmall?.copyWith(
                     fontWeight: FontWeight.w900,
                     letterSpacing: 1,
-                    color: cs.onSurface.withValues(alpha: 0.6),
+                    color: cs.onSurface.withOpacity(0.6),
                   ),
                 ),
               ),
@@ -719,7 +719,7 @@ class CascadaScreen extends ConsumerWidget {
         boxShadow: [
           BoxShadow(
             blurRadius: 6,
-            color: theme.shadowColor.withValues(alpha: 0.12),
+            color: theme.shadowColor.withOpacity(0.12),
           ),
         ],
       ),
@@ -819,7 +819,7 @@ class _OneLineControlsBarState extends ConsumerState<_OneLineControlsBar> {
       return InputDecoration(
         filled: true,
         fillColor: isDark
-            ? cs.surface.withValues(alpha: 120 / 255)
+            ? cs.surface.withOpacity(120 / 255)
             : const Color(0xFFF3F4F6),
         isDense: true,
         contentPadding:
@@ -872,7 +872,7 @@ class _OneLineControlsBarState extends ConsumerState<_OneLineControlsBar> {
 
     final labelStyle = theme.textTheme.labelMedium?.copyWith(
       fontWeight: FontWeight.w600,
-      color: cs.onSurface.withValues(alpha: 0.8),
+      color: cs.onSurface.withOpacity(0.8),
     );
 
     return Container(
@@ -886,7 +886,7 @@ class _OneLineControlsBarState extends ConsumerState<_OneLineControlsBar> {
         boxShadow: [
           BoxShadow(
             blurRadius: 6,
-            color: theme.shadowColor.withValues(alpha: 0.12),
+            color: theme.shadowColor.withOpacity(0.12),
           ),
         ],
       ),
@@ -1154,7 +1154,7 @@ class _CareerSelectorCardStandaloneState
 
     final labelStyle = Theme.of(context).textTheme.labelMedium?.copyWith(
       fontWeight: FontWeight.w600,
-      color: cs.onSurface.withValues(alpha: 0.8),
+      color: cs.onSurface.withOpacity(0.8),
     );
 
     return Container(
@@ -1168,7 +1168,7 @@ class _CareerSelectorCardStandaloneState
         boxShadow: [
           BoxShadow(
             blurRadius: 6,
-            color: theme.shadowColor.withValues(alpha: 0.12),
+            color: theme.shadowColor.withOpacity(0.12),
           ),
         ],
       ),
@@ -1321,7 +1321,7 @@ class _DesktopYearBoard extends StatelessWidget {
             boxShadow: [
               BoxShadow(
                 blurRadius: 6,
-                color: theme.shadowColor.withValues(alpha: 0.06),
+                color: theme.shadowColor.withOpacity(0.06),
               ),
             ],
           ),
@@ -1471,3 +1471,4 @@ class _CollapsingBannerDelegate extends SliverPersistentHeaderDelegate {
 }
 
 */
+

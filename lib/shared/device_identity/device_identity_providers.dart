@@ -4,6 +4,7 @@ import '../supabase/supabase.dart';
 import 'device_profile.dart';
 import 'device_profile_repository.dart';
 import 'device_identity_service.dart';
+import 'device_registry_entry.dart';
 
 final deviceIdentityServiceProvider = Provider<DeviceIdentityService>(
   (ref) => const DeviceIdentityService(),
@@ -39,20 +40,40 @@ String serializeDeviceIds(Iterable<String> deviceIds) {
   return sorted.join('|');
 }
 
-final deviceProfilesByIdsProvider =
-    FutureProvider.autoDispose.family<Map<String, DeviceProfile>, String>((ref, key) async {
+final deviceProfilesByIdsProvider = FutureProvider.autoDispose
+    .family<Map<String, DeviceProfile>, String>((ref, key) async {
   final client = ref.watch(supabaseClientProvider);
   if (client == null || key.trim().isEmpty) {
     return const <String, DeviceProfile>{};
   }
 
-  final ids = key
-      .split('|')
-      .map((e) => e.trim())
-      .where((e) => e.isNotEmpty)
-      .toSet();
+  final ids =
+      key.split('|').map((e) => e.trim()).where((e) => e.isNotEmpty).toSet();
   if (ids.isEmpty) return const <String, DeviceProfile>{};
 
   final repo = ref.watch(deviceProfileRepositoryProvider);
   return repo.fetchProfilesByIds(client: client, deviceIds: ids);
+});
+
+final deviceRegistryEntriesByIdsProvider = FutureProvider.autoDispose
+    .family<Map<String, DeviceRegistryEntry>, String>((ref, key) async {
+  final client = ref.watch(supabaseClientProvider);
+  if (client == null || key.trim().isEmpty) {
+    return const <String, DeviceRegistryEntry>{};
+  }
+
+  final ids =
+      key.split('|').map((e) => e.trim()).where((e) => e.isNotEmpty).toSet();
+  if (ids.isEmpty) return const <String, DeviceRegistryEntry>{};
+
+  final rows = await client
+      .from('device_registry')
+      .select('device_id, device_kind, lifecycle_status, label, notes, last_active_at')
+      .inFilter('device_id', ids.toList(growable: false));
+
+  final entries = rows
+      .cast<Map<String, dynamic>>()
+      .map(DeviceRegistryEntry.fromMap)
+      .toList(growable: false);
+  return {for (final entry in entries) entry.deviceId: entry};
 });

@@ -157,7 +157,7 @@ class DocHeader extends StatelessWidget {
                   Text(
                     subtitle,
                     style: GoogleFonts.manrope(
-                      color: Colors.white.withValues(alpha: 0.95),
+                      color: Colors.white.withOpacity(0.95),
                       fontSize: 12.5,
                       fontWeight: FontWeight.w600,
                     ),
@@ -303,3 +303,4 @@ class _SoftCircle extends StatelessWidget {
     );
   }
 }
+

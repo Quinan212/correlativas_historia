@@ -10,6 +10,7 @@ class ExamenEvent {
   final String materia;
   final String instancia;
   final List<String> docentes;
+  final String? division;
   final String? actaUrl;
 
   const ExamenEvent({
@@ -20,6 +21,7 @@ class ExamenEvent {
     required this.materia,
     required this.instancia,
     required this.docentes,
+    this.division,
     required this.actaUrl,
   });
 
@@ -140,6 +142,7 @@ class ExamenEvent {
       materia: reqString('materia'),
       instancia: optString('instancia', 'llamado_1'),
       docentes: optDocentes(),
+      division: optString('division', ''),
       actaUrl: optActaUrl(),
     );
   }

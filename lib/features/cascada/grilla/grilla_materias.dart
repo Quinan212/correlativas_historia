@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart' show ScrollDirection;
 import 'package:flutter/scheduler.dart' show Ticker;
@@ -117,7 +116,8 @@ class _AutoScrollingHorizontalStripState
     _lastElapsed = elapsed;
     if (last == null) return;
 
-    final dtSeconds = (elapsed - last).inMicroseconds / Duration.microsecondsPerSecond;
+    final dtSeconds =
+        (elapsed - last).inMicroseconds / Duration.microsecondsPerSecond;
     if (dtSeconds <= 0) return;
 
     final delta = _autoScrollPixelsPerSecond * dtSeconds * _direction;
@@ -139,7 +139,8 @@ class _AutoScrollingHorizontalStripState
   bool _handleScrollNotification(ScrollNotification notification) {
     if (notification.metrics.axis != Axis.horizontal) return false;
 
-    if (notification is ScrollStartNotification && notification.dragDetails != null) {
+    if (notification is ScrollStartNotification &&
+        notification.dragDetails != null) {
       _pauseFromUser();
     } else if (notification is ScrollUpdateNotification &&
         notification.dragDetails != null) {
@@ -161,7 +162,6 @@ class _AutoScrollingHorizontalStripState
     return LayoutBuilder(
       builder: (context, constraints) {
         final isDark = Theme.of(context).brightness == Brightness.dark;
-        // Approximation of the background color
         final bgColor = isDark ? const Color(0xFF111827) : Colors.white;
 
         return NotificationListener<ScrollNotification>(
@@ -242,8 +242,6 @@ class _VisualizationGridState extends ConsumerState<VisualizationGrid> {
     final byYear = agruparPorAnio(ordered);
     final years = aniosPresentes(byYear);
 
-    // Key que cambia cuando cambia el contenido visible (carrera/filtros)
-    // sin depender de providers extra.
     final gridKey = '${ordered.length}_'
         '${years.length}_'
         '${ordered.isNotEmpty ? ordered.first.id : 'none'}_'
@@ -261,17 +259,17 @@ class _VisualizationGridState extends ConsumerState<VisualizationGrid> {
       border: widget.borderless
           ? null
           : Border.all(
-        color: cs.outlineVariant,
-        width: 1,
-      ),
+              color: cs.outlineVariant,
+              width: 1,
+            ),
       boxShadow: widget.borderless || isDark
           ? const []
           : [
-        BoxShadow(
-          blurRadius: 6,
-          color: theme.shadowColor.withValues(alpha: 0.07),
-        )
-      ],
+              BoxShadow(
+                blurRadius: 6,
+                color: theme.shadowColor.withValues(alpha: 0.07),
+              )
+            ],
     );
 
     final EdgeInsets hostPadding = widget.borderless
@@ -285,7 +283,8 @@ class _VisualizationGridState extends ConsumerState<VisualizationGrid> {
         switchInCurve: Curves.easeOutCubic,
         switchOutCurve: Curves.easeInCubic,
         transitionBuilder: (child, anim) {
-          final curved = CurvedAnimation(parent: anim, curve: Curves.easeOutCubic);
+          final curved =
+              CurvedAnimation(parent: anim, curve: Curves.easeOutCubic);
           return FadeTransition(
             opacity: curved,
             child: SlideTransition(
@@ -307,10 +306,12 @@ class _VisualizationGridState extends ConsumerState<VisualizationGrid> {
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   final maxW = constraints.maxWidth;
-                  final bool isDesktopLike = kIsWeb || maxW >= 1100;
+                  final bool isDesktop =
+                      MediaQuery.of(context).size.width >= 900;
+
                   final double cardW = widget.borderless
                       ? maxW * 0.4
-                      : (isDesktopLike ? 360 : maxW * 0.7);
+                      : (isDesktop ? double.infinity : maxW * 0.7);
 
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -348,6 +349,7 @@ class _VisualizationGridState extends ConsumerState<VisualizationGrid> {
     required double cardW,
     required double horizontalInset,
   }) {
+    final isDesktop = MediaQuery.of(context).size.width >= 900;
     int? lastCuatri;
 
     final List<Widget> rowChildren = [
@@ -360,20 +362,17 @@ class _VisualizationGridState extends ConsumerState<VisualizationGrid> {
       if (m.cuatri != lastCuatri) {
         rowChildren.add(
           Padding(
-            padding: const EdgeInsets.only(right: 8),
+            padding: const EdgeInsets.only(right: 8, top: 8),
             child: Text(
               etiquetaCuatri(m.cuatri),
               style: theme.textTheme.bodySmall?.copyWith(
                 fontWeight: FontWeight.w700,
-                color: isDark
-                    ? Colors.white70
-                    : _TokensGrilla.textSecondaryLight,
+                color:
+                    isDark ? Colors.white70 : _TokensGrilla.textSecondaryLight,
               ),
             ),
-          )
-              .animate()
-              .fadeIn(delay: (i * 12).ms, duration: 180.ms)
-              .slideY(begin: 0.06, end: 0, delay: (i * 12).ms, duration: 220.ms),
+          ).animate().fadeIn(delay: (i * 12).ms, duration: 180.ms).slideY(
+              begin: 0.06, end: 0, delay: (i * 12).ms, duration: 220.ms),
         );
         lastCuatri = m.cuatri;
       }
@@ -385,19 +384,20 @@ class _VisualizationGridState extends ConsumerState<VisualizationGrid> {
             m,
             borderless: widget.borderless,
           ),
-        )
-            .animate()
-            .fadeIn(delay: (i * 18).ms, duration: 220.ms)
-            .slideY(
-          begin: 0.06,
-          end: 0,
-          delay: (i * 18).ms,
-          duration: 260.ms,
-          curve: Curves.easeOutCubic,
-        ),
+        ).animate().fadeIn(delay: (i * 18).ms, duration: 220.ms).slideY(
+              begin: 0.06,
+              end: 0,
+              delay: (i * 18).ms,
+              duration: 260.ms,
+              curve: Curves.easeOutCubic,
+            ),
       );
 
-      rowChildren.add(const SizedBox(width: 12));
+      // Aumento de espacio: 16px horizontal en móvil, 20px vertical en escritorio
+      rowChildren.add(SizedBox(
+        width: isDesktop ? 0 : 16,
+        height: isDesktop ? 20 : 0,
+      ));
     }
 
     rowChildren.add(const SizedBox(width: 4));
@@ -419,9 +419,8 @@ class _VisualizationGridState extends ConsumerState<VisualizationGrid> {
                   '$year° Año',
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w800,
-                    color: isDark
-                        ? Colors.white
-                        : _TokensGrilla.textPrimaryLight,
+                    color:
+                        isDark ? Colors.white : _TokensGrilla.textPrimaryLight,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -464,12 +463,20 @@ class _VisualizationGridState extends ConsumerState<VisualizationGrid> {
               ],
             ),
           ),
-        _AutoScrollingHorizontalStrip(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: rowChildren,
-          ),
-        ),
+        isDesktop
+            ? Padding(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: rowChildren,
+                ),
+              )
+            : _AutoScrollingHorizontalStrip(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: rowChildren,
+                ),
+              ),
         const SizedBox(height: 16),
       ],
     );
@@ -478,11 +485,11 @@ class _VisualizationGridState extends ConsumerState<VisualizationGrid> {
         .animate()
         .fadeIn(delay: (yearIndex * 40).ms, duration: 220.ms)
         .slideY(
-      begin: 0.05,
-      end: 0,
-      delay: (yearIndex * 40).ms,
-      duration: 260.ms,
-      curve: Curves.easeOutCubic,
-    );
+          begin: 0.05,
+          end: 0,
+          delay: (yearIndex * 40).ms,
+          duration: 260.ms,
+          curve: Curves.easeOutCubic,
+        );
   }
 }

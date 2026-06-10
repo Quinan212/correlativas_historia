@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../shared/providers/app_state.dart';
+import '../../../../shared/widgets/metrics_cards.dart';
 import 'estado_requiere_carrera.dart';
-import 'premium_feature_accordion.dart';
-import 'tarjeta_acordeon_inicio.dart';
 
 class TarjetaRegimenCorrelatividades extends ConsumerWidget {
   const TarjetaRegimenCorrelatividades({
@@ -20,38 +20,13 @@ class TarjetaRegimenCorrelatividades extends ConsumerWidget {
     final hasSelectedCareer = career != null;
     final data =
         career == null ? null : _buildRegimenData(career.id, career.nombre);
-    final activeChild = career == null
-        ? const SizedBox.shrink()
-        : TarjetaAcordeonInicio(
-            leading: compact
-                ? null
-                : _LeadingBadge(
-                    icon: Icons.menu_book_rounded,
-                    compact: compact,
-                  ),
-            eyebrowLeading: compact
-                ? _LeadingBadge(
-                    icon: Icons.gavel_rounded,
-                    compact: compact,
-                  )
-                : null,
-            eyebrow: compact ? 'Norma activa' : 'Regimen vigente',
-            title: compact
-                ? 'El marco de lectura cambia con la carrera que estes viendo'
-                : 'Base normativa de la carrera activa',
-            summary: compact
-                ? 'Aqui ves la referencia normativa de la carrera seleccionada, junto con el recorte del plan que se esta leyendo en esta vista.'
-                : 'Esta referencia acompaña la carrera que estas viendo para interpretar correlativas, avance y alcance del plan sin mezclar marcos de otra carrera o institución.',
-            initiallyExpanded: false,
-            child: compact
-                ? _compactExpandedBody(context, data!)
-                : _fullExpandedBody(context, data!),
-          );
 
     return CambioEstadoCarrera(
       activo: hasSelectedCareer,
       placeholder: _emptyBody(context),
-      child: activeChild,
+      child: career == null
+          ? const SizedBox.shrink()
+          : _DashboardGrid(data: data!),
     );
   }
 
@@ -74,7 +49,7 @@ class TarjetaRegimenCorrelatividades extends ConsumerWidget {
           BoxShadow(
             blurRadius: 8,
             offset: const Offset(0, 8),
-            color: theme.shadowColor.withValues(alpha: 0.1),
+            color: theme.shadowColor.withOpacity(0.1),
           ),
         ],
       ),
@@ -144,143 +119,6 @@ class TarjetaRegimenCorrelatividades extends ConsumerWidget {
     );
   }
 
-  static Widget _compactExpandedBody(BuildContext context, _RegimenData data) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _AnimatedBadgeGroup(
-          careerIcon: Icons.school_outlined,
-          careerText: data.carreraCorta,
-          institutionIcon: Icons.apartment_outlined,
-          institutionText: data.institucionCorta,
-        ),
-        if (data.resolucion != null) ...[
-          const SizedBox(height: 14),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: BoxDecoration(
-              color: isDark
-                  ? cs.surfaceContainerHighest.withValues(alpha: 0.24)
-                  : const Color(0xFFF8FAFC),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: isDark ? cs.outlineVariant : const Color(0xFFE5E7EB),
-              ),
-            ),
-            child: Text(
-              data.resolucion!,
-              style: theme.textTheme.bodySmall?.copyWith(
-                height: 1.4,
-                color: cs.onSurfaceVariant,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-
-  static Widget _fullExpandedBody(BuildContext context, _RegimenData data) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _AnimatedBadgeGroup(
-          careerIcon: Icons.school_outlined,
-          careerText: data.carreraCorta,
-          institutionIcon: Icons.account_balance_outlined,
-          institutionText: data.institucionCorta,
-        ),
-        const SizedBox(height: 16),
-        PremiumFeatureAccordion(
-          items: _buildAccordionItems(data),
-          lightweight: true,
-        ),
-      ],
-    );
-  }
-
-  static List<PremiumAccordionItemData> _buildAccordionItems(
-    _RegimenData data,
-  ) {
-    return [
-      PremiumAccordionItemData(
-        icon: Icons.badge_outlined,
-        title: 'Carrera activa',
-        kicker: 'Referencia actual',
-        summary:
-            'Identifica rápido sobre qué carrera se aplica esta referencia.',
-        detail:
-            'La lectura del mapa toma esta carrera como referencia para interpretar correlativas, alcances y condiciones visibles en la grilla.',
-        bullets: [
-          data.carreraLinea,
-          'Se actualiza automáticamente cuando cambias de carrera.',
-        ],
-      ),
-      PremiumAccordionItemData(
-        icon: Icons.location_city_outlined,
-        title: 'Institucion',
-        kicker: 'Origen del plan',
-        summary:
-            'Muestra la institución que sostiene la referencia usada en esta vista.',
-        detail:
-            'Este dato te ayuda a ubicar el plan correcto cuando comparas carreras o revisas documentos de distintas instituciones.',
-        bullets: [
-          data.institucionLinea,
-          'Se mantiene sincronizado con la carrera seleccionada.',
-        ],
-      ),
-      PremiumAccordionItemData(
-        icon: Icons.alt_route_outlined,
-        title: 'Alcance',
-        kicker: 'Como leer el mapa',
-        summary:
-            'Aclara desde que marco se interpretan las correlativas y el avance de la carrera.',
-        detail:
-            'El sistema usa el régimen vigente de esta carrera para ordenar la lectura del mapa y evitar mezclar reglas de otro plan o institución.',
-        bullets: [
-          'La vista adapta correlativas, avance y alcance al plan activo.',
-          'Sirve como contexto antes de revisar materias puntuales.',
-        ],
-      ),
-      PremiumAccordionItemData(
-        icon: Icons.description_outlined,
-        title: 'Norma de referencia',
-        kicker: data.resolucion == null ? 'Dato pendiente' : 'Documento base',
-        summary: data.resolucion == null
-            ? 'Todavía no hay una norma cargada para mostrar en este panel.'
-            : 'Resume la norma usada como apoyo para interpretar esta carrera.',
-        detail: data.resolucion == null
-            ? 'Cuando se incorpore la referencia documental de esta carrera, va a aparecer acá con el mismo formato que el resto de los planes.'
-            : 'Esta referencia documental acompaña la lectura de la carrera activa y te da una base concreta para ubicar el régimen correspondiente.',
-        bullets: [
-          data.resolucion ?? 'Referencia normativa en actualizacion.',
-          data.resolucion == null
-              ? 'Mientras tanto, el mapa sigue tomando la carrera activa como contexto.'
-              : 'Te sirve para contrastar la lectura visual con su respaldo documental.',
-        ],
-      ),
-      const PremiumAccordionItemData(
-        icon: Icons.download_rounded,
-        title: 'Documento oficial',
-        kicker: 'Acceso rapido',
-        summary:
-            'Explica dónde encontrar la descarga del respaldo documental vinculado a la carrera.',
-        detail:
-            'Si necesitas revisar el texto original, puedes usar el boton de descarga del panel de controles sin salir del flujo principal del mapa.',
-        bullets: [
-          'La descarga se gestiona desde el panel de controles.',
-          'Te permite contrastar la lectura visual con el documento fuente.',
-        ],
-      ),
-    ];
-  }
-
   _RegimenData _buildRegimenData(String careerId, String fallbackName) {
     switch (careerId) {
       case 'geografia':
@@ -289,6 +127,7 @@ class TarjetaRegimenCorrelatividades extends ConsumerWidget {
           carreraCorta: 'Geografia',
           institucionLinea: 'Profesorado Superior de Ciencias Sociales',
           institucionCorta: 'PSCS',
+          logoAsset: 'assets/career_icons/logo_pscs_overlay.png',
           resolucion:
               'Resolucion N 0766 C.G.E. | Expte. Grabado N (1507261) | Provincia de Entre Rios - Consejo General de Educacion.',
         );
@@ -298,6 +137,7 @@ class TarjetaRegimenCorrelatividades extends ConsumerWidget {
           carreraCorta: 'Historia',
           institucionLinea: 'Profesorado Superior de Ciencias Sociales',
           institucionCorta: 'PSCS',
+          logoAsset: 'assets/career_icons/logo_pscs_overlay.png',
           resolucion:
               'Resolucion N 0765 C.G.E. | Expte. Grabado N (1506606) | Provincia de Entre Rios - Consejo General de Educacion.',
         );
@@ -308,6 +148,7 @@ class TarjetaRegimenCorrelatividades extends ConsumerWidget {
           institucionLinea:
               'Escuela Secundaria y Superior N 1 "Cesareo Bernaldo de Quiros"',
           institucionCorta: 'Cesareo Bernaldo de Quiros',
+          logoAsset: 'assets/career_icons/logo_artes.png',
           resolucion:
               'Resolucion N 0440/23 C.G.E. | Expte. Grabado N (1943528) | Provincia de Entre Rios - Consejo General de Educacion.',
         );
@@ -319,6 +160,7 @@ class TarjetaRegimenCorrelatividades extends ConsumerWidget {
           institucionLinea:
               'Escuela Secundaria y Superior N 1 "Cesareo Bernaldo de Quiros"',
           institucionCorta: 'Cesareo Bernaldo de Quiros',
+          logoAsset: 'assets/career_icons/career_logo.png',
           resolucion:
               'Resolucion N 2867/23 C.G.E. | Expte. Grabado N (2856760) | Provincia de Entre Rios - Consejo General de Educacion.',
         );
@@ -329,6 +171,7 @@ class TarjetaRegimenCorrelatividades extends ConsumerWidget {
           institucionLinea:
               'Instituto Superior de las Especialidades de la Educacion Fisica',
           institucionCorta: 'I.S.E.E.F.',
+          logoAsset: 'assets/career_icons/career_logo.png',
           resolucion:
               'Resolucion N 0338/23 C.G.E. | Expte. Grabado N (1943502) | Provincia de Entre Rios - Consejo General de Educacion.',
         );
@@ -339,6 +182,7 @@ class TarjetaRegimenCorrelatividades extends ConsumerWidget {
           carreraCorta: 'Ciencia Politica',
           institucionLinea: 'Profesorado Superior de Ciencias Sociales',
           institucionCorta: 'PSCS',
+          logoAsset: 'assets/career_icons/logo_pscs_overlay.png',
           resolucion: null,
         );
       default:
@@ -347,9 +191,169 @@ class TarjetaRegimenCorrelatividades extends ConsumerWidget {
           carreraCorta: fallbackName,
           institucionLinea: 'Institucion correspondiente',
           institucionCorta: 'Institucion correspondiente',
+          logoAsset: 'assets/career_icons/career_logo.png',
           resolucion: null,
         );
     }
+  }
+}
+
+class _DashboardGrid extends StatelessWidget {
+  const _DashboardGrid({required this.data});
+
+  final _RegimenData data;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const spacing = 12.0;
+        final thirdWidth = (constraints.maxWidth - (spacing * 2)) / 3;
+        final tileHeight = thirdWidth;
+        final largeWidth = (thirdWidth * 2) + spacing;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  width: largeWidth,
+                  height: tileHeight,
+                  child: _LargeNormaCard(
+                    resolucion: data.resolucion,
+                  ),
+                ),
+                const SizedBox(width: spacing),
+                SizedBox(
+                  width: thirdWidth,
+                  height: tileHeight,
+                  child: MetricCard(
+                    icon: Icons.school_rounded,
+                    label: 'Carrera',
+                    value: data.carreraCorta.replaceAll(' ', '\n'),
+                    maxLines: 2,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: spacing),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  width: thirdWidth,
+                  height: tileHeight,
+                  child: Consumer(
+                    builder: (context, ref, child) {
+                      final downloadUrl = ref.watch(careerDownloadUrlProvider);
+                      final isClickable = downloadUrl.isNotEmpty;
+
+                      return Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(18),
+                          onTap: isClickable
+                              ? () async {
+                                  final uri = Uri.parse(downloadUrl);
+                                  if (!await launchUrl(uri,
+                                      mode: LaunchMode.externalApplication)) {
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content:
+                                              Text('No se pudo abrir el enlace.'),
+                                        ),
+                                      );
+                                    }
+                                  }
+                                }
+                              : null,
+                          child: const MetricCard(
+                            icon: Icons.fact_check_rounded,
+                            label: 'Vigente',
+                            value: 'Plan',
+                            highlight: false,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(width: spacing),
+                SizedBox(
+                  width: largeWidth,
+                  height: tileHeight,
+                  child: _LargeInstitutionCard(data: data),
+                ),
+              ],
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _LargeNormaCard extends StatelessWidget {
+  const _LargeNormaCard({required this.resolucion});
+
+  final String? resolucion;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    
+    return GlassMetricCard(
+      padding: const EdgeInsets.all(12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: cs.primary.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.gavel_rounded,
+              color: cs.primary,
+              size: 28,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Norma activa',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 15,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  resolucion?.split(' | ').first ?? 'Referencia normativa en actualización.',
+                  maxLines: 6,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: cs.onSurfaceVariant,
+                    fontSize: 11.5,
+                    height: 1.25,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -387,127 +391,68 @@ class _LeadingBadge extends StatelessWidget {
   }
 }
 
-class _InlineBadge extends StatelessWidget {
-  const _InlineBadge({
-    required this.icon,
-    required this.text,
-  });
+class _LargeInstitutionCard extends StatelessWidget {
+  const _LargeInstitutionCard({required this.data});
 
-  final IconData icon;
-  final String text;
+  final _RegimenData data;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
-      decoration: BoxDecoration(
-        color: isDark
-            ? cs.surfaceContainerHighest.withValues(alpha: 0.2)
-            : const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(
-          color: isDark ? cs.outlineVariant : const Color(0xFFE2E8F0),
-        ),
-      ),
+    return GlassMetricCard(
+      padding: const EdgeInsets.all(16),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Icon(
-            icon,
-            size: 15,
-            color: cs.onSurfaceVariant,
-          ),
-          const SizedBox(width: 7),
-          Text(
-            text,
-            style: theme.textTheme.labelLarge?.copyWith(
-              fontWeight: FontWeight.w700,
-              color: cs.onSurface,
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: cs.surface,
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: cs.outlineVariant.withOpacity(0.5),
+                width: 1,
+              ),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: Transform.scale(
+              scale: 1.22,
+              child: Image.asset(
+                data.logoAsset,
+                fit: BoxFit.cover,
+              ),
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _AnimatedInlineBadge extends StatelessWidget {
-  const _AnimatedInlineBadge({
-    required this.icon,
-    required this.text,
-  });
-
-  final IconData icon;
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedSize(
-      duration: const Duration(milliseconds: 320),
-      curve: Curves.easeOutCubic,
-      alignment: Alignment.centerLeft,
-      child: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 240),
-        switchInCurve: Curves.easeOutCubic,
-        switchOutCurve: Curves.easeOutCubic,
-        transitionBuilder: (child, animation) {
-          return FadeTransition(
-            opacity: animation,
-            child: SlideTransition(
-              position: Tween<Offset>(
-                begin: const Offset(0, 0.02),
-                end: Offset.zero,
-              ).animate(animation),
-              child: child,
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  data.institucionLinea,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    height: 1.15,
+                  ),
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Institución',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: cs.onSurfaceVariant,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
             ),
-          );
-        },
-        child: KeyedSubtree(
-          key: ValueKey('${icon.codePoint}:$text'),
-          child: _InlineBadge(
-            icon: icon,
-            text: text,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _AnimatedBadgeGroup extends StatelessWidget {
-  const _AnimatedBadgeGroup({
-    required this.careerIcon,
-    required this.careerText,
-    required this.institutionIcon,
-    required this.institutionText,
-  });
-
-  final IconData careerIcon;
-  final String careerText;
-  final IconData institutionIcon;
-  final String institutionText;
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedSize(
-      duration: const Duration(milliseconds: 320),
-      curve: Curves.easeOutCubic,
-      alignment: Alignment.topLeft,
-      child: Wrap(
-        spacing: 10,
-        runSpacing: 10,
-        children: [
-          _AnimatedInlineBadge(
-            icon: careerIcon,
-            text: careerText,
-          ),
-          _AnimatedInlineBadge(
-            icon: institutionIcon,
-            text: institutionText,
           ),
         ],
       ),
@@ -521,6 +466,7 @@ class _RegimenData {
     required this.carreraCorta,
     required this.institucionLinea,
     required this.institucionCorta,
+    required this.logoAsset,
     required this.resolucion,
   });
 
@@ -528,5 +474,6 @@ class _RegimenData {
   final String carreraCorta;
   final String institucionLinea;
   final String institucionCorta;
+  final String logoAsset;
   final String? resolucion;
 }

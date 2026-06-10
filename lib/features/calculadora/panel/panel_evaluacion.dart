@@ -39,35 +39,60 @@ class EvaluationPanel extends ConsumerWidget {
 
     final res = evaluateCourse(course, statusMap, plan.materias);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        if (reqBlock != null) ...[
-          EstilosPanel.panelCard(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isDesktop = constraints.maxWidth >= 1000;
+
+        Widget requirementsCard() {
+          return EstilosPanel.panelCard(
             context,
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 EstilosPanel.sectionHeader(context, 'Materias'),
                 const SizedBox(height: 10),
-                reqBlock,
+                reqBlock ?? const SizedBox.shrink(),
               ],
             ),
-          ),
-          const SizedBox(height: 12),
-        ],
-        EstilosPanel.panelCard(
-          context,
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          );
+        }
+
+        Widget resultCard() {
+          return EstilosPanel.panelCard(
+            context,
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                EstilosPanel.sectionHeader(context, 'Escenario actual'),
+                const SizedBox(height: 10),
+                PanelResultado.build(context, res),
+              ],
+            ),
+          );
+        }
+
+        if (!isDesktop || reqBlock == null) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              EstilosPanel.sectionHeader(context, 'Escenario actual'),
-              const SizedBox(height: 10),
-              PanelResultado.build(context, res),
+              if (reqBlock != null) ...[
+                requirementsCard(),
+                const SizedBox(height: 12),
+              ],
+              resultCard(),
             ],
-          ),
-        ),
-      ],
+          );
+        }
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: requirementsCard()),
+            const SizedBox(width: 16),
+            Expanded(child: resultCard()),
+          ],
+        );
+      },
     );
   }
 }

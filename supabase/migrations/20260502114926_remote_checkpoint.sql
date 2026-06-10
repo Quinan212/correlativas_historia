@@ -1,0 +1,2 @@
+-- Remote migration checkpoint.
+-- This file keeps the local migration history aligned with the remote project.

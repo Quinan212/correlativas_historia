@@ -27,38 +27,45 @@ class _AdminCleanupScreenState extends ConsumerState<AdminCleanupScreen> {
       title: 'Referencias de materias',
       description: 'Borra todas las referencias de materias.',
       confirmation:
-          'Se van a borrar todas las referencias de materias. Esta accion no se puede deshacer.',
+          'Se van a borrar todas las referencias de materias. Esta acción no se puede deshacer.',
     ),
     _CleanupOption(
       action: 'clear_teacher_reviews',
       title: 'Referencias de docentes',
       description: 'Borra todas las referencias de docentes.',
       confirmation:
-          'Se van a borrar todas las referencias de docentes. Esta accion no se puede deshacer.',
+          'Se van a borrar todas las referencias de docentes. Esta acción no se puede deshacer.',
     ),
     _CleanupOption(
       action: 'clear_photos',
       title: 'Fotos comunitarias',
       description: 'Borra fotos y archivos de comunidad.',
       confirmation:
-          'Se van a borrar todas las fotos comunitarias y sus archivos. Esta accion no se puede deshacer.',
+          'Se van a borrar todas las fotos comunitarias y sus archivos. Esta acción no se puede deshacer.',
     ),
     _CleanupOption(
       action: 'clear_verifications',
       title: 'Verificaciones y permisos',
       description: 'Borra verificaciones y permisos asociados.',
       confirmation:
-          'Se van a borrar verificaciones y permisos vinculados. Esta accion no se puede deshacer.',
+          'Se van a borrar verificaciones y permisos vinculados. Esta acción no se puede deshacer.',
     ),
   ];
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final width = MediaQuery.of(context).size.width;
+    final isDesktop = width >= 900;
 
     return Scaffold(
+      backgroundColor:
+          isDark ? const Color(0xFF030712) : const Color(0xFFF9FAFB),
       appBar: AppBar(
         title: const Text('Limpieza y reinicio'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         actions: [
           IconButton(
             onPressed: _runningAction != null
@@ -70,65 +77,129 @@ class _AdminCleanupScreenState extends ConsumerState<AdminCleanupScreen> {
         ],
       ),
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-          children: [
-            _SectionCard(
-              title: 'Acciones destructivas',
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Elegí una o varias opciones para limpiar. También podés ejecutar cada una de forma individual.',
-                    style: theme.textTheme.bodyMedium,
-                  ),
-                  const SizedBox(height: 14),
-                  ..._options.map(
-                    (option) => _CleanupChoiceTile(
-                      option: option,
-                      selected: _selectedActions.contains(option.action),
-                      busy: _runningAction == option.action,
-                      onChanged: (value) {
-                        setState(() {
-                          if (value == true) {
-                            _selectedActions.add(option.action);
-                          } else {
-                            _selectedActions.remove(option.action);
-                          }
-                        });
-                      },
-                      onDeletePressed: () => _runSingleAction(option),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1000),
+            child: ListView(
+              padding: isDesktop
+                  ? const EdgeInsets.symmetric(horizontal: 40, vertical: 24)
+                  : const EdgeInsets.fromLTRB(16, 12, 16, 24),
+              children: [
+                _HeaderCard(),
+                const SizedBox(height: 24),
+                _SectionCard(
+                  title: 'Acciones disponibles',
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
-                        child: FilledButton(
-                          onPressed: _selectedActions.isEmpty ||
-                                  _runningAction != null
-                              ? null
-                              : _runSelectedActions,
-                          child: const Text('Ejecutar selección'),
-                        ),
+                      Text(
+                        'Seleccioná los módulos que querés limpiar o ejecutá cada acción individualmente.',
+                        style: theme.textTheme.bodyLarge,
                       ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: FilledButton.tonal(
-                          onPressed:
-                              _runningAction != null ? null : _runResetAll,
-                          style: FilledButton.styleFrom(
-                            foregroundColor: const Color(0xFFB91C1C),
+                      const SizedBox(height: 24),
+                      if (isDesktop)
+                        GridView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            crossAxisSpacing: 16,
+                            mainAxisSpacing: 16,
+                            childAspectRatio: 2.8,
                           ),
-                          child: const Text('Reiniciar todo'),
+                          itemCount: _options.length,
+                          itemBuilder: (context, index) {
+                            final option = _options[index];
+                            return _CleanupChoiceTile(
+                              option: option,
+                              selected:
+                                  _selectedActions.contains(option.action),
+                              busy: _runningAction == option.action,
+                              onChanged: (value) {
+                                setState(() {
+                                  if (value == true) {
+                                    _selectedActions.add(option.action);
+                                  } else {
+                                    _selectedActions.remove(option.action);
+                                  }
+                                });
+                              },
+                              onDeletePressed: () => _runSingleAction(option),
+                            );
+                          },
+                        )
+                      else
+                        Column(
+                          children: _options
+                              .map(
+                                (option) => _CleanupChoiceTile(
+                                  option: option,
+                                  selected:
+                                      _selectedActions.contains(option.action),
+                                  busy: _runningAction == option.action,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      if (value == true) {
+                                        _selectedActions.add(option.action);
+                                      } else {
+                                        _selectedActions.remove(option.action);
+                                      }
+                                    });
+                                  },
+                                  onDeletePressed: () =>
+                                      _runSingleAction(option),
+                                ),
+                              )
+                              .toList(),
                         ),
+                      const SizedBox(height: 32),
+                      Row(
+                        mainAxisAlignment: isDesktop
+                            ? MainAxisAlignment.end
+                            : MainAxisAlignment.center,
+                        children: [
+                          Expanded(
+                            flex: isDesktop ? 0 : 1,
+                            child: FilledButton.icon(
+                              onPressed: _selectedActions.isEmpty ||
+                                      _runningAction != null
+                                  ? null
+                                  : _runSelectedActions,
+                              style: FilledButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 24, vertical: 16),
+                              ),
+                              icon: const Icon(Icons.play_arrow_rounded),
+                              label: const Text('Ejecutar selección'),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            flex: isDesktop ? 0 : 1,
+                            child: FilledButton.tonal(
+                              onPressed:
+                                  _runningAction != null ? null : _runResetAll,
+                              style: FilledButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 24, vertical: 16),
+                                foregroundColor: const Color(0xFFDC2626),
+                                backgroundColor:
+                                    const Color(0xFFDC2626).withValues(
+                                  alpha: 0.08,
+                                ),
+                              ),
+                              child: const Text('Reiniciar todo'),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -145,15 +216,16 @@ class _AdminCleanupScreenState extends ConsumerState<AdminCleanupScreen> {
   Future<void> _runSelectedActions() async {
     final selected = _options
         .where((option) => _selectedActions.contains(option.action))
-        .toList(growable: false);
+        .toList();
     if (selected.isEmpty) return;
 
     final confirmed = await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
-            title: const Text('Confirmar selección'),
+            title: const Text('Confirmar selección',
+                style: TextStyle(fontWeight: FontWeight.w900)),
             content: Text(
-              'Se van a ejecutar ${selected.length} acciones de limpieza. Esta accion no se puede deshacer.',
+              'Se van a ejecutar ${selected.length} acciones de limpieza. Esta acción no se puede deshacer.',
             ),
             actions: [
               TextButton(
@@ -189,7 +261,7 @@ class _AdminCleanupScreenState extends ConsumerState<AdminCleanupScreen> {
       action: 'reset_all',
       title: 'Reiniciar todo',
       confirmation:
-          'Se va a borrar todo: referencias de materias, referencias de docentes, fotos, verificaciones y permisos. Esta accion no se puede deshacer.',
+          'Se va a borrar todo: referencias, fotos, verificaciones y permisos. Esta acción no se puede deshacer.',
     );
   }
 
@@ -203,7 +275,8 @@ class _AdminCleanupScreenState extends ConsumerState<AdminCleanupScreen> {
       final confirmed = await showDialog<bool>(
             context: context,
             builder: (context) => AlertDialog(
-              title: Text(title),
+              title: Text(title,
+                  style: const TextStyle(fontWeight: FontWeight.w900)),
               content: Text(confirmation),
               actions: [
                 TextButton(
@@ -260,12 +333,51 @@ class _AdminCleanupScreenState extends ConsumerState<AdminCleanupScreen> {
   }
 }
 
-class _SectionCard extends StatelessWidget {
-  const _SectionCard({
-    required this.title,
-    required this.child,
-  });
+class _HeaderCard extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
 
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFEE2E2),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFFECACA)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.warning_amber_rounded,
+              color: Color(0xFF991B1B), size: 32),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Zona de Peligro',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w900,
+                    color: const Color(0xFF991B1B),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  'Las acciones en esta pantalla son permanentes e irreversibles.',
+                  style: TextStyle(color: Color(0xFF991B1B)),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SectionCard extends StatelessWidget {
+  const _SectionCard({required this.title, required this.child});
   final String title;
   final Widget child;
 
@@ -276,7 +388,7 @@ class _SectionCard extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF0B1220) : Colors.white,
         borderRadius: BorderRadius.circular(20),
@@ -290,10 +402,10 @@ class _SectionCard extends StatelessWidget {
           Text(
             title,
             style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w900,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           child,
         ],
       ),
@@ -319,14 +431,19 @@ class _CleanupChoiceTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color:
-            theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
+        color: isDark ? const Color(0xFF161E2C) : const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: selected
+              ? theme.colorScheme.primary.withValues(alpha: 0.5)
+              : Colors.transparent,
+        ),
       ),
       child: Row(
         children: [
@@ -334,14 +451,16 @@ class _CleanupChoiceTile extends StatelessWidget {
             value: selected,
             onChanged: busy ? null : onChanged,
           ),
+          const SizedBox(width: 8),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
                   option.title,
                   style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w900,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -352,18 +471,19 @@ class _CleanupChoiceTile extends StatelessWidget {
               ],
             ),
           ),
-          busy
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2.3),
-                )
-              : IconButton(
-                  onPressed: onDeletePressed,
-                  icon: const Icon(Icons.delete_outline_rounded),
-                  color: const Color(0xFFB91C1C),
-                  tooltip: 'Borrar solo esta opción',
-                ),
+          if (busy)
+            const SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          else
+            IconButton(
+              onPressed: onDeletePressed,
+              icon: const Icon(Icons.delete_outline_rounded),
+              color: const Color(0xFFDC2626),
+              tooltip: 'Borrar solo esta opción',
+            ),
         ],
       ),
     );

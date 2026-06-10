@@ -358,12 +358,12 @@ class _LitePremiumAccordionItem extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: isDark
                               ? cs.surfaceContainerHighest
-                                  .withValues(alpha: 0.22)
+                                  .withOpacity(0.22)
                               : Colors.white,
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
                             color: isDark
-                                ? cs.outlineVariant.withValues(alpha: 0.5)
+                                ? cs.outlineVariant.withOpacity(0.5)
                                 : const Color(0xFFD0D6DE),
                           ),
                         ),
@@ -822,7 +822,7 @@ class _AccordionSurface extends StatelessWidget {
     final closedTitleStyle =
         (theme.textTheme.titleMedium ?? const TextStyle()).copyWith(
       fontWeight: FontWeight.w700,
-      color: cs.onSurface.withValues(alpha: 0.92),
+      color: cs.onSurface.withOpacity(0.92),
       height: 1.1,
       letterSpacing: -0.15,
     );
@@ -1060,8 +1060,8 @@ class _AccordionSurface extends StatelessWidget {
                             width: double.infinity,
                             height: 1,
                             color: isDark
-                                ? Colors.white.withValues(alpha: 0.06)
-                                : Colors.black.withValues(alpha: 0.06),
+                                ? Colors.white.withOpacity(0.06)
+                                : Colors.black.withOpacity(0.06),
                           ),
                           const SizedBox(height: 12),
                           for (var i = 0; i < data.bullets.length; i++) ...[
@@ -1214,8 +1214,8 @@ class _FeatureGlyph extends StatelessWidget {
         borderRadius: BorderRadius.circular(ui.lerpDouble(10, 14, t) ?? 14),
         border: Border.all(
           color: Color.lerp(
-            cs.outlineVariant.withValues(alpha: isDark ? 0.28 : 0.55),
-            cs.primary.withValues(alpha: isDark ? 0.42 : 0.22),
+            cs.outlineVariant.withOpacity(isDark ? 0.28 : 0.55),
+            cs.primary.withOpacity(isDark ? 0.42 : 0.22),
             t,
           )!,
         ),
@@ -1224,7 +1224,7 @@ class _FeatureGlyph extends StatelessWidget {
         icon,
         size: ui.lerpDouble(14, 18, t) ?? 18,
         color: Color.lerp(
-          cs.onSurfaceVariant.withValues(alpha: 0.78),
+          cs.onSurfaceVariant.withOpacity(0.78),
           cs.primary,
           t,
         ),
@@ -1249,13 +1249,13 @@ class _CircleAction extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(999),
         border: Border.all(
-          color: cs.outlineVariant.withValues(alpha: isDark ? 0.35 : 0.75),
+          color: cs.outlineVariant.withOpacity(isDark ? 0.35 : 0.75),
         ),
       ),
       child: Icon(
         icon,
         size: 18,
-        color: cs.onSurface.withValues(alpha: 0.74),
+        color: cs.onSurface.withOpacity(0.74),
       ),
     );
   }
@@ -1279,7 +1279,7 @@ class _AccordionBullet extends StatelessWidget {
           height: 8,
           margin: const EdgeInsets.only(top: 6),
           decoration: BoxDecoration(
-            color: cs.primary.withValues(alpha: 0.88),
+            color: cs.primary.withOpacity(0.88),
             shape: BoxShape.circle,
           ),
         ),
@@ -1297,3 +1297,4 @@ class _AccordionBullet extends StatelessWidget {
     );
   }
 }
+

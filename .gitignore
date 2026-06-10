@@ -12,3 +12,36 @@
 *.out
 /tmp_docx_pages/
 /RUIDO/
+
+# Codex Archive
+/codex_archive/
+
+# Python scripts (herramientas de desarrollo)
+*.py
+
+# Archivos de audio/imagen/documentos temporales
+*.mp3
+*.m4a
+*.docx
+*.xlsx
+
+# Archivos de texto con datos del sistema
+devices*.txt
+
+# Archivos de entorno con credenciales
+*.env
+
+# Archivos de log de ejecución
+tmp_*.log
+flutter_run_*.log
+
+# Directorios de proyectos externos
+/binance_bot/
+/better-antigravity-main/
+/hf-run/
+/mod-packages/
+/tessdata/
+/releases/
+
+# Archivos de backup de código fuente
+all_code_to_read.txt

@@ -68,7 +68,8 @@ class DeviceIdentityService {
 
   Future<String?> _readAndroidDeviceLabel() async {
     try {
-      final result = await _channel.invokeMethod<String>('getAndroidDeviceLabel');
+      final result =
+          await _channel.invokeMethod<String>('getAndroidDeviceLabel');
       final cleaned = result?.trim();
       if (cleaned == null || cleaned.isEmpty) {
         return null;

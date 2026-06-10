@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
 
 class AppBottomNav extends StatelessWidget {
-  final int current; // 0 = Inicio, 1 = Cascada/Mapa, 2 = Calculadora, 3 = FAQ
+  final int current; // 0 = Trayectorias, 1 = Inicio, 2 = Cascada/Mapa, 3 = Calculadora
+  final VoidCallback onTapTrayectorias;
   final VoidCallback onTapHome;
   final VoidCallback onTapMap;
   final VoidCallback onTapCalc;
-  final VoidCallback onTapFaq;
 
   const AppBottomNav({
     super.key,
     required this.current,
+    required this.onTapTrayectorias,
     required this.onTapHome,
     required this.onTapMap,
     required this.onTapCalc,
-    required this.onTapFaq,
   });
 
   static const _brand = Color(0xFF1D4ED8);
@@ -56,18 +56,38 @@ class AppBottomNav extends StatelessWidget {
         ),
         child: Row(
           children: [
+            // TRAYECTORIAS
             Expanded(
               child: InkWell(
-                onTap: onTapHome,
-                splashColor: _brand.withValues(alpha: 0.08),
-                highlightColor: _brand.withValues(alpha: 0.04),
+                onTap: onTapTrayectorias,
+                splashColor: _brand.withOpacity(0.08),
+                highlightColor: _brand.withOpacity(0.04),
                 child: SizedBox(
                   height: 60,
                   child: _tile(
                     selected: current == 0,
+                    icon: Icons.school_outlined,
+                    filledIcon: Icons.school_rounded,
+                    color: current == 0 ? _brand : unselected,
+                  ),
+                ),
+              ),
+            ),
+            _divider(brd),
+
+            // INICIO
+            Expanded(
+              child: InkWell(
+                onTap: onTapHome,
+                splashColor: _brand.withOpacity(0.08),
+                highlightColor: _brand.withOpacity(0.04),
+                child: SizedBox(
+                  height: 60,
+                  child: _tile(
+                    selected: current == 1,
                     icon: Icons.home_outlined,
                     filledIcon: Icons.home_rounded,
-                    color: current == 0 ? _brand : unselected,
+                    color: current == 1 ? _brand : unselected,
                   ),
                 ),
               ),
@@ -78,15 +98,15 @@ class AppBottomNav extends StatelessWidget {
             Expanded(
               child: InkWell(
                 onTap: onTapMap,
-                splashColor: _brand.withValues(alpha: 0.08),
-                highlightColor: _brand.withValues(alpha: 0.04),
+                splashColor: _brand.withOpacity(0.08),
+                highlightColor: _brand.withOpacity(0.04),
                 child: SizedBox(
                   height: 60,
                   child: _tile(
-                    selected: current == 1,
+                    selected: current == 2,
                     icon: Icons.map_outlined,
                     filledIcon: Icons.map,
-                    color: current == 1 ? _brand : unselected,
+                    color: current == 2 ? _brand : unselected,
                   ),
                 ),
               ),
@@ -97,33 +117,14 @@ class AppBottomNav extends StatelessWidget {
             Expanded(
               child: InkWell(
                 onTap: onTapCalc,
-                splashColor: _brand.withValues(alpha: 0.08),
-                highlightColor: _brand.withValues(alpha: 0.04),
-                child: SizedBox(
-                  height: 60,
-                  child: _tile(
-                    selected: current == 2,
-                    icon: Icons.calculate_outlined,
-                    filledIcon: Icons.calculate,
-                    color: current == 2 ? _brand : unselected,
-                  ),
-                ),
-              ),
-            ),
-            _divider(brd),
-
-            // FAQ
-            Expanded(
-              child: InkWell(
-                onTap: onTapFaq,
-                splashColor: _brand.withValues(alpha: 0.08),
-                highlightColor: _brand.withValues(alpha: 0.04),
+                splashColor: _brand.withOpacity(0.08),
+                highlightColor: _brand.withOpacity(0.04),
                 child: SizedBox(
                   height: 60,
                   child: _tile(
                     selected: current == 3,
-                    icon: Icons.quiz_outlined,
-                    filledIcon: Icons.quiz,
+                    icon: Icons.calculate_outlined,
+                    filledIcon: Icons.calculate,
                     color: current == 3 ? _brand : unselected,
                   ),
                 ),
@@ -135,3 +136,4 @@ class AppBottomNav extends StatelessWidget {
     );
   }
 }
+

@@ -5,12 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../models/materia.dart';
 import '../../../shared/providers/app_state.dart';
-import '../../../shared/widgets/career_option_label.dart';
 import '../providers/examenes_providers.dart';
 import '../providers/plan_providers.dart';
 import 'examenes_visibility.dart';
 import 'logica_examenes.dart';
-import 'jerarquico_examenes_screen.dart';
 import 'sheet/route_sheet_examenes.dart';
 import 'widgets/banner_colapsable_examenes.dart';
 import 'widgets/lista_materias.dart';
@@ -87,6 +85,7 @@ class _PantallaExamenesState extends ConsumerState<PantallaExamenes> {
           llamado2Eventos: pick.llamado2Eventos,
           coloquioEventos: pick.coloquioEventos,
           detalleInicial: pick.detalleInicial,
+          mapaPlan: mapaPlan,
         ),
       );
     } finally {
@@ -97,27 +96,27 @@ class _PantallaExamenesState extends ConsumerState<PantallaExamenes> {
   String _normalize(String s) {
     return s
         .toLowerCase()
-        .replaceAll('Ã¡', 'a')
-        .replaceAll('Ã ', 'a')
-        .replaceAll('Ã¤', 'a')
-        .replaceAll('Ã¢', 'a')
-        .replaceAll('Ã©', 'e')
-        .replaceAll('Ã¨', 'e')
-        .replaceAll('Ã«', 'e')
-        .replaceAll('Ãª', 'e')
-        .replaceAll('Ã­', 'i')
-        .replaceAll('Ã¬', 'i')
-        .replaceAll('Ã¯', 'i')
-        .replaceAll('Ã®', 'i')
-        .replaceAll('Ã³', 'o')
-        .replaceAll('Ã²', 'o')
-        .replaceAll('Ã¶', 'o')
-        .replaceAll('Ã´', 'o')
-        .replaceAll('Ãº', 'u')
-        .replaceAll('Ã¹', 'u')
-        .replaceAll('Ã¼', 'u')
-        .replaceAll('Ã»', 'u')
-        .replaceAll('Ã±', 'n')
+        .replaceAll('\u00e1', 'a')
+        .replaceAll('\u00e0', 'a')
+        .replaceAll('\u00e4', 'a')
+        .replaceAll('\u00e2', 'a')
+        .replaceAll('\u00e9', 'e')
+        .replaceAll('\u00e8', 'e')
+        .replaceAll('\u00eb', 'e')
+        .replaceAll('\u00ea', 'e')
+        .replaceAll('\u00ed', 'i')
+        .replaceAll('\u00ec', 'i')
+        .replaceAll('\u00ef', 'i')
+        .replaceAll('\u00ee', 'i')
+        .replaceAll('\u00f3', 'o')
+        .replaceAll('\u00f2', 'o')
+        .replaceAll('\u00f6', 'o')
+        .replaceAll('\u00f4', 'o')
+        .replaceAll('\u00fa', 'u')
+        .replaceAll('\u00f9', 'u')
+        .replaceAll('\u00fc', 'u')
+        .replaceAll('\u00fb', 'u')
+        .replaceAll('\u00f1', 'n')
         .replaceAll(RegExp(r'\s+'), ' ')
         .trim();
   }
@@ -179,6 +178,53 @@ class _PantallaExamenesState extends ConsumerState<PantallaExamenes> {
     });
 
     return all.where((m) => m.fechaActual != null).take(5).toList();
+  }
+
+  InputDecoration _searchDecoration(
+    BuildContext context, {
+    required String hintText,
+    VoidCallback? onClear,
+  }) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final isDarkTheme = theme.brightness == Brightness.dark;
+
+    return InputDecoration(
+      hintText: hintText,
+      prefixIcon: const Icon(Icons.search_rounded),
+      suffixIcon: _searchQuery.isEmpty
+          ? null
+          : IconButton(
+              icon: const Icon(Icons.close_rounded),
+              tooltip: 'Limpiar búsqueda',
+              onPressed: onClear,
+            ),
+      isDense: true,
+      filled: true,
+      fillColor: isDarkTheme ? cs.surface : Colors.white,
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: 14,
+      ),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(999),
+        borderSide: BorderSide(
+          color: cs.outline.withValues(alpha: 0.22),
+        ),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(999),
+        borderSide: BorderSide(
+          color: cs.outline.withValues(alpha: 0.22),
+        ),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(999),
+        borderSide: BorderSide(
+          color: cs.primary.withValues(alpha: 0.26),
+        ),
+      ),
+    );
   }
 
   Widget _buildModeSwitcher({
@@ -246,12 +292,8 @@ class _PantallaExamenesState extends ConsumerState<PantallaExamenes> {
             child: Padding(
               padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _buildModeSwitcher(
-                    context: context,
-                    mode: ExamenesViewMode.resumen,
-                  ),
-                  const SizedBox(height: 12),
                   Container(
                     width: double.infinity,
                     decoration: BoxDecoration(
@@ -283,46 +325,92 @@ class _PantallaExamenesState extends ConsumerState<PantallaExamenes> {
                           ),
                         ),
                         const SizedBox(height: 12),
-                        DropdownButtonFormField<String>(
-                          initialValue: careerId,
-                          borderRadius: BorderRadius.circular(16),
-                          dropdownColor:
-                              isDark ? cs.surfaceContainer : Colors.white,
-                          menuMaxHeight: 400,
-                          itemHeight: 56,
-                          decoration: InputDecoration(
-                            isDense: true,
-                            filled: true,
-                            fillColor: isDark ? cs.surface : Colors.white,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(
-                                color: isDark
-                                    ? cs.outlineVariant
-                                    : const Color(0xFFD1D5DB),
-                              ),
-                            ),
-                          ),
-                          items: examCareerOptions
-                              .map(
-                                (career) => DropdownMenuItem<String>(
-                                  value: career.id,
-                                  child: CareerOptionLabel(
-                                    career,
-                                    iconSize: 30,
-                                    iconShiftX: -6,
-                                  ),
+                        LayoutBuilder(
+                          builder: (context, constraints) {
+                            return Container(
+                              height: 52,
+                              decoration: BoxDecoration(
+                                color: isDark ? cs.surface : Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: isDark
+                                      ? cs.outlineVariant
+                                      : const Color(0xFFD1D5DB),
                                 ),
-                              )
-                              .toList(),
-                          onChanged: (v) {
-                            if (v == null) return;
-                            setState(() {
-                              _yearFilter = null;
-                              _scope = 'todos';
-                            });
-                            ref.read(examenesCareerIdProvider.notifier).state =
-                                v;
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                              ),
+                              child: DropdownButtonHideUnderline(
+                                child: DropdownButton<String>(
+                                  value: careerId,
+                                  isExpanded: true,
+                                  menuWidth: constraints.maxWidth,
+                                  menuMaxHeight: 400,
+                                  dropdownColor:
+                                      isDark ? cs.surface : Colors.white,
+                                  borderRadius: BorderRadius.circular(14),
+                                  icon: Icon(
+                                    Icons.keyboard_arrow_down_rounded,
+                                    color: cs.onSurfaceVariant,
+                                  ),
+                                  itemHeight: 48,
+                                  selectedItemBuilder: (context) {
+                                    return examCareerOptions.map((career) {
+                                      return Align(
+                                        alignment: Alignment.centerLeft,
+                                        child: _careerLabel(
+                                          career,
+                                          textColor: cs.onSurface,
+                                          iconSize: 22,
+                                          gap: 8,
+                                          iconShiftX: -4,
+                                        ),
+                                      );
+                                    }).toList(growable: false);
+                                  },
+                                  items: examCareerOptions
+                                      .map(
+                                        (career) => DropdownMenuItem<String>(
+                                          value: career.id,
+                                          child: Row(
+                                            children: [
+                                              Expanded(
+                                                child: _careerLabel(
+                                                  career,
+                                                  textColor: cs.onSurface,
+                                                  iconSize: 22,
+                                                  gap: 8,
+                                                  iconShiftX: -4,
+                                                ),
+                                              ),
+                                              if (career.id == careerId) ...[
+                                                Icon(
+                                                  Icons.check_rounded,
+                                                  size: 18,
+                                                  color: cs.primary,
+                                                ),
+                                              ],
+                                            ],
+                                          ),
+                                        ),
+                                      )
+                                      .toList(growable: false),
+                                  onChanged: (v) {
+                                    if (v == null) return;
+                                    setState(() {
+                                      _yearFilter = null;
+                                      _scope = 'todos';
+                                    });
+                                    ref
+                                        .read(
+                                          examenesCareerIdProvider.notifier,
+                                        )
+                                        .state = v;
+                                  },
+                                ),
+                              ),
+                            );
                           },
                         ),
                         const SizedBox(height: 10),
@@ -337,23 +425,14 @@ class _PantallaExamenesState extends ConsumerState<PantallaExamenes> {
                               }
                             });
                           },
-                          decoration: InputDecoration(
-                            isDense: true,
+                          decoration: _searchDecoration(
+                            context,
                             hintText: 'Buscar materia, código o tramo...',
-                            prefixIcon: const Icon(Icons.search_rounded),
-                            suffixIcon: _searchQuery.isEmpty
-                                ? null
-                                : IconButton(
-                                    icon: const Icon(Icons.close_rounded),
-                                    onPressed: () {
-                                      _debounce?.cancel();
-                                      _searchCtrl.clear();
-                                      setState(() => _searchQuery = '');
-                                    },
-                                  ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
+                            onClear: () {
+                              _debounce?.cancel();
+                              _searchCtrl.clear();
+                              setState(() => _searchQuery = '');
+                            },
                           ),
                         ),
                         const SizedBox(height: 10),
@@ -523,22 +602,7 @@ class _PantallaExamenesState extends ConsumerState<PantallaExamenes> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'Vista jerárquica',
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w800,
-                            color: cs.onSurface,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          'Elegí una carrera, luego un año y después alterná entre mesas y coloquios.',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: cs.onSurfaceVariant,
-                            height: 1.35,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 8),
                         Wrap(
                           spacing: 8,
                           runSpacing: 8,
@@ -560,7 +624,7 @@ class _PantallaExamenesState extends ConsumerState<PantallaExamenes> {
                               )
                               .toList(growable: false),
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 10),
                         SizedBox(
                           height: 34,
                           child: ListView(
@@ -568,7 +632,30 @@ class _PantallaExamenesState extends ConsumerState<PantallaExamenes> {
                             children: [
                               _chip(
                                 context: context,
-                                label: 'Todos los años',
+                                label: 'Todos',
+                                selected: _scope == 'todos',
+                                onTap: () => setState(() => _scope = 'todos'),
+                              ),
+                              const SizedBox(width: 8),
+                              _chip(
+                                context: context,
+                                label: 'Llamados',
+                                selected: _scope == 'llamados',
+                                onTap: () =>
+                                    setState(() => _scope = 'llamados'),
+                              ),
+                              const SizedBox(width: 8),
+                              _chip(
+                                context: context,
+                                label: 'Coloquios',
+                                selected: _scope == 'coloquios',
+                                onTap: () =>
+                                    setState(() => _scope = 'coloquios'),
+                              ),
+                              const SizedBox(width: 12),
+                              _chip(
+                                context: context,
+                                label: 'Año: todos',
                                 selected: _yearFilter == null,
                                 onTap: () => setState(() => _yearFilter = null),
                               ),
@@ -576,32 +663,13 @@ class _PantallaExamenesState extends ConsumerState<PantallaExamenes> {
                                 const SizedBox(width: 8),
                                 _chip(
                                   context: context,
-                                  label: 'Año $y',
+                                  label: '$y\u00ba',
                                   selected: _yearFilter == y,
                                   onTap: () => setState(() => _yearFilter = y),
                                 ),
                               ],
                             ],
                           ),
-                        ),
-                        const SizedBox(height: 12),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: [
-                            ChoiceChip(
-                              label: const Text('Mesas'),
-                              selected: _scope == 'llamados',
-                              onSelected: (_) =>
-                                  setState(() => _scope = 'llamados'),
-                            ),
-                            ChoiceChip(
-                              label: const Text('Coloquios'),
-                              selected: _scope == 'coloquios',
-                              onSelected: (_) =>
-                                  setState(() => _scope = 'coloquios'),
-                            ),
-                          ],
                         ),
                       ],
                     ),
@@ -684,6 +752,297 @@ class _PantallaExamenesState extends ConsumerState<PantallaExamenes> {
     );
   }
 
+  Widget _buildDesktopResumenMode(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final isZeus =
+        ref.watch(examenesStyleModeProvider) == ExamenesStyleMode.zeus;
+
+    final careerId = ref.watch(examenesCareerIdProvider);
+    final examCareerOptions = kCareers
+        .where(
+          (c) =>
+              c.id == 'historia' || c.id == 'geografia' || c.id == 'politica',
+        )
+        .toList();
+    final selectedCareer = examCareerOptions.firstWhere(
+      (career) => career.id == careerId,
+      orElse: () => examCareerOptions.first,
+    );
+    final examenesAsync = ref.watch(examenesFiltradosProvider);
+    final planMapaAsync = ref.watch(planMapaMateriasProvider(careerId));
+
+    return Row(
+      children: [
+        Container(
+          width: 320,
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF0B1220) : Colors.white,
+            border: Border(
+              right: BorderSide(
+                color:
+                    isDark ? const Color(0xFF243041) : const Color(0xFFE5E7EB),
+              ),
+            ),
+          ),
+          child: SafeArea(
+            top: true,
+            bottom: true,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Calendario académico',
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      color: cs.primary,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Mesas y exámenes',
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w900,
+                      height: 1,
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  _DesktopSearchField(
+                    controller: _searchCtrl,
+                    query: _searchQuery,
+                    onChanged: (value) {
+                      _debounce?.cancel();
+                      _debounce = Timer(const Duration(milliseconds: 160), () {
+                        if (mounted) setState(() => _searchQuery = value);
+                      });
+                    },
+                    onClear: () {
+                      _debounce?.cancel();
+                      _searchCtrl.clear();
+                      setState(() => _searchQuery = '');
+                    },
+                  ),
+                  const SizedBox(height: 18),
+                  Text(
+                    'Carrera',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  ...examCareerOptions.map(
+                    (career) => _DesktopCareerButton(
+                      career: career,
+                      selected: career.id == careerId,
+                      onTap: () {
+                        setState(() {
+                          _yearFilter = null;
+                          _scope = 'todos';
+                        });
+                        ref.read(examenesCareerIdProvider.notifier).state =
+                            career.id;
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  Text(
+                    'Tipo',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  _DesktopScopeButton(
+                    label: 'Todos',
+                    icon: Icons.select_all_rounded,
+                    selected: _scope == 'todos',
+                    onTap: () => setState(() => _scope = 'todos'),
+                  ),
+                  _DesktopScopeButton(
+                    label: 'Mesas',
+                    icon: Icons.event_available_outlined,
+                    selected: _scope == 'llamados',
+                    onTap: () => setState(() => _scope = 'llamados'),
+                  ),
+                  _DesktopScopeButton(
+                    label: 'Coloquios',
+                    icon: Icons.forum_outlined,
+                    selected: _scope == 'coloquios',
+                    onTap: () => setState(() => _scope = 'coloquios'),
+                  ),
+                  const SizedBox(height: 18),
+                  Text(
+                    'Año',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      _DesktopYearButton(
+                        label: 'Todos',
+                        selected: _yearFilter == null,
+                        onTap: () => setState(() => _yearFilter = null),
+                      ),
+                      for (final year in [1, 2, 3, 4])
+                        _DesktopYearButton(
+                          label: '$year°',
+                          selected: _yearFilter == year,
+                          onTap: () => setState(() => _yearFilter = year),
+                        ),
+                    ],
+                  ),
+                  const Spacer(),
+                  _DesktopSideNote(isDark: isDark),
+                ],
+              ),
+            ),
+          ),
+        ),
+        Expanded(
+          child: Container(
+            color: isDark ? const Color(0xFF070C15) : const Color(0xFFF5F7FA),
+            child: RefreshIndicator(
+              onRefresh: _refreshExams,
+              child: CustomScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                slivers: [
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 22, 24, 10),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  selectedCareer.nombre,
+                                  style: theme.textTheme.headlineSmall
+                                      ?.copyWith(fontWeight: FontWeight.w900),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Vista de trabajo para revisar fechas, llamados, coloquios y próximos movimientos.',
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color: cs.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton.filledTonal(
+                            onPressed: _refreshing ? null : _refreshExams,
+                            tooltip: 'Actualizar',
+                            icon: _refreshing
+                                ? const SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Icon(Icons.refresh_rounded),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  SliverToBoxAdapter(
+                    child: planMapaAsync.when(
+                      loading: () => const Padding(
+                        padding: EdgeInsets.all(32),
+                        child: Center(child: CircularProgressIndicator()),
+                      ),
+                      error: (e, _) => Padding(
+                        padding: const EdgeInsets.all(32),
+                        child: Center(child: Text('Error cargando plan: $e')),
+                      ),
+                      data: (mapaPlan) {
+                        return examenesAsync.when(
+                          loading: () => const Padding(
+                            padding: EdgeInsets.all(32),
+                            child: Center(child: CircularProgressIndicator()),
+                          ),
+                          error: (e, _) => Padding(
+                            padding: const EdgeInsets.all(32),
+                            child: Center(
+                              child: Text('Error cargando exámenes: $e'),
+                            ),
+                          ),
+                          data: (eventos) {
+                            if (eventos.isEmpty) {
+                              return _DesktopEmptyState(
+                                message:
+                                    'Todavía no hay mesas cargadas para ${labelCarrera(careerId)}.',
+                              );
+                            }
+
+                            final secciones = armarSeccionesConPlan(
+                              eventos: eventos,
+                              mapaPlan: mapaPlan,
+                            );
+                            final baseSecciones = kOcultarExamenesPublicados
+                                ? armarSeccionesSoloPlan(mapaPlan: mapaPlan)
+                                : secciones;
+                            final filtradas = _filtrarSecciones(baseSecciones);
+                            final proximos = kOcultarExamenesPublicados
+                                ? const <MateriaParaLista>[]
+                                : _proximos(filtradas);
+
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                _DesktopSummaryStrip(
+                                  secciones: filtradas,
+                                  proximos: proximos,
+                                  scope: _scope,
+                                  yearFilter: _yearFilter,
+                                ),
+                                ListaMaterias(
+                                  key: ValueKey(
+                                    'desktop-lista-$careerId-$_scope-${_yearFilter ?? 0}-${_searchCtrl.text}',
+                                  ),
+                                  careerId: careerId,
+                                  secciones: filtradas,
+                                  proximos: proximos,
+                                  examsHiddenMode: kOcultarExamenesPublicados,
+                                  hiddenModeMessage: kMensajeProximasMesas,
+                                  isZeus: isZeus,
+                                  onTapMateria: (materia, fromColoquios) {
+                                    if (kOcultarExamenesPublicados) return;
+                                    _openMateriaSheet(
+                                      context,
+                                      careerId: careerId,
+                                      materia: materia,
+                                      mapaPlan: mapaPlan,
+                                      fromColoquios: fromColoquios,
+                                    );
+                                  },
+                                ),
+                              ],
+                            );
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _chip({
     required BuildContext context,
     required String label,
@@ -715,12 +1074,70 @@ class _PantallaExamenesState extends ConsumerState<PantallaExamenes> {
     );
   }
 
+  Widget _careerLabel(
+    CareerInfo career, {
+    required Color textColor,
+    double iconSize = 22,
+    double gap = 8,
+    double iconShiftX = 0,
+  }) {
+    final hasIcon = career.iconAsset != null;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (hasIcon) ...[
+          Transform.translate(
+            offset: Offset(iconShiftX, 0),
+            child: Container(
+              width: iconSize,
+              height: iconSize,
+              clipBehavior: Clip.antiAlias,
+              decoration: const BoxDecoration(shape: BoxShape.circle),
+              child: Image.asset(
+                career.iconAsset!,
+                fit: BoxFit.cover,
+                cacheWidth: 64,
+                cacheHeight: 64,
+                filterQuality: FilterQuality.low,
+                errorBuilder: (_, __, ___) => Icon(
+                  Icons.school_rounded,
+                  size: iconSize - 4,
+                  color: textColor,
+                ),
+              ),
+            ),
+          ),
+          SizedBox(width: gap),
+        ],
+        Flexible(
+          child: Text(
+            career.nombre,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              color: textColor,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final mode = ref.watch(examenesViewModeProvider);
     final styleMode = ref.watch(examenesStyleModeProvider);
     final isZeus = styleMode == ExamenesStyleMode.zeus;
+    final isDesktop = MediaQuery.sizeOf(context).width >= 1000;
     final topInset = MediaQuery.of(context).viewPadding.top;
+
+    if (isDesktop) {
+      return Scaffold(
+        body: _buildDesktopResumenMode(context),
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      );
+    }
+
     return Scaffold(
       body: SafeArea(
         top: false,
@@ -770,14 +1187,383 @@ class _PantallaExamenesState extends ConsumerState<PantallaExamenes> {
                 ),
               ),
             Expanded(
-              child: mode == ExamenesViewMode.resumen
-                  ? _buildResumenMode(context, topInset)
-                  : const ExamenesJerarquicoHome(),
+              child: _buildResumenMode(context, topInset),
             ),
           ],
         ),
       ),
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+    );
+  }
+}
+
+class _DesktopSearchField extends StatelessWidget {
+  const _DesktopSearchField({
+    required this.controller,
+    required this.query,
+    required this.onChanged,
+    required this.onClear,
+  });
+
+  final TextEditingController controller;
+  final String query;
+  final ValueChanged<String> onChanged;
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final isDarkTheme = theme.brightness == Brightness.dark;
+
+    return TextField(
+      controller: controller,
+      onChanged: onChanged,
+      decoration: InputDecoration(
+        hintText: 'Buscar materia o tramo',
+        prefixIcon: const Icon(Icons.search_rounded),
+        suffixIcon: query.isEmpty
+            ? null
+            : IconButton(
+                onPressed: onClear,
+                tooltip: 'Limpiar b?squeda',
+                icon: const Icon(Icons.close_rounded),
+              ),
+        isDense: true,
+        filled: true,
+        fillColor: isDarkTheme ? cs.surface : Colors.white,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(999),
+          borderSide: BorderSide(
+            color: cs.outline.withValues(alpha: 0.22),
+          ),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(999),
+          borderSide: BorderSide(
+            color: cs.outline.withValues(alpha: 0.22),
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(999),
+          borderSide: BorderSide(
+            color: cs.primary.withValues(alpha: 0.26),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DesktopCareerButton extends StatelessWidget {
+  const _DesktopCareerButton({
+    required this.career,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final CareerInfo career;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Material(
+        color: selected
+            ? theme.colorScheme.primary.withValues(alpha: 0.10)
+            : Colors.transparent,
+        borderRadius: BorderRadius.circular(8),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(8),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.school_rounded,
+                  size: 19,
+                  color: selected ? theme.colorScheme.primary : theme.hintColor,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    career.nombre,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: selected ? FontWeight.w900 : FontWeight.w700,
+                      color: selected ? theme.colorScheme.primary : null,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DesktopScopeButton extends StatelessWidget {
+  const _DesktopScopeButton({
+    required this.label,
+    required this.icon,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: OutlinedButton.icon(
+        onPressed: onTap,
+        icon: Icon(icon),
+        label: Align(
+          alignment: Alignment.centerLeft,
+          child: Text(label),
+        ),
+        style: OutlinedButton.styleFrom(
+          minimumSize: const Size.fromHeight(42),
+          alignment: Alignment.centerLeft,
+          backgroundColor: selected
+              ? theme.colorScheme.primary.withValues(alpha: 0.10)
+              : null,
+          foregroundColor: selected ? theme.colorScheme.primary : null,
+          side: BorderSide(
+            color: selected
+                ? theme.colorScheme.primary.withValues(alpha: 0.28)
+                : theme.colorScheme.outlineVariant,
+          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+      ),
+    );
+  }
+}
+
+class _DesktopYearButton extends StatelessWidget {
+  const _DesktopYearButton({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return ChoiceChip(
+      label: Text(label),
+      selected: selected,
+      onSelected: (_) => onTap(),
+      selectedColor: theme.colorScheme.primary.withValues(alpha: 0.14),
+      labelStyle: TextStyle(
+        color: selected ? theme.colorScheme.primary : null,
+        fontWeight: FontWeight.w800,
+      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      visualDensity: VisualDensity.compact,
+    );
+  }
+}
+
+class _DesktopSideNote extends StatelessWidget {
+  const _DesktopSideNote({required this.isDark});
+
+  final bool isDark;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF111827) : const Color(0xFFF9FAFB),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            Icons.info_outline_rounded,
+            size: 18,
+            color: theme.colorScheme.primary,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Los filtros quedan fijos para trabajar con muchas materias sin volver arriba.',
+              style: theme.textTheme.bodySmall,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DesktopSummaryStrip extends StatelessWidget {
+  const _DesktopSummaryStrip({
+    required this.secciones,
+    required this.proximos,
+    required this.scope,
+    required this.yearFilter,
+  });
+
+  final List<SeccionDeLista> secciones;
+  final List<MateriaParaLista> proximos;
+  final String scope;
+  final int? yearFilter;
+
+  @override
+  Widget build(BuildContext context) {
+    final total = secciones.fold<int>(
+      0,
+      (count, section) => count + section.materias.length,
+    );
+    final mesas = secciones
+        .where((section) => !section.esColoquios)
+        .fold<int>(0, (count, section) => count + section.materias.length);
+    final coloquios = secciones
+        .where((section) => section.esColoquios)
+        .fold<int>(0, (count, section) => count + section.materias.length);
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
+      child: Row(
+        children: [
+          _DesktopMetric(
+            label: 'Resultados',
+            value: total.toString(),
+            icon: Icons.list_alt_rounded,
+          ),
+          const SizedBox(width: 10),
+          _DesktopMetric(
+            label: 'Mesas',
+            value: mesas.toString(),
+            icon: Icons.event_available_outlined,
+          ),
+          const SizedBox(width: 10),
+          _DesktopMetric(
+            label: 'Coloquios',
+            value: coloquios.toString(),
+            icon: Icons.forum_outlined,
+          ),
+          const SizedBox(width: 10),
+          _DesktopMetric(
+            label: yearFilter == null ? 'Próximos' : 'Año filtrado',
+            value: yearFilter == null
+                ? proximos.length.toString()
+                : '$yearFilter°',
+            icon: yearFilter == null
+                ? Icons.upcoming_outlined
+                : Icons.filter_alt_outlined,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DesktopMetric extends StatelessWidget {
+  const _DesktopMetric({
+    required this.label,
+    required this.value,
+    required this.icon,
+  });
+
+  final String label;
+  final String value;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Expanded(
+      child: Container(
+        height: 58,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: theme.colorScheme.outlineVariant),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 19, color: theme.colorScheme.primary),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.bodySmall,
+              ),
+            ),
+            Text(
+              value,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DesktopEmptyState extends StatelessWidget {
+  const _DesktopEmptyState({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.all(48),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.event_busy_outlined,
+              size: 52,
+              color: theme.colorScheme.primary,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

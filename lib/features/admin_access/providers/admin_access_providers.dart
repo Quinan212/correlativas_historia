@@ -98,7 +98,16 @@ final adminObservedDevicesProvider =
       .eq('lifecycle_status', 'active')
       .order('label');
 
-  final registry = registryRows.cast<Map<String, dynamic>>();
+  final registry = registryRows.cast<Map<String, dynamic>>().where((row) {
+    final deviceId = (row['device_id'] ?? '').toString().trim();
+    final label = (row['label'] ?? '').toString().trim();
+    final notes = (row['notes'] ?? '').toString().trim();
+    return !shouldHideDeviceFromAdminPanels(
+      deviceId: deviceId,
+      label: label,
+      notes: notes,
+    );
+  }).toList(growable: false);
   if (registry.isEmpty) return const <AdminObservedDevice>[];
 
   final deviceIds = registry
@@ -183,6 +192,21 @@ final adminObservedDevicesProvider =
   return items;
 });
 
+final adminDemoStudentCountProvider = FutureProvider<int>((ref) async {
+  final bootstrap = ref.watch(supabaseBootstrapProvider);
+  final client = ref.watch(supabaseClientProvider);
+
+  if (!bootstrap.isReady || client == null) {
+    return 0;
+  }
+
+  final rows = await client
+      .from('academic_students')
+      .select('id')
+      .eq('is_demo', true);
+  return rows.length;
+});
+
 String _cleanDisplayText(dynamic value) {
   final cleaned = (value ?? '').toString().trim();
   if (cleaned.isEmpty) return '';
@@ -193,9 +217,9 @@ String _cleanDisplayText(dynamic value) {
 
 String _friendlyDeviceFallback(String deviceId) {
   final cleaned = deviceId.trim();
-  if (cleaned.isEmpty) return 'Dispositivo';
+  if (cleaned.isEmpty) return 'Equipo técnico';
   final suffix = cleaned.length <= 4
       ? cleaned.toUpperCase()
       : cleaned.substring(cleaned.length - 4).toUpperCase();
-  return 'Dispositivo $suffix';
+  return 'Equipo técnico $suffix';
 }

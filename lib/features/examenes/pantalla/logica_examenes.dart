@@ -257,8 +257,40 @@ String _claveVisualMateria({
     anioEvento: evento.anio,
     mapaPlan: mapaPlan,
   );
-  return sanitizeText(
-      plan?.displayNombre ?? _stripDivisionNoise(evento.materia));
+
+  var displayName = plan?.displayNombre ?? _stripDivisionNoise(evento.materia);
+
+  // Normalizar "Práctica Docente" para el filtro
+  final lowName = displayName.toLowerCase();
+  if (lowName.contains('practica docente')) {
+    final n = _numeroPractica(displayName);
+    if (n != null) {
+      // Usar números romanos para consistencia con el estilo legacy si es necesario,
+      // o números arábigos como pidió el usuario "practica docente 1"
+      // El usuario dijo "practica docente II" en el ejemplo pero luego "practica docente 1"
+      // "por ejemplo practica docente II practica docente III" -> Usaré Romanos.
+      final roman = n == 1
+          ? 'I'
+          : n == 2
+              ? 'II'
+              : n == 3
+                  ? 'III'
+                  : 'IV';
+      displayName = 'Práctica Docente $roman';
+    }
+  }
+
+  var divSuffix = '';
+  if (evento.division != null && evento.division!.isNotEmpty) {
+    var div = evento.division!.trim();
+    // Normalizar "A y B" con 'y' minúscula
+    if (div.toUpperCase() == 'A Y B') {
+      div = 'A y B';
+    }
+    divSuffix = ' $_emdash $div';
+  }
+
+  return '$displayName$divSuffix';
 }
 
 int? anioPlanParaEvento(
@@ -288,14 +320,25 @@ class SeccionDeLista {
 class _ResumenFechasMateria {
   DateTime? fechaMin;
   DateTime? fechaMax;
+  String? division;
 
-  void add(DateTime? dt) {
-    if (dt == null) return;
-    if (fechaMin == null || dt.isBefore(fechaMin!)) {
-      fechaMin = dt;
+  void add(DateTime? dt, String? div) {
+    if (dt == null && div == null) return;
+    if (dt != null) {
+      if (fechaMin == null || dt.isBefore(fechaMin!)) {
+        fechaMin = dt;
+      }
+      if (fechaMax == null || dt.isAfter(fechaMax!)) {
+        fechaMax = dt;
+      }
     }
-    if (fechaMax == null || dt.isAfter(fechaMax!)) {
-      fechaMax = dt;
+    if (div != null && div.isNotEmpty) {
+      if (division == null) {
+        division = div;
+      } else if (division != div && !division!.contains(div)) {
+        // Simple join for now, could be smarter
+        division = '$division, $div';
+      }
     }
   }
 }
@@ -308,6 +351,7 @@ class MateriaParaLista {
     required this.fechaActual,
     required this.esColoquio,
     required this.materiaPlan,
+    this.division,
   });
 
   final String nombreEvento;
@@ -316,9 +360,34 @@ class MateriaParaLista {
   final DateTime? fechaActual;
   final bool esColoquio;
   final Materia? materiaPlan;
+  final String? division;
 
   String get nombreMostrable {
-    return sanitizeText((materiaPlan?.displayNombre ?? nombreBase).trim());
+    final raw = (materiaPlan?.displayNombre ?? nombreBase).trim();
+    final low = raw.toLowerCase();
+    if (low.contains('practica docente')) {
+      final n = _numeroPractica(raw);
+      if (n != null) {
+        final roman = n == 1
+            ? 'I'
+            : n == 2
+                ? 'II'
+                : n == 3
+                    ? 'III'
+                    : 'IV';
+        return 'Práctica Docente $roman';
+      }
+    }
+    return sanitizeText(raw);
+  }
+
+  String get formattedDivision {
+    if (division == null) return '';
+    final d = division!.trim();
+    if (d.toUpperCase() == 'A Y B') return 'A y B';
+    if (d.toUpperCase() == 'A') return 'A';
+    if (d.toUpperCase() == 'B') return 'B';
+    return d.toUpperCase();
   }
 
   String get tipo => sanitizeText((materiaPlan?.tipo ?? '').trim());
@@ -338,14 +407,13 @@ List<SeccionDeLista> armarSeccionesConPlan({
     return const [];
   }
 
-  final porAnio = <int, Map<String, _ResumenFechasMateria>>{};
   final coloquios = <String, _ResumenFechasMateria>{};
   final sinAnioOtros = <String, _ResumenFechasMateria>{};
 
-  void setFechas(
-      Map<String, _ResumenFechasMateria> map, String key, DateTime? dt) {
+  void setFechas(Map<String, _ResumenFechasMateria> map, String key,
+      DateTime? dt, String? div) {
     final prev = map.putIfAbsent(key, () => _ResumenFechasMateria());
-    prev.add(dt);
+    prev.add(dt, div);
   }
 
   // Ahora tenemos mapas separados para mesas y coloquios POR AÑO
@@ -359,9 +427,9 @@ List<SeccionDeLista> armarSeccionesConPlan({
 
     if (evento.anio == null) {
       if (esColoquio) {
-        setFechas(coloquios, clave, dt);
+        setFechas(coloquios, clave, dt, evento.division);
       } else {
-        setFechas(sinAnioOtros, clave, dt);
+        setFechas(sinAnioOtros, clave, dt, evento.division);
       }
       continue;
     }
@@ -373,7 +441,7 @@ List<SeccionDeLista> armarSeccionesConPlan({
         : porAnioMesas.putIfAbsent(
             year, () => <String, _ResumenFechasMateria>{});
 
-    setFechas(map, clave, dt);
+    setFechas(map, clave, dt, evento.division);
   }
 
   int cmp(
@@ -410,6 +478,7 @@ List<SeccionDeLista> armarSeccionesConPlan({
         fechaActual: entry.value.fechaMax ?? entry.value.fechaMin,
         esColoquio: esColoquio,
         materiaPlan: plan,
+        division: entry.value.division,
       );
     }).toList();
   }
@@ -522,8 +591,9 @@ List<SeccionDeLista> armarSeccionesSoloPlan({
 }
 
 class DetalleArgs {
-  const DetalleArgs({required this.tabId});
+  const DetalleArgs({required this.tabId, this.divisionId});
   final String tabId;
+  final String? divisionId;
 }
 
 class PickParaSheet {

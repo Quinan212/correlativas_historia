@@ -72,20 +72,30 @@ class _TarjetaMateriaGrillaState extends ConsumerState<TarjetaMateriaGrilla> {
       color: Colors.transparent,
       child: InkWell(
         onTap: () async {
+          final width = MediaQuery.of(context).size.width;
+          final isDesktop = width >= 900;
+
           // Bloquear doble tap: Si ya hay una materia abriéndose, ignoramos
           // los clicks siguientes para no ahogar al procesador abriendo dos
           // paneles gigantes superpuestos.
-          if (ref.read(selectedMateriaIdProvider) != null) return;
+          if (!isDesktop && ref.read(selectedMateriaIdProvider) != null) return;
 
           HapticFeedback.lightImpact();
-          debugPrint(
-              'Abrir detalle: setting selectedId=${m.id} and pushing route');
-          ref.read(selectedMateriaIdProvider.notifier).state = m.id;
-          await mostrarModalDetalleMateria(
-            context: context,
-            ref: ref,
-            heroId: m.id,
-          );
+
+          if (isDesktop) {
+            // En escritorio solo seleccionamos, el SidePanel reacciona
+            ref.read(selectedMateriaIdProvider.notifier).state = m.id;
+          } else {
+            debugPrint(
+                'Abrir detalle: setting selectedId=${m.id} and pushing route');
+            ref.read(selectedMateriaIdProvider.notifier).state = m.id;
+            await mostrarModalDetalleMateria(
+              context: context,
+              ref: ref,
+              heroId: m.id,
+            );
+            ref.read(selectedMateriaIdProvider.notifier).state = null;
+          }
         },
         onTapDown: (_) => _setPressed(true),
         onTapCancel: () => _setPressed(false),
@@ -107,7 +117,7 @@ class _TarjetaMateriaGrillaState extends ConsumerState<TarjetaMateriaGrilla> {
                   ? const []
                   : [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
+                        color: Colors.black.withOpacity(0.05),
                         blurRadius: 2,
                         offset: const Offset(0, 1),
                       )
@@ -126,8 +136,8 @@ class _TarjetaMateriaGrillaState extends ConsumerState<TarjetaMateriaGrilla> {
                         style: TextStyle(
                           fontSize: 15.4,
                           fontWeight: FontWeight.w800,
-                          color: titleColor.withValues(
-                            alpha: isDark ? 0.9 : 0.8,
+                          color: titleColor.withOpacity(
+                            isDark ? 0.9 : 0.8,
                           ),
                           letterSpacing: 0.5,
                         ),
@@ -151,9 +161,7 @@ class _TarjetaMateriaGrillaState extends ConsumerState<TarjetaMateriaGrilla> {
                         children: [
                           Container(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 2,
-                            ),
+                                horizontal: 8, vertical: 2),
                             decoration: BoxDecoration(
                               color: fmtBg,
                               borderRadius: BorderRadius.circular(99),
@@ -170,9 +178,7 @@ class _TarjetaMateriaGrillaState extends ConsumerState<TarjetaMateriaGrilla> {
                           ),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 2,
-                            ),
+                                horizontal: 8, vertical: 2),
                             decoration: BoxDecoration(
                               color: typeBg,
                               borderRadius: BorderRadius.circular(99),

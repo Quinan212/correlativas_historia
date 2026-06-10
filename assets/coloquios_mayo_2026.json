@@ -1,166 +1,122 @@
 [
   {
     "careerId": "historia",
-    "anio": null,
-    "fecha": "2026-05-11",
+    "anio": 1,
+    "fecha": null,
     "hora": "18:30",
     "materia": "Práctica Docente I",
     "instancia": "coloquio",
-    "docentes": [
-      "OCHOA, Natalia",
-      "MARTINEZ, Gustavo"
-    ]
+    "docentes": ["OCHOA, Natalia", "MARTINEZ, Gustavo"],
+    "division": "A y B"
   },
   {
     "careerId": "historia",
-    "anio": null,
-    "fecha": "2026-05-11",
-    "hora": "18:30",
-    "materia": "Práctica Docente I",
-    "instancia": "coloquio",
-    "docentes": [
-      "OCHOA, Natalia",
-      "MARTINEZ, Gustavo"
-    ]
-  },
-  {
-    "careerId": "historia",
-    "anio": null,
-    "fecha": "2026-05-11",
-    "hora": "18:30",
-    "materia": "Didáctica de las Ciencias Sociales",
-    "instancia": "coloquio",
-    "docentes": [
-      "CODURI, Emilia"
-    ]
-  },
-  {
-    "careerId": "historia",
-    "anio": null,
-    "fecha": "2026-05-11",
-    "hora": "18:30",
-    "materia": "Didáctica de las Ciencias Sociales",
-    "instancia": "coloquio",
-    "docentes": [
-      "PALAVECINI, Patricia"
-    ]
-  },
-  {
-    "careerId": "historia",
-    "anio": null,
-    "fecha": "2026-05-12",
+    "anio": 2,
+    "fecha": null,
     "hora": "18:30",
     "materia": "Práctica Docente II",
     "instancia": "coloquio",
-    "docentes": [
-      "ROBINSON, Soledad",
-      "GONZALEZ, Carlos"
-    ]
+    "docentes": ["GONZALEZ, Carlos", "ROBINSON, Soledad"],
+    "division": "A y B"
   },
   {
     "careerId": "historia",
-    "anio": null,
+    "anio": 2,
+    "fecha": null,
+    "hora": "18:30",
+    "materia": "Didáctica de las Ciencias Sociales",
+    "instancia": "coloquio",
+    "docentes": ["CODURI, Emilia", "Docente nombre"],
+    "division": "A"
+  },
+  {
+    "careerId": "historia",
+    "anio": 2,
     "fecha": "2026-05-12",
     "hora": "18:30",
-    "materia": "Práctica Docente II",
+    "materia": "Historia de las Ideas II",
     "instancia": "coloquio",
-    "docentes": [
-      "ROBINSON, Soledad",
-      "GONZALEZ, Carlos"
-    ]
+    "docentes": ["BORCHE, Javier", "Docente nombre"],
+    "division": "B"
   },
   {
     "careerId": "historia",
-    "anio": null,
+    "anio": 3,
+    "fecha": "2026-05-11",
+    "hora": "18:30",
+    "materia": "Práctica Docente III",
+    "instancia": "coloquio",
+    "docentes": ["LOWER, Griselda", "CODURI, Emilia"],
+    "division": "A y B"
+  },
+  {
+    "careerId": "historia",
+    "anio": 3,
     "fecha": "2026-05-14",
     "hora": "18:30",
     "materia": "Epistemología de la Historia",
     "instancia": "coloquio",
-    "docentes": [
-      "BORCHE, Javier"
-    ]
-  },
-  {
-    "careerId": "historia",
-    "anio": null,
-    "fecha": "2026-05-14",
-    "hora": "18:30",
-    "materia": "Epistemología de la Historia",
-    "instancia": "coloquio",
-    "docentes": [
-      "BORCHE, Javier"
-    ]
-  },
-  {
-    "careerId": "historia",
-    "anio": null,
-    "fecha": "2026-05-15",
-    "hora": "18:30",
-    "materia": "Práctica Docente III",
-    "instancia": "coloquio",
-    "docentes": [
-      "LOWER, Griselda",
-      "CODURI, Emilia"
-    ]
-  },
-  {
-    "careerId": "geografia",
-    "anio": null,
-    "fecha": "2026-05-15",
-    "hora": "18:30",
-    "materia": "Práctica Docente III",
-    "instancia": "coloquio",
-    "docentes": [
-      "LOWER, Griselda",
-      "CODURI, Emilia"
-    ]
-  },
-  {
-    "careerId": "geografia",
-    "anio": null,
-    "fecha": "2026-05-15",
-    "hora": "18:30",
-    "materia": "Práctica Docente III",
-    "instancia": "coloquio",
-    "docentes": [
-      "LOWER, Griselda",
-      "CODURI, Emilia"
-    ]
+    "docentes": ["BORCHE, Javier"],
+    "division": "A y B"
   },
   {
     "careerId": "politica",
-    "anio": null,
+    "anio": 1,
     "fecha": "2026-05-15",
+    "hora": "18:30",
+    "materia": "Oralidad, Lectura, Escritura y TIC",
+    "instancia": "coloquio",
+    "docentes": ["BRAGHINI, María Noel", "MARTINEZ, Yanina"],
+    "division": "A"
+  },
+  {
+    "careerId": "politica",
+    "anio": 3,
+    "fecha": "2026-05-11",
     "hora": "18:30",
     "materia": "Práctica Docente II",
     "instancia": "coloquio",
-    "docentes": [
-      "LOWER, Griselda",
-      "CODURI, Emilia"
-    ]
+    "docentes": ["LEIVA, Carina", "DIAZ, Ignacio"],
+    "division": "A y B"
   },
   {
     "careerId": "politica",
-    "anio": null,
-    "fecha": "2026-05-15",
+    "anio": 2,
+    "fecha": null,
     "hora": "18:30",
-    "materia": "Didáctica de las Ciencias Sociales",
+    "materia": "Sujetos de la Educación Secundaria",
     "instancia": "coloquio",
-    "docentes": [
-      "LOWER, Griselda",
-      "CODURI, Emilia"
-    ]
+    "docentes": ["PIZZIO, Marcos", "Docente nombre"],
+    "division": "A"
   },
   {
-    "careerId": "politica",
-    "anio": null,
-    "fecha": "2026-05-15",
+    "careerId": "geografia",
+    "anio": 1,
+    "fecha": "2026-05-12",
+    "hora": "18:30",
+    "materia": "Técnicas de Representación Cartográfica",
+    "instancia": "coloquio",
+    "docentes": ["CARRERA, Franklin", "Docente nombre"],
+    "division": "A"
+  },
+  {
+    "careerId": "geografia",
+    "anio": 3,
+    "fecha": null,
+    "hora": "18:30",
+    "materia": "Epistemología de la Geografía",
+    "instancia": "coloquio",
+    "docentes": ["MOSER, Sebastían", "Docente nombre"],
+    "division": "A"
+  },
+  {
+    "careerId": "geografia",
+    "anio": 3,
+    "fecha": null,
     "hora": "18:30",
     "materia": "Práctica Docente III",
     "instancia": "coloquio",
-    "docentes": [
-      "LOWER, Griselda",
-      "CODURI, Emilia"
-    ]
+    "docentes": ["MOSER, Sebastían", "RODAS, Laura"],
+    "division": "A y B"
   }
 ]

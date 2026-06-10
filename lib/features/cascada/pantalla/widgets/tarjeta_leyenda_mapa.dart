@@ -16,8 +16,8 @@ class TarjetaLeyendaMapa extends StatelessWidget {
         String label, String desc, Color bg, Color border, Color textC) {
       return Expanded(
         child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 4),
-          padding: const EdgeInsets.all(12),
+          margin: const EdgeInsets.symmetric(horizontal: 2),
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 12),
           decoration: BoxDecoration(
             color: bg,
             borderRadius: BorderRadius.circular(16),
@@ -30,7 +30,8 @@ class TarjetaLeyendaMapa extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: tt.labelLarge?.copyWith(
                   color: textC,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 12,
                   height: 1.1,
                 ),
               ),
@@ -39,7 +40,7 @@ class TarjetaLeyendaMapa extends StatelessWidget {
                 desc,
                 textAlign: TextAlign.center,
                 style: tt.bodySmall?.copyWith(
-                  color: textC.withValues(alpha: 0.82),
+                  color: textC.withOpacity(0.82),
                   fontSize: 10,
                   height: 1.2,
                 ),
@@ -57,7 +58,7 @@ class TarjetaLeyendaMapa extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             SizedBox(
-              width: 100,
+              width: 110,
               child: Container(
                 alignment: Alignment.center,
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
@@ -146,7 +147,7 @@ class TarjetaLeyendaMapa extends StatelessWidget {
           BoxShadow(
             blurRadius: 4,
             offset: const Offset(0, 2),
-            color: theme.shadowColor.withValues(alpha: 0.08),
+            color: theme.shadowColor.withOpacity(0.08),
           ),
         ],
       ),
@@ -158,8 +159,8 @@ class TarjetaLeyendaMapa extends StatelessWidget {
             initiallyExpanded: false,
             maintainState: true,
             tilePadding:
-                const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            childrenPadding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 24),
             backgroundColor: isDark ? cs.surface : Colors.white,
             collapsedBackgroundColor: isDark ? cs.surface : Colors.white,
             shape: const RoundedRectangleBorder(
@@ -200,7 +201,7 @@ class TarjetaLeyendaMapa extends StatelessWidget {
                   style: tt.labelSmall?.copyWith(
                     fontWeight: FontWeight.w900,
                     letterSpacing: 1,
-                    color: cs.onSurface.withValues(alpha: 0.6),
+                    color: cs.onSurface.withOpacity(0.6),
                   ),
                 ),
               ),
@@ -239,7 +240,7 @@ class TarjetaLeyendaMapa extends StatelessWidget {
                   style: tt.labelSmall?.copyWith(
                     fontWeight: FontWeight.w900,
                     letterSpacing: 1,
-                    color: cs.onSurface.withValues(alpha: 0.6),
+                    color: cs.onSurface.withOpacity(0.6),
                   ),
                 ),
               ),

@@ -39,7 +39,7 @@ class ExamenesRepo {
       final rows = await client
           .from('exam_events')
           .select(
-            'career_id, anio, fecha, hora, materia, instancia, docentes, acta_url',
+            'career_id, anio, fecha, hora, materia, instancia, docentes, acta_url, division',
           )
           .eq('instancia', instancia)
           .order('fecha')

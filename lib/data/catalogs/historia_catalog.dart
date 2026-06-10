@@ -285,7 +285,7 @@ List<Materia> buildHistoriaCatalogMaterias() {
       nombre: 'Did\u00e1ctica de la Historia',
       anio: 3,
       tipo: 'Formaci\u00f3n Espec\u00edfica',
-      formato: 'Seminario',
+      formato: 'Asignatura',
       horas: '3 hs',
     ),
     _materia(

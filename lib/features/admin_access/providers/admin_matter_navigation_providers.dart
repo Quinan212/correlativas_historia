@@ -122,6 +122,11 @@ final adminMatterNavigationOverviewProvider =
       .toSet()
       .toList(growable: false);
 
+  final registryMap = deviceIds.isEmpty
+      ? const <String, DeviceRegistryEntry>{}
+      : await ref.read(
+          deviceRegistryEntriesByIdsProvider(serializeDeviceIds(deviceIds)).future,
+        );
   final profileMap = deviceIds.isEmpty
       ? const <String, DeviceProfile>{}
       : await ref.read(
@@ -130,6 +135,12 @@ final adminMatterNavigationOverviewProvider =
 
   final perDevice = <String, _DeviceCounters>{};
   for (final event in events) {
+    final registry = registryMap[event.deviceId];
+    if (registry == null ||
+        !registry.isVisibleInHistories ||
+        !registry.isVisibleInAdminPanels) {
+      continue;
+    }
     final counters = perDevice.putIfAbsent(
       event.deviceId,
       () => _DeviceCounters(),
@@ -183,7 +194,15 @@ final adminMatterNavigationEventsByDeviceProvider =
     final events =
         ref.watch(adminMatterNavigationOverviewProvider).valueOrNull?.events ??
             const <AdminMatterNavigationEvent>[];
+    final visibleDeviceIds = ref
+            .watch(adminMatterNavigationOverviewProvider)
+            .valueOrNull
+            ?.deviceSummaries
+            .map((summary) => summary.deviceId)
+            .toSet() ??
+        const <String>{};
     return events
+        .where((event) => visibleDeviceIds.contains(event.deviceId))
         .where((event) => event.deviceId == deviceId)
         .toList(growable: false);
   },
@@ -222,9 +241,9 @@ String _cleanDisplayText(String? value) {
 
 String _friendlyDeviceFallback(String deviceId) {
   final cleaned = deviceId.trim();
-  if (cleaned.isEmpty) return 'Dispositivo';
+  if (cleaned.isEmpty) return 'Equipo técnico';
   final suffix = cleaned.length <= 4
       ? cleaned.toUpperCase()
       : cleaned.substring(cleaned.length - 4).toUpperCase();
-  return 'Dispositivo $suffix';
+  return 'Equipo técnico $suffix';
 }

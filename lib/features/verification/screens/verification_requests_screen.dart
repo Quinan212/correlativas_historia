@@ -11,11 +11,18 @@ class VerificationRequestsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final ownRequestsAsync = ref.watch(ownVerificationRequestsProvider);
+    final width = MediaQuery.of(context).size.width;
+    final isDesktop = width >= 900;
 
     return Scaffold(
+      backgroundColor:
+          isDark ? const Color(0xFF030712) : const Color(0xFFF9FAFB),
       appBar: AppBar(
         title: const Text('Tus solicitudes'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         actions: [
           IconButton(
             onPressed: () => ref.invalidate(ownVerificationRequestsProvider),
@@ -25,44 +32,60 @@ class VerificationRequestsScreen extends ConsumerWidget {
         ],
       ),
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-          children: [
-            _SectionCard(
-              title: 'Tus verificaciones',
-              child: ownRequestsAsync.when(
-                data: (items) {
-                  if (items.isEmpty) {
-                    return Text(
-                      'Todavía no enviaste ninguna verificación.',
-                      style: theme.textTheme.bodyLarge,
-                    );
-                  }
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 900),
+            child: ListView(
+              padding: isDesktop
+                  ? const EdgeInsets.symmetric(horizontal: 40, vertical: 24)
+                  : const EdgeInsets.fromLTRB(16, 12, 16, 24),
+              children: [
+                _SectionCard(
+                  title: 'Tus verificaciones',
+                  child: ownRequestsAsync.when(
+                    data: (items) {
+                      if (items.isEmpty) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 20),
+                          child: Text(
+                            'Todavía no enviaste ninguna verificación.',
+                            style: theme.textTheme.bodyLarge,
+                          ),
+                        );
+                      }
 
-                  final latestReviewed = _latestReviewedRequest(items);
-                  return Column(
-                    children: [
-                      if (latestReviewed != null) ...[
-                        _VerificationReadyBanner(request: latestReviewed),
-                        const SizedBox(height: 12),
-                      ],
-                      ...items.map(
-                        (item) => VerificationRequestCard(request: item),
+                      final latestReviewed = _latestReviewedRequest(items);
+                      return Column(
+                        children: [
+                          if (latestReviewed != null) ...[
+                            _VerificationReadyBanner(request: latestReviewed),
+                            const SizedBox(height: 16),
+                          ],
+                          ...items.map(
+                            (item) => Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: VerificationRequestCard(request: item),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                    loading: () => const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 16),
+                      child: LinearProgressIndicator(minHeight: 3),
+                    ),
+                    error: (error, _) => Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      child: Text(
+                        'No se pudieron cargar tus solicitudes: $error',
+                        style: theme.textTheme.bodyLarge,
                       ),
-                    ],
-                  );
-                },
-                loading: () => const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 8),
-                  child: LinearProgressIndicator(minHeight: 3),
+                    ),
+                  ),
                 ),
-                error: (error, _) => Text(
-                  'No se pudieron cargar tus solicitudes: $error',
-                  style: theme.textTheme.bodyLarge,
-                ),
-              ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -116,23 +139,24 @@ class _VerificationReadyBanner extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: background,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: foreground.withValues(alpha: 0.22)),
+        border: Border.all(color: foreground.withOpacity(0.22)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: foreground),
-          const SizedBox(width: 10),
+          Icon(icon, color: foreground, size: 24),
+          const SizedBox(width: 14),
           Expanded(
             child: Text(
               _verificationReadyMessage(request),
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: foreground,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w700,
+                height: 1.4,
               ),
             ),
           ),
@@ -151,13 +175,17 @@ class _SectionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
+        color: isDark ? const Color(0xFF0B1220) : Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: theme.colorScheme.outlineVariant),
+        border: Border.all(
+          color: isDark ? const Color(0xFF243041) : const Color(0xFFE5E7EB),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -165,10 +193,10 @@ class _SectionCard extends StatelessWidget {
           Text(
             title,
             style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w900,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           child,
         ],
       ),

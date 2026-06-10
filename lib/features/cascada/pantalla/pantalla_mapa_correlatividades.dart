@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../shared/providers/app_state.dart';
+import '../detail_panel.dart';
 import '../filters_bar.dart';
 import '../visualization_grid.dart';
 import 'utils/decoraciones_mapa.dart';
@@ -37,7 +38,7 @@ class CascadaScreen extends ConsumerWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     final width = MediaQuery.of(context).size.width;
-    final isDesktop = width >= 1180;
+    final isDesktop = width >= 900;
     final isWindowsDesktop = LayoutMapa.isWindowsDesktop();
     final hasSelectedCareer = ref.watch(hasSelectedCareerProvider);
 
@@ -51,93 +52,106 @@ class CascadaScreen extends ConsumerWidget {
               child: const Icon(Icons.calendar_month),
             )
           : null,
-      body: CustomScrollView(
-        slivers: [
-          SliverPersistentHeader(
-            pinned: true,
-            floating: false,
-            delegate: BannerColapsableMapa(topInset: topInset),
-          ),
-          SliverToBoxAdapter(
-            child: LayoutMapa.pageContainer(
-              context,
-              maxW: kMaxWGeneral,
-              child: Padding(
-                padding: const EdgeInsets.only(top: 12, bottom: 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const _PanelHerramientaMapa(),
-                    const SizedBox(height: 12),
-                    if (isDesktop && isWindowsDesktop) ...[
-                      BarraControlesUnaLinea(
-                        inputDecorationBuilder:
-                            DecoracionesMapa.inputDecoration,
-                      ),
-                    ] else ...[
-                      if (isDesktop) ...[
-                        const SelectorCarreraStandalone(),
-                        const SizedBox(height: 8),
-                        CalloutExamenes(
-                          onTap: () => _openExamenes(context, ref),
-                        ),
-                        if (hasSelectedCareer) ...[
-                          const SizedBox(height: 12),
-                          const FiltersBar(),
-                        ],
-                      ] else ...[
-                        CalloutExamenes(
-                          onTap: () => _openExamenes(context, ref),
-                        ),
-                        const SizedBox(height: 12),
-                        const SelectorCarreraStandalone(),
-                        if (hasSelectedCareer) ...[
-                          const SizedBox(height: 12),
-                          const FiltersBar(),
-                        ],
-                      ],
-                    ],
-                    if (hasSelectedCareer) ...[
-                      const SizedBox(height: 12),
-                      const TarjetaRegimenCorrelatividades(),
-                      const SizedBox(height: 12),
-                    ],
-                    if (!isDesktop && hasSelectedCareer)
-                      const VisualizationGrid(),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          if (isDesktop && hasSelectedCareer)
-            SliverToBoxAdapter(
-              child: LayoutMapa.columnsContainer(
-                context,
-                maxWGeneral: kMaxWGeneral,
-                colsFactor: kColsFactor,
-                colsSidePadding: kColsSidePadding,
-                child: const TableroAniosDesktop(),
-              ),
-            ),
-          SliverToBoxAdapter(
-            child: LayoutMapa.pageContainer(
-              context,
-              maxW: kMaxWGeneral,
-              child: Padding(
-                padding: const EdgeInsets.only(top: 12, bottom: 24),
-                child: planAsync.when(
-                  data: (_) => const SizedBox.shrink(),
-                  loading: () =>
-                      const Center(child: CircularProgressIndicator()),
-                  error: (e, _) => Text(
-                    'Error cargando plan: $e',
-                    style: theme.textTheme.bodyMedium,
+      body: SafeArea(
+        top: false,
+        bottom: true,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: CustomScrollView(
+                slivers: [
+                  SliverPersistentHeader(
+                    pinned: true,
+                    floating: false,
+                    delegate: BannerColapsableMapa(
+                      topInset: topInset,
+                      expandedTitle: 'Mapa de Correlatividades',
+                      collapsedTitle: 'MAPA DE CORRELATIVIDADES',
+                    ),
                   ),
-                ),
+                  SliverToBoxAdapter(
+                    child: LayoutMapa.pageContainer(
+                      context,
+                      maxW: kMaxWGeneral,
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 12, bottom: 16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            const _PanelHerramientaMapa(),
+                            const SizedBox(height: 12),
+                            if (isDesktop && isWindowsDesktop) ...[
+                              BarraControlesUnaLinea(
+                                inputDecorationBuilder:
+                                    DecoracionesMapa.inputDecoration,
+                              ),
+                            ] else ...[
+                              if (isDesktop) ...[
+                                const SelectorCarreraStandalone(),
+                                const SizedBox(height: 8),
+                                CalloutExamenes(
+                                  onTap: () => _openExamenes(context, ref),
+                                ),
+                              ] else ...[
+                                CalloutExamenes(
+                                  onTap: () => _openExamenes(context, ref),
+                                ),
+                                const SizedBox(height: 12),
+                                const SelectorCarreraStandalone(),
+                              ],
+                            ],
+                            if (hasSelectedCareer) ...[
+                              const SizedBox(height: 12),
+                              const TarjetaRegimenCorrelatividades(),
+                              if (!(isDesktop && isWindowsDesktop)) ...[
+                                const SizedBox(height: 12),
+                                const FiltersBar(),
+                              ],
+                              const SizedBox(height: 12),
+                            ],
+                            if (!isDesktop && hasSelectedCareer)
+                              const VisualizationGrid(),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  if (isDesktop && hasSelectedCareer)
+                    SliverToBoxAdapter(
+                      child: LayoutMapa.columnsContainer(
+                        context,
+                        maxWGeneral: kMaxWGeneral,
+                        colsFactor: kColsFactor,
+                        colsSidePadding: kColsSidePadding,
+                        child: const TableroAniosDesktop(),
+                      ),
+                    ),
+                  SliverToBoxAdapter(
+                    child: LayoutMapa.pageContainer(
+                      context,
+                      maxW: kMaxWGeneral,
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 12, bottom: 24),
+                        child: planAsync.when(
+                          data: (_) => const SizedBox.shrink(),
+                          loading: () =>
+                              const Center(child: CircularProgressIndicator()),
+                          error: (e, _) => Text(
+                            'Error cargando plan: $e',
+                            style: theme.textTheme.bodyMedium,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-          ),
-        ],
+            if (isDesktop && ref.watch(selectedMateriaIdProvider) != null)
+              const _DesktopSidePanel(),
+          ],
+        ),
       ),
     );
   }
@@ -162,7 +176,7 @@ class _PanelHerramientaMapa extends ConsumerWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.14 : 0.05),
+            color: Colors.black.withOpacity(isDark ? 0.14 : 0.05),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -188,10 +202,10 @@ class _PanelHerramientaMapa extends ConsumerWidget {
                 height: 36,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: cs.primary.withValues(alpha: isDark ? 0.18 : 0.1),
+                  color: cs.primary.withOpacity(isDark ? 0.18 : 0.1),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: cs.primary.withValues(alpha: isDark ? 0.3 : 0.18),
+                    color: cs.primary.withOpacity(isDark ? 0.3 : 0.18),
                   ),
                 ),
                 child: Icon(
@@ -221,6 +235,58 @@ class _PanelHerramientaMapa extends ConsumerWidget {
             style: theme.textTheme.bodyMedium?.copyWith(
               color: cs.onSurfaceVariant,
               height: 1.45,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DesktopSidePanel extends ConsumerWidget {
+  const _DesktopSidePanel();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Container(
+      width: 450,
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1F2937) : Colors.white,
+        border: Border(
+          left: BorderSide(
+            color: isDark ? cs.outlineVariant : const Color(0xFFDCE3EC),
+          ),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 25,
+            offset: const Offset(-4, 0),
+          ),
+        ],
+      ),
+      child: Stack(
+        children: [
+          const SingleChildScrollView(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+            child: DetailPanel(),
+          ),
+          Positioned(
+            top: 12,
+            right: 12,
+            child: IconButton(
+              onPressed: () {
+                ref.read(selectedMateriaIdProvider.notifier).state = null;
+              },
+              icon: const Icon(Icons.close_rounded),
+              style: IconButton.styleFrom(
+                backgroundColor:
+                    isDark ? Colors.black26 : Colors.black.withOpacity(0.05),
+              ),
             ),
           ),
         ],

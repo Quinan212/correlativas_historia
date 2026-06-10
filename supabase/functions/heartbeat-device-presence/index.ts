@@ -49,28 +49,32 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    const isEmulator = deviceId.startsWith('emu_');
-    const defaultLabel = isEmulator
+    const inferredKind = inferDeviceKind(deviceId);
+    const defaultLabel = inferredKind === 'emulator'
       ? 'Emulador registrado'
+      : inferredKind === 'tester'
+      ? 'Tester registrado'
       : 'Dispositivo real registrado';
 
     const { data: existingRow, error: existingError } = await supabase
       .from('device_registry')
-      .select('label, notes')
+      .select('device_kind, label, notes')
       .eq('device_id', deviceId)
       .maybeSingle();
 
     if (existingError) throw existingError;
 
+    const deviceKind = existingRow?.device_kind ?? inferredKind;
+    const existingLabel = String(existingRow?.label ?? '').trim();
+    const resolvedLabel = existingLabel.length === 0 ? defaultLabel : existingLabel;
+
     const { error } = await supabase
       .from('device_registry')
       .upsert({
         device_id: deviceId,
-        device_kind: isEmulator ? 'emulator' : 'real',
+        device_kind: deviceKind,
         lifecycle_status: 'active',
-        label: String(existingRow?.label ?? defaultLabel).trim().isEmpty
-            ? defaultLabel
-            : String(existingRow?.label),
+        label: resolvedLabel,
         notes: existingRow?.notes ?? null,
         last_active_at: new Date().toISOString(),
       }, {
@@ -103,3 +107,11 @@ Deno.serve(async (req: Request) => {
     );
   }
 });
+
+function inferDeviceKind(deviceId: string) {
+  if (deviceId.startsWith('emu_')) return 'emulator';
+  if (deviceId.startsWith('test_') || deviceId.startsWith('tester_')) {
+    return 'tester';
+  }
+  return 'real';
+}

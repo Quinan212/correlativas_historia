@@ -81,7 +81,7 @@ class TarjetaRequiereCarrera extends StatelessWidget {
           BoxShadow(
             blurRadius: 8,
             offset: const Offset(0, 8),
-            color: theme.shadowColor.withValues(alpha: isDark ? 0.1 : 0.08),
+            color: theme.shadowColor.withOpacity(isDark ? 0.1 : 0.08),
           ),
         ],
       ),
@@ -109,11 +109,11 @@ class TarjetaRequiereCarrera extends StatelessWidget {
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   color: isDark
-                      ? cs.primary.withValues(alpha: 0.16)
-                      : cs.primary.withValues(alpha: 0.08),
+                      ? cs.primary.withOpacity(0.16)
+                      : cs.primary.withOpacity(0.08),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: cs.primary.withValues(alpha: isDark ? 0.28 : 0.16),
+                    color: cs.primary.withOpacity(isDark ? 0.28 : 0.16),
                   ),
                 ),
                 child: Icon(
@@ -163,3 +163,4 @@ class TarjetaRequiereCarrera extends StatelessWidget {
     );
   }
 }
+

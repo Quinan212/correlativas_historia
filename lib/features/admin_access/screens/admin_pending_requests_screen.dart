@@ -29,63 +29,590 @@ class AdminPendingRequestsScreen extends ConsumerWidget {
     final profileMap =
         profileMapAsync.valueOrNull ?? const <String, DeviceProfile>{};
 
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isDesktop = constraints.maxWidth >= 900;
+
+        if (isDesktop) {
+          return _AdminPendingRequestsDesktop(
+            adminDeviceId: adminDeviceId,
+            pendingAsync: pendingAsync,
+            profileMap: profileMap,
+          );
+        }
+
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text('Solicitudes pendientes'),
+            actions: [
+              IconButton(
+                onPressed: () =>
+                    ref.invalidate(pendingVerificationRequestsProvider),
+                icon: const Icon(Icons.refresh_rounded),
+                tooltip: 'Refrescar',
+              ),
+            ],
+          ),
+          body: SafeArea(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+              children: [
+                _SectionCard(
+                  title: 'Verificaciones en revisión',
+                  child: pendingAsync.when(
+                    data: (items) {
+                      if (items.isEmpty) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 20),
+                          child: Text(
+                            'No hay solicitudes pendientes en este momento.',
+                            style: theme.textTheme.bodyLarge,
+                          ),
+                        );
+                      }
+
+                      return Column(
+                        children: items
+                            .map(
+                              (item) => Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: _MobileRequestItem(
+                                  request: item,
+                                  adminDeviceId: adminDeviceId,
+                                  deviceProfile: profileMap[item.deviceId],
+                                ),
+                              ),
+                            )
+                            .toList(),
+                      );
+                    },
+                    loading: () => const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 16),
+                      child: LinearProgressIndicator(minHeight: 3),
+                    ),
+                    error: (error, _) => Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      child: Text(
+                        'No se pudieron cargar las solicitudes: $error',
+                        style: theme.textTheme.bodyLarge,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _AdminPendingRequestsDesktop extends StatefulWidget {
+  const _AdminPendingRequestsDesktop({
+    required this.adminDeviceId,
+    required this.pendingAsync,
+    required this.profileMap,
+  });
+
+  final String adminDeviceId;
+  final AsyncValue<List<VerificationRequest>> pendingAsync;
+  final Map<String, DeviceProfile> profileMap;
+
+  @override
+  State<_AdminPendingRequestsDesktop> createState() =>
+      _AdminPendingRequestsDesktopState();
+}
+
+class _AdminPendingRequestsDesktopState
+    extends State<_AdminPendingRequestsDesktop> {
+  VerificationRequest? _selectedRequest;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
+      backgroundColor:
+          isDark ? const Color(0xFF030712) : const Color(0xFFF9FAFB),
       appBar: AppBar(
-        title: const Text('Solicitudes pendientes'),
+        title: const Text('Gestión de Solicitudes'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         actions: [
-          IconButton(
-            onPressed: () => ref.invalidate(pendingVerificationRequestsProvider),
-            icon: const Icon(Icons.refresh_rounded),
-            tooltip: 'Refrescar',
+          Consumer(builder: (context, ref, _) {
+            return IconButton(
+              onPressed: () =>
+                  ref.invalidate(pendingVerificationRequestsProvider),
+              icon: const Icon(Icons.refresh_rounded),
+              tooltip: 'Refrescar',
+            );
+          }),
+        ],
+      ),
+      body: widget.pendingAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (err, _) => Center(child: Text('Error: $err')),
+        data: (items) {
+          if (items.isEmpty) {
+            return _EmptyState(
+              title: 'Todo al día',
+              subtitle: 'No hay solicitudes pendientes de revisión.',
+              icon: Icons.done_all_rounded,
+            );
+          }
+
+          if (_selectedRequest == null ||
+              !items.any((e) => e.id == _selectedRequest?.id)) {
+            _selectedRequest = items.first;
+          }
+
+          return Row(
+            children: [
+              Container(
+                width: 380,
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF0B1220) : Colors.white,
+                  border: Border(
+                    right: BorderSide(
+                      color: isDark
+                          ? const Color(0xFF243041)
+                          : const Color(0xFFE5E7EB),
+                    ),
+                  ),
+                ),
+                child: ListView.separated(
+                  itemCount: items.length,
+                  separatorBuilder: (_, __) => Divider(
+                    height: 1,
+                    color: isDark
+                        ? const Color(0xFF243041)
+                        : const Color(0xFFE5E7EB),
+                  ),
+                  itemBuilder: (context, index) {
+                    final item = items[index];
+                    final profile = widget.profileMap[item.deviceId];
+                    final isSelected = _selectedRequest?.id == item.id;
+
+                    return ListTile(
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 12),
+                      selected: isSelected,
+                      selectedTileColor:
+                          theme.colorScheme.primary.withOpacity(0.08),
+                      leading: Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primary.withOpacity(0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          _buildInitials(
+                              profile?.adminDisplayLabel ?? 'Usuario'),
+                          style: TextStyle(
+                            fontWeight: FontWeight.w900,
+                            color: theme.colorScheme.primary,
+                          ),
+                        ),
+                      ),
+                      title: Text(
+                        profile?.adminDisplayLabel ?? 'Usuario desconocido',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontWeight: FontWeight.w800),
+                      ),
+                      subtitle: Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text(
+                          item.matterName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodySmall,
+                        ),
+                      ),
+                      trailing: const Icon(Icons.chevron_right_rounded),
+                      onTap: () => setState(() => _selectedRequest = item),
+                    );
+                  },
+                ),
+              ),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(40),
+                  child: _selectedRequest == null
+                      ? const Center(child: Text('Seleccioná una solicitud'))
+                      : Center(
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 850),
+                            child: _PendingRequestDetailView(
+                              request: _selectedRequest!,
+                              adminDeviceId: widget.adminDeviceId,
+                              deviceProfile:
+                                  widget.profileMap[_selectedRequest!.deviceId],
+                              onHandled: () {
+                                setState(() => _selectedRequest = null);
+                              },
+                            ),
+                          ),
+                        ),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  String _buildInitials(String label) {
+    final parts = label.trim().split(RegExp(r'\s+'));
+    if (parts.isEmpty) return '?';
+    if (parts.length == 1) return parts.first.substring(0, 1).toUpperCase();
+    return (parts.first.substring(0, 1) + parts.last.substring(0, 1))
+        .toUpperCase();
+  }
+}
+
+class _PendingRequestDetailView extends ConsumerStatefulWidget {
+  const _PendingRequestDetailView({
+    required this.request,
+    required this.adminDeviceId,
+    required this.onHandled,
+    this.deviceProfile,
+  });
+
+  final VerificationRequest request;
+  final String adminDeviceId;
+  final DeviceProfile? deviceProfile;
+  final VoidCallback onHandled;
+
+  @override
+  ConsumerState<_PendingRequestDetailView> createState() =>
+      _PendingRequestDetailViewState();
+}
+
+class _PendingRequestDetailViewState
+    extends ConsumerState<_PendingRequestDetailView> {
+  bool _busy = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF0B1220) : Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: isDark ? const Color(0xFF243041) : const Color(0xFFE5E7EB),
+        ),
+        boxShadow: isDark
+            ? const []
+            : [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.03),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                )
+              ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _DetailHeader(
+            deviceProfile: widget.deviceProfile,
+            request: widget.request,
+          ),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(32),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _SectionTitle(title: 'Detalles de la solicitud'),
+                  const SizedBox(height: 16),
+                  _DetailInfoGrid(request: widget.request),
+                  const SizedBox(height: 32),
+                  _SectionTitle(title: 'Captura adjunta'),
+                  const SizedBox(height: 16),
+                  _ImagePreview(imageUrl: widget.request.imageUrl),
+                  const SizedBox(height: 40),
+                ],
+              ),
+            ),
+          ),
+          _ActionBar(
+            busy: _busy,
+            onApprove: _approve,
+            onReject: _reject,
           ),
         ],
       ),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-          children: [
-            _SectionCard(
-              title: 'Verificaciones en revisión',
-              child: pendingAsync.when(
-                data: (items) {
-                  if (items.isEmpty) {
-                    return Text(
-                      'No hay solicitudes pendientes en este momento.',
-                      style: theme.textTheme.bodyLarge,
-                    );
-                  }
+    );
+  }
 
-                  return Column(
-                    children: items
-                        .map(
-                          (item) => _PendingRequestActions(
-                            request: item,
-                            adminDeviceId: adminDeviceId,
-                            deviceProfile: profileMap[item.deviceId],
-                          ),
-                        )
-                        .toList(growable: false),
-                  );
-                },
-                loading: () => const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 8),
-                  child: LinearProgressIndicator(minHeight: 3),
+  Future<void> _approve() async {
+    final client = ref.read(supabaseClientProvider);
+    if (client == null) return;
+    setState(() => _busy = true);
+    try {
+      final repo = ref.read(verificationRepositoryProvider);
+      await repo.approveRequest(
+        client: client,
+        request: widget.request,
+        adminDeviceId: widget.adminDeviceId,
+      );
+      ref.invalidate(pendingVerificationRequestsProvider);
+      widget.onHandled();
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _reject() async {
+    final client = ref.read(supabaseClientProvider);
+    if (client == null) return;
+    setState(() => _busy = true);
+    try {
+      final repo = ref.read(verificationRepositoryProvider);
+      await repo.rejectRequest(
+        client: client,
+        requestId: widget.request.id,
+        adminDeviceId: widget.adminDeviceId,
+      );
+      ref.invalidate(pendingVerificationRequestsProvider);
+      widget.onHandled();
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+}
+
+class _DetailHeader extends StatelessWidget {
+  const _DetailHeader({required this.deviceProfile, required this.request});
+  final DeviceProfile? deviceProfile;
+  final VerificationRequest request;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Container(
+      padding: const EdgeInsets.all(24),
+      color: isDark ? const Color(0xFF161E2C) : const Color(0xFFF8FAFC),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 28,
+            backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
+            child: Icon(Icons.person_outline_rounded,
+                color: theme.colorScheme.primary, size: 30),
+          ),
+          const SizedBox(width: 20),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  deviceProfile?.adminDisplayLabel ?? 'Usuario desconocido',
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
-                error: (error, _) => Text(
-                  'No se pudieron cargar las solicitudes: $error',
-                  style: theme.textTheme.bodyLarge,
+                Text(
+                  'ID: ${request.deviceId}',
+                  style: theme.textTheme.bodySmall,
                 ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFEF3C7),
+              borderRadius: BorderRadius.circular(99),
+            ),
+            child: const Text(
+              'PENDIENTE',
+              style: TextStyle(
+                color: Color(0xFF92400E),
+                fontWeight: FontWeight.w800,
+                fontSize: 12,
               ),
             ),
-          ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SectionTitle extends StatelessWidget {
+  const _SectionTitle({required this.title});
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Text(
+      title.toUpperCase(),
+      style: theme.textTheme.labelLarge?.copyWith(
+        fontWeight: FontWeight.w900,
+        color: theme.colorScheme.primary,
+        letterSpacing: 1.2,
+      ),
+    );
+  }
+}
+
+class _DetailInfoGrid extends StatelessWidget {
+  const _DetailInfoGrid({required this.request});
+  final VerificationRequest request;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(builder: (context, constraints) {
+      return Wrap(
+        spacing: 24,
+        runSpacing: 20,
+        children: [
+          _InfoItem(
+              label: 'Materia', value: request.matterName, width: 200),
+          _InfoItem(
+              label: 'Carrera', value: request.careerId, width: 150),
+          _InfoItem(
+              label: 'Fecha de envío',
+              value: _formatDateTime(request.createdAt),
+              width: 180),
+        ],
+      );
+    });
+  }
+
+  String _formatDateTime(DateTime dt) {
+    final d = dt.day.toString().padLeft(2, '0');
+    final m = dt.month.toString().padLeft(2, '0');
+    final y = dt.year;
+    final h = dt.hour.toString().padLeft(2, '0');
+    final min = dt.minute.toString().padLeft(2, '0');
+    return '$d/$m/$y $h:$min';
+  }
+}
+
+class _InfoItem extends StatelessWidget {
+  const _InfoItem(
+      {required this.label, required this.value, required this.width});
+  final String label;
+  final String value;
+  final double width;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return SizedBox(
+      width: width,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label,
+              style: theme.textTheme.labelSmall?.copyWith(color: theme.hintColor)),
+          const SizedBox(height: 4),
+          Text(value,
+              style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700)),
+        ],
+      ),
+    );
+  }
+}
+
+class _ImagePreview extends StatelessWidget {
+  const _ImagePreview({required this.imageUrl});
+  final String imageUrl;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      height: 400,
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.black.withOpacity(0.1)),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Image.network(
+        imageUrl,
+        fit: BoxFit.contain,
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return const Center(child: CircularProgressIndicator());
+        },
+        errorBuilder: (_, __, ___) => const Center(
+          child: Icon(Icons.broken_image_outlined, size: 48, color: Colors.grey),
         ),
       ),
     );
   }
 }
 
-class _PendingRequestActions extends ConsumerStatefulWidget {
-  const _PendingRequestActions({
+class _ActionBar extends StatelessWidget {
+  const _ActionBar(
+      {required this.busy, required this.onApprove, required this.onReject});
+  final bool busy;
+  final VoidCallback onApprove;
+  final VoidCallback onReject;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF161E2C) : const Color(0xFFF8FAFC),
+        border: Border(
+          top: BorderSide(
+            color: isDark ? const Color(0xFF243041) : const Color(0xFFE5E7EB),
+          ),
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          OutlinedButton(
+            onPressed: busy ? null : onReject,
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+              foregroundColor: theme.colorScheme.error,
+              side: BorderSide(color: theme.colorScheme.error.withOpacity(0.5)),
+            ),
+            child: const Text('RECHAZAR SOLICITUD',
+                style: TextStyle(fontWeight: FontWeight.w800)),
+          ),
+          const SizedBox(width: 16),
+          FilledButton(
+            onPressed: busy ? null : onApprove,
+            style: FilledButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 18),
+            ),
+            child: Text(busy ? 'PROCESANDO...' : 'APROBAR VERIFICACIÓN',
+                style: const TextStyle(fontWeight: FontWeight.w800)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MobileRequestItem extends ConsumerStatefulWidget {
+  const _MobileRequestItem({
     required this.request,
     required this.adminDeviceId,
     this.deviceProfile,
@@ -96,12 +623,10 @@ class _PendingRequestActions extends ConsumerStatefulWidget {
   final DeviceProfile? deviceProfile;
 
   @override
-  ConsumerState<_PendingRequestActions> createState() =>
-      _PendingRequestActionsState();
+  ConsumerState<_MobileRequestItem> createState() => _MobileRequestItemState();
 }
 
-class _PendingRequestActionsState
-    extends ConsumerState<_PendingRequestActions> {
+class _MobileRequestItemState extends ConsumerState<_MobileRequestItem> {
   bool _busy = false;
 
   @override
@@ -118,7 +643,6 @@ class _PendingRequestActionsState
   Future<void> _approve() async {
     final client = ref.read(supabaseClientProvider);
     if (client == null) return;
-
     setState(() => _busy = true);
     try {
       final repo = ref.read(verificationRepositoryProvider);
@@ -127,32 +651,15 @@ class _PendingRequestActionsState
         request: widget.request,
         adminDeviceId: widget.adminDeviceId,
       );
-
       ref.invalidate(pendingVerificationRequestsProvider);
-      ref.invalidate(ownVerificationRequestsProvider);
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Solicitud aprobada')),
-        );
-      }
-    } catch (error) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('No se pudo aprobar: $error')),
-        );
-      }
     } finally {
-      if (mounted) {
-        setState(() => _busy = false);
-      }
+      if (mounted) setState(() => _busy = false);
     }
   }
 
   Future<void> _reject() async {
     final client = ref.read(supabaseClientProvider);
     if (client == null) return;
-
     setState(() => _busy = true);
     try {
       final repo = ref.read(verificationRepositoryProvider);
@@ -161,35 +668,15 @@ class _PendingRequestActionsState
         requestId: widget.request.id,
         adminDeviceId: widget.adminDeviceId,
       );
-
       ref.invalidate(pendingVerificationRequestsProvider);
-      ref.invalidate(ownVerificationRequestsProvider);
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Solicitud rechazada')),
-        );
-      }
-    } catch (error) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('No se pudo rechazar: $error')),
-        );
-      }
     } finally {
-      if (mounted) {
-        setState(() => _busy = false);
-      }
+      if (mounted) setState(() => _busy = false);
     }
   }
 }
 
 class _SectionCard extends StatelessWidget {
-  const _SectionCard({
-    required this.title,
-    required this.child,
-  });
-
+  const _SectionCard({required this.title, required this.child});
   final String title;
   final Widget child;
 
@@ -197,10 +684,9 @@ class _SectionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF0B1220) : Colors.white,
         borderRadius: BorderRadius.circular(20),
@@ -211,14 +697,41 @@ class _SectionCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 12),
+          Text(title,
+              style:
+                  theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
+          const SizedBox(height: 16),
           child,
+        ],
+      ),
+    );
+  }
+}
+
+class _EmptyState extends StatelessWidget {
+  const _EmptyState({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+  });
+  final String title;
+  final String subtitle;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 64, color: theme.hintColor.withOpacity(0.5)),
+          const SizedBox(height: 16),
+          Text(title,
+              style:
+                  theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
+          const SizedBox(height: 8),
+          Text(subtitle, style: theme.textTheme.bodyMedium),
         ],
       ),
     );

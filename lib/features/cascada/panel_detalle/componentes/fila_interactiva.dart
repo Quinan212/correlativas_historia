@@ -116,7 +116,7 @@ Widget filaInteractivaMateria({
               Icon(
                 Icons.chevron_right,
                 size: 20,
-                color: chipFg.withValues(alpha: 0.5),
+                color: chipFg.withOpacity(0.5),
               ),
             ],
           ],

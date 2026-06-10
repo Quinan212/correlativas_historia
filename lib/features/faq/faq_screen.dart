@@ -390,33 +390,39 @@ class FaqScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final topInset = MediaQuery.of(context).viewPadding.top;
 
-    return CustomScrollView(
-      slivers: [
-        SliverPersistentHeader(
-          pinned: true,
-          delegate: _CollapsingBannerDelegate(
-            topInset: topInset,
-            subtitle: 'Normativa y trayectorias',
-          ),
-        ),
-        const SliverToBoxAdapter(
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(16, 12, 16, 24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _FaqHero(),
-                SizedBox(height: 12),
-                _SearchBar(),
-                SizedBox(height: 12),
-                _FaqList(),
-                SizedBox(height: 24),
-                _AutorBlock(),
-              ],
+    return Scaffold(
+      body: SafeArea(
+        top: false,
+        bottom: true,
+        child: CustomScrollView(
+          slivers: [
+            SliverPersistentHeader(
+              pinned: true,
+              delegate: _CollapsingBannerDelegate(
+                topInset: topInset,
+                subtitle: 'Normativa y trayectorias',
+              ),
             ),
-          ),
+            const SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(16, 12, 16, 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _FaqHero(),
+                    SizedBox(height: 12),
+                    _SearchBar(),
+                    SizedBox(height: 12),
+                    _FaqList(),
+                    SizedBox(height: 24),
+                    _AutorBlock(),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }

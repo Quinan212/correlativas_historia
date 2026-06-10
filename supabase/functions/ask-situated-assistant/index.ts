@@ -1,4 +1,4 @@
-﻿import { createClient } from "jsr:@supabase/supabase-js@2";
+import { createClient } from "jsr:@supabase/supabase-js@2";
 
 type AssistantChunkRow = {
   id: number;
@@ -421,7 +421,7 @@ async function maybeAnswerCurriculumQuestion(question: string, contextId: string
       };
     }
     return {
-      answer: `${detected.materia_nombre} corresponde a ${detected.anio}° año en ${detected.career_name}.`,
+      answer: `${detected.materia_nombre} corresponde al a\u00f1o ${detected.anio} en ${detected.career_name}.`,
       sources: [],
       intent: "curriculum_anio",
       resolvedCareerId: careerId,
@@ -685,8 +685,8 @@ function isRequisitosQuestion(question: string) {
 function isAnioQuestion(question: string) {
   const q = normalizeForMatch(question);
   const raw = question.toLowerCase();
-  const hasYearWordRaw = /(año|anio|ano|aÃ±o)/.test(raw);
-  const hasQuestionCueRaw = /(de que|de qué|que|qué|en que|en qué|a que|a qué)/.test(raw);
+  const hasYearWordRaw = /(a\u00f1o|anio|ano)/.test(raw);
+  const hasQuestionCueRaw = /(de que|de qu\u00e9|que|qu\u00e9|en que|en qu\u00e9|a que|a qu\u00e9)/.test(raw);
   const asksAnoByPhrase = /de que ano es|de que a o es|que ano es|en que ano esta|que ano curs|a que ano pertenece|de que curso es/.test(q);
   const asksAnoByKeywords = q.includes("ano") && (q.includes("de que") || q.includes("en que") || q.includes("a que"));
   return asksAnoByPhrase || asksAnoByKeywords || (hasYearWordRaw && hasQuestionCueRaw);
@@ -907,13 +907,13 @@ function normalizeForMatch(input: string) {
   const fixed = recodeLatin1Utf8(input);
   return fixed
     .toLowerCase()
-    .replace(/á/g, "a")
-    .replace(/é/g, "e")
-    .replace(/í/g, "i")
-    .replace(/ó/g, "o")
-    .replace(/ú/g, "u")
-    .replace(/ü/g, "u")
-    .replace(/ñ/g, "n")
+    .replace(/\u00e1/g, "a")
+    .replace(/\u00e9/g, "e")
+    .replace(/\u00ed/g, "i")
+    .replace(/\u00f3/g, "o")
+    .replace(/\u00fa/g, "u")
+    .replace(/\u00fc/g, "u")
+    .replace(/\u00f1/g, "n")
     .replace(/[^a-z0-9\s]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
@@ -1231,22 +1231,22 @@ function escapeLike(input: string) {
 function cleanAnswerText(text: string) {
   const recoded = recodeLatin1Utf8(text);
   return recoded
-    .replace(/Ã¡/g, "á")
-    .replace(/Ã©/g, "é")
-    .replace(/Ã­/g, "í")
-    .replace(/Ã³/g, "ó")
-    .replace(/Ãº/g, "ú")
-    .replace(/Ã±/g, "ñ")
-    .replace(/Ã¼/g, "ü")
-    .replace(/Â¿/g, "¿")
-    .replace(/Â¡/g, "¡")
-    .replace(/â|â/g, "\"")
-    .replace(/â/g, "'")
-    .replace(/â|â/g, "-");
+    .replace(/\u00c3\u00a1/g, "\u00e1")
+    .replace(/\u00c3\u00a9/g, "\u00e9")
+    .replace(/\u00c3\u00ad/g, "\u00ed")
+    .replace(/\u00c3\u00b3/g, "\u00f3")
+    .replace(/\u00c3\u00ba/g, "\u00fa")
+    .replace(/\u00c3\u00b1/g, "\u00f1")
+    .replace(/\u00c3\u00bc/g, "\u00fc")
+    .replace(/\u00c2\u00bf/g, "\u00bf")
+    .replace(/\u00c2\u00a1/g, "\u00a1")
+    .replace(/\u00e2\u0080\u009c|\u00e2\u0080\u009d/g, "\"")
+    .replace(/\u00e2\u0080\u0099/g, "'")
+    .replace(/\u00e2\u0080\u0093|\u00e2\u0080\u0094/g, "-");
 }
 
 function recodeLatin1Utf8(input: string) {
-  if (!/[ÃÂâ]/.test(input)) return input;
+  if (!/[\u00c3\u00c2\u00e2]/.test(input)) return input;
   try {
     const bytes = Uint8Array.from(Array.from(input).map((ch) => ch.charCodeAt(0) & 0xff));
     return new TextDecoder("utf-8", { fatal: false }).decode(bytes);

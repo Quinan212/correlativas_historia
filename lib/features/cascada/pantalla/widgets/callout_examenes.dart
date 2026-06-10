@@ -1,4 +1,4 @@
-﻿import 'dart:math' as math;
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
@@ -99,7 +99,7 @@ class _CalloutExamenesState extends State<CalloutExamenes>
           border: Border.all(color: border),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: isDark ? 0.22 : 0.06),
+              color: Colors.black.withOpacity(isDark ? 0.22 : 0.06),
               blurRadius: 12,
               offset: const Offset(0, 8),
             ),
@@ -113,10 +113,10 @@ class _CalloutExamenesState extends State<CalloutExamenes>
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color: cs.primary.withValues(alpha: isDark ? 0.18 : 0.12),
+                color: cs.primary.withOpacity(isDark ? 0.18 : 0.12),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: cs.primary.withValues(alpha: isDark ? 0.35 : 0.25),
+                  color: cs.primary.withOpacity(isDark ? 0.35 : 0.25),
                 ),
               ),
               child: Icon(
@@ -139,10 +139,10 @@ class _CalloutExamenesState extends State<CalloutExamenes>
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'Las mesas extraordinarias de mayo ya estan cargadas en la app. Ya se publicaron anteriormente los formularios para inscribirse a las mesas.',
+                    'El período de mesas extraordinarias de mayo ya cerró. Cuando estén disponibles las próximas fechas, se van a reflejar automáticamente acá.',
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: cs.onSurfaceVariant.withValues(
-                        alpha: isDark ? 0.86 : 0.82,
+                      color: cs.onSurfaceVariant.withOpacity(
+                        isDark ? 0.86 : 0.82,
                       ),
                       height: 1.25,
                     ),
@@ -238,4 +238,3 @@ class _WaveArrow extends StatelessWidget {
     );
   }
 }
-

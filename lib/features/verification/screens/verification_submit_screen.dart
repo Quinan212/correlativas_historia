@@ -24,25 +24,36 @@ class VerificationSubmitScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    final isDesktop = width >= 900;
+
     return Scaffold(
       appBar: AppBar(title: const Text('Enviar verificación')),
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-          children: [
-            const _HeroCard(
-              title: 'Subí tu captura',
-              subtitle:
-                  'Elegí la materia, subí una imagen del campus o del aula virtual, y enviá la verificación.',
-              icon: Icons.verified_user_rounded,
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 900),
+            child: ListView(
+              padding: isDesktop
+                  ? const EdgeInsets.symmetric(horizontal: 40, vertical: 24)
+                  : const EdgeInsets.fromLTRB(16, 12, 16, 24),
+              children: [
+                _HeroCard(
+                  title: 'Subí tu captura',
+                  subtitle:
+                      'Elegí la materia, subí una imagen del campus o del aula virtual, y enviá la verificación.',
+                  icon: Icons.verified_user_rounded,
+                  isDesktop: isDesktop,
+                ),
+                const SizedBox(height: 16),
+                _VerificationComposerCard(
+                  initialCareerId: initialCareerId,
+                  initialMatterId: initialMatterId,
+                  lockMatterSelection: lockMatterSelection,
+                ),
+              ],
             ),
-            const SizedBox(height: 14),
-            _VerificationComposerCard(
-              initialCareerId: initialCareerId,
-              initialMatterId: initialMatterId,
-              lockMatterSelection: lockMatterSelection,
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -273,25 +284,29 @@ class _VerificationComposerCardState
                             setState(() => _selectedMatterId = value);
                           },
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 20),
                   if (_selectedImage != null)
                     ClipRRect(
                       borderRadius: BorderRadius.circular(16),
                       child: Image.memory(
                         _selectedImage!.bytes,
-                        height: 180,
+                        height: 240,
                         width: double.infinity,
                         fit: BoxFit.cover,
                       ),
                     ),
-                  if (_selectedImage != null) const SizedBox(height: 14),
+                  if (_selectedImage != null) const SizedBox(height: 20),
                   Wrap(
-                    spacing: 10,
-                    runSpacing: 10,
+                    spacing: 12,
+                    runSpacing: 12,
                     children: [
                       OutlinedButton.icon(
                         onPressed: _submitting ? null : _pickImage,
                         icon: const Icon(Icons.photo_library_outlined),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 16),
+                        ),
                         label: Text(
                           _selectedImage == null
                               ? 'Elegir imagen'
@@ -306,12 +321,16 @@ class _VerificationComposerCardState
                                   matterName: selected.displayNombre,
                                   careerId: selectedCareer.id,
                                 ),
+                        style: FilledButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 24, vertical: 16),
+                        ),
                         icon: _submitting
                             ? const SizedBox(
-                                width: 16,
-                                height: 16,
+                                width: 18,
+                                height: 18,
                                 child:
-                                    CircularProgressIndicator(strokeWidth: 2),
+                                    CircularProgressIndicator(strokeWidth: 2.5),
                               )
                             : const Icon(Icons.cloud_upload_rounded),
                         label: Text(_submitting ? 'Enviando...' : 'Enviar'),
@@ -467,50 +486,64 @@ class _HeroCard extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.icon,
+    required this.isDesktop,
   });
 
   final String title;
   final String subtitle;
   final IconData icon;
+  final bool isDesktop;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(18),
+      padding: EdgeInsets.all(isDesktop ? 24 : 18),
       decoration: BoxDecoration(
-        color: theme.colorScheme.primary.withValues(alpha: 0.08),
+        color: theme.colorScheme.primary.withOpacity(0.08),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: theme.colorScheme.primary.withValues(alpha: 0.14),
+          color: theme.colorScheme.primary.withOpacity(0.14),
         ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 44,
-            height: 44,
+            width: isDesktop ? 60 : 44,
+            height: isDesktop ? 60 : 44,
             decoration: BoxDecoration(
-              color: theme.colorScheme.primary.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(14),
+              color: theme.colorScheme.primary.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(16),
             ),
-            child: Icon(icon, color: theme.colorScheme.primary),
+            child: Icon(
+              icon,
+              color: theme.colorScheme.primary,
+              size: isDesktop ? 30 : 24,
+            ),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 18),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   title,
-                  style: theme.textTheme.titleLarge?.copyWith(
+                  style: (isDesktop
+                          ? theme.textTheme.headlineSmall
+                          : theme.textTheme.titleLarge)
+                      ?.copyWith(
                     fontWeight: FontWeight.w900,
                   ),
                 ),
-                const SizedBox(height: 6),
-                Text(subtitle, style: theme.textTheme.bodyMedium),
+                const SizedBox(height: 8),
+                Text(
+                  subtitle,
+                  style: isDesktop
+                      ? theme.textTheme.bodyLarge
+                      : theme.textTheme.bodyMedium,
+                ),
               ],
             ),
           ),
@@ -531,7 +564,7 @@ class _SectionCard extends StatelessWidget {
     final theme = Theme.of(context);
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
@@ -543,10 +576,10 @@ class _SectionCard extends StatelessWidget {
           Text(
             title,
             style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w900,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           child,
         ],
       ),

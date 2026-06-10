@@ -14,15 +14,23 @@ class AdminMatterPhotosCareerScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final overviewAsync = ref.watch(adminMatterPhotosOverviewProvider);
     final career = kCareers.firstWhere(
       (item) => item.id == careerId,
       orElse: () => kCareers.first,
     );
+    final width = MediaQuery.of(context).size.width;
+    final isDesktop = width >= 900;
 
     return Scaffold(
+      backgroundColor:
+          isDark ? const Color(0xFF030712) : const Color(0xFFF9FAFB),
       appBar: AppBar(
         title: Text(career.nombre),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         actions: [
           IconButton(
             onPressed: () => ref.invalidate(adminMatterPhotosOverviewProvider),
@@ -32,46 +40,70 @@ class AdminMatterPhotosCareerScreen extends ConsumerWidget {
         ],
       ),
       body: SafeArea(
-        child: overviewAsync.when(
-          data: (items) {
-            final stats = items.where((item) => item.career.id == careerId).toList(
-                  growable: false,
-                );
-            if (stats.isEmpty) {
-              return _EmptyState(
-                title: 'No hay fotos para esta carrera',
-                subtitle:
-                    'Si todavía no hay imágenes cargadas, no se muestran años ni materias vacías.',
-                icon: Icons.photo_library_outlined,
-              );
-            }
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1200),
+            child: overviewAsync.when(
+              data: (items) {
+                final stats = items.where((item) => item.career.id == careerId).toList(
+                      growable: false,
+                    );
+                if (stats.isEmpty) {
+                  return _EmptyState(
+                    title: 'No hay fotos para esta carrera',
+                    subtitle:
+                        'Si todavía no hay imágenes cargadas, no se muestran años ni materias vacías.',
+                    icon: Icons.photo_library_outlined,
+                  );
+                }
 
-            final careerStats = stats.first;
+                final careerStats = stats.first;
+                final padding = isDesktop
+                    ? const EdgeInsets.symmetric(horizontal: 40, vertical: 24)
+                    : const EdgeInsets.fromLTRB(16, 12, 16, 24);
 
-            return ListView(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-              children: [
-                _HeaderCard(
-                  careerName: career.nombre,
-                  totalPhotos: careerStats.photoCount,
-                ),
-                const SizedBox(height: 14),
-                ...careerStats.years.map(
-                  (yearStats) => Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: _YearCard(
-                      yearStats: yearStats,
+                return ListView(
+                  padding: padding,
+                  children: [
+                    _HeaderCard(
+                      careerName: career.nombre,
+                      totalPhotos: careerStats.photoCount,
                     ),
-                  ),
-                ),
-              ],
-            );
-          },
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, _) => _EmptyState(
-            title: 'No se pudo cargar la carrera',
-            subtitle: '$error',
-            icon: Icons.error_outline_rounded,
+                    const SizedBox(height: 24),
+                    if (isDesktop)
+                      GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 16,
+                          mainAxisSpacing: 16,
+                          childAspectRatio: 1.4,
+                        ),
+                        itemCount: careerStats.years.length,
+                        itemBuilder: (context, index) {
+                          return _YearCard(yearStats: careerStats.years[index]);
+                        },
+                      )
+                    else
+                      Column(
+                        children: careerStats.years
+                            .map((yearStats) => Padding(
+                                  padding: const EdgeInsets.only(bottom: 12),
+                                  child: _YearCard(yearStats: yearStats),
+                                ))
+                            .toList(),
+                      ),
+                  ],
+                );
+              },
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (error, _) => _EmptyState(
+                title: 'Error de carga',
+                subtitle: '$error',
+                icon: Icons.error_outline_rounded,
+              ),
+            ),
           ),
         ),
       ),
@@ -91,13 +123,17 @@ class _HeaderCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
+        color: isDark ? const Color(0xFF0B1220) : Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: theme.colorScheme.outlineVariant),
+        border: Border.all(
+          color: isDark ? const Color(0xFF243041) : const Color(0xFFE5E7EB),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -105,18 +141,20 @@ class _HeaderCard extends StatelessWidget {
           Text(
             careerName,
             style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w900,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           Text(
-            '$totalPhotos fotos en total',
-            style: theme.textTheme.bodyLarge,
+            'Se han detectado $totalPhotos fotos cargadas en esta carrera.',
+            style: theme.textTheme.bodyLarge?.copyWith(
+              color: isDark ? Colors.white70 : Colors.black87,
+            ),
           ),
           const SizedBox(height: 6),
           Text(
-            'Solo se muestran años y materias que tienen al menos una imagen.',
-            style: theme.textTheme.bodyMedium,
+            'Solo se muestran los años y materias que cuentan con material activo.',
+            style: theme.textTheme.bodySmall?.copyWith(color: theme.hintColor),
           ),
         ],
       ),
@@ -126,44 +164,59 @@ class _HeaderCard extends StatelessWidget {
 
 class _YearCard extends StatelessWidget {
   const _YearCard({required this.yearStats});
-
   final AdminMatterPhotoYearStats yearStats;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
+        color: isDark ? const Color(0xFF0B1220) : Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: theme.colorScheme.outlineVariant),
+        border: Border.all(
+          color: isDark ? const Color(0xFF243041) : const Color(0xFFE5E7EB),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Text(
-                '${yearStats.year}° año',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w900,
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  '${yearStats.year}° AÑO',
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    fontWeight: FontWeight.w900,
+                    color: theme.colorScheme.primary,
+                  ),
                 ),
               ),
-              const SizedBox(width: 10),
+              const Spacer(),
               _Badge(label: '${yearStats.photoCount} fotos'),
             ],
           ),
-          const SizedBox(height: 12),
-          ...yearStats.matters.map(
-            (matterStats) => Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: _MatterRow(
-                matterName: matterStats.matter.nombre,
-                photoCount: matterStats.photoCount,
-              ),
+          const SizedBox(height: 20),
+          Expanded(
+            child: ListView.separated(
+              shrinkWrap: true,
+              physics: const ClampingScrollPhysics(),
+              itemCount: yearStats.matters.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 8),
+              itemBuilder: (context, index) {
+                final matterStats = yearStats.matters[index];
+                return _MatterTile(
+                  matterName: matterStats.matter.nombre,
+                  photoCount: matterStats.photoCount,
+                );
+              },
             ),
           ),
         ],
@@ -172,8 +225,8 @@ class _YearCard extends StatelessWidget {
   }
 }
 
-class _MatterRow extends StatelessWidget {
-  const _MatterRow({
+class _MatterTile extends StatelessWidget {
+  const _MatterTile({
     required this.matterName,
     required this.photoCount,
   });
@@ -184,11 +237,12 @@ class _MatterRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
-      width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
+        color: isDark ? const Color(0xFF161E2C) : const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(14),
       ),
       child: Row(
@@ -196,13 +250,19 @@ class _MatterRow extends StatelessWidget {
           Expanded(
             child: Text(
               matterName,
-              style: theme.textTheme.bodyLarge?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
             ),
           ),
           const SizedBox(width: 12),
-          _Badge(label: '$photoCount'),
+          Text(
+            '$photoCount',
+            style: theme.textTheme.labelLarge?.copyWith(
+              fontWeight: FontWeight.w900,
+              color: theme.hintColor,
+            ),
+          ),
         ],
       ),
     );
@@ -211,21 +271,20 @@ class _MatterRow extends StatelessWidget {
 
 class _Badge extends StatelessWidget {
   const _Badge({required this.label});
-
   final String label;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: theme.colorScheme.primary.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(999),
+        color: theme.colorScheme.primary.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
         label,
-        style: theme.textTheme.labelLarge?.copyWith(
+        style: theme.textTheme.labelMedium?.copyWith(
           fontWeight: FontWeight.w800,
           color: theme.colorScheme.primary,
         ),
@@ -240,7 +299,6 @@ class _EmptyState extends StatelessWidget {
     required this.subtitle,
     required this.icon,
   });
-
   final String title;
   final String subtitle;
   final IconData icon;
@@ -249,28 +307,15 @@ class _EmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 44, color: theme.colorScheme.primary),
-            const SizedBox(height: 12),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              subtitle,
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodyMedium,
-            ),
-          ],
-        ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 64, color: theme.hintColor.withOpacity(0.5)),
+          const SizedBox(height: 16),
+          Text(title, style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
+          const SizedBox(height: 8),
+          Text(subtitle, textAlign: TextAlign.center, style: theme.textTheme.bodyMedium),
+        ],
       ),
     );
   }

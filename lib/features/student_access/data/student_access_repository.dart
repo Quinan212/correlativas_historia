@@ -1,0 +1,125 @@
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../models/student_access_models.dart';
+
+class StudentAccessRepository {
+  const StudentAccessRepository();
+
+  Future<StudentAccessPayload> load({
+    required SupabaseClient client,
+    String? guestFirstName,
+    String? guestDni,
+    String? guestCareerId,
+  }) async {
+    final response = await client.functions.invoke(
+      'student-access',
+      body: {
+        'action': 'load',
+        if (guestFirstName != null) 'first_name': guestFirstName,
+        if (guestDni != null && guestDni.isNotEmpty) 'dni': guestDni,
+        if (guestCareerId != null) 'career_id': guestCareerId,
+      },
+    );
+
+    final data = response.data as Map?;
+    if (data?['ok'] != true) {
+      throw StateError(
+        data?['error']?.toString() ?? 'No se pudo cargar la trayectoria',
+      );
+    }
+
+    return StudentAccessPayload.fromJson(
+      data!.cast<String, dynamic>(),
+    );
+  }
+
+  Future<StudentAccessProfile> updateContact({
+    required SupabaseClient client,
+    required String phone,
+    required String email,
+    String? firstName,
+    String? dni,
+    String? careerId,
+  }) async {
+    final response = await client.functions.invoke(
+      'student-access',
+      body: {
+        'action': 'update_contact',
+        'contact_phone': phone,
+        'contact_email': email,
+        if (firstName != null) 'first_name': firstName,
+        if (dni != null) 'dni': dni,
+        if (careerId != null) 'career_id': careerId,
+      },
+    );
+
+    final data = response.data as Map?;
+    if (data?['ok'] != true) {
+      throw StateError(
+        data?['error']?.toString() ?? 'No se pudo actualizar el contacto',
+      );
+    }
+
+    return StudentAccessProfile.fromJson(
+      (data?['student'] as Map).cast<String, dynamic>(),
+    );
+  }
+
+  Future<Map<String, dynamic>> upsertSelfSubject({
+    required SupabaseClient client,
+    required String subjectId,
+    required String subjectName,
+    int? subjectYear,
+    required String status,
+    String? academicPeriod,
+    String? sourceDate,
+    double? grade,
+    String? notes,
+    String? id,
+  }) async {
+    final response = await client.functions.invoke(
+      'student-access',
+      body: {
+        'action': 'upsert_self_subject',
+        if (id != null) 'id': id,
+        'subject_id': subjectId,
+        'subject_name': subjectName,
+        'subject_year': subjectYear,
+        'status': status,
+        'academic_period': academicPeriod,
+        'source_date': sourceDate,
+        'grade': grade,
+        'notes': notes,
+      },
+    );
+
+    final data = response.data as Map?;
+    if (data?['ok'] != true) {
+      throw StateError(
+        data?['error']?.toString() ?? 'No se pudo guardar la materia',
+      );
+    }
+
+    return (data?['subject'] as Map).cast<String, dynamic>();
+  }
+
+  Future<void> deleteSelfSubject({
+    required SupabaseClient client,
+    required String subjectId,
+  }) async {
+    final response = await client.functions.invoke(
+      'student-access',
+      body: {
+        'action': 'delete_self_subject',
+        'subject_id': subjectId,
+      },
+    );
+
+    final data = response.data as Map?;
+    if (data?['ok'] != true) {
+      throw StateError(
+        data?['error']?.toString() ?? 'No se pudo eliminar la materia',
+      );
+    }
+  }
+}

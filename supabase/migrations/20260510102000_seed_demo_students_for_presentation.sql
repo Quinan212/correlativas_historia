@@ -1,0 +1,97 @@
+with upserted_students as (
+  insert into public.academic_students (
+    dni,
+    first_name,
+    last_name,
+    career_id,
+    cohort_year,
+    current_year,
+    division,
+    is_new_student,
+    is_repeating,
+    enrollment_status,
+    initial_password,
+    must_change_password,
+    notes,
+    created_by_device_id,
+    updated_by_device_id,
+    is_demo
+  )
+  values
+    ('99000001', 'Sofia', 'Alvarez', 'artes_visuales', 2024, 1, 'A', true, false, 'active', 'Correlativas.2026', true, null, 'demo_seed', 'demo_seed', true),
+    ('99000002', 'Luna', 'Benitez', 'artes_visuales', 2024, 1, 'B', true, false, 'active', 'Correlativas.2026', true, null, 'demo_seed', 'demo_seed', true),
+    ('99000003', 'Camila', 'Castro', 'artes_visuales', 2024, 2, 'A', false, true, 'active', 'Correlativas.2026', true, null, 'demo_seed', 'demo_seed', true),
+    ('99000004', 'Valentina', 'Dominguez', 'artes_visuales', 2024, 2, 'B', false, true, 'active', 'Correlativas.2026', true, null, 'demo_seed', 'demo_seed', true),
+    ('99000005', 'Julia', 'Escobar', 'artes_visuales', 2025, 3, 'A', false, true, 'active', 'Correlativas.2026', true, null, 'demo_seed', 'demo_seed', true),
+    ('99000006', 'Martina', 'Ferreyra', 'artes_visuales', 2025, 1, 'C', true, false, 'active', 'Correlativas.2026', true, null, 'demo_seed', 'demo_seed', true),
+    ('99000007', 'Ariana', 'Gomez', 'artes_visuales', 2025, 2, 'A', false, true, 'active', 'Correlativas.2026', true, null, 'demo_seed', 'demo_seed', true),
+    ('99000008', 'Mara', 'Herrera', 'artes_visuales', 2024, 4, 'B', false, true, 'active', 'Correlativas.2026', true, null, 'demo_seed', 'demo_seed', true),
+    ('99000009', 'Lucia', 'Ibarra', 'artes_visuales', 2025, 1, 'D', true, false, 'active', 'Correlativas.2026', true, null, 'demo_seed', 'demo_seed', true),
+    ('99000010', 'Noelia', 'Juarez', 'artes_visuales', 2024, 3, 'A', false, true, 'active', 'Correlativas.2026', true, null, 'demo_seed', 'demo_seed', true),
+    ('99000011', 'Agustina', 'Ledesma', 'artes_visuales', 2024, 2, 'C', false, true, 'active', 'Correlativas.2026', true, null, 'demo_seed', 'demo_seed', true),
+    ('99000012', 'Rocio', 'Mendez', 'artes_visuales', 2025, 4, 'B', false, true, 'active', 'Correlativas.2026', true, null, 'demo_seed', 'demo_seed', true),
+    ('99000013', 'Micaela', 'Navarro', 'artes_visuales', 2025, 1, 'A', true, false, 'active', 'Correlativas.2026', true, null, 'demo_seed', 'demo_seed', true),
+    ('99000014', 'Bianca', 'Ortega', 'artes_visuales', 2024, 3, 'D', false, true, 'active', 'Correlativas.2026', true, null, 'demo_seed', 'demo_seed', true),
+    ('99000015', 'Antonella', 'Paredes', 'artes_visuales', 2025, 2, 'A', false, true, 'active', 'Correlativas.2026', true, null, 'demo_seed', 'demo_seed', true),
+    ('99000016', 'Florencia', 'Quiroga', 'artes_visuales', 2024, 4, 'C', false, true, 'active', 'Correlativas.2026', true, null, 'demo_seed', 'demo_seed', true),
+    ('99000017', 'Emilia', 'Ramos', 'artes_visuales', 2025, 1, 'B', true, false, 'active', 'Correlativas.2026', true, null, 'demo_seed', 'demo_seed', true),
+    ('99000018', 'Milagros', 'Suarez', 'artes_visuales', 2024, 2, 'D', false, true, 'active', 'Correlativas.2026', true, null, 'demo_seed', 'demo_seed', true),
+    ('99000019', 'Abril', 'Torres', 'artes_visuales', 2025, 3, 'A', false, true, 'active', 'Correlativas.2026', true, null, 'demo_seed', 'demo_seed', true),
+    ('99000020', 'Ana', 'Vega', 'artes_visuales', 2024, 4, 'B', false, true, 'active', 'Correlativas.2026', true, null, 'demo_seed', 'demo_seed', true),
+    ('99000021', 'Bruno', 'Acuña', 'musica', 2024, 1, 'A', true, false, 'active', 'Correlativas.2026', true, null, 'demo_seed', 'demo_seed', true),
+    ('99000022', 'Tomas', 'Bustos', 'musica', 2025, 1, 'B', true, false, 'active', 'Correlativas.2026', true, null, 'demo_seed', 'demo_seed', true),
+    ('99000023', 'Franco', 'Caceres', 'musica', 2024, 2, 'A', false, true, 'active', 'Correlativas.2026', true, null, 'demo_seed', 'demo_seed', true),
+    ('99000024', 'Ivo', 'Diaz', 'musica', 2025, 2, 'B', false, true, 'active', 'Correlativas.2026', true, null, 'demo_seed', 'demo_seed', true),
+    ('99000025', 'Joaquin', 'Echenique', 'musica', 2024, 3, 'A', false, true, 'active', 'Correlativas.2026', true, null, 'demo_seed', 'demo_seed', true),
+    ('99000026', 'Kevin', 'Figueroa', 'musica', 2025, 1, 'C', true, false, 'active', 'Correlativas.2026', true, null, 'demo_seed', 'demo_seed', true),
+    ('99000027', 'Leonel', 'Garcia', 'musica', 2024, 2, 'B', false, true, 'active', 'Correlativas.2026', true, null, 'demo_seed', 'demo_seed', true),
+    ('99000028', 'Mateo', 'Hidalgo', 'musica', 2025, 4, 'A', false, true, 'active', 'Correlativas.2026', true, null, 'demo_seed', 'demo_seed', true),
+    ('99000029', 'Nicolas', 'Iriarte', 'musica', 2024, 1, 'D', true, false, 'active', 'Correlativas.2026', true, null, 'demo_seed', 'demo_seed', true),
+    ('99000030', 'Pablo', 'Jofre', 'musica', 2025, 3, 'B', false, true, 'active', 'Correlativas.2026', true, null, 'demo_seed', 'demo_seed', true),
+    ('99000031', 'Ramiro', 'Klein', 'musica', 2024, 2, 'C', false, true, 'active', 'Correlativas.2026', true, null, 'demo_seed', 'demo_seed', true),
+    ('99000032', 'Santino', 'Lopez', 'musica', 2025, 1, 'A', true, false, 'active', 'Correlativas.2026', true, null, 'demo_seed', 'demo_seed', true),
+    ('99000033', 'Thiago', 'Molina', 'musica', 2024, 4, 'B', false, true, 'active', 'Correlativas.2026', true, null, 'demo_seed', 'demo_seed', true),
+    ('99000034', 'Ulises', 'Nunez', 'musica', 2025, 2, 'D', false, true, 'active', 'Correlativas.2026', true, null, 'demo_seed', 'demo_seed', true),
+    ('99000035', 'Violeta', 'Ocampo', 'musica', 2024, 1, 'C', true, false, 'active', 'Correlativas.2026', true, null, 'demo_seed', 'demo_seed', true),
+    ('99000036', 'Yanina', 'Paz', 'musica', 2025, 3, 'A', false, true, 'active', 'Correlativas.2026', true, null, 'demo_seed', 'demo_seed', true),
+    ('99000037', 'Zoe', 'Quiros', 'musica', 2024, 2, 'B', false, true, 'active', 'Correlativas.2026', true, null, 'demo_seed', 'demo_seed', true),
+    ('99000038', 'Elian', 'Roldan', 'musica', 2025, 4, 'D', false, true, 'active', 'Correlativas.2026', true, null, 'demo_seed', 'demo_seed', true),
+    ('99000039', 'Gaspar', 'Sosa', 'musica', 2024, 1, 'A', true, false, 'active', 'Correlativas.2026', true, null, 'demo_seed', 'demo_seed', true),
+    ('99000040', 'Hector', 'Tapia', 'musica', 2025, 2, 'C', false, true, 'active', 'Correlativas.2026', true, null, 'demo_seed', 'demo_seed', true)
+  on conflict (dni) do update set
+    first_name = excluded.first_name,
+    last_name = excluded.last_name,
+    career_id = excluded.career_id,
+    cohort_year = excluded.cohort_year,
+    current_year = excluded.current_year,
+    division = excluded.division,
+    is_new_student = excluded.is_new_student,
+    is_repeating = excluded.is_repeating,
+    enrollment_status = excluded.enrollment_status,
+    initial_password = excluded.initial_password,
+    must_change_password = excluded.must_change_password,
+    notes = excluded.notes,
+    updated_by_device_id = excluded.updated_by_device_id,
+    is_demo = true
+  returning id, dni, first_name, last_name, career_id, current_year, is_demo
+)
+insert into public.academic_student_history (
+  student_id,
+  event_type,
+  payload,
+  admin_device_id
+)
+select
+  id,
+  'student_seed',
+  jsonb_build_object(
+    'dni', dni,
+    'first_name', first_name,
+    'last_name', last_name,
+    'career_id', career_id,
+    'current_year', current_year,
+    'is_demo', is_demo,
+    'source', 'presentation_seed'
+  ),
+  'demo_seed'
+from upserted_students;

@@ -24,11 +24,10 @@ class SupabaseBootstrapResult {
 }
 
 Future<SupabaseBootstrapResult> initializeSupabase() async {
-  if (!SupabaseConfig.hasPublishableKey) {
+  if (!SupabaseConfig.hasClientKey) {
     return const SupabaseBootstrapResult(
       status: SupabaseBootstrapStatus.missingAnonKey,
-      message:
-          'Supabase no se inicializo porque falta SUPABASE_PUBLISHABLE_KEY. '
+      message: 'Supabase no se inicializo porque falta una client key valida. '
           'La app puede abrir, pero las funciones online quedan desactivadas.',
     );
   }
@@ -36,7 +35,7 @@ Future<SupabaseBootstrapResult> initializeSupabase() async {
   try {
     await Supabase.initialize(
       url: SupabaseConfig.url,
-      anonKey: SupabaseConfig.publishableKey,
+      anonKey: SupabaseConfig.clientKey,
     );
 
     return const SupabaseBootstrapResult(
