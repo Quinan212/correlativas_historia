@@ -2,21 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
-import 'package:correlativas_historia/features/cascada/cascada_screen.dart';
-import 'package:correlativas_historia/features/cascada/inicio_mapa_screen.dart';
-import 'package:correlativas_historia/features/calculadora/calculadora_screen.dart';
-import 'package:correlativas_historia/features/faq/faq_screen.dart';
-import 'package:correlativas_historia/features/admin_access/screens/admin_access_screen.dart';
-import 'package:correlativas_historia/features/admin_access/providers/admin_access_providers.dart';
-import 'package:correlativas_historia/features/student_access/screens/student_access_screen.dart';
-import 'package:correlativas_historia/shared/firebase/firebase_app.dart';
-import 'package:correlativas_historia/shared/nav/app_navigator.dart';
-import 'package:correlativas_historia/shared/providers/app_state.dart';
-import 'package:correlativas_historia/shared/notifications/push_notifications.dart';
-import 'package:correlativas_historia/shared/performance/app_performance.dart';
-import 'package:correlativas_historia/shared/supabase/supabase.dart';
-import 'package:correlativas_historia/shared/widgets/bottom_nav.dart';
-import 'package:correlativas_historia/theme/app_theme.dart';
+import 'package:correlativas_historia/funcionalidades/cascada/mapa_correlatividades_pantalla.dart';
+import 'package:correlativas_historia/funcionalidades/cascada/inicio_mapa_pantalla.dart';
+import 'package:correlativas_historia/funcionalidades/calculadora/calculadora_pantalla.dart';
+import 'package:correlativas_historia/funcionalidades/preguntas_frecuentes/preguntas_frecuentes_pantalla.dart';
+import 'package:correlativas_historia/funcionalidades/administrador/pantallas/acceso_administrador_pantalla.dart';
+import 'package:correlativas_historia/funcionalidades/administrador/proveedores/proveedores_acceso_administrador.dart';
+import 'package:correlativas_historia/funcionalidades/acceso_estudiante/pantallas/acceso_estudiante_pantalla.dart';
+import 'package:correlativas_historia/compartido/firebase/app_firebase.dart';
+import 'package:correlativas_historia/compartido/navegacion/navegador_app.dart';
+import 'package:correlativas_historia/compartido/proveedores/estado_app.dart';
+import 'package:correlativas_historia/compartido/notificaciones/notificaciones_push.dart';
+import 'package:correlativas_historia/compartido/rendimiento/rendimiento_app.dart';
+import 'package:correlativas_historia/compartido/supabase/supabase.dart';
+import 'package:correlativas_historia/compartido/componentes/navegacion_inferior.dart';
+import 'package:correlativas_historia/tema/tema_app.dart';
 import 'package:video_player_win/video_player_win_plugin.dart';
 
 Future<void> main() async {
@@ -25,15 +25,15 @@ Future<void> main() async {
   if (!kIsWeb && defaultTargetPlatform == TargetPlatform.windows) {
     WindowsVideoPlayer.registerWith();
   }
-  AppPerformance.installFrameDiagnostics();
+  RendimientoApp.instalarDiagnosticoFrames();
   final supabaseBootstrapFuture = initializeSupabase();
-  await ensureFirebaseApp();
-  // await AppPerformance.configureCollection();
+  await asegurarAppFirebase();
+  // await RendimientoApp.configurarRecoleccion();
   final supabaseBootstrap = await supabaseBootstrapFuture;
   runApp(
     ProviderScope(
       overrides: [
-        supabaseBootstrapProvider.overrideWithValue(supabaseBootstrap),
+        proveedorArranqueSupabase.overrideWithValue(supabaseBootstrap),
       ],
       child: const App(),
     ),
@@ -45,17 +45,17 @@ class App extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final themeMode = ref.watch(themeModeProvider);
+    final themeMode = ref.watch(proveedorModoTema);
 
-    return PushNotificationsBootstrapper(
+    return ArranqueNotificacionesPush(
       child: MaterialApp(
         navigatorKey: appNavigatorKey,
         title: 'Mapa y Calculadora de Correlatividades',
         debugShowCheckedModeBanner: false,
-        showPerformanceOverlay: AppPerformance.diagnosticsEnabled,
+        showPerformanceOverlay: RendimientoApp.diagnosticosHabilitados,
         themeMode: themeMode,
-        theme: AppTheme.light(),
-        darkTheme: AppTheme.dark(),
+        theme: TemaApp.light(),
+        darkTheme: TemaApp.dark(),
         home: const MainScreen(),
       ),
     );
@@ -79,14 +79,15 @@ class _MainScreenState extends ConsumerState<MainScreen> {
     _checkedWhatsNew = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      // WhatsNewSheet.maybeShow(context); // Desactivado por ahora
+      // HojaNovedades.maybeShow(context); // Desactivado por ahora
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final routerIndex = ref.watch(routerIndexProvider).clamp(0, 4);
-    final adminStatus = ref.watch(adminDeviceStatusProvider).valueOrNull;
+    final routerIndex = ref.watch(proveedorIndiceRouter).clamp(0, 4);
+    final adminStatus =
+        ref.watch(proveedorEstadoDispositivoAdministrador).valueOrNull;
     final showAdminFab = adminStatus?.isAdmin == true;
     final width = MediaQuery.of(context).size.width;
     final isDesktop = width >= 900;
@@ -98,11 +99,11 @@ class _MainScreenState extends ConsumerState<MainScreen> {
     Widget content = IndexedStack(
       index: routerIndex,
       children: const [
-        StudentAccessScreen(key: ValueKey('trayectorias')),
-        InicioMapaScreen(key: ValueKey('inicio_mapa')),
-        CascadaScreen(key: ValueKey('cascada')),
-        CalculadoraScreen(key: ValueKey('calculadora')),
-        FaqScreen(key: ValueKey('faq')),
+        AccesoEstudiantePantalla(key: ValueKey('trayectorias')),
+        PantallaInicioMapa(key: ValueKey('inicio_mapa')),
+        PantallaMapaCorrelatividades(key: ValueKey('cascada')),
+        PantallaCalculadora(key: ValueKey('calculadora')),
+        PantallaPreguntasFrecuentes(key: ValueKey('faq')),
       ],
     );
 
@@ -112,10 +113,12 @@ class _MainScreenState extends ConsumerState<MainScreen> {
           NavigationRail(
             selectedIndex: routerIndex,
             onDestinationSelected: (idx) =>
-                ref.read(routerIndexProvider.notifier).state = idx,
+                ref.read(proveedorIndiceRouter.notifier).state = idx,
             extended: width >= 1300,
             minExtendedWidth: 165,
-            labelType: width >= 1300 ? NavigationRailLabelType.none : NavigationRailLabelType.all,
+            labelType: width >= 1300
+                ? NavigationRailLabelType.none
+                : NavigationRailLabelType.all,
             backgroundColor: isDark ? const Color(0xFF0B1220) : Colors.white,
             indicatorColor: theme.colorScheme.primary.withValues(alpha: 0.12),
             trailing: Expanded(
@@ -124,11 +127,15 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                 child: Padding(
                   padding: const EdgeInsets.only(bottom: 20),
                   child: IconButton(
-                    icon: Icon(isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded),
+                    icon: Icon(isDark
+                        ? Icons.light_mode_rounded
+                        : Icons.dark_mode_rounded),
                     onPressed: () {
-                      final cur = ref.read(themeModeProvider);
-                      ref.read(themeModeProvider.notifier).state =
-                        cur == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
+                      final cur = ref.read(proveedorModoTema);
+                      ref.read(proveedorModoTema.notifier).state =
+                          cur == ThemeMode.dark
+                              ? ThemeMode.light
+                              : ThemeMode.dark;
                     },
                   ),
                 ),
@@ -189,7 +196,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                 onPressed: () {
                   Navigator.of(context).push(
                     MaterialPageRoute<void>(
-                      builder: (_) => const AdminAccessScreen(),
+                      builder: (_) => const AccesoAdministradorPantalla(),
                     ),
                   );
                 },
@@ -200,12 +207,16 @@ class _MainScreenState extends ConsumerState<MainScreen> {
       ),
       bottomNavigationBar: isDesktop
           ? null
-          : AppBottomNav(
+          : NavegacionInferiorApp(
               current: routerIndex,
-              onTapTrayectorias: () => ref.read(routerIndexProvider.notifier).state = 0,
-              onTapHome: () => ref.read(routerIndexProvider.notifier).state = 1,
-              onTapMap: () => ref.read(routerIndexProvider.notifier).state = 2,
-              onTapCalc: () => ref.read(routerIndexProvider.notifier).state = 3,
+              onTapTrayectorias: () =>
+                  ref.read(proveedorIndiceRouter.notifier).state = 0,
+              onTapHome: () =>
+                  ref.read(proveedorIndiceRouter.notifier).state = 1,
+              onTapMap: () =>
+                  ref.read(proveedorIndiceRouter.notifier).state = 2,
+              onTapCalc: () =>
+                  ref.read(proveedorIndiceRouter.notifier).state = 3,
             ),
     );
   }

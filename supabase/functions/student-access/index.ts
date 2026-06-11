@@ -70,88 +70,30 @@ Deno.serve(async (req: Request) => {
       return json({ ok: false, error: "User not found" }, 404);
     }
 
-    const isAnonymous = user.is_anonymous;
-
-    let studentUuid = stringValue(
+    const studentId = stringValue(
       user.user_metadata?.academic_student_id ?? "",
     );
     const email = stringValue(user.email);
     const dni = email.includes("@") ? email.split("@")[0] : "";
 
-    let { data: student, error: studentError } = await supabase
+    const { data: student, error: studentError } = await supabase
       .from("academic_students")
       .select(
         "id, dni, first_name, last_name, career_id, is_demo, cohort_year, current_year, division, is_new_student, is_repeating, enrollment_status, contact_phone, contact_email, notes",
       )
       .or(
-        isAnonymous
-          ? `id.eq.${user.id}`
-          : (studentUuid ? `id.eq.${studentUuid},dni.eq.${dni}` : `dni.eq.${dni}`),
+        studentId
+          ? `id.eq.${studentId},dni.eq.${dni}`
+          : `dni.eq.${dni}`,
       )
       .maybeSingle();
-
     if (studentError) throw studentError;
 
     if (!student) {
-      if (isAnonymous) {
-        // Create a temporary guest profile
-        const guestName = stringValue(body?.first_name) || "Invitado";
-        const rawCareer = stringValue(body?.career_id);
-        const guestCareer = VALID_CAREERS.has(rawCareer) ? rawCareer : "artes_visuales";
-        const guestDni = stringValue(body?.dni) || `guest_${user.id.substring(0, 8)}`;
-
-        const { data: newStudent, error: insertError } = await supabase
-          .from("academic_students")
-          .insert({
-            id: user.id,
-            dni: guestDni,
-            first_name: guestName,
-            last_name: "Usuario",
-            career_id: guestCareer,
-            is_demo: true,
-            enrollment_status: "active",
-          })
-          .select(
-            "id, dni, first_name, last_name, career_id, is_demo, cohort_year, current_year, division, is_new_student, is_repeating, enrollment_status, contact_phone, contact_email, notes",
-          )
-          .single();
-
-        if (insertError) throw insertError;
-        student = newStudent;
-      } else {
-        return json({ ok: false, error: "Student profile not found" }, 404);
-      }
-    } else if (isAnonymous && body?.career_id) {
-      // Update existing guest profile with new selections
-      const guestName = stringValue(body?.first_name) || "Invitado";
-      const rawCareer = stringValue(body?.career_id);
-      const guestCareer = VALID_CAREERS.has(rawCareer) ? rawCareer : "artes_visuales";
-      
-      const updateData: Record<string, any> = {
-        first_name: guestName,
-        career_id: guestCareer,
-      };
-
-      const guestDni = stringValue(body?.dni);
-      if (guestDni) {
-        updateData.dni = guestDni;
-      }
-
-      const { data: updatedStudent, error: updateError } = await supabase
-        .from("academic_students")
-        .update(updateData)
-        .eq("id", user.id)
-        .select(
-          "id, dni, first_name, last_name, career_id, is_demo, cohort_year, current_year, division, is_new_student, is_repeating, enrollment_status, contact_phone, contact_email, notes",
-        )
-        .single();
-
-      if (!updateError && updatedStudent) {
-        student = updatedStudent;
-      }
+      return json({ ok: false, error: "Student profile not found" }, 404);
     }
 
-    studentUuid = stringValue(student.id);
+    const studentUuid = stringValue(student.id);
 
     // ─── update_contact ─────────────────────────────────────
     if (action === "update_contact") {
@@ -162,23 +104,12 @@ Deno.serve(async (req: Request) => {
         return json({ ok: false, error: "E-mail invalido" }, 400);
       }
 
-      const updateData: Record<string, any> = {
-        contact_phone: contactPhone,
-        contact_email: contactEmail,
-      };
-
-      if (student.is_demo) {
-        if (body?.first_name) updateData.first_name = stringValue(body.first_name);
-        if (body?.dni) updateData.dni = stringValue(body.dni);
-        if (body?.career_id) {
-            const rawCareer = stringValue(body.career_id);
-            updateData.career_id = VALID_CAREERS.has(rawCareer) ? rawCareer : "artes_visuales";
-        }
-      }
-
       const { data: updatedStudent, error: updateError } = await supabase
         .from("academic_students")
-        .update(updateData)
+        .update({
+          contact_phone: contactPhone,
+          contact_email: contactEmail,
+        })
         .eq("id", studentUuid)
         .select(
           "id, dni, first_name, last_name, career_id, is_demo, cohort_year, current_year, division, is_new_student, is_repeating, enrollment_status, contact_phone, contact_email, notes",
@@ -237,6 +168,7 @@ Deno.serve(async (req: Request) => {
         subject_name: subjectName,
         subject_year: subjectYear,
         status,
+        condition_status: "habilitada",
         academic_period: academicPeriod,
         source_period: academicPeriod,
         source_date: sourceDate,
@@ -374,11 +306,11 @@ Deno.serve(async (req: Request) => {
       history: history ?? [],
       self_subjects: selfSubjects ?? [],
     });
-  } catch (error: any) {
+  } catch (error) {
     return json(
       {
         ok: false,
-        error: error?.message || (error instanceof Error ? error.message : String(error)),
+        error: error instanceof Error ? error.message : String(error),
       },
       500,
     );
