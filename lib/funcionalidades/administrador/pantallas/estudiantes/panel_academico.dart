@@ -9,6 +9,7 @@ import '../../modelos/item_nomina_materia_administrador.dart';
 import '../../proveedores/proveedores_estudiantes_administrador.dart';
 import 'utilidades_administrador.dart';
 import 'editor_materia_estudiante.dart';
+import 'historial_estudiante.dart';
 
 class PanelAcademicoEstudiante extends ConsumerStatefulWidget {
   const PanelAcademicoEstudiante({
