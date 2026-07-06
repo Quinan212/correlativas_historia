@@ -11,8 +11,12 @@ class _DatosEstudiantePantalla extends StatefulWidget {
     required String phone,
     required String email,
     String? firstName,
+    String? lastName,
     String? dni,
     String? careerId,
+    String? division,
+    int? currentYear,
+    int? cohortYear,
   }) onSaveContact;
 
   @override
@@ -23,13 +27,31 @@ class _DatosEstudiantePantalla extends StatefulWidget {
 class _DatosEstudiantePantallaState extends State<_DatosEstudiantePantalla> {
   late final TextEditingController _phoneCtrl;
   late final TextEditingController _emailCtrl;
+  late final TextEditingController _dniCtrl;
   late final TextEditingController _nameCtrl;
+  late final TextEditingController _lastNameCtrl;
   late String _selectedCareer;
+  late String _selectedDivision;
+  late int? _selectedYear;
+  late int? _selectedCohort;
 
   bool _showAcademic = true;
   bool _editing = false;
   bool _saving = false;
   String? _error;
+
+  static const List<int> _aniosValidos = [1, 2, 3, 4];
+  static const List<int> _cohortesValidas = [
+    2018,
+    2019,
+    2020,
+    2021,
+    2022,
+    2023,
+    2024,
+    2025,
+    2026,
+  ];
 
   @override
   void initState() {
@@ -37,22 +59,36 @@ class _DatosEstudiantePantallaState extends State<_DatosEstudiantePantalla> {
     _phoneCtrl = TextEditingController(text: widget.student.contactPhone ?? '');
     _emailCtrl = TextEditingController(text: widget.student.contactEmail ?? '');
     _nameCtrl = TextEditingController(text: widget.student.firstName);
-    _emailCtrl = TextEditingController(
+    _lastNameCtrl = TextEditingController(text: widget.student.lastName);
+    _selectedDivision = switch (widget.student.division?.toUpperCase()) {
+      'B' => 'B',
+      _ => 'A',
+    };
+    _dniCtrl = TextEditingController(
         text:
             widget.student.dni.startsWith('guest_') ? '' : widget.student.dni);
     _selectedCareer = widget.student.careerId;
+    _selectedYear = widget.student.currentYear;
+    _selectedCohort = widget.student.cohortYear;
   }
 
   @override
   void dispose() {
     _phoneCtrl.dispose();
     _emailCtrl.dispose();
+    _dniCtrl.dispose();
     _nameCtrl.dispose();
-    _emailCtrl.dispose();
+    _lastNameCtrl.dispose();
     super.dispose();
   }
 
   Future<void> _save() async {
+    final dni = _dniCtrl.text.trim().replaceAll(RegExp(r'\D'), '');
+    if (!RegExp(r'^\d{7,9}$').hasMatch(dni)) {
+      setState(() => _error = 'El DNI debe tener entre 7 y 9 dígitos.');
+      return;
+    }
+
     setState(() {
       _saving = true;
       _error = null;
@@ -63,14 +99,21 @@ class _DatosEstudiantePantallaState extends State<_DatosEstudiantePantalla> {
         phone: _phoneCtrl.text.trim(),
         email: _emailCtrl.text.trim(),
         firstName: _nameCtrl.text.trim(),
-        dni: _emailCtrl.text.trim().replaceAll(RegExp(r'\D'), ''),
+        lastName: _lastNameCtrl.text.trim(),
+        dni: dni,
         careerId: _selectedCareer,
+        division: _selectedDivision,
+        currentYear: _selectedYear,
+        cohortYear: _selectedCohort,
       );
       if (!mounted) return;
       setState(() => _editing = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Contacto actualizado.')),
+        const SnackBar(content: Text('Datos actualizados.')),
       );
+    } on DniEnUsoException {
+      if (!mounted) return;
+      await _mostrarDniEnUso();
     } catch (error) {
       if (!mounted) return;
       setState(() => _error = '$error');
@@ -79,6 +122,25 @@ class _DatosEstudiantePantallaState extends State<_DatosEstudiantePantalla> {
         setState(() => _saving = false);
       }
     }
+  }
+
+  Future<void> _mostrarDniEnUso() {
+    return showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        icon: const Icon(Icons.warning_amber_rounded),
+        title: const Text('DNI ya registrado'),
+        content: const Text(
+          'Ese DNI pertenece a otro usuario. No se realizó ningún cambio.',
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Entendido'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _copyValue(String label, String value) async {
@@ -96,6 +158,17 @@ class _DatosEstudiantePantallaState extends State<_DatosEstudiantePantalla> {
     final student = widget.student;
     final scheme = theme.colorScheme;
     final primaryBlue = const Color(0xFF0E5E86);
+    final editableCareers = kCareers
+        .where(
+          (career) => const {
+            'artes_visuales',
+            'musica',
+            'historia',
+            'geografia',
+            'politica',
+          }.contains(career.id),
+        )
+        .toList(growable: false);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -182,54 +255,93 @@ class _DatosEstudiantePantallaState extends State<_DatosEstudiantePantalla> {
                         ),
                       ),
                     ),
-                    if (student.isDemo)
-                      TextButton(
-                        onPressed: _saving
-                            ? null
-                            : () => setState(() => _editing = !_editing),
-                        child: Text(_editing ? 'Cancelar' : 'Editar'),
-                      ),
+                    TextButton(
+                      onPressed: _saving
+                          ? null
+                          : () => setState(() => _editing = !_editing),
+                      child: Text(_editing ? 'Cancelar' : 'Editar'),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 10),
                 _SeccionDatosEstudiante(
                   child: Column(
                     children: [
-                      if (student.isDemo && _editing) ...[
+                      if (_editing) ...[
                         TextField(
                           controller: _nameCtrl,
-                          decoration: const InputDecoration(
-                              labelText: 'Nombre completo'),
+                          decoration:
+                              const InputDecoration(labelText: 'Nombres'),
                           textCapitalization: TextCapitalization.words,
                         ),
                         const SizedBox(height: 12),
                         TextField(
-                          controller: _emailCtrl,
-                          keyboardType: TextInputType.number,
-                          decoration: const InputDecoration(labelText: 'DNI'),
+                          controller: _lastNameCtrl,
+                          decoration:
+                              const InputDecoration(labelText: 'Apellido'),
+                          textCapitalization: TextCapitalization.words,
                         ),
                         const SizedBox(height: 12),
-                        DropdownButtonFormField<String>(
-                          value: _selectedCareer,
-                          decoration:
-                              const InputDecoration(labelText: 'Carrera'),
-                          items: const [
-                            DropdownMenuItem(
-                                value: 'artes_visuales',
-                                child: Text('Artes Visuales')),
-                            DropdownMenuItem(
-                                value: 'historia', child: Text('Historia')),
-                            DropdownMenuItem(
-                                value: 'geografia', child: Text('Geografía')),
-                            DropdownMenuItem(
-                                value: 'politica',
-                                child: Text('Ciencias Políticas')),
+                        TextField(
+                          controller: _dniCtrl,
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly
                           ],
+                          maxLength: 9,
+                          decoration: const InputDecoration(
+                            labelText: 'DNI',
+                            counterText: '',
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        _DropdownCarreraEstudiante(
+                          value: _selectedCareer,
+                          careers: editableCareers,
                           onChanged: (value) {
                             if (value != null) {
                               setState(() => _selectedCareer = value);
                             }
                           },
+                        ),
+                        const SizedBox(height: 12),
+                        DropdownButtonFormField<String>(
+                          initialValue: _selectedDivision,
+                          decoration:
+                              const InputDecoration(labelText: 'División'),
+                          items: const [
+                            DropdownMenuItem(value: 'A', child: Text('A')),
+                            DropdownMenuItem(value: 'B', child: Text('B')),
+                          ],
+                          onChanged: (value) {
+                            if (value != null) {
+                              setState(() => _selectedDivision = value);
+                            }
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                        _DropdownEnteroEstudiante(
+                          label: 'Año actual',
+                          values: _aniosValidos,
+                          selectedValue: _selectedYear,
+                          valueLabel: (year) => switch (year) {
+                            1 => '1er año',
+                            2 => '2do año',
+                            3 => '3er año',
+                            4 => '4to año',
+                            _ => '$year° año',
+                          },
+                          onChanged: (value) =>
+                              setState(() => _selectedYear = value),
+                        ),
+                        const SizedBox(height: 12),
+                        _DropdownEnteroEstudiante(
+                          label: 'Cohorte',
+                          values: _cohortesValidas,
+                          selectedValue: _selectedCohort,
+                          valueLabel: (year) => '$year',
+                          onChanged: (value) =>
+                              setState(() => _selectedCohort = value),
                         ),
                         const SizedBox(height: 16),
                         FilledButton(
@@ -257,9 +369,16 @@ class _DatosEstudiantePantallaState extends State<_DatosEstudiantePantalla> {
                         ],
                       ] else ...[
                         _BaldosaDatosEstudiante(
-                          label: 'Nombre completo',
-                          value: student.fullName,
-                          onCopy: () => _copyValue('Nombre', student.fullName),
+                          label: 'Nombres',
+                          value: student.firstName,
+                          onCopy: () =>
+                              _copyValue('Nombres', student.firstName),
+                        ),
+                        _BaldosaDatosEstudiante(
+                          label: 'Apellido',
+                          value: student.lastName,
+                          onCopy: () =>
+                              _copyValue('Apellido', student.lastName),
                         ),
                         _BaldosaDatosEstudiante(
                           label: 'DNI',
@@ -274,34 +393,38 @@ class _DatosEstudiantePantallaState extends State<_DatosEstudiantePantalla> {
                           onCopy: () => _copyValue(
                               'Carrera', _etiquetaCarrera(student.careerId)),
                         ),
-                      ],
-                      _BaldosaDatosEstudiante(
-                        label: 'Año actual',
-                        value: student.yearLabel,
-                        onCopy: () =>
-                            _copyValue('Año actual', student.yearLabel),
-                      ),
-                      if (student.cohortYear != null)
+                        _BaldosaDatosEstudiante(
+                          label: 'Año actual',
+                          value: student.yearLabel,
+                          onCopy: () =>
+                              _copyValue('Año actual', student.yearLabel),
+                        ),
                         _BaldosaDatosEstudiante(
                           label: 'Cohorte',
-                          value: '${student.cohortYear}',
+                          value: student.cohortYear != null
+                              ? '${student.cohortYear}'
+                              : 'No especificada',
                           onCopy: () => _copyValue(
                             'Cohorte',
-                            '${student.cohortYear}',
+                            student.cohortYear != null
+                                ? '${student.cohortYear}'
+                                : '',
                           ),
                         ),
-                      _BaldosaDatosEstudiante(
-                        label: 'División',
-                        value: (student.division?.trim().isNotEmpty ?? false)
-                            ? student.division!
-                            : 'A',
-                        onCopy: () => _copyValue(
-                          'División',
-                          (student.division?.trim().isNotEmpty ?? false)
+                      ],
+                      if (!_editing)
+                        _BaldosaDatosEstudiante(
+                          label: 'División',
+                          value: (student.division?.trim().isNotEmpty ?? false)
                               ? student.division!
                               : 'A',
+                          onCopy: () => _copyValue(
+                            'División',
+                            (student.division?.trim().isNotEmpty ?? false)
+                                ? student.division!
+                                : 'A',
+                          ),
                         ),
-                      ),
                       _BaldosaDatosEstudiante(
                         label: 'Estado',
                         value: _etiquetaEstadoInscripcion(
@@ -776,6 +899,82 @@ class _BotonAccionDatos extends StatelessWidget {
           color: theme.colorScheme.primary,
           size: 20,
         ),
+      ),
+    );
+  }
+}
+
+class _DropdownEnteroEstudiante extends StatelessWidget {
+  const _DropdownEnteroEstudiante({
+    required this.label,
+    required this.values,
+    required this.selectedValue,
+    required this.valueLabel,
+    required this.onChanged,
+  });
+
+  final String label;
+  final List<int> values;
+  final int? selectedValue;
+  final String Function(int) valueLabel;
+  final ValueChanged<int?> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: DropdownButtonFormField<int>(
+        value: selectedValue,
+        decoration: InputDecoration(
+          labelText: label,
+          isDense: true,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+        items: values
+            .map((e) => DropdownMenuItem(
+                  value: e,
+                  child: Text(valueLabel(e)),
+                ))
+            .toList(),
+        onChanged: onChanged,
+      ),
+    );
+  }
+}
+
+class _DropdownCarreraEstudiante extends StatelessWidget {
+  const _DropdownCarreraEstudiante({
+    required this.value,
+    required this.careers,
+    required this.onChanged,
+  });
+
+  final String value;
+  final List<CareerInfo> careers;
+  final ValueChanged<String?> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: DropdownButtonFormField<String>(
+        value: value,
+        decoration: InputDecoration(
+          labelText: 'Carrera',
+          isDense: true,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+        items: careers
+            .map((e) => DropdownMenuItem<String>(
+                  value: e.id,
+                  child: Text(e.nombre),
+                ))
+            .toList(),
+        onChanged: onChanged,
       ),
     );
   }

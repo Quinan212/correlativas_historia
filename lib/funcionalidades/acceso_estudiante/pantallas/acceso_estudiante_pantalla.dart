@@ -14,6 +14,8 @@ import '../../../modelos/materia.dart';
 import '../../../compartido/supabase/supabase.dart';
 import '../../../compartido/utilidades/sanitizar_texto.dart';
 import '../../../compartido/componentes/tarjetas_metricas.dart';
+import '../../../compartido/componentes/navegacion_inferior.dart';
+import '../../../compartido/proveedores/estado_app.dart';
 import '../datos/repositorio_acceso_estudiante.dart';
 import '../modelos/modelos_acceso_estudiante.dart';
 import 'materias_autodeclaradas_pantalla.dart';
@@ -205,7 +207,7 @@ class _AccesoEstudiantePantallaState
   void _openInicioMapa() {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => const PantallaInicioMapa(),
+        builder: (_) => _conNavegacionInferior(const PantallaInicioMapa()),
       ),
     );
   }
@@ -213,7 +215,8 @@ class _AccesoEstudiantePantallaState
   void _openPlanCompleto() {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => const PantallaMapaCorrelatividades(),
+        builder: (_) =>
+            _conNavegacionInferior(const PantallaMapaCorrelatividades()),
       ),
     );
   }
@@ -221,7 +224,7 @@ class _AccesoEstudiantePantallaState
   void _openEscenarios() {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => const PantallaCalculadora(),
+        builder: (_) => _conNavegacionInferior(const PantallaCalculadora()),
       ),
     );
   }
@@ -229,7 +232,8 @@ class _AccesoEstudiantePantallaState
   void _openAyuda() {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => const PantallaPreguntasFrecuentes(),
+        builder: (_) =>
+            _conNavegacionInferior(const PantallaPreguntasFrecuentes()),
       ),
     );
   }
@@ -243,9 +247,11 @@ class _AccesoEstudiantePantallaState
     if (!mounted) return;
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => _ProximosPasosEstudiantePantalla(
-          payload: payload,
-          entries: entries,
+        builder: (_) => _conNavegacionInferior(
+          _ProximosPasosEstudiantePantalla(
+            payload: payload,
+            entries: entries,
+          ),
         ),
       ),
     );
@@ -260,9 +266,11 @@ class _AccesoEstudiantePantallaState
     if (!mounted) return;
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => _ProgresoEstudiantePantalla(
-          payload: payload,
-          entries: entries,
+        builder: (_) => _conNavegacionInferior(
+          _ProgresoEstudiantePantalla(
+            payload: payload,
+            entries: entries,
+          ),
         ),
       ),
     );
@@ -277,9 +285,11 @@ class _AccesoEstudiantePantallaState
     if (!mounted) return;
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => _CalendarioAcademicoEstudiantePantalla(
-          payload: payload,
-          entries: entries,
+        builder: (_) => _conNavegacionInferior(
+          _CalendarioAcademicoEstudiantePantalla(
+            payload: payload,
+            entries: entries,
+          ),
         ),
       ),
     );
@@ -421,7 +431,9 @@ class _AccesoEstudiantePantallaState
     Navigator.of(context)
         .push(
       MaterialPageRoute<void>(
-        builder: (_) => MateriasAutodeclaradasPantalla(payload: payload),
+        builder: (_) => _conNavegacionInferior(
+          MateriasAutodeclaradasPantalla(payload: payload),
+        ),
       ),
     )
         .then((_) {
@@ -431,12 +443,42 @@ class _AccesoEstudiantePantallaState
     });
   }
 
+  Widget _conNavegacionInferior(Widget child) {
+    return Consumer(
+      builder: (context, ref, _) {
+        final current = ref.watch(proveedorIndiceRouter).clamp(0, 4);
+
+        void navigateTo(int index) {
+          ref.read(proveedorIndiceRouter.notifier).state = index;
+          Navigator.of(context).popUntil((route) => route.isFirst);
+        }
+
+        return Scaffold(
+          body: child,
+          bottomNavigationBar: MediaQuery.sizeOf(context).width >= 900
+              ? null
+              : NavegacionInferiorApp(
+                  current: current,
+                  onTapTrayectorias: () => navigateTo(0),
+                  onTapHome: () => navigateTo(1),
+                  onTapMap: () => navigateTo(2),
+                  onTapCalc: () => navigateTo(3),
+                ),
+        );
+      },
+    );
+  }
+
   Future<void> _saveStudentContact({
     required String phone,
     required String email,
     String? firstName,
+    String? lastName,
     String? dni,
     String? careerId,
+    String? division,
+    int? currentYear,
+    int? cohortYear,
   }) async {
     final client = ref.read(proveedorClienteSupabase);
     if (client == null) {
@@ -448,8 +490,12 @@ class _AccesoEstudiantePantallaState
       phone: phone,
       email: email,
       firstName: firstName,
+      lastName: lastName,
       dni: dni,
       careerId: careerId,
+      division: division,
+      currentYear: currentYear,
+      cohortYear: cohortYear,
     );
     await _loadTrajectory();
   }

@@ -2,6 +2,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../modelos/modelos_acceso_estudiante.dart';
 
+class DniEnUsoException implements Exception {
+  const DniEnUsoException();
+}
+
 class RepositorioAccesoEstudiante {
   const RepositorioAccesoEstudiante();
 
@@ -38,20 +42,37 @@ class RepositorioAccesoEstudiante {
     required String phone,
     required String email,
     String? firstName,
+    String? lastName,
     String? dni,
     String? careerId,
+    String? division,
+    int? currentYear,
+    int? cohortYear,
   }) async {
-    final response = await client.functions.invoke(
-      'student-access',
-      body: {
-        'action': 'update_contact',
-        'contact_phone': phone,
-        'contact_email': email,
-        if (firstName != null) 'first_name': firstName,
-        if (dni != null) 'dni': dni,
-        if (careerId != null) 'career_id': careerId,
-      },
-    );
+    late final FunctionResponse response;
+    try {
+      response = await client.functions.invoke(
+        'student-access',
+        body: {
+          'action': 'update_contact',
+          'contact_phone': phone,
+          'contact_email': email,
+          if (firstName != null) 'first_name': firstName,
+          if (lastName != null) 'last_name': lastName,
+          if (dni != null) 'dni': dni,
+          if (careerId != null) 'career_id': careerId,
+          if (division != null) 'division': division,
+          if (currentYear != null) 'current_year': currentYear,
+          if (cohortYear != null) 'cohort_year': cohortYear,
+        },
+      );
+    } on FunctionException catch (error) {
+      final details = error.details;
+      if (details is Map && details['code'] == 'dni_already_exists') {
+        throw const DniEnUsoException();
+      }
+      rethrow;
+    }
 
     final data = response.data as Map?;
     if (data?['ok'] != true) {

@@ -5,6 +5,10 @@ import '../modelos/entrada_historial_estudiante_administrador.dart';
 import '../modelos/item_nomina_materia_administrador.dart';
 import '../modelos/materia_estudiante_administrador.dart';
 
+class DniEnUsoAdministradorException implements Exception {
+  const DniEnUsoAdministradorException();
+}
+
 class RepositorioEstudiantesAdministrador {
   const RepositorioEstudiantesAdministrador();
 
@@ -42,14 +46,22 @@ class RepositorioEstudiantesAdministrador {
     required String adminDeviceId,
     required BorradorEstudianteAdministrador draft,
   }) async {
-    final response = await client.functions.invoke(
-      'admin-students',
-      body: {
-        'device_id': adminDeviceId,
-        'action': 'upsert',
-        'student': draft.toPayload(),
-      },
-    );
+    late final FunctionResponse response;
+    try {
+      response = await client.functions.invoke(
+        'admin-students',
+        body: {
+          'device_id': adminDeviceId,
+          'action': 'upsert',
+          'student': draft.toPayload(),
+        },
+      );
+    } on FunctionException catch (error) {
+      if (_isDniCollision(error.details)) {
+        throw const DniEnUsoAdministradorException();
+      }
+      rethrow;
+    }
 
     final data = response.data as Map?;
     if (data?['ok'] != true) {
@@ -67,14 +79,22 @@ class RepositorioEstudiantesAdministrador {
     required String adminDeviceId,
     required List<BorradorEstudianteAdministrador> drafts,
   }) async {
-    final response = await client.functions.invoke(
-      'admin-students',
-      body: {
-        'device_id': adminDeviceId,
-        'action': 'bulk_upsert',
-        'students': drafts.map((draft) => draft.toPayload()).toList(),
-      },
-    );
+    late final FunctionResponse response;
+    try {
+      response = await client.functions.invoke(
+        'admin-students',
+        body: {
+          'device_id': adminDeviceId,
+          'action': 'bulk_upsert',
+          'students': drafts.map((draft) => draft.toPayload()).toList(),
+        },
+      );
+    } on FunctionException catch (error) {
+      if (_isDniCollision(error.details)) {
+        throw const DniEnUsoAdministradorException();
+      }
+      rethrow;
+    }
 
     final data = response.data as Map?;
     if (data?['ok'] != true) {
@@ -222,4 +242,8 @@ class RepositorioEstudiantesAdministrador {
             row.cast<String, dynamic>()))
         .toList(growable: false);
   }
+}
+
+bool _isDniCollision(dynamic details) {
+  return details is Map && details['code'] == 'dni_already_exists';
 }

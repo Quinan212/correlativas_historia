@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../compartido/supabase/supabase.dart';
+import '../datos/repositorio_estudiantes_administrador.dart';
 import '../modelos/estudiante_administrador.dart';
 import '../proveedores/proveedores_estudiantes_administrador.dart';
 import 'estudiantes/selector_carrera.dart';
@@ -360,7 +361,7 @@ class _EstudiantesAdministradorPantallaState
         drafts: drafts,
       );
       _bulkCtrl.clear();
-    }, success: '${drafts.length} alumnos cargados o actualizados.');
+    }, success: '${drafts.length} alumnos cargados.');
   }
 
   Future<void> _runSave(
@@ -374,12 +375,34 @@ class _EstudiantesAdministradorPantallaState
       if (!mounted) return;
       setState(() {});
       _showMessage(success);
+    } on DniEnUsoAdministradorException {
+      if (!mounted) return;
+      await _mostrarDniEnUso();
     } catch (error) {
       if (!mounted) return;
       _showMessage('No se pudo guardar: $error');
     } finally {
       if (mounted) setState(() => _busy = false);
     }
+  }
+
+  Future<void> _mostrarDniEnUso() {
+    return showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        icon: const Icon(Icons.warning_amber_rounded),
+        title: const Text('DNI ya registrado'),
+        content: const Text(
+          'Ese DNI pertenece a otro usuario. No se creó ni modificó ningún registro.',
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Entendido'),
+          ),
+        ],
+      ),
+    );
   }
 
   BorradorEstudianteAdministrador? _buildDraft() {

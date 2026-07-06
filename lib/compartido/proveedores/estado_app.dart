@@ -110,6 +110,7 @@ const List<CareerInfo> kCareers = [
     assetHtml: 'assets/data/artes_visuales.json',
     downloadUrl: 'https://drive.google.com/tu_link_oficial_de_artes_visuales',
     categoria: 'profesorado',
+    iconAsset: 'assets/career_icons/logo_artes.png',
   ),
   CareerInfo(
     id: 'fisica',
@@ -125,7 +126,7 @@ const List<CareerInfo> kCareers = [
     assetHtml: 'assets/Musica.html',
     downloadUrl: 'https://drive.google.com/tu_link_oficial_de_musica',
     categoria: 'profesorado',
-    hidden: true,
+    iconAsset: 'assets/career_icons/logo_artes.png',
   ),
   CareerInfo(
     id: 'lengua_literatura',

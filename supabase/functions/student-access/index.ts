@@ -104,19 +104,122 @@ Deno.serve(async (req: Request) => {
         return json({ ok: false, error: "E-mail invalido" }, 400);
       }
 
+      // Año actual y cohorte: editables por cualquier usuario.
+      const currentYear = body?.current_year != null
+        ? parseInt(body.current_year)
+        : undefined;
+      if (currentYear !== undefined && (currentYear < 1 || currentYear > 4)) {
+        return json({ ok: false, error: "Año actual invalido (1 a 4)" }, 400);
+      }
+      const cohortYear = body?.cohort_year != null
+        ? parseInt(body.cohort_year)
+        : undefined;
+      if (
+        cohortYear !== undefined && (cohortYear < 2015 || cohortYear > 2026)
+      ) {
+        return json({ ok: false, error: "Cohorte invalida (2015 a 2026)" }, 400);
+      }
+
+      // Nombre, DNI, carrera y división son editables por cualquier usuario.
+      const isDemo = student.is_demo === true;
+      const firstName = body?.first_name !== undefined
+        ? nullableString(body.first_name)
+        : undefined;
+      if (body?.first_name !== undefined && !firstName) {
+        return json({ ok: false, error: "Nombre requerido" }, 400);
+      }
+      const lastName = body?.last_name !== undefined
+        ? nullableString(body.last_name)
+        : undefined;
+      if (body?.last_name !== undefined && !lastName) {
+        return json({ ok: false, error: "Apellido requerido" }, 400);
+      }
+      const requestedDni = body?.dni !== undefined
+        ? (nullableString(body.dni)?.replaceAll(/\D/g, "") || null)
+        : undefined;
+      if (requestedDni !== undefined && !/^\d{7,9}$/.test(requestedDni ?? "")) {
+        return json({ ok: false, error: "DNI invalido" }, 400);
+      }
+      if (requestedDni && requestedDni !== student.dni) {
+        const { data: dniOwner, error: dniLookupError } = await supabase
+          .from("academic_students")
+          .select("id")
+          .eq("dni", requestedDni)
+          .neq("id", studentUuid)
+          .maybeSingle();
+        if (dniLookupError) throw dniLookupError;
+        if (dniOwner) return dniAlreadyExists();
+      }
+      const careerId = body?.career_id !== undefined
+        ? nullableString(body.career_id)
+        : undefined;
+      if (careerId !== undefined && careerId && !VALID_CAREERS.has(careerId)) {
+        return json({ ok: false, error: "Carrera invalida" }, 400);
+      }
+      const division = body?.division !== undefined
+        ? nullableString(body.division)?.toUpperCase() ?? null
+        : undefined;
+      if (division !== undefined && !["A", "B"].includes(division ?? "")) {
+        return json({ ok: false, error: "Division invalida (A o B)" }, 400);
+      }
+
+      const updatePayload: Record<string, unknown> = {
+        contact_phone: contactPhone,
+        contact_email: contactEmail,
+      };
+      if (currentYear !== undefined) updatePayload.current_year = currentYear;
+      if (cohortYear !== undefined) updatePayload.cohort_year = cohortYear;
+      if (firstName !== undefined) updatePayload.first_name = firstName;
+      if (lastName !== undefined) updatePayload.last_name = lastName;
+      if (requestedDni !== undefined) updatePayload.dni = requestedDni;
+      if (careerId !== undefined) updatePayload.career_id = careerId;
+      if (division !== undefined) updatePayload.division = division;
+
       const { data: updatedStudent, error: updateError } = await supabase
         .from("academic_students")
-        .update({
-          contact_phone: contactPhone,
-          contact_email: contactEmail,
-        })
+        .update(updatePayload)
         .eq("id", studentUuid)
         .select(
           "id, dni, first_name, last_name, career_id, is_demo, cohort_year, current_year, division, is_new_student, is_repeating, enrollment_status, contact_phone, contact_email, notes",
         )
         .single();
 
+      if (updateError?.code === "23505") return dniAlreadyExists();
       if (updateError) throw updateError;
+
+      if (
+        requestedDni && requestedDni !== student.dni && !isDemo &&
+        user.is_anonymous !== true
+      ) {
+        const { error: authUpdateError } = await supabase.auth.admin.updateUserById(
+          user.id,
+          {
+            email: `${requestedDni}@correlativas.local`,
+            email_confirm: true,
+          },
+        );
+        if (authUpdateError) {
+          const { error: rollbackError } = await supabase
+            .from("academic_students")
+            .update({
+              dni: student.dni,
+              first_name: student.first_name,
+              last_name: student.last_name,
+              career_id: student.career_id,
+              division: student.division,
+              current_year: student.current_year,
+              cohort_year: student.cohort_year,
+              contact_phone: student.contact_phone,
+              contact_email: student.contact_email,
+            })
+            .eq("id", studentUuid);
+          if (rollbackError) console.error("DNI rollback failed", rollbackError);
+          if (authUpdateError.message.toLowerCase().includes("already")) {
+            return dniAlreadyExists();
+          }
+          throw authUpdateError;
+        }
+      }
 
       await supabase.from("academic_student_history").insert({
         student_id: studentUuid,
@@ -124,6 +227,13 @@ Deno.serve(async (req: Request) => {
         payload: {
           contact_phone: contactPhone,
           contact_email: contactEmail,
+          ...(currentYear !== undefined && { current_year: currentYear }),
+          ...(cohortYear !== undefined && { cohort_year: cohortYear }),
+          ...(firstName !== undefined && { first_name: firstName }),
+          ...(lastName !== undefined && { last_name: lastName }),
+          ...(requestedDni !== undefined && { dni: requestedDni }),
+          ...(careerId !== undefined && { career_id: careerId }),
+          ...(division !== undefined && { division }),
         },
       });
 
@@ -325,6 +435,17 @@ function json(payload: unknown, status = 200) {
       "Content-Type": "application/json",
     },
   });
+}
+
+function dniAlreadyExists() {
+  return json(
+    {
+      ok: false,
+      code: "dni_already_exists",
+      error: "Ese DNI ya pertenece a otro usuario",
+    },
+    409,
+  );
 }
 
 function stringValue(value: unknown) {

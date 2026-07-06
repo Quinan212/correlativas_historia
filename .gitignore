@@ -31,6 +31,13 @@ devices*.txt
 # Archivos de entorno con credenciales
 *.env
 
+# Exportaciones locales de Supabase con datos personales o credenciales
+/auth_users.json
+/nicolas_update.json
+/profiles.json
+/schema.json
+/students.json
+
 # Archivos de log de ejecución
 tmp_*.log
 flutter_run_*.log

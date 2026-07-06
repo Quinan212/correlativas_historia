@@ -130,12 +130,22 @@ Deno.serve(async (req) => {
       const validation = validateStudent(student);
       if (validation) return json({ ok: false, error: validation }, 400);
 
-      const payload = toRow(student, deviceId);
-      const { data, error } = await supabase
+      let collisionQuery = supabase
         .from("academic_students")
-        .upsert(payload, { onConflict: "dni" })
-        .select()
-        .single();
+        .select("id")
+        .eq("dni", student.dni);
+      if (student.id) collisionQuery = collisionQuery.neq("id", student.id);
+      const { data: dniOwner, error: dniLookupError } = await collisionQuery
+        .maybeSingle();
+      if (dniLookupError) throw dniLookupError;
+      if (dniOwner) return dniAlreadyExists();
+
+      const payload = toRow(student, deviceId);
+      const query = student.id
+        ? supabase.from("academic_students").update(payload).eq("id", student.id)
+        : supabase.from("academic_students").insert(payload);
+      const { data, error } = await query.select().single();
+      if (error?.code === "23505") return dniAlreadyExists();
       if (error) throw error;
 
       await insertHistory(data.id, "student_upsert", payload, deviceId);
@@ -290,10 +300,21 @@ Deno.serve(async (req) => {
         return json({ ok: false, error: "No hay alumnos para cargar" }, 400);
       }
 
+      const dnis = rows.map((row: any) => stringValue(row.dni));
+      if (new Set(dnis).size !== dnis.length) return dniAlreadyExists();
+      const { data: existingDnis, error: dniLookupError } = await supabase
+        .from("academic_students")
+        .select("dni")
+        .in("dni", dnis)
+        .limit(1);
+      if (dniLookupError) throw dniLookupError;
+      if ((existingDnis ?? []).length > 0) return dniAlreadyExists();
+
       const { data, error } = await supabase
         .from("academic_students")
-        .upsert(rows, { onConflict: "dni" })
+        .insert(rows)
         .select();
+      if (error?.code === "23505") return dniAlreadyExists();
       if (error) throw error;
 
       for (const student of data ?? []) {
@@ -533,4 +554,15 @@ function json(payload: unknown, status = 200) {
     status,
     headers: { "Content-Type": "application/json" },
   });
+}
+
+function dniAlreadyExists() {
+  return json(
+    {
+      ok: false,
+      code: "dni_already_exists",
+      error: "Ese DNI ya pertenece a otro usuario",
+    },
+    409,
+  );
 }

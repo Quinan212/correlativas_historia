@@ -2,7 +2,7 @@ name: correlativas_historia
 description: "correlativas"
 publish_to: "none"
 
-version: 1.3.260608+749
+version: 1.3.260608+750
 
 environment:
   sdk: ">=3.3.0 <4.0.0"
@@ -72,7 +72,52 @@ flutter:
     - assets/coloquios_feb_mar_2026.json
     - assets/examenes_mayo_2026.json
     - assets/coloquios_mayo_2026.json
-    - assets/banners/
+    - assets/banners/historia/1/antiguedad.webp
+    - assets/banners/historia/1/antiguedad_ancho.webp
+    - assets/banners/historia/1/didactica_general.webp
+    - assets/banners/historia/1/didactica_general_ancho.webp
+    - assets/banners/historia/1/corporeidad_juego.webp
+    - assets/banners/historia/1/corporeidad_juego_ancho.webp
+    - assets/banners/historia/1/historia_ideas_1.webp
+    - assets/banners/historia/1/historia_ideas_1_ancho.webp
+    - assets/banners/historia/1/oralidad_lectura_tic.webp
+    - assets/banners/historia/1/oralidad_lectura_tic_ancho.webp
+    - assets/banners/historia/1/problematica_conocimiento.webp
+    - assets/banners/historia/1/problematica_conocimiento_ancho.webp
+    - assets/banners/historia/1/pueblos_originarios.webp
+    - assets/banners/historia/1/pueblos_originarios_ancho.webp
+    - assets/banners/historia/1/pedagogia.webp
+    - assets/banners/historia/1/pedagogia_ancho.webp
+    - assets/banners/historia/1/practica_docente_1.webp
+    - assets/banners/historia/1/practica_docente_1_ancho.webp
+    - assets/banners/historia/2/filosofia.webp
+    - assets/banners/historia/2/filosofia_ancho.webp
+    - assets/banners/historia/2/didactica_ciencias_sociales.webp
+    - assets/banners/historia/2/didactica_ciencias_sociales_ancho.webp
+    - assets/banners/historia/2/economia_politica.webp
+    - assets/banners/historia/2/economia_politica_ancho.webp
+    - assets/banners/historia/2/educacion_sexual_integral.webp
+    - assets/banners/historia/2/educacion_sexual_integral_ancho.webp
+    - assets/banners/historia/2/mundo_territorialidades.webp
+    - assets/banners/historia/2/mundo_territorialidades_ancho.webp
+    - assets/banners/historia/2/psicologia_educacional.webp
+    - assets/banners/historia/2/psicologia_educacional_ancho.webp
+    - assets/banners/historia/2/sujetos_educacion_secundaria.webp
+    - assets/banners/historia/2/sujetos_educacion_secundaria_ancho.webp
+    - assets/banners/historia/3/instituciones_educativas.webp
+    - assets/banners/historia/3/instituciones_educativas_ancho.webp
+    - assets/banners/historia/3/epistemologia_historia.webp
+    - assets/banners/historia/3/epistemologia_historia_ancho.webp
+    - assets/banners/historia/3/historia_politica_educacion_argentina.webp
+    - assets/banners/historia/3/historia_politica_educacion_argentina_ancho.webp
+    - assets/banners/historia/3/procesos_americanos_ii.webp
+    - assets/banners/historia/3/procesos_americanos_ii_ancho.webp
+    - assets/banners/historia/3/procesos_contemporaneos_i.webp
+    - assets/banners/historia/3/procesos_contemporaneos_i_ancho.webp
+    - assets/banners/historia/3/procesos_argentina_i.webp
+    - assets/banners/historia/3/procesos_argentina_i_ancho.webp
+    - assets/banners/historia/3/sociologia_educacion.webp
+    - assets/banners/historia/3/sociologia_educacion_ancho.webp
     - shorebird.yaml
 
   fonts:
