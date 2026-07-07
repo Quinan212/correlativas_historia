@@ -640,13 +640,6 @@ class _MateriasEstudiantePantallaState
           },
         ),
       ),
-      bottomNavigationBar: SafeArea(
-        top: false,
-        child: BarraInferiorDetalle(
-          onTap: () => Navigator.of(context).pop(),
-          label: 'Cerrar y volver',
-        ),
-      ),
     );
   }
 }

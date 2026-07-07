@@ -45,9 +45,11 @@ class _TableroEstadoMateria extends StatelessWidget {
     final String? noteLabel = current?.grade != null
         ? 'Nota ${current!.grade!.toStringAsFixed(0)}'
         : null;
-    final String? periodLabel = (current?.academicPeriod.isNotEmpty ?? false)
-        ? _etiquetaPeriodo(current!.academicPeriod)
-        : null;
+    final String? periodLabel = current?.sourceDate != null
+        ? nombreMesAcademico(current!.sourceDate!)
+        : (current?.academicPeriod.isNotEmpty ?? false)
+            ? _etiquetaPeriodo(current!.academicPeriod)
+            : null;
     final String? condLabel = current?.detailStatus != null
         ? _etiquetaDetalle(current!.detailStatus!)
         : null;

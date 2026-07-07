@@ -18,6 +18,7 @@ const _artesOverlayCompactAsset = 'assets/career_icons/logo_artes.png';
 const _bannerCollapseDuration = Duration(milliseconds: 760);
 const Map<String, String> _overlayBannerVideosByInstitutionId = {
   'artes_visuales_cesareo': _artesOverlayBannerAsset,
+  'musica_cesareo': _artesOverlayBannerAsset,
   'geografia_pscs': _geografiaOverlayBannerAsset,
   'historia_pscs': _historiaOverlayBannerAsset,
 };

@@ -189,3 +189,18 @@ String? _emptyToNull(dynamic value) {
   final text = value?.toString().trim() ?? '';
   return text.isEmpty ? null : text;
 }
+
+String nombreMesAcademico(DateTime date) => const <String>[
+      'Enero',
+      'Febrero',
+      'Marzo',
+      'Abril',
+      'Mayo',
+      'Junio',
+      'Julio',
+      'Agosto',
+      'Septiembre',
+      'Octubre',
+      'Noviembre',
+      'Diciembre',
+    ][date.month - 1];

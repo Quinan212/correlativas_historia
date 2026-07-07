@@ -187,7 +187,7 @@ class ServicioNotificacionesPush {
         AndroidInitializationSettings('@mipmap/ic_launcher');
 
     await _localNotifications.initialize(
-      const InitializationSettings(
+      settings: const InitializationSettings(
         android: androidSettings,
       ),
       onDidReceiveNotificationResponse: _handleLocalNotificationTap,
@@ -228,10 +228,10 @@ class ServicioNotificacionesPush {
     if (notification == null) return;
 
     await _localNotifications.show(
-      notification.hashCode,
-      notification.title,
-      notification.body,
-      NotificationDetails(
+      id: notification.hashCode,
+      title: notification.title,
+      body: notification.body,
+      notificationDetails: NotificationDetails(
         android: AndroidNotificationDetails(
           _verificationUpdatesChannel.id,
           _verificationUpdatesChannel.name,

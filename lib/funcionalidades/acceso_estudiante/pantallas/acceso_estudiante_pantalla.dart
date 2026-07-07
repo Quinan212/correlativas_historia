@@ -7,7 +7,6 @@ import '../../../datos/cargador_fuente_html.dart';
 import '../../../funcionalidades/calculadora/pantalla/pantalla_calculadora.dart';
 import '../../../funcionalidades/cascada/pantalla/pantalla_inicio_mapa.dart';
 import '../../../funcionalidades/cascada/pantalla/pantalla_mapa_correlatividades.dart';
-import '../../../funcionalidades/cascada/panel_detalle/componentes/controles_superiores.dart';
 import '../../../funcionalidades/examenes/examenes_pantalla.dart';
 import '../../../funcionalidades/preguntas_frecuentes/preguntas_frecuentes_pantalla.dart';
 import '../../../modelos/materia.dart';
@@ -25,7 +24,10 @@ part '../componentes/panel/panel_estudiante.dart';
 part '../componentes/datos/datos_estudiante.dart';
 part '../componentes/materias/materias_estudiante.dart';
 part '../componentes/materias/estado_academico_estudiante.dart';
-part '../componentes/seguimiento/pantallas_secundarias_estudiante.dart';
+part '../componentes/seguimiento/notificaciones_estudiante_pantalla.dart';
+part '../componentes/seguimiento/proximos_pasos_estudiante_pantalla.dart';
+part '../componentes/seguimiento/progreso_estudiante_pantalla.dart';
+part '../componentes/seguimiento/calendario_academico_estudiante_pantalla.dart';
 part '../componentes/comunes/componentes_comunes_estudiante.dart';
 part '../dominio/entrada_plan_estudios.dart';
 part '../componentes/acceso/registro_invitado_estudiante.dart';
@@ -56,7 +58,8 @@ class _AccesoEstudiantePantallaState
   void initState() {
     super.initState();
     _scrollController.addListener(_handleScroll);
-    if (Supabase.instance.client.auth.currentSession != null) {
+    final client = ref.read(proveedorClienteSupabase);
+    if (client?.auth.currentSession != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _loadTrajectory());
     }
   }
@@ -504,7 +507,8 @@ class _AccesoEstudiantePantallaState
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final loggedIn = Supabase.instance.client.auth.currentSession != null;
+    final loggedIn =
+        ref.watch(proveedorClienteSupabase)?.auth.currentSession != null;
     final student = _payload?.student;
 
     return Scaffold(

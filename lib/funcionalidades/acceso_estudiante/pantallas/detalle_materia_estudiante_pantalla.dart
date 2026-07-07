@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../modelos/materia.dart';
 import '../../../compartido/componentes/tarjetas_metricas.dart';
-import '../../cascada/panel_detalle/componentes/controles_superiores.dart';
 import '../modelos/modelos_acceso_estudiante.dart';
 
 /// Pantalla pública de detalle de materia (estado, historial, correlativas)
@@ -110,13 +109,6 @@ class DetalleMateriaEstudiantePantalla extends StatelessWidget {
             ),
           ),
         ],
-      ),
-      bottomNavigationBar: SafeArea(
-        top: false,
-        child: BarraInferiorDetalle(
-          onTap: () => Navigator.of(context).pop(),
-          label: 'Cerrar y volver',
-        ),
       ),
     );
   }
@@ -275,24 +267,28 @@ class DetalleMateriaEstudiantePantalla extends StatelessWidget {
               status == 'cursando' ||
               status == 'regular');
 
-      final dateLabel = _historyDateLabel(item.createdAt) ??
-          _historyDateLabel(_parseHistoryDate(payload['source_date']));
+      final historyDateLabel =
+          _historyDateLabel(_parseHistoryDate(payload['source_date'])) ??
+              _historyDateLabel(item.createdAt);
 
       if (isEnrollment && steps.every((step) => step.label != 'Inscripción')) {
         steps.add(_PasoHistorialMateria(
           label: 'Inscripción',
           detail: 'Alta de la materia',
-          dateLabel: dateLabel,
+          dateLabel: historyDateLabel,
           color: const Color(0xFF2B6F96),
           icon: Icons.edit_note_rounded,
         ));
       }
 
       if (isApproved) {
+        final current = entry.current;
         approvalStep = _PasoHistorialMateria(
           label: 'Acreditación del espacio',
-          detail: _historyCreditDetail(payload),
-          dateLabel: dateLabel,
+          detail: current == null
+              ? _historyCreditDetail(payload)
+              : _subjectCreditDetail(current),
+          dateLabel: _historyDateLabel(current?.sourceDate) ?? historyDateLabel,
           color: const Color(0xFF2EAD57),
           icon: Icons.check_circle_rounded,
         );
@@ -326,6 +322,19 @@ class DetalleMateriaEstudiantePantalla extends StatelessWidget {
       parts.add(
         parsed == null ? 'Nota $grade' : 'Nota ${parsed.toStringAsFixed(0)}',
       );
+    }
+    return parts.join(' · ');
+  }
+
+  String _subjectCreditDetail(MateriaEstudiante current) {
+    final parts = <String>[
+      'Aprobada en ${(current.sourceDate != null ? nombreMesAcademico(current.sourceDate!) : _etiquetaPeriodo(current.academicPeriod)).toLowerCase()}',
+    ];
+    if (current.detailStatus != null) {
+      parts.add(_etiquetaDetalle(current.detailStatus!));
+    }
+    if (current.grade != null) {
+      parts.add('Nota ${current.grade!.toStringAsFixed(0)}');
     }
     return parts.join(' · ');
   }
@@ -792,7 +801,9 @@ class _TableroEstadoMateria extends StatelessWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          _etiquetaPeriodoTop(current.academicPeriod),
+                          current.sourceDate != null
+                              ? nombreMesAcademico(current.sourceDate!)
+                              : _etiquetaPeriodoTop(current.academicPeriod),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: theme.textTheme.bodySmall?.copyWith(
@@ -917,11 +928,9 @@ class _CompactInsignia extends StatelessWidget {
 }
 
 class _TarjetaVidrio extends StatelessWidget {
-  const _TarjetaVidrio(
-      {required this.child, this.padding = const EdgeInsets.all(18)});
+  const _TarjetaVidrio({required this.child});
 
   final Widget child;
-  final EdgeInsetsGeometry padding;
 
   @override
   Widget build(BuildContext context) {
@@ -929,7 +938,7 @@ class _TarjetaVidrio extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
     return Container(
       width: double.infinity,
-      padding: padding,
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF0A1020) : Colors.white,
         borderRadius: BorderRadius.circular(26),

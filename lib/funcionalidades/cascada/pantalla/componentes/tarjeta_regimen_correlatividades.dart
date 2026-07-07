@@ -160,7 +160,7 @@ class TarjetaRegimenCorrelatividades extends ConsumerWidget {
           institucionLinea:
               'Escuela Secundaria y Superior N 1 "Cesareo Bernaldo de Quiros"',
           institucionCorta: 'Cesareo Bernaldo de Quiros',
-          logoAsset: 'assets/career_icons/career_logo.png',
+          logoAsset: 'assets/career_icons/logo_artes.png',
           resolucion:
               'Resolucion N 2867/23 C.G.E. | Expte. Grabado N (2856760) | Provincia de Entre Rios - Consejo General de Educacion.',
         );

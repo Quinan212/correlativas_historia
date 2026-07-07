@@ -187,7 +187,7 @@ String _estadoMateriaParaRequisito(MateriaEstudiante subject) {
 
 String _subjectCreditDetail(MateriaEstudiante current) {
   final parts = <String>[
-    'Aprobada en ${_etiquetaPeriodo(current.academicPeriod).toLowerCase()}',
+    'Aprobada en ${(current.sourceDate != null ? nombreMesAcademico(current.sourceDate!) : _etiquetaPeriodo(current.academicPeriod)).toLowerCase()}',
   ];
   if (current.detailStatus != null) {
     parts.add(_etiquetaMetodoAcreditacion(
@@ -317,15 +317,16 @@ List<_PasoHistorialMateria> _subjectHistorySteps(
             status == 'cursando' ||
             status == 'regular');
 
-    final dateLabel = _historyDateLabel(item.createdAt) ??
-        _historyDateLabel(_parseHistoryDate(payload['source_date']));
+    final historyDateLabel =
+        _historyDateLabel(_parseHistoryDate(payload['source_date'])) ??
+            _historyDateLabel(item.createdAt);
 
     if (isEnrollment && steps.every((step) => step.label != 'Inscripción')) {
       steps.add(
         _PasoHistorialMateria(
           label: 'Inscripción',
           detail: 'Alta de la materia',
-          dateLabel: dateLabel,
+          dateLabel: historyDateLabel,
           color: const Color(0xFF2B6F96),
           icon: Icons.edit_note_rounded,
         ),
@@ -333,10 +334,13 @@ List<_PasoHistorialMateria> _subjectHistorySteps(
     }
 
     if (isApproved) {
+      final current = entry.current;
       approvalStep = _PasoHistorialMateria(
         label: 'Acreditación del espacio',
-        detail: _historyCreditDetail(payload),
-        dateLabel: dateLabel,
+        detail: current == null
+            ? _historyCreditDetail(payload)
+            : _subjectCreditDetail(current),
+        dateLabel: _historyDateLabel(current?.sourceDate) ?? historyDateLabel,
         color: const Color(0xFF2EAD57),
         icon: Icons.check_circle_rounded,
       );
@@ -493,7 +497,6 @@ List<_MovimientoEstudiante> _buildStudentMovements(
 }
 
 List<_EventoCalendarioAcademico> _buildAcademicCalendarEvents(
-  List<EntradaHistorialEstudiante> history,
   List<_CurriculumEntry> entries,
 ) {
   final events = <_EventoCalendarioAcademico>[];
@@ -507,34 +510,45 @@ List<_EventoCalendarioAcademico> _buildAcademicCalendarEvents(
     }
   }
 
-  for (final movement in _buildStudentMovements(history, entries)) {
-    final date = _parseDisplayDate(movement.dateLabel);
-    if (date == null) continue;
-    addEvent(
-      _EventoCalendarioAcademico(
-        date: date,
-        title: movement.title,
-        detail: movement.detail,
-        icon: movement.icon,
-        color: movement.color,
-        entry: movement.entry,
-      ),
-    );
-  }
-
   for (final entry in entries) {
     final current = entry.current;
     if (current == null || current.sourceDate == null) continue;
-    if (!_isSubjectApproved(current)) continue;
+
+    final status = _estadoMateriaParaRequisito(current);
+    final (title, detail, icon, color) = switch (status) {
+      'aprobada' => (
+          'Aprob\u00f3 ${entry.materia.displayNombre}',
+          _subjectCreditDetail(current),
+          Icons.check_circle_rounded,
+          const Color(0xFF2EAD57),
+        ),
+      'regular' => (
+          'Regulariz\u00f3 ${entry.materia.displayNombre}',
+          'Materia regularizada',
+          Icons.verified_rounded,
+          const Color(0xFF2B6F96),
+        ),
+      'cursando' => (
+          'Comenz\u00f3 ${entry.materia.displayNombre}',
+          'Inicio de cursada',
+          Icons.school_rounded,
+          const Color(0xFF7C3AED),
+        ),
+      _ => (
+          entry.materia.displayNombre,
+          'Movimiento acad\u00e9mico',
+          Icons.event_note_rounded,
+          const Color(0xFF64748B),
+        ),
+    };
+
     addEvent(
       _EventoCalendarioAcademico(
         date: current.sourceDate!,
-        title: 'Aprob\u00f3 ${entry.materia.displayNombre}',
-        detail: current.grade == null
-            ? 'Materia acreditada'
-            : 'Materia acreditada \u00b7 Nota ${current.grade!.toStringAsFixed(0)}',
-        icon: Icons.check_circle_rounded,
-        color: const Color(0xFF2EAD57),
+        title: title,
+        detail: detail,
+        icon: icon,
+        color: color,
         entry: entry,
       ),
     );

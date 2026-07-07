@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 import 'package:correlativas_historia/funcionalidades/cascada/mapa_correlatividades_pantalla.dart';
@@ -53,6 +54,9 @@ class App extends ConsumerWidget {
         title: 'Mapa y Calculadora de Correlatividades',
         debugShowCheckedModeBanner: false,
         showPerformanceOverlay: RendimientoApp.diagnosticosHabilitados,
+        locale: const Locale('es', 'AR'),
+        localizationsDelegates: GlobalMaterialLocalizations.delegates,
+        supportedLocales: const <Locale>[Locale('es', 'AR')],
         themeMode: themeMode,
         theme: TemaApp.light(),
         darkTheme: TemaApp.dark(),

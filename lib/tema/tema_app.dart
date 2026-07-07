@@ -45,6 +45,7 @@ class TemaApp {
       ),
       iconTheme: const IconThemeData(color: _textMutedLight),
       pageTransitionsTheme: buildAppPageTransitionsTheme(),
+      datePickerTheme: _datePickerTheme(cs, _surfaceLight),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: _surfaceLight,
@@ -98,6 +99,7 @@ class TemaApp {
       ),
       iconTheme: const IconThemeData(color: _textMutedDark),
       pageTransitionsTheme: buildAppPageTransitionsTheme(),
+      datePickerTheme: _datePickerTheme(cs, _surfaceDark),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: const Color(0xFF0A1728),
@@ -122,6 +124,51 @@ class TemaApp {
     return t.copyWith(
       textTheme: t.textTheme.apply(fontFamily: 'inter'),
       primaryTextTheme: t.primaryTextTheme.apply(fontFamily: 'inter'),
+    );
+  }
+
+  static DatePickerThemeData _datePickerTheme(
+    ColorScheme colors,
+    Color surface,
+  ) {
+    return DatePickerThemeData(
+      backgroundColor: surface,
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+      headerBackgroundColor: colors.primary,
+      headerForegroundColor: colors.onPrimary,
+      headerHeadlineStyle: const TextStyle(
+        fontSize: 30,
+        fontWeight: FontWeight.w800,
+      ),
+      headerHelpStyle: const TextStyle(
+        fontSize: 13,
+        fontWeight: FontWeight.w700,
+      ),
+      weekdayStyle: TextStyle(
+        color: colors.onSurfaceVariant,
+        fontWeight: FontWeight.w700,
+      ),
+      dayForegroundColor: WidgetStateProperty.resolveWith<Color?>((states) {
+        if (states.contains(WidgetState.selected)) return colors.onPrimary;
+        if (states.contains(WidgetState.disabled)) {
+          return colors.onSurface.withValues(alpha: 0.32);
+        }
+        return colors.onSurface;
+      }),
+      dayBackgroundColor: WidgetStateProperty.resolveWith<Color?>((states) {
+        return states.contains(WidgetState.selected) ? colors.primary : null;
+      }),
+      todayForegroundColor: WidgetStatePropertyAll<Color>(colors.primary),
+      todayBorder: BorderSide(color: colors.primary, width: 1.5),
+      cancelButtonStyle: TextButton.styleFrom(
+        foregroundColor: colors.onSurfaceVariant,
+        textStyle: const TextStyle(fontWeight: FontWeight.w800),
+      ),
+      confirmButtonStyle: TextButton.styleFrom(
+        foregroundColor: colors.primary,
+        textStyle: const TextStyle(fontWeight: FontWeight.w900),
+      ),
     );
   }
 }
