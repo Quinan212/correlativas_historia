@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../modelos/modelos_acceso_estudiante.dart';
@@ -14,25 +17,60 @@ class RepositorioAccesoEstudiante {
     String? guestFirstName,
     String? guestCareerId,
   }) async {
-    final response = await client.functions.invoke(
-      'student-access',
-      body: {
-        'action': 'load',
-        'first_name': ?guestFirstName,
-        'career_id': ?guestCareerId,
-      },
-    );
+    final prefs = await SharedPreferences.getInstance();
+    final cacheKey = _cacheKey(client);
 
-    final data = response.data as Map?;
-    if (data?['ok'] != true) {
-      throw StateError(
-        data?['error']?.toString() ?? 'No se pudo cargar la trayectoria',
+    try {
+      final response = await client.functions.invoke(
+        'student-access',
+        body: {
+          'action': 'load',
+          'first_name': ?guestFirstName,
+          'career_id': ?guestCareerId,
+        },
       );
-    }
 
-    return DatosAccesoEstudiante.fromJson(
-      data!.cast<String, dynamic>(),
-    );
+      final data = response.data as Map?;
+      if (data?['ok'] != true) {
+        throw StateError(
+          data?['error']?.toString() ?? 'No se pudo cargar la trayectoria',
+        );
+      }
+
+      final json = data!.cast<String, dynamic>();
+      await prefs.setString(cacheKey, jsonEncode(json));
+      return DatosAccesoEstudiante.fromJson(json);
+    } catch (error) {
+      if (!_isNetworkError(error)) rethrow;
+
+      final cached = prefs.getString(cacheKey);
+      if (cached == null) rethrow;
+
+      try {
+        return DatosAccesoEstudiante.fromJson(
+          (jsonDecode(cached) as Map).cast<String, dynamic>(),
+        );
+      } catch (_) {
+        rethrow;
+      }
+    }
+  }
+
+  String _cacheKey(SupabaseClient client) {
+    final userId = client.auth.currentUser?.id;
+    if (userId == null || userId.isEmpty) {
+      throw StateError('No hay una sesión de estudiante activa.');
+    }
+    return 'student_access_cache_v1_$userId';
+  }
+
+  bool _isNetworkError(Object error) {
+    final message = error.toString().toLowerCase();
+    return message.contains('socket') ||
+        message.contains('connection') ||
+        message.contains('failed host lookup') ||
+        message.contains('network') ||
+        message.contains('clientexception');
   }
 
   Future<PerfilAccesoEstudiante> updateContact({
@@ -129,10 +167,7 @@ class RepositorioAccesoEstudiante {
   }) async {
     final response = await client.functions.invoke(
       'student-access',
-      body: {
-        'action': 'delete_self_subject',
-        'subject_id': subjectId,
-      },
+      body: {'action': 'delete_self_subject', 'subject_id': subjectId},
     );
 
     final data = response.data as Map?;

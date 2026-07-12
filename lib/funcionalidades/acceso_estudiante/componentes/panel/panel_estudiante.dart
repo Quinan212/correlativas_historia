@@ -138,94 +138,175 @@ class _TarjetaIngreso extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final cs = theme.colorScheme;
 
-    return _TarjetaVidrio(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Acceso al perfil',
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Usá DNI o correo técnico y contraseña para entrar al perfil del alumno.',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: 18),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final compact = constraints.maxWidth < 420;
-              final dniField = TextField(
-                controller: emailCtrl,
-                enabled: !loading,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'DNI o correo',
-                  prefixIcon: Icon(Icons.badge_rounded),
-                ),
-              );
-              final passwordField = TextField(
-                controller: passwordCtrl,
-                enabled: !loading,
-                obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: 'Contraseña',
-                  prefixIcon: Icon(Icons.lock_rounded),
-                ),
-              );
+    InputDecoration fieldDecoration({
+      required String label,
+      required IconData icon,
+    }) {
+      return InputDecoration(
+        labelText: label,
+        prefixIcon: Icon(icon, size: 22),
+        filled: true,
+        fillColor: cs.surfaceContainerLowest,
+        constraints: const BoxConstraints(minHeight: 56),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(18),
+          borderSide: BorderSide(color: cs.outline.withValues(alpha: 0.14)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(18),
+          borderSide: BorderSide(color: cs.outline.withValues(alpha: 0.14)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(18),
+          borderSide: BorderSide(color: cs.primary, width: 1.5),
+        ),
+      );
+    }
 
-              if (compact) {
-                return Column(
-                  children: [
-                    dniField,
-                    const SizedBox(height: 12),
-                    passwordField,
-                  ],
-                );
-              }
-
-              return Row(
-                children: [
-                  Expanded(child: dniField),
-                  const SizedBox(width: 12),
-                  Expanded(child: passwordField),
-                ],
-              );
-            },
-          ),
-          const SizedBox(height: 18),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton.icon(
-              onPressed: loading ? null : onLogin,
-              icon: const Icon(Icons.login_rounded),
-              label: Text(loading ? 'Ingresando...' : 'Entrar'),
-            ),
-          ),
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: loading ? null : onGuestLogin,
-              icon: const Icon(Icons.person_outline_rounded),
-              label: const Text('Ingresar como Invitado'),
-            ),
-          ),
-          if (error != null) ...[
-            const SizedBox(height: 12),
-            Text(
-              error!,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.error,
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 520),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: cs.surface,
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(color: cs.outline.withValues(alpha: 0.12)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.06),
+                blurRadius: 24,
+                offset: const Offset(0, 10),
               ),
-            ),
-          ],
-        ],
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Ingresá a tu cuenta',
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Consultá tu trayectoria, materias, mesas y datos académicos.',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: cs.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 20),
+              AutofillGroup(
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final compact = constraints.maxWidth < 600;
+                    final dniField = TextField(
+                      controller: emailCtrl,
+                      enabled: !loading,
+                      keyboardType: TextInputType.number,
+                      autofillHints: const [AutofillHints.username],
+                      textInputAction: TextInputAction.next,
+                      decoration: fieldDecoration(
+                        label: 'DNI o correo',
+                        icon: Icons.badge_rounded,
+                      ),
+                    );
+                    final passwordField = TextField(
+                      controller: passwordCtrl,
+                      enabled: !loading,
+                      obscureText: true,
+                      autofillHints: const [AutofillHints.password],
+                      textInputAction: TextInputAction.done,
+                      onSubmitted: loading ? null : (_) => onLogin(),
+                      decoration: fieldDecoration(
+                        label: 'Contraseña',
+                        icon: Icons.lock_rounded,
+                      ),
+                    );
+
+                    if (compact) {
+                      return Column(
+                        children: [
+                          dniField,
+                          const SizedBox(height: 14),
+                          passwordField,
+                        ],
+                      );
+                    }
+
+                    return Row(
+                      children: [
+                        Expanded(child: dniField),
+                        const SizedBox(width: 14),
+                        Expanded(child: passwordField),
+                      ],
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: loading ? null : onLogin,
+                  icon: const Icon(Icons.login_rounded),
+                  label: Text(loading ? 'Ingresando...' : 'Entrar'),
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size.fromHeight(52),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: loading ? null : onGuestLogin,
+                  icon: const Icon(Icons.person_outline_rounded),
+                  label: const Text('Ingresar como invitado'),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(50),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    side: BorderSide(color: cs.outline.withValues(alpha: 0.38)),
+                  ),
+                ),
+              ),
+              if (error != null) ...[
+                const SizedBox(height: 12),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.error_outline_rounded,
+                      color: cs.error,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        error!,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: cs.error,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -616,42 +697,58 @@ class _GrillaAccionesEstudiante extends StatelessWidget {
 // Sección promocional al final de Trayectorias con efecto "stacked cards"
 // sincronizado al scroll: las tarjetas empiezan desplegadas (se ven todas)
 // y al bajar se van apilando una por una. Si se sube, se desapilan.
+enum _CardPromocionalAction { exams, scenarios, selfSubjects, academicCalendar }
+
 class _PromocionalTrayectoriasHeaderDelegate
     extends SliverPersistentHeaderDelegate {
   static const List<_CardPromocional> _items = <_CardPromocional>[
     _CardPromocional(
       assetPath: 'assets/banners/historia/recorrido/01.jpg',
-      eyebrow: 'Recorrido sugerido',
-      title: 'Repasá los núcleos del primer año',
-      cta: 'Conocé más',
+      eyebrow: 'Mesas de julio',
+      title: 'Prepará tus finales y revisá las fechas de cada mesa',
+      cta: 'Ver mesas',
       alignment: Alignment.center,
+      action: _CardPromocionalAction.exams,
     ),
     _CardPromocional(
       assetPath: 'assets/banners/historia/recorrido/02.jpg',
-      eyebrow: 'Seguimiento',
-      title: 'Volvé a tus tramos con más movimiento',
-      cta: 'Ver avance',
+      eyebrow: 'Después de rendir',
+      title: 'Comprobá qué materias se habilitan para tu próximo año',
+      cta: 'Consultar correlativas',
       alignment: Alignment.center,
+      action: _CardPromocionalAction.scenarios,
     ),
     _CardPromocional(
       assetPath: 'assets/banners/historia/recorrido/03.jpg',
-      eyebrow: 'Proyección',
-      title: 'Visualizá el trayecto que sigue',
-      cta: 'Planificar',
+      eyebrow: 'Actualizá tu trayectoria',
+      title: 'Cargá tus materias aprobadas y tus notas finales',
+      cta: 'Actualizar registro',
       alignment: Alignment.center,
+      action: _CardPromocionalAction.selfSubjects,
     ),
     _CardPromocional(
       assetPath: 'assets/banners/historia/recorrido/04.jpg',
-      eyebrow: 'Tu carrera',
-      title: 'Descubrí más sobre tu plan',
-      cta: 'Explorar',
+      eyebrow: 'Próximas fechas',
+      title: 'Consultá fechas, eventos y próximos vencimientos',
+      cta: 'Ver calendario',
       alignment: Alignment.topCenter,
+      action: _CardPromocionalAction.academicCalendar,
     ),
   ];
 
-  _PromocionalTrayectoriasHeaderDelegate({required this.viewportHeight});
+  _PromocionalTrayectoriasHeaderDelegate({
+    required this.viewportHeight,
+    required this.onOpenExams,
+    required this.onOpenScenarios,
+    required this.onOpenSelfSubjects,
+    required this.onOpenAcademicCalendar,
+  });
 
   final double viewportHeight;
+  final VoidCallback onOpenExams;
+  final VoidCallback onOpenScenarios;
+  final VoidCallback onOpenSelfSubjects;
+  final VoidCallback onOpenAcademicCalendar;
 
   static const double _cardHeight = 340.0;
   static const double _cardGap = 28.0;
@@ -714,6 +811,19 @@ class _PromocionalTrayectoriasHeaderDelegate
     return ((currentTop - stackedTop) / travel).clamp(0.0, 1.0);
   }
 
+  VoidCallback _callbackFor(_CardPromocionalAction action) {
+    switch (action) {
+      case _CardPromocionalAction.exams:
+        return onOpenExams;
+      case _CardPromocionalAction.scenarios:
+        return onOpenScenarios;
+      case _CardPromocionalAction.selfSubjects:
+        return onOpenSelfSubjects;
+      case _CardPromocionalAction.academicCalendar:
+        return onOpenAcademicCalendar;
+    }
+  }
+
   @override
   Widget build(
     BuildContext context,
@@ -744,6 +854,7 @@ class _PromocionalTrayectoriasHeaderDelegate
               collisionProgress: _progressFor(index, scroll),
               depthProgress: _depthFor(index, scroll),
               cardHeight: _cardHeight,
+              onTap: _callbackFor(item.action),
             ),
           );
         }),
@@ -763,7 +874,11 @@ class _PromocionalTrayectoriasHeaderDelegate
   bool shouldRebuild(
     covariant _PromocionalTrayectoriasHeaderDelegate oldDelegate,
   ) {
-    return oldDelegate.viewportHeight != viewportHeight;
+    return oldDelegate.viewportHeight != viewportHeight ||
+        oldDelegate.onOpenExams != onOpenExams ||
+        oldDelegate.onOpenScenarios != onOpenScenarios ||
+        oldDelegate.onOpenSelfSubjects != onOpenSelfSubjects ||
+        oldDelegate.onOpenAcademicCalendar != onOpenAcademicCalendar;
   }
 }
 
@@ -813,12 +928,14 @@ class _CardPromocionalTrayectorias extends StatelessWidget {
     required this.collisionProgress,
     required this.depthProgress,
     required this.cardHeight,
+    required this.onTap,
   });
 
   final _CardPromocional item;
   final double collisionProgress;
   final double depthProgress;
   final double cardHeight;
+  final VoidCallback onTap;
 
   ColorFilter _brightnessFilter(double brightness) {
     return ColorFilter.matrix(<double>[
@@ -884,8 +1001,8 @@ class _CardPromocionalTrayectorias extends StatelessWidget {
                   ColoredBox(color: scheme.surfaceContainerHighest),
                   Transform.scale(
                     scale: 1.08,
-                    child: Image.asset(
-                      item.assetPath,
+                    child: ImagenMediaRemota(
+                      source: item.assetPath,
                       fit: BoxFit.cover,
                       alignment: item.alignment,
                     ),
@@ -939,22 +1056,48 @@ class _CardPromocionalTrayectorias extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 12),
-                        Row(
-                          children: <Widget>[
-                            Text(
-                              item.cta,
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                color: Colors.white.withValues(alpha: 0.92),
-                                fontWeight: FontWeight.w700,
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: onTap,
+                              borderRadius: BorderRadius.circular(999),
+                              splashColor: Colors.white.withValues(alpha: 0.14),
+                              highlightColor: Colors.white.withValues(
+                                alpha: 0.07,
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 10,
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: <Widget>[
+                                    Text(
+                                      item.cta,
+                                      style: theme.textTheme.bodyMedium
+                                          ?.copyWith(
+                                            color: Colors.white.withValues(
+                                              alpha: 0.92,
+                                            ),
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                    ),
+                                    const SizedBox(width: 5),
+                                    Icon(
+                                      Icons.arrow_forward_rounded,
+                                      size: 16,
+                                      color: Colors.white.withValues(
+                                        alpha: 0.92,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                            const SizedBox(width: 4),
-                            Icon(
-                              Icons.arrow_forward_rounded,
-                              size: 16,
-                              color: Colors.white.withValues(alpha: 0.92),
-                            ),
-                          ],
+                          ),
                         ),
                       ],
                     ),
@@ -976,6 +1119,7 @@ class _CardPromocional {
     required this.title,
     required this.cta,
     required this.alignment,
+    required this.action,
   });
 
   final String assetPath;
@@ -983,4 +1127,5 @@ class _CardPromocional {
   final String title;
   final String cta;
   final Alignment alignment;
+  final _CardPromocionalAction action;
 }

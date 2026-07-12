@@ -14,3 +14,23 @@ final proveedorClienteSupabase = Provider<SupabaseClient?>((ref) {
   if (!bootstrap.isReady) return null;
   return Supabase.instance.client;
 });
+
+final proveedorEstadoAutenticacionSupabase = StreamProvider<AuthState>((ref) {
+  final client = ref.watch(proveedorClienteSupabase);
+
+  if (client == null) {
+    return const Stream<AuthState>.empty();
+  }
+
+  return client.auth.onAuthStateChange;
+});
+
+final proveedorSesionActivaSupabase = Provider<bool>((ref) {
+  final client = ref.watch(proveedorClienteSupabase);
+  final authState = ref.watch(proveedorEstadoAutenticacionSupabase);
+
+  return authState.maybeWhen(
+    data: (state) => state.session != null,
+    orElse: () => client?.auth.currentSession != null,
+  );
+});

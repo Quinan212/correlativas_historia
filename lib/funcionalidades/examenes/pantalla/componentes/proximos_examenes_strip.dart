@@ -131,8 +131,8 @@ class _TarjetaProximo extends StatelessWidget {
               border: Border.all(
                 color: info.isExpired
                     ? (isDark
-                        ? const Color(0xFF374151)
-                        : const Color(0xFFD1D5DB))
+                          ? const Color(0xFF374151)
+                          : const Color(0xFFD1D5DB))
                     : (isDark ? cs.outlineVariant : const Color(0xFFE5E7EB)),
               ),
               color: info.isExpired
@@ -150,25 +150,28 @@ class _TarjetaProximo extends StatelessWidget {
                     borderRadius: BorderRadius.circular(10),
                     color: info.isExpired
                         ? (isDark
-                            ? const Color(0xFF374151)
-                            : const Color(0xFFD1D5DB))
+                              ? const Color(0xFF374151)
+                              : const Color(0xFFD1D5DB))
                         : (isDark
-                            ? const Color(0xFF1F2937)
-                            : const Color(0xFFE5E7EB)),
-                    image: banner == null
-                        ? null
-                        : DecorationImage(
-                            image: AssetImage(banner),
-                            fit: BoxFit.cover,
-                            alignment: Alignment.centerLeft,
-                            colorFilter: info.isExpired
-                                ? ColorFilter.mode(
-                                    Colors.black.withValues(alpha: 0.4),
-                                    BlendMode.saturation,
-                                  )
-                                : null,
-                          ),
+                              ? const Color(0xFF1F2937)
+                              : const Color(0xFFE5E7EB)),
                   ),
+                  child: banner == null
+                      ? null
+                      : Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            ImagenMediaRemota(
+                              source: banner,
+                              fit: BoxFit.cover,
+                              alignment: Alignment.centerLeft,
+                            ),
+                            if (info.isExpired)
+                              ColoredBox(
+                                color: Colors.black.withValues(alpha: 0.4),
+                              ),
+                          ],
+                        ),
                 ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(10, 4, 10, 8),
@@ -195,25 +198,25 @@ class _TarjetaProximo extends StatelessWidget {
                             text: dateLabel,
                             bg: info.isExpired
                                 ? (isDark
-                                    ? const Color(0xFF374151)
-                                    : const Color(0xFFE5E7EB))
+                                      ? const Color(0xFF374151)
+                                      : const Color(0xFFE5E7EB))
                                 : (isDark
-                                    ? const Color(0xFF1F2937)
-                                    : const Color(0xFFF3F4F6)),
+                                      ? const Color(0xFF1F2937)
+                                      : const Color(0xFFF3F4F6)),
                             fg: info.isExpired
                                 ? (isDark
-                                    ? const Color(0xFF9CA3AF)
-                                    : const Color(0xFF6B7280))
+                                      ? const Color(0xFF9CA3AF)
+                                      : const Color(0xFF6B7280))
                                 : (isDark
-                                    ? const Color(0xFFE5E7EB)
-                                    : const Color(0xFF4B5563)),
+                                      ? const Color(0xFFE5E7EB)
+                                      : const Color(0xFF4B5563)),
                             bd: info.isExpired
                                 ? (isDark
-                                    ? const Color(0xFF4B5563)
-                                    : const Color(0xFFD1D5DB))
+                                      ? const Color(0xFF4B5563)
+                                      : const Color(0xFFD1D5DB))
                                 : (isDark
-                                    ? const Color(0xFF4B5563)
-                                    : const Color(0xFFD1D5DB)),
+                                      ? const Color(0xFF4B5563)
+                                      : const Color(0xFFD1D5DB)),
                           ),
                           if (timeLabel != null)
                             _metaChip(
@@ -221,25 +224,25 @@ class _TarjetaProximo extends StatelessWidget {
                               text: timeLabel,
                               bg: info.isExpired
                                   ? (isDark
-                                      ? const Color(0xFF374151)
-                                      : const Color(0xFFE5E7EB))
+                                        ? const Color(0xFF374151)
+                                        : const Color(0xFFE5E7EB))
                                   : (isDark
-                                      ? const Color(0xFF1F2937)
-                                      : const Color(0xFFF3F4F6)),
+                                        ? const Color(0xFF1F2937)
+                                        : const Color(0xFFF3F4F6)),
                               fg: info.isExpired
                                   ? (isDark
-                                      ? const Color(0xFF9CA3AF)
-                                      : const Color(0xFF6B7280))
+                                        ? const Color(0xFF9CA3AF)
+                                        : const Color(0xFF6B7280))
                                   : (isDark
-                                      ? const Color(0xFFE5E7EB)
-                                      : const Color(0xFF4B5563)),
+                                        ? const Color(0xFFE5E7EB)
+                                        : const Color(0xFF4B5563)),
                               bd: info.isExpired
                                   ? (isDark
-                                      ? const Color(0xFF4B5563)
-                                      : const Color(0xFFD1D5DB))
+                                        ? const Color(0xFF4B5563)
+                                        : const Color(0xFFD1D5DB))
                                   : (isDark
-                                      ? const Color(0xFF4B5563)
-                                      : const Color(0xFFD1D5DB)),
+                                        ? const Color(0xFF4B5563)
+                                        : const Color(0xFFD1D5DB)),
                             ),
                           if (item.esColoquio &&
                               item.formattedDivision.isNotEmpty)

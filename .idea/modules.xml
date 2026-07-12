@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/correlativas_historia.iml" filepath="$PROJECT_DIR$/correlativas_historia.iml" />
+      <module fileurl="file://$PROJECT_DIR$/android/correlativas_historia_android.iml" filepath="$PROJECT_DIR$/android/correlativas_historia_android.iml" />
     </modules>
   </component>
 </project>

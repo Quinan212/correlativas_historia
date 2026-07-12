@@ -52,6 +52,7 @@ class _BannerPortada extends StatelessWidget {
     required this.onOpenExams,
     required this.onShowStudentData,
     required this.onOpenAccountSheet,
+    required this.gradientTopExtension,
   });
 
   final bool loggedIn;
@@ -63,6 +64,7 @@ class _BannerPortada extends StatelessWidget {
   final VoidCallback? onOpenExams;
   final VoidCallback? onShowStudentData;
   final VoidCallback? onOpenAccountSheet;
+  final double gradientTopExtension;
 
   @override
   Widget build(BuildContext context) {
@@ -72,109 +74,107 @@ class _BannerPortada extends StatelessWidget {
     final hasLoadedStudent = loggedIn && currentStudent != null;
     const headerBlue = Color(0xFF0E5E86);
 
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: hasLoadedStudent ? null : headerBlue,
-        gradient: hasLoadedStudent
-            ? LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  headerBlue,
-                  headerBlue,
-                  headerBlue,
-                  headerBlue.withValues(alpha: 0.82),
-                  const Color(0xFFEAF1F7),
-                  const Color(0xFFF6F8FC),
-                ],
-                stops: const [0, 0.34, 0.42, 0.62, 0.84, 1],
-              )
-            : null,
-      ),
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(
-          16,
-          16,
-          16,
-          hasLoadedStudent ? 16 : 24,
+    final backgroundDecoration = BoxDecoration(
+      color: hasLoadedStudent ? null : headerBlue,
+      gradient: hasLoadedStudent
+          ? LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                headerBlue,
+                headerBlue,
+                headerBlue,
+                headerBlue.withValues(alpha: 0.82),
+                const Color(0xFFEAF1F7),
+                const Color(0xFFF6F8FC),
+              ],
+              stops: const [0, 0.40, 0.52, 0.70, 0.88, 1],
+            )
+          : null,
+    );
+
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Positioned(
+          top: -gradientTopExtension,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          child: DecoratedBox(decoration: backgroundDecoration),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (loggedIn && currentStudent != null) ...[
-              const SizedBox(height: 8),
-              InkWell(
-                onTap: onOpenAccountSheet,
-                borderRadius: BorderRadius.circular(16),
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
-                  decoration: BoxDecoration(
-                    color: scheme.surface,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: scheme.primary.withValues(alpha: 0.12),
+        Padding(
+          padding: EdgeInsets.fromLTRB(16, 0, 16, hasLoadedStudent ? 16 : 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (loggedIn && currentStudent != null) ...[
+                InkWell(
+                  onTap: onOpenAccountSheet,
+                  borderRadius: BorderRadius.circular(16),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
+                    decoration: BoxDecoration(
+                      color: scheme.surface,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: scheme.primary.withValues(alpha: 0.12),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.07),
+                          blurRadius: 14,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
                     ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.07),
-                        blurRadius: 14,
-                        offset: const Offset(0, 6),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Estudiante',
-                        style: theme.textTheme.labelLarge?.copyWith(
-                          color: scheme.onSurfaceVariant,
-                          fontWeight: FontWeight.w700,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Estudiante',
+                          style: theme.textTheme.labelLarge?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        currentStudent.fullName,
-                        style: theme.textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.w900,
-                          height: 1.04,
+                        const SizedBox(height: 6),
+                        Text(
+                          currentStudent.fullName,
+                          style: theme.textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.w900,
+                            height: 1.04,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        'DNI ${currentStudent.dni} · ${_etiquetaCarrera(currentStudent.careerId)} · ${currentStudent.yearLabel}'
-                        '${currentStudent.cohortYear == null ? '' : ' · Cohorte ${currentStudent.cohortYear}'}'
-                        '${currentStudent.division == null ? '' : ' · División ${currentStudent.division}'}',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: scheme.onSurfaceVariant,
+                        const SizedBox(height: 10),
+                        Text(
+                          'DNI ${currentStudent.dni} · ${_etiquetaCarrera(currentStudent.careerId)} · ${currentStudent.yearLabel}'
+                          '${currentStudent.cohortYear == null ? '' : ' · Cohorte ${currentStudent.cohortYear}'}'
+                          '${currentStudent.division == null ? '' : ' · División ${currentStudent.division}'}',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 18),
-                      _AccionesRapidasTablero(
-                        onOpenSubjects: onOpenSubjects,
-                        onOpenHistory: onOpenHistory,
-                        onOpenExams: onOpenExams,
-                        onShowStudentData: onShowStudentData,
-                        movementCount: movementCount,
-                      ),
-                    ],
+                        const SizedBox(height: 18),
+                        _AccionesRapidasTablero(
+                          onOpenSubjects: onOpenSubjects,
+                          onOpenHistory: onOpenHistory,
+                          onOpenExams: onOpenExams,
+                          onShowStudentData: onShowStudentData,
+                          movementCount: movementCount,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ] else ...[
-              const SizedBox(height: 12),
-              Text(
-                'Entrá con DNI o correo técnico para ver tu recorrido académico.',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: Colors.white.withValues(alpha: 0.92),
-                ),
-              ),
+              ] else ...[
+                const SizedBox(height: 16),
+              ],
             ],
-          ],
+          ),
         ),
-      ),
+      ],
     );
   }
 }
@@ -188,6 +188,7 @@ class _EncabezadoEstudianteFijo extends StatefulWidget {
     required this.onOpenHistory,
     required this.onRefresh,
     required this.onOpenAccountSheet,
+    required this.onOpenSearch,
   });
 
   final bool loggedIn;
@@ -197,6 +198,7 @@ class _EncabezadoEstudianteFijo extends StatefulWidget {
   final VoidCallback? onOpenHistory;
   final Future<void> Function()? onRefresh;
   final VoidCallback? onOpenAccountSheet;
+  final VoidCallback? onOpenSearch;
 
   @override
   State<_EncabezadoEstudianteFijo> createState() =>
@@ -205,6 +207,7 @@ class _EncabezadoEstudianteFijo extends StatefulWidget {
 
 class _EncabezadoEstudianteFijoState extends State<_EncabezadoEstudianteFijo> {
   bool _compact = false;
+  double _searchProgress = 0;
 
   @override
   void initState() {
@@ -219,10 +222,21 @@ class _EncabezadoEstudianteFijoState extends State<_EncabezadoEstudianteFijo> {
   }
 
   void _onScroll() {
-    final compact = widget.scrollController.hasClients &&
-        widget.scrollController.offset > 180;
-    if (compact != _compact && mounted) {
-      setState(() => _compact = compact);
+    final offset = widget.scrollController.hasClients
+        ? widget.scrollController.offset
+        : 0.0;
+
+    final compact = offset > 180;
+
+    final searchProgress = (offset / 60).clamp(0.0, 1.0);
+
+    if ((compact != _compact ||
+            (searchProgress - _searchProgress).abs() > 0.01) &&
+        mounted) {
+      setState(() {
+        _compact = compact;
+        _searchProgress = searchProgress;
+      });
     }
   }
 
@@ -234,7 +248,21 @@ class _EncabezadoEstudianteFijoState extends State<_EncabezadoEstudianteFijo> {
     final greetingName = firstName.isEmpty
         ? 'alumno'
         : firstName.split(RegExp(r'\s+')).first;
+    final headerTitle = widget.loggedIn
+        ? 'Hola, $greetingName'
+        : 'Acceso estudiantil';
     final compact = _compact;
+    final titleWidth = compact ? 80.0 : 150.0;
+    final searchProgress = _searchProgress;
+    final hasSearch = widget.loggedIn && widget.onOpenSearch != null;
+    final titleOpacity = widget.loggedIn
+        ? (1 - searchProgress * 1.25).clamp(0.0, 1.0)
+        : 1.0;
+    final titleOffset = widget.loggedIn ? -52 * searchProgress : 0.0;
+    final actionsOpacity = (1 - searchProgress * 1.15).clamp(0.0, 1.0);
+    final topInset = MediaQuery.paddingOf(context).top;
+    const headerBlue = Color(0xFF0E5E86);
+    final headerRadius = 24 * searchProgress;
 
     final TextStyle? titleStyle = theme.textTheme.titleMedium?.copyWith(
       fontWeight: FontWeight.w900,
@@ -245,99 +273,170 @@ class _EncabezadoEstudianteFijoState extends State<_EncabezadoEstudianteFijo> {
     return RepaintBoundary(
       child: Container(
         width: double.infinity,
-        padding: EdgeInsets.fromLTRB(
-          14,
-          MediaQuery.of(context).padding.top + 6,
-          14,
-          8,
+        clipBehavior: Clip.antiAlias,
+        padding: EdgeInsets.fromLTRB(14, topInset + 6, 14, 14),
+        decoration: BoxDecoration(
+          color: headerBlue,
+          borderRadius: BorderRadius.vertical(
+            bottom: Radius.circular(headerRadius),
+          ),
         ),
-        decoration: const BoxDecoration(color: Color(0xFF0E5E86)),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            InkWell(
-              onTap: widget.onOpenAccountSheet,
-              borderRadius: BorderRadius.circular(14),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 2),
-                child: Row(
-                  children: [
-                    _InstitutionLogoMark(
-                      loggedIn: widget.loggedIn,
-                      assetPath: currentStudent == null
-                          ? null
-                          : _institutionLogoAssetFor(currentStudent.careerId),
-                      size: 38,
-                    ),
-                    const SizedBox(width: 10),
-                    SizedBox(
-                      width: 170,
-                      height: 24,
-                      child: Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          AnimatedOpacity(
-                            duration: const Duration(milliseconds: 140),
-                            curve: Curves.easeOut,
-                            opacity: compact ? 0 : 1,
-                            child: AnimatedSlide(
-                              duration: const Duration(milliseconds: 140),
-                              curve: Curves.easeOut,
-                              offset: compact
-                                  ? const Offset(-0.06, 0)
-                                  : Offset.zero,
-                              child: Text(
-                                'Hola, $greetingName',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: titleStyle,
+        child: SizedBox(
+          height: 42,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Row(
+                children: [
+                  InkWell(
+                    onTap: widget.onOpenAccountSheet,
+                    borderRadius: BorderRadius.circular(14),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 2),
+                      child: Transform.translate(
+                        offset: Offset(titleOffset, 0),
+                        child: Opacity(
+                          opacity: titleOpacity,
+                          child: Row(
+                            children: [
+                              _InstitutionLogoMark(
+                                loggedIn: widget.loggedIn,
+                                assetPath: currentStudent == null
+                                    ? null
+                                    : _institutionLogoAssetFor(
+                                        currentStudent.careerId,
+                                      ),
+                                size: 38,
                               ),
-                            ),
+                              const SizedBox(width: 10),
+                              if (!widget.loggedIn)
+                                SizedBox(
+                                  width: 180,
+                                  child: Text(
+                                    headerTitle,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: titleStyle,
+                                  ),
+                                )
+                              else
+                                AnimatedContainer(
+                                  duration: const Duration(milliseconds: 220),
+                                  curve: Curves.easeOutCubic,
+                                  width: titleWidth,
+                                  height: 24,
+                                  child: Stack(
+                                    fit: StackFit.expand,
+                                    children: [
+                                      AnimatedOpacity(
+                                        duration: const Duration(
+                                          milliseconds: 140,
+                                        ),
+                                        curve: Curves.easeOut,
+                                        opacity: compact ? 0 : 1,
+                                        child: AnimatedSlide(
+                                          duration: const Duration(
+                                            milliseconds: 140,
+                                          ),
+                                          curve: Curves.easeOut,
+                                          offset: compact
+                                              ? const Offset(-0.06, 0)
+                                              : Offset.zero,
+                                          child: Text(
+                                            headerTitle,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: titleStyle,
+                                          ),
+                                        ),
+                                      ),
+                                      AnimatedOpacity(
+                                        duration: const Duration(
+                                          milliseconds: 140,
+                                        ),
+                                        curve: Curves.easeOut,
+                                        opacity: compact ? 1 : 0,
+                                        child: AnimatedSlide(
+                                          duration: const Duration(
+                                            milliseconds: 140,
+                                          ),
+                                          curve: Curves.easeOut,
+                                          offset: compact
+                                              ? Offset.zero
+                                              : const Offset(0.06, 0),
+                                          child: Text(
+                                            greetingName,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: titleStyle,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                            ],
                           ),
-                          AnimatedOpacity(
-                            duration: const Duration(milliseconds: 140),
-                            curve: Curves.easeOut,
-                            opacity: compact ? 1 : 0,
-                            child: AnimatedSlide(
-                              duration: const Duration(milliseconds: 140),
-                              curve: Curves.easeOut,
-                              offset: compact
-                                  ? Offset.zero
-                                  : const Offset(0.06, 0),
-                              child: Text(
-                                greetingName,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: titleStyle,
-                              ),
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
                     ),
-                  ],
+                  ),
+                  const Spacer(),
+                  if (hasSearch)
+                    Opacity(
+                      opacity: 1 - searchProgress,
+                      child: _BotonIconoPortada(
+                        icon: Icons.search_rounded,
+                        tooltip: 'Buscar materias y carreras',
+                        onTap: widget.onOpenSearch,
+                        compact: true,
+                      ),
+                    ),
+                  if (hasSearch) const SizedBox(width: 6),
+                  if (widget.loggedIn || widget.onRefresh != null)
+                    Opacity(
+                      opacity: actionsOpacity,
+                      child: Transform.translate(
+                        offset: Offset(72 * searchProgress, 0),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (widget.loggedIn)
+                              _BotonIconoPortada(
+                                icon: Icons.notifications_none_rounded,
+                                badge: widget.movementCount,
+                                tooltip: 'Movimientos',
+                                onTap: widget.onOpenHistory,
+                                compact: true,
+                              ),
+                            if (widget.loggedIn) const SizedBox(width: 6),
+                            if (widget.onRefresh != null)
+                              _BotonIconoPortada(
+                                icon: Icons.refresh_rounded,
+                                tooltip: 'Actualizar',
+                                onTap: widget.onRefresh,
+                                compact: true,
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              if (hasSearch)
+                Positioned(
+                  left: 0,
+                  right: 88 * (1 - searchProgress),
+                  top: 0,
+                  bottom: 0,
+                  child: _BarraBusquedaPortada(
+                    progress: searchProgress,
+                    tooltip: 'Buscar materias y carreras',
+                    onTap: widget.onOpenSearch,
+                  ),
                 ),
-              ),
-            ),
-            const Spacer(),
-            const SizedBox(width: 8),
-            if (widget.loggedIn)
-              _BotonIconoPortada(
-                icon: Icons.notifications_none_rounded,
-                badge: widget.movementCount,
-                tooltip: 'Movimientos',
-                onTap: widget.onOpenHistory,
-                compact: true,
-              ),
-            if (widget.loggedIn) const SizedBox(width: 6),
-            if (widget.onRefresh != null)
-              _BotonIconoPortada(
-                icon: Icons.refresh_rounded,
-                tooltip: 'Actualizar',
-                onTap: widget.onRefresh,
-                compact: true,
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -407,7 +506,179 @@ class _BotonIconoPortada extends StatelessWidget {
   }
 }
 
+class _BarraBusquedaPortada extends StatelessWidget {
+  const _BarraBusquedaPortada({
+    required this.progress,
+    required this.tooltip,
+    required this.onTap,
+  });
+
+  final double progress;
+  final String tooltip;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    const searchBorder = Color(0xFFEAF1F7);
+    final normalizedProgress = progress.clamp(0.0, 1.0);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final maxWidth = constraints.maxWidth;
+        final width = 42 + (maxWidth - 42) * normalizedProgress;
+        final background = Color.lerp(
+          Colors.white.withValues(alpha: 0.10),
+          Colors.white,
+          normalizedProgress,
+        );
+        final border = Color.lerp(
+          Colors.white.withValues(alpha: 0.28),
+          searchBorder,
+          normalizedProgress,
+        );
+        final labelOpacity = ((normalizedProgress - 0.18) / 0.82).clamp(
+          0.0,
+          1.0,
+        );
+        final contentWidth = (width - 2).clamp(0.0, double.infinity).toDouble();
+        final iconWidth = contentWidth.clamp(0.0, 42.0).toDouble();
+        final showLabel = normalizedProgress > 0.18 && contentWidth > 58;
+
+        return Align(
+          child: Tooltip(
+            message: tooltip,
+            child: Opacity(
+              opacity: normalizedProgress,
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: onTap,
+                  borderRadius: BorderRadius.circular(24),
+                  child: Container(
+                    width: width,
+                    height: 42,
+                    clipBehavior: Clip.hardEdge,
+                    decoration: BoxDecoration(
+                      color: background,
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(color: border!),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(
+                            alpha: 0.10 * normalizedProgress,
+                          ),
+                          blurRadius: 12 * normalizedProgress,
+                          offset: Offset(0, 4 * normalizedProgress),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        SizedBox(
+                          width: iconWidth,
+                          child: Icon(
+                            Icons.search_rounded,
+                            color: scheme.primary,
+                            size: 20,
+                          ),
+                        ),
+                        if (showLabel)
+                          Expanded(
+                            child: Opacity(
+                              opacity: labelOpacity,
+                              child: Text(
+                                'Buscar materias y carreras...',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: scheme.onSurfaceVariant,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ),
+                          ),
+                        if (showLabel) const SizedBox(width: 12),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
 TextStyle themeTextSmall(BuildContext context) {
   return Theme.of(context).textTheme.labelSmall ??
       const TextStyle(fontSize: 11);
+}
+
+class _FondoEsquinasEncabezadoPainter extends CustomPainter {
+  const _FondoEsquinasEncabezadoPainter({
+    required this.scrollOffset,
+    required this.gradientTopExtension,
+    required this.bannerHeight,
+    required this.hasLoadedStudent,
+  });
+
+  final double scrollOffset;
+  final double gradientTopExtension;
+  final double bannerHeight;
+  final bool hasLoadedStudent;
+
+  static const Color _headerBlue = Color(0xFF0E5E86);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final canvasRect = Offset.zero & size;
+
+    if (!hasLoadedStudent) {
+      canvas.drawRect(canvasRect, Paint()..color = _headerBlue);
+      return;
+    }
+
+    final totalGradientHeight = math.max(
+      gradientTopExtension + bannerHeight,
+      1.0,
+    );
+    final bandTopInsideGradient =
+        gradientTopExtension - size.height + scrollOffset;
+    final shaderRect = Rect.fromLTWH(
+      0,
+      -bandTopInsideGradient,
+      size.width,
+      totalGradientHeight,
+    );
+
+    final gradient = LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [
+        _headerBlue,
+        _headerBlue,
+        _headerBlue,
+        _headerBlue.withValues(alpha: 0.82),
+        const Color(0xFFEAF1F7),
+        const Color(0xFFF6F8FC),
+      ],
+      stops: const [0.0, 0.40, 0.52, 0.70, 0.88, 1.0],
+    );
+
+    canvas.drawRect(
+      canvasRect,
+      Paint()..shader = gradient.createShader(shaderRect),
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _FondoEsquinasEncabezadoPainter oldDelegate) {
+    return oldDelegate.scrollOffset != scrollOffset ||
+        oldDelegate.gradientTopExtension != gradientTopExtension ||
+        oldDelegate.bannerHeight != bannerHeight ||
+        oldDelegate.hasLoadedStudent != hasLoadedStudent;
+  }
 }

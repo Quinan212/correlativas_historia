@@ -70,26 +70,104 @@ Deno.serve(async (req: Request) => {
       return json({ ok: false, error: "User not found" }, 404);
     }
 
+    let student: Record<string, unknown> | null = null;
+
     const studentId = stringValue(
       user.user_metadata?.academic_student_id ?? "",
     );
     const email = stringValue(user.email);
-    const dni = email.includes("@") ? email.split("@")[0] : "";
+    const isAnonymous = user.is_anonymous === true;
+    let dni = "";
 
-    const { data: student, error: studentError } = await supabase
-      .from("academic_students")
-      .select(
-        "id, dni, first_name, last_name, career_id, is_demo, cohort_year, current_year, division, is_new_student, is_repeating, enrollment_status, contact_phone, contact_email, notes",
-      )
-      .or(
-        studentId
-          ? `id.eq.${studentId},dni.eq.${dni}`
-          : `dni.eq.${dni}`,
-      )
-      .maybeSingle();
-    if (studentError) throw studentError;
+    if (isAnonymous) {
+      const requestCareerId = body?.career_id != null
+        ? stringValue(body.career_id)
+        : "historia";
+      const rawDni = body?.dni != null ? stringValue(body.dni) : "";
+      const guestDni = rawDni || user.id.replace(/-/g, "").slice(0, 9);
+      const guestName = body?.first_name != null
+        ? stringValue(body.first_name)
+        : "Invitado";
+
+      const { data: existingStudent, error: lookupError } = await supabase
+        .from("academic_students")
+        .select(
+          "id, dni, first_name, last_name, career_id, is_demo, cohort_year, current_year, division, is_new_student, is_repeating, enrollment_status, contact_phone, contact_email, notes",
+        )
+        .eq("dni", guestDni)
+        .eq("career_id", requestCareerId)
+        .maybeSingle();
+      if (lookupError) throw lookupError;
+
+      if (existingStudent) {
+        student = existingStudent;
+      } else if (action === "load") {
+        const { data: newStudent, error: createError } = await supabase
+          .from("academic_students")
+          .insert({
+            dni: guestDni,
+            first_name: guestName,
+            last_name: "",
+            career_id: requestCareerId,
+            is_demo: true,
+            cohort_year: new Date().getFullYear(),
+            current_year: 1,
+          })
+          .select(
+            "id, dni, first_name, last_name, career_id, is_demo, cohort_year, current_year, division, is_new_student, is_repeating, enrollment_status, contact_phone, contact_email, notes",
+          )
+          .single();
+        if (createError) throw createError;
+        const result = await buildLoadResponse(supabase, newStudent);
+        return json(result);
+      }
+      student = existingStudent;
+    } else {
+      dni = email.includes("@") ? email.split("@")[0] : "";
+      const { data: foundStudent, error: studentError } = await supabase
+        .from("academic_students")
+        .select(
+          "id, dni, first_name, last_name, career_id, is_demo, cohort_year, current_year, division, is_new_student, is_repeating, enrollment_status, contact_phone, contact_email, notes",
+        )
+        .or(
+          studentId
+            ? `id.eq.${studentId},dni.eq.${dni}`
+            : `dni.eq.${dni}`,
+        )
+        .maybeSingle();
+      if (studentError) throw studentError;
+      student = foundStudent;
+    }
 
     if (!student) {
+      if (isAnonymous && action === "load") {
+        const rawDni = body?.dni != null ? stringValue(body.dni) : "";
+        const guestDni = rawDni || user.id.replace(/-/g, "").slice(0, 9);
+        const guestCareer = body?.career_id != null
+          ? stringValue(body.career_id)
+          : "historia";
+        const guestName = body?.first_name != null
+          ? stringValue(body.first_name)
+          : "Invitado";
+        const { data: newStudent, error: createError } = await supabase
+          .from("academic_students")
+          .insert({
+            dni: guestDni,
+            first_name: guestName,
+            last_name: "",
+            career_id: guestCareer,
+            is_demo: true,
+            cohort_year: new Date().getFullYear(),
+            current_year: 1,
+          })
+          .select(
+            "id, dni, first_name, last_name, career_id, is_demo, cohort_year, current_year, division, is_new_student, is_repeating, enrollment_status, contact_phone, contact_email, notes",
+          )
+          .single();
+        if (createError) throw createError;
+        const result = await buildLoadResponse(supabase, newStudent);
+        return json(result);
+      }
       return json({ ok: false, error: "Student profile not found" }, 404);
     }
 
@@ -372,13 +450,50 @@ Deno.serve(async (req: Request) => {
     }
 
     // ─── load (trayectoria completa) ────────────────────────
-    const [{ data: subjects, error: subjectsError }, {
-      data: history,
-      error: historyError,
-    }, {
-      data: selfSubjects,
-      error: selfError,
-    }] = await Promise.all([
+    const result = await buildLoadResponse(supabase, student);
+    return json(result);
+  } catch (error) {
+    console.error("student-access error", error);
+    const detail = error instanceof Error
+      ? error.message
+      : typeof error === "object" && error !== null
+      ? JSON.stringify(error)
+      : String(error);
+    return json(
+      { ok: false, error: detail },
+      500,
+    );
+  }
+});
+
+function json(payload: unknown, status = 200) {
+  return new Response(JSON.stringify(payload), {
+    status,
+    headers: {
+      ...corsHeaders,
+      "Content-Type": "application/json",
+    },
+  });
+}
+
+function dniAlreadyExists() {
+  return json(
+    {
+      ok: false,
+      code: "dni_already_exists",
+      error: "Ese DNI ya pertenece a otro usuario",
+    },
+    409,
+  );
+}
+
+async function buildLoadResponse(
+  supabase: ReturnType<typeof createClient>,
+  student: Record<string, unknown>,
+) {
+  const studentUuid = stringValue(student.id);
+  const [{ data: subjects }, { data: history }, { data: selfSubjects }] =
+    await Promise.all([
       supabase
         .from("academic_student_subjects")
         .select(
@@ -405,47 +520,13 @@ Deno.serve(async (req: Request) => {
         .order("subject_name"),
     ]);
 
-    if (subjectsError) throw subjectsError;
-    if (historyError) throw historyError;
-    if (selfError) throw selfError;
-
-    return json({
-      ok: true,
-      student,
-      subjects: subjects ?? [],
-      history: history ?? [],
-      self_subjects: selfSubjects ?? [],
-    });
-  } catch (error) {
-    return json(
-      {
-        ok: false,
-        error: error instanceof Error ? error.message : String(error),
-      },
-      500,
-    );
-  }
-});
-
-function json(payload: unknown, status = 200) {
-  return new Response(JSON.stringify(payload), {
-    status,
-    headers: {
-      ...corsHeaders,
-      "Content-Type": "application/json",
-    },
-  });
-}
-
-function dniAlreadyExists() {
-  return json(
-    {
-      ok: false,
-      code: "dni_already_exists",
-      error: "Ese DNI ya pertenece a otro usuario",
-    },
-    409,
-  );
+  return {
+    ok: true,
+    student,
+    subjects: subjects ?? [],
+    history: history ?? [],
+    self_subjects: selfSubjects ?? [],
+  };
 }
 
 function stringValue(value: unknown) {

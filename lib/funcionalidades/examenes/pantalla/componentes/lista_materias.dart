@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../../../compartido/media/widgets_media_remota.dart';
 import '../../../../compartido/utilidades/sanitizar_texto.dart';
 import '../../../../modelos/materia.dart';
 
@@ -56,10 +57,7 @@ class ListaMaterias extends StatelessWidget {
           if (hiddenModeMessage.isNotEmpty)
             Padding(
               padding: EdgeInsets.only(bottom: isZeus ? 14 : 10),
-              child: _BannerAviso(
-                message: hiddenModeMessage,
-                isZeus: isZeus,
-              ),
+              child: _BannerAviso(message: hiddenModeMessage, isZeus: isZeus),
             ),
           if (proximos.isNotEmpty && !examsHiddenMode) ...[
             _ProximosStrip(
@@ -91,12 +89,13 @@ class ListaMaterias extends StatelessWidget {
                 final sectionCols = sectionConstraints.maxWidth >= 1800
                     ? 3
                     : sectionConstraints.maxWidth >= 1180
-                        ? 2
-                        : sectionConstraints.maxWidth >= 700
-                            ? 2
-                            : 1;
+                    ? 2
+                    : sectionConstraints.maxWidth >= 700
+                    ? 2
+                    : 1;
                 final sectionSpacing = isZeus ? 16.0 : 14.0;
-                final sectionWidth = (sectionConstraints.maxWidth -
+                final sectionWidth =
+                    (sectionConstraints.maxWidth -
                         sectionSpacing * (sectionCols - 1)) /
                     sectionCols;
 
@@ -173,7 +172,9 @@ _TiempoRelativoInfo _tiempoRelativo(DateTime? dt) {
       return const _TiempoRelativoInfo(label: 'Hoy', isExpired: false);
     if (totalHours <= 48)
       return _TiempoRelativoInfo(
-          label: 'En $totalHours horas', isExpired: false);
+        label: 'En $totalHours horas',
+        isExpired: false,
+      );
     if (daysDiff == 1)
       return const _TiempoRelativoInfo(label: 'Mañana', isExpired: false);
     return _TiempoRelativoInfo(label: 'En $daysDiff días', isExpired: false);
@@ -192,7 +193,9 @@ _TiempoRelativoInfo _tiempoRelativo(DateTime? dt) {
     return const _TiempoRelativoInfo(label: 'Hace 1 hora', isExpired: true);
   if (totalHours < 24)
     return _TiempoRelativoInfo(
-        label: 'Hace $totalHours horas', isExpired: true);
+      label: 'Hace $totalHours horas',
+      isExpired: true,
+    );
   if (daysAgo == 1)
     return const _TiempoRelativoInfo(label: 'Ayer', isExpired: true);
   if (daysAgo == 2)
@@ -217,8 +220,9 @@ _TiempoRelativoInfo _tiempoRelativo(DateTime? dt) {
 // ---------- Helpers de visualización ----------
 
 String _displayNameForScreen(MateriaParaLista item) {
-  final raw =
-      sanitizarTexto(item.materiaPlan?.displayNombre ?? item.nombreBase).trim();
+  final raw = sanitizarTexto(
+    item.materiaPlan?.displayNombre ?? item.nombreBase,
+  ).trim();
   final low = sanitizeLowerNoAccents(raw);
   if (!low.contains('practica docente')) return raw;
 
@@ -275,17 +279,13 @@ Widget _statusPill(
         color: isExpired
             ? (isDark ? const Color(0xFF4B5563) : const Color(0xFFD1D5DB))
             : (confirmed
-                ? (isDark ? cs.outlineVariant : const Color(0xFFA7F3D0))
-                : (isDark ? cs.outlineVariant : const Color(0xFFD1D5DB))),
+                  ? (isDark ? cs.outlineVariant : const Color(0xFFA7F3D0))
+                  : (isDark ? cs.outlineVariant : const Color(0xFFD1D5DB))),
       ),
     ),
     child: Text(
       label,
-      style: TextStyle(
-        color: fg,
-        fontWeight: FontWeight.w800,
-        fontSize: 10,
-      ),
+      style: TextStyle(color: fg, fontWeight: FontWeight.w800, fontSize: 10),
     ),
   );
 }
@@ -305,11 +305,7 @@ Widget _chip({
     ),
     child: Text(
       text,
-      style: TextStyle(
-        color: fg,
-        fontWeight: FontWeight.w800,
-        fontSize: 10,
-      ),
+      style: TextStyle(color: fg, fontWeight: FontWeight.w800, fontSize: 10),
     ),
   );
 }

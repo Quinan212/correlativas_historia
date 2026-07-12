@@ -10,12 +10,15 @@ import 'package:correlativas_historia/funcionalidades/preguntas_frecuentes/pregu
 import 'package:correlativas_historia/funcionalidades/administrador/pantallas/acceso_administrador_pantalla.dart';
 import 'package:correlativas_historia/funcionalidades/administrador/proveedores/proveedores_acceso_administrador.dart';
 import 'package:correlativas_historia/funcionalidades/acceso_estudiante/pantallas/acceso_estudiante_pantalla.dart';
+import 'package:correlativas_historia/funcionalidades/busqueda_global/busqueda_global.dart';
+import 'package:correlativas_historia/funcionalidades/busqueda_global/pantalla/busqueda_global_pantalla.dart';
 import 'package:correlativas_historia/compartido/firebase/app_firebase.dart';
 import 'package:correlativas_historia/compartido/navegacion/navegador_app.dart';
 import 'package:correlativas_historia/compartido/proveedores/estado_app.dart';
 import 'package:correlativas_historia/compartido/notificaciones/notificaciones_push.dart';
 import 'package:correlativas_historia/compartido/rendimiento/rendimiento_app.dart';
 import 'package:correlativas_historia/compartido/supabase/supabase.dart';
+import 'package:correlativas_historia/compartido/media/precarga_media_remota.dart';
 import 'package:correlativas_historia/compartido/componentes/navegacion_inferior.dart';
 import 'package:correlativas_historia/tema/tema_app.dart';
 import 'package:video_player_win/video_player_win_plugin.dart';
@@ -29,7 +32,6 @@ Future<void> main() async {
   RendimientoApp.instalarDiagnosticoFrames();
   final supabaseBootstrapFuture = initializeSupabase();
   await asegurarAppFirebase();
-  // await RendimientoApp.configurarRecoleccion();
   final supabaseBootstrap = await supabaseBootstrapFuture;
   runApp(
     ProviderScope(
@@ -39,6 +41,7 @@ Future<void> main() async {
       child: const App(),
     ),
   );
+  iniciarPrecargaMediaRemota();
 }
 
 class App extends ConsumerWidget {
@@ -95,8 +98,13 @@ class _MainScreenState extends ConsumerState<MainScreen> {
     _checkedWhatsNew = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      // HojaNovedades.maybeShow(context); // Desactivado por ahora
     });
+  }
+
+  Future<void> _openGlobalSearch() async {
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(builder: (_) => const GlobalSearchPage()),
+    );
   }
 
   @override
@@ -111,25 +119,39 @@ class _MainScreenState extends ConsumerState<MainScreen> {
     final isDesktop = width >= 900;
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final loggedIn =
-        ref.watch(proveedorClienteSupabase)?.auth.currentSession != null;
+    final loggedIn = ref.watch(proveedorSesionActivaSupabase);
     final showNavBar = !isDesktop && loggedIn;
+
+    ref.listen<bool>(proveedorSesionActivaSupabase, (previous, next) {
+      if (previous == next) return;
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+
+        ref.read(proveedorSeccionNav.notifier).state = 0;
+        ref.read(proveedorIndiceRouter.notifier).state = 0;
+
+        _trayectoriasNavKey.currentState?.popUntil((route) => route.isFirst);
+      });
+    });
 
     final adminFabBottom = isDesktop ? 20.0 : (routerIndex == 1 ? 92.0 : 10.0);
 
-    Widget content = IndexedStack(
-      index: routerIndex,
-      children: [
-        _TabNavigator(
-          navigatorKey: _trayectoriasNavKey,
-          child: const AccesoEstudiantePantalla(key: ValueKey('trayectorias')),
+    final tabs = [
+      _TabNavigator(
+        navigatorKey: _trayectoriasNavKey,
+        child: AccesoEstudiantePantalla(
+          key: const ValueKey('trayectorias'),
+          onOpenSearch: _openGlobalSearch,
         ),
-        const PantallaInicioMapa(key: ValueKey('inicio_mapa')),
-        const PantallaMapaCorrelatividades(key: ValueKey('cascada')),
-        const PantallaCalculadora(key: ValueKey('calculadora')),
-        const PantallaPreguntasFrecuentes(key: ValueKey('faq')),
-      ],
-    );
+      ),
+      const PantallaInicioMapa(key: ValueKey('inicio_mapa')),
+      const PantallaMapaCorrelatividades(key: ValueKey('cascada')),
+      const PantallaCalculadora(key: ValueKey('calculadora')),
+      const PantallaPreguntasFrecuentes(key: ValueKey('faq')),
+    ];
+
+    Widget content = IndexedStack(index: routerIndex, children: tabs);
 
     if (isDesktop) {
       content = Row(
@@ -196,6 +218,11 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                 icon: Icon(Icons.calculate_outlined),
                 selectedIcon: Icon(Icons.calculate_rounded),
                 label: Text('Calculadora'),
+              ),
+              NavigationRailDestination(
+                icon: Icon(Icons.help_outline_rounded),
+                selectedIcon: Icon(Icons.help_rounded),
+                label: Text('Preguntas'),
               ),
             ],
           ),

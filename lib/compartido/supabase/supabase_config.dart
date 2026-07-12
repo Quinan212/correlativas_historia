@@ -23,10 +23,17 @@ class SupabaseConfig {
   );
 
   static String get clientKey {
-    final publishable = publishableKey.trim();
-    if (publishable.startsWith('eyJ')) return publishable;
-    final anon = anonKey.trim();
-    if (anon.isNotEmpty) return anon;
+    return resolveClientKey(publishable: publishableKey, anon: anonKey);
+  }
+
+  static String resolveClientKey({
+    required String publishable,
+    required String anon,
+  }) {
+    publishable = publishable.trim();
+    if (publishable.isNotEmpty) return publishable;
+    final fallback = anon.trim();
+    if (fallback.isNotEmpty) return fallback;
     return publishable;
   }
 

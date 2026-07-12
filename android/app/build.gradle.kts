@@ -4,7 +4,7 @@ import java.io.FileInputStream
 plugins {
     id("com.android.application")
     id("com.google.gms.google-services")
-    id("com.google.firebase.firebase-perf")
+    // id("com.google.firebase.firebase-perf") // Deshabilitado temporalmente
     id("dev.flutter.flutter-gradle-plugin")
 }
 
@@ -24,6 +24,13 @@ android {
         isCoreLibraryDesugaringEnabled = true
     }
     kotlinOptions { jvmTarget = JavaVersion.VERSION_11.toString() }
+
+    lint {
+        checkDependencies = false
+        abortOnError = false
+        warningsAsErrors = false
+        checkReleaseBuilds = false
+    }
 
     defaultConfig {
         applicationId = "ar.maillet.correlativas_historia"

@@ -6,6 +6,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:video_player/video_player.dart';
 
 import '../../../../compartido/proveedores/estado_app.dart';
+import '../../../../compartido/media/repositorio_media_remota.dart';
 
 OverlayEntry? _activeInstitutionSelectionOverlay;
 const _pscsOverlayLogoAsset = 'assets/career_icons/logo_pscs_overlay.png';
@@ -148,24 +149,17 @@ class _CapaSeleccionInstitucionState extends State<_CapaSeleccionInstitucion>
       parent: _entryController,
       curve: Curves.easeOut,
     );
-    _entryScale = Tween<double>(
-      begin: 0.84,
-      end: 1,
-    ).animate(
+    _entryScale = Tween<double>(begin: 0.84, end: 1).animate(
       CurvedAnimation(parent: _entryController, curve: Curves.easeOutBack),
     );
-    _entryOffset = Tween<Offset>(
-      begin: const Offset(0, -0.20),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(parent: _entryController, curve: Curves.easeOutCubic),
-    );
-    _exitOffset = Tween<Offset>(
-      begin: Offset.zero,
-      end: const Offset(0, -1.2),
-    ).animate(
-      CurvedAnimation(parent: _exitController, curve: Curves.easeInBack),
-    );
+    _entryOffset =
+        Tween<Offset>(begin: const Offset(0, -0.20), end: Offset.zero).animate(
+          CurvedAnimation(parent: _entryController, curve: Curves.easeOutCubic),
+        );
+    _exitOffset = Tween<Offset>(begin: Offset.zero, end: const Offset(0, -1.2))
+        .animate(
+          CurvedAnimation(parent: _exitController, curve: Curves.easeInBack),
+        );
 
     _runSequence();
   }
@@ -275,14 +269,18 @@ class _CapaSeleccionInstitucionState extends State<_CapaSeleccionInstitucion>
     final topInset = MediaQuery.paddingOf(context).top;
     final squareSize = math.min(media.width * 0.452, 180.0);
     final useBanner = _usesOverlayBannerFor(widget.institution);
-    final bannerWidth =
-        useBanner ? math.min(media.width * 0.733, 359.0) : squareSize;
-    final bannerHeight =
-        useBanner ? math.min(bannerWidth / 1.70, 199.0) : squareSize;
-    final cardWidth =
-        useBanner && _collapseBannerForCheck ? squareSize : bannerWidth;
-    final cardHeight =
-        useBanner && _collapseBannerForCheck ? squareSize : bannerHeight;
+    final bannerWidth = useBanner
+        ? math.min(media.width * 0.733, 359.0)
+        : squareSize;
+    final bannerHeight = useBanner
+        ? math.min(bannerWidth / 1.70, 199.0)
+        : squareSize;
+    final cardWidth = useBanner && _collapseBannerForCheck
+        ? squareSize
+        : bannerWidth;
+    final cardHeight = useBanner && _collapseBannerForCheck
+        ? squareSize
+        : bannerHeight;
     final topOffset = topInset + 10;
 
     return IgnorePointer(
@@ -305,8 +303,9 @@ class _CapaSeleccionInstitucionState extends State<_CapaSeleccionInstitucion>
 
                   if (_isExiting) {
                     current = SlideTransition(
-                      position:
-                          AlwaysStoppedAnimation<Offset>(_exitOffset.value),
+                      position: AlwaysStoppedAnimation<Offset>(
+                        _exitOffset.value,
+                      ),
                       child: current,
                     );
                   } else {
@@ -394,15 +393,15 @@ class _TarjetaSeleccionPremium extends StatelessWidget {
     final successIconColor = colorScheme.onPrimary;
     final surfaceStart =
         (enforceWhiteCompactSurface || enforceWhiteBannerSurface)
-            ? Colors.white
-            : colorScheme.surface;
+        ? Colors.white
+        : colorScheme.surface;
     final surfaceEnd = (enforceWhiteCompactSurface || enforceWhiteBannerSurface)
         ? Colors.white
         : colorScheme.surfaceContainerHighest.withValues(alpha: 0.94);
     final borderColor =
         (enforceWhiteCompactSurface || enforceWhiteBannerSurface)
-            ? Colors.white
-            : colorScheme.outlineVariant.withValues(alpha: 0.40);
+        ? Colors.white
+        : colorScheme.outlineVariant.withValues(alpha: 0.40);
 
     return AnimatedContainer(
       duration: _bannerCollapseDuration,
@@ -429,25 +428,25 @@ class _TarjetaSeleccionPremium extends StatelessWidget {
             ),
             blurRadius:
                 (enforceWhiteCompactSurface || enforceWhiteBannerSurface)
-                    ? (24 + (glow * 8))
-                    : (28 + (glow * 10)),
+                ? (24 + (glow * 8))
+                : (28 + (glow * 10)),
             spreadRadius:
                 (enforceWhiteCompactSurface || enforceWhiteBannerSurface)
-                    ? 0.8
-                    : 1,
+                ? 0.8
+                : 1,
             offset: const Offset(0, 16),
           ),
         ],
-        border: Border.all(
-          color: borderColor,
-        ),
+        border: Border.all(color: borderColor),
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final animatedWidth =
-              constraints.maxWidth.isFinite ? constraints.maxWidth : width;
-          final animatedHeight =
-              constraints.maxHeight.isFinite ? constraints.maxHeight : height;
+          final animatedWidth = constraints.maxWidth.isFinite
+              ? constraints.maxWidth
+              : width;
+          final animatedHeight = constraints.maxHeight.isFinite
+              ? constraints.maxHeight
+              : height;
           final contentWidth = useBanner && !compactCheckMode
               ? animatedWidth
               : animatedWidth * 0.74;
@@ -469,8 +468,9 @@ class _TarjetaSeleccionPremium extends StatelessWidget {
                               end: Alignment.bottomRight,
                               colors: [
                                 colorScheme.surface,
-                                colorScheme.surfaceContainerHighest
-                                    .withValues(alpha: 0.94),
+                                colorScheme.surfaceContainerHighest.withValues(
+                                  alpha: 0.94,
+                                ),
                               ],
                             ),
                           ),
@@ -485,8 +485,8 @@ class _TarjetaSeleccionPremium extends StatelessWidget {
                   height: compactCheckMode
                       ? contentHeight * 1.06
                       : (useBanner
-                          ? contentHeight * 1.08
-                          : contentHeight * 1.06),
+                            ? contentHeight * 1.08
+                            : contentHeight * 1.06),
                   decoration: BoxDecoration(
                     color: checkHaloColor.withValues(alpha: haloOpacity),
                     borderRadius: compactCheckMode || !useBanner
@@ -523,7 +523,9 @@ class _TarjetaSeleccionPremium extends StatelessWidget {
                     child: ScaleTransition(
                       scale: Tween<double>(begin: 0.94, end: 1).animate(
                         CurvedAnimation(
-                            parent: animation, curve: Curves.easeOut),
+                          parent: animation,
+                          curve: Curves.easeOut,
+                        ),
                       ),
                       child: child,
                     ),
@@ -663,11 +665,7 @@ class _CheckExitoAnimado extends StatelessWidget {
         child: SizedBox(
           width: size,
           height: size,
-          child: Icon(
-            Icons.check_rounded,
-            size: iconSize,
-            color: iconColor,
-          ),
+          child: Icon(Icons.check_rounded, size: iconSize, color: iconColor),
         ),
       ),
     );
@@ -711,6 +709,7 @@ class _ArteInstitucionAnimadoState extends State<_ArteInstitucionAnimado> {
   VideoPlayerController? _videoController;
   bool _nearEndReported = false;
   bool _completionReported = false;
+  bool _videoUnavailable = false;
 
   bool get _usesVideo => widget.assetPath.endsWith('.mp4');
 
@@ -731,19 +730,43 @@ class _ArteInstitucionAnimadoState extends State<_ArteInstitucionAnimado> {
       _disposeVideo();
       _nearEndReported = false;
       _completionReported = false;
+      _videoUnavailable = false;
       _initializeVideoIfNeeded();
     }
   }
 
   Future<void> _initializeVideoIfNeeded() async {
     if (!_usesVideo) return;
-    final controller = VideoPlayerController.asset(widget.assetPath);
+    final cachedFile = await repositorioMediaRemota.fileForSource(
+      widget.assetPath,
+    );
+    if (!mounted) return;
+
+    if (cachedFile == null) {
+      setState(() {
+        _videoUnavailable = true;
+      });
+      widget.onCompleted?.call();
+      return;
+    }
+
+    final controller = VideoPlayerController.file(cachedFile);
     _videoController = controller;
     controller.addListener(_handleVideoTick);
-    await controller.initialize();
-    await controller.setLooping(false);
-    await controller.setVolume(0);
-    await controller.play();
+    try {
+      await controller.initialize();
+      await controller.setLooping(false);
+      await controller.setVolume(0);
+      await controller.play();
+    } catch (_) {
+      await _disposeVideo();
+      if (!mounted) return;
+      setState(() {
+        _videoUnavailable = true;
+      });
+      widget.onCompleted?.call();
+      return;
+    }
     if (mounted) {
       setState(() {});
     }
@@ -789,8 +812,9 @@ class _ArteInstitucionAnimadoState extends State<_ArteInstitucionAnimado> {
   @override
   Widget build(BuildContext context) {
     final isDark = widget.colorScheme.brightness == Brightness.dark;
-    final compactSurfaceColor =
-        isDark ? widget.colorScheme.surface : Colors.white;
+    final compactSurfaceColor = isDark
+        ? widget.colorScheme.surface
+        : Colors.white;
 
     if (widget.useBanner && widget.useNeutralCollapseSurface && !_usesVideo) {
       return ClipRRect(
@@ -821,7 +845,9 @@ class _ArteInstitucionAnimadoState extends State<_ArteInstitucionAnimado> {
     if (_usesVideo && widget.useBanner) {
       final controller = _videoController;
       if (controller == null || !controller.value.isInitialized) {
-        return const SizedBox.shrink();
+        return _videoUnavailable
+            ? _buildVideoFallback(context)
+            : const SizedBox.shrink();
       }
       return ClipRRect(
         borderRadius: BorderRadius.circular(36),
@@ -833,10 +859,12 @@ class _ArteInstitucionAnimadoState extends State<_ArteInstitucionAnimado> {
     }
 
     final shimmerTravel = (widget.glow - 0.5) * widget.width * 0.64;
-    final bannerDriftX =
-        widget.useBanner ? (widget.glow - 0.5) * widget.width * 0.045 : 0.0;
-    final bannerDriftY =
-        widget.useBanner ? (0.5 - widget.glow) * widget.height * 0.028 : 0.0;
+    final bannerDriftX = widget.useBanner
+        ? (widget.glow - 0.5) * widget.width * 0.045
+        : 0.0;
+    final bannerDriftY = widget.useBanner
+        ? (0.5 - widget.glow) * widget.height * 0.028
+        : 0.0;
     final bannerScale = widget.useBanner ? 1.035 + (widget.glow * 0.02) : 1.0;
     final reveal = widget.useBanner ? 0.92 + (widget.glow * 0.08) : 1.0;
 
@@ -882,7 +910,9 @@ class _ArteInstitucionAnimadoState extends State<_ArteInstitucionAnimado> {
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
                                 colors: [
-                                  widget.colorScheme.surface.withValues(alpha: 0.02),
+                                  widget.colorScheme.surface.withValues(
+                                    alpha: 0.02,
+                                  ),
                                   widget.colorScheme.primary.withValues(
                                     alpha: 0.05 + (widget.glow * 0.04),
                                   ),
@@ -925,9 +955,7 @@ class _ArteInstitucionAnimadoState extends State<_ArteInstitucionAnimado> {
                                     end: Alignment.bottomCenter,
                                     colors: [
                                       Colors.black.withValues(alpha: 0),
-                                      Colors.black.withValues(
-                                        alpha: 0.10,
-                                      ),
+                                      Colors.black.withValues(alpha: 0.10),
                                     ],
                                   ),
                                 ),
@@ -974,11 +1002,9 @@ class _ArteInstitucionAnimadoState extends State<_ArteInstitucionAnimado> {
     );
   }
 
-  Widget _buildAssetImage(
-    String path, {
-    required bool useContainedFit,
-  }) {
-    final isPscsDark = path == _pscsOverlayLogoAsset &&
+  Widget _buildAssetImage(String path, {required bool useContainedFit}) {
+    final isPscsDark =
+        path == _pscsOverlayLogoAsset &&
         widget.colorScheme.brightness == Brightness.dark;
     final resolvedFit = isPscsDark
         ? BoxFit.cover
@@ -1038,6 +1064,20 @@ class _ArteInstitucionAnimadoState extends State<_ArteInstitucionAnimado> {
         math.min(widget.width, widget.height) * paddingFactor,
       ),
       child: result,
+    );
+  }
+
+  Widget _buildVideoFallback(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return ColoredBox(
+      color: scheme.surfaceContainerHighest,
+      child: Center(
+        child: Icon(
+          Icons.movie_outlined,
+          size: math.min(widget.width, widget.height) * 0.32,
+          color: scheme.onSurfaceVariant,
+        ),
+      ),
     );
   }
 }
