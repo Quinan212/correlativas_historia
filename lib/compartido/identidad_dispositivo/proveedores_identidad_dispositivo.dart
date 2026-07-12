@@ -1,10 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../supabase/supabase.dart';
+import 'entrada_registro_dispositivo.dart';
 import 'perfil_dispositivo.dart';
 import 'repositorio_perfil_dispositivo.dart';
 import 'servicio_identidad_dispositivo.dart';
-import 'entrada_registro_dispositivo.dart';
 
 final proveedorServicioIdentidadDispositivo =
     Provider<ServicioIdentidadDispositivo>(
@@ -43,8 +43,7 @@ String serializeDeviceIds(Iterable<String> deviceIds) {
   return sorted.join('|');
 }
 
-final proveedorPerfilesDispositivoPorIds = FutureProvider.autoDispose
-    .family<Map<String, PerfilDispositivo>, String>((ref, key) async {
+final proveedorPerfilesDispositivoPorIds = FutureProvider.family<Map<String, PerfilDispositivo>, String>((ref, key) async {
   final client = ref.watch(proveedorClienteSupabase);
   if (client == null || key.trim().isEmpty) {
     return const <String, PerfilDispositivo>{};
@@ -56,10 +55,9 @@ final proveedorPerfilesDispositivoPorIds = FutureProvider.autoDispose
 
   final repo = ref.watch(proveedorRepositorioPerfilDispositivo);
   return repo.fetchProfilesByIds(client: client, deviceIds: ids);
-});
+}, isAutoDispose: true);
 
-final proveedorEntradasRegistroDispositivoPorIds = FutureProvider.autoDispose
-    .family<Map<String, EntradaRegistroDispositivo>, String>((ref, key) async {
+final proveedorEntradasRegistroDispositivoPorIds = FutureProvider.family<Map<String, EntradaRegistroDispositivo>, String>((ref, key) async {
   final client = ref.watch(proveedorClienteSupabase);
   if (client == null || key.trim().isEmpty) {
     return const <String, EntradaRegistroDispositivo>{};
@@ -80,4 +78,4 @@ final proveedorEntradasRegistroDispositivoPorIds = FutureProvider.autoDispose
       .map(EntradaRegistroDispositivo.fromMap)
       .toList(growable: false);
   return {for (final entry in entries) entry.deviceId: entry};
-});
+}, isAutoDispose: true);

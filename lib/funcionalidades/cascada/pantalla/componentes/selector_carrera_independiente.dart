@@ -88,7 +88,7 @@ class _SelectorCarreraIndependienteState
 
     final labelStyle = theme.textTheme.labelMedium?.copyWith(
       fontWeight: FontWeight.w600,
-      color: cs.onSurface.withOpacity(0.8),
+      color: cs.onSurface.withValues(alpha: 0.8),
     );
 
     return Container(
@@ -102,7 +102,7 @@ class _SelectorCarreraIndependienteState
         boxShadow: [
           BoxShadow(
             blurRadius: 6,
-            color: theme.shadowColor.withOpacity(0.12),
+            color: theme.shadowColor.withValues(alpha: 0.12),
           ),
         ],
       ),

@@ -40,7 +40,7 @@ class TarjetaLeyendaMapa extends StatelessWidget {
                 desc,
                 textAlign: TextAlign.center,
                 style: tt.bodySmall?.copyWith(
-                  color: textC.withOpacity(0.82),
+                  color: textC.withValues(alpha: 0.82),
                   fontSize: 10,
                   height: 1.2,
                 ),
@@ -147,7 +147,7 @@ class TarjetaLeyendaMapa extends StatelessWidget {
           BoxShadow(
             blurRadius: 4,
             offset: const Offset(0, 2),
-            color: theme.shadowColor.withOpacity(0.08),
+            color: theme.shadowColor.withValues(alpha: 0.08),
           ),
         ],
       ),
@@ -201,7 +201,7 @@ class TarjetaLeyendaMapa extends StatelessWidget {
                   style: tt.labelSmall?.copyWith(
                     fontWeight: FontWeight.w900,
                     letterSpacing: 1,
-                    color: cs.onSurface.withOpacity(0.6),
+                    color: cs.onSurface.withValues(alpha: 0.6),
                   ),
                 ),
               ),
@@ -240,7 +240,7 @@ class TarjetaLeyendaMapa extends StatelessWidget {
                   style: tt.labelSmall?.copyWith(
                     fontWeight: FontWeight.w900,
                     letterSpacing: 1,
-                    color: cs.onSurface.withOpacity(0.6),
+                    color: cs.onSurface.withValues(alpha: 0.6),
                   ),
                 ),
               ),

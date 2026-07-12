@@ -73,7 +73,7 @@ class TarjetaSolicitudVerificacion extends StatelessWidget {
                   top: 12,
                   child: DecoratedBox(
                     decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.62),
+                      color: Colors.black.withValues(alpha: 0.62),
                       borderRadius: BorderRadius.circular(999),
                     ),
                     child: const Padding(

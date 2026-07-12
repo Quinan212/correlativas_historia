@@ -35,7 +35,7 @@ Future<ResultadoArranqueSupabase> initializeSupabase() async {
   try {
     await Supabase.initialize(
       url: SupabaseConfig.url,
-      anonKey: SupabaseConfig.clientKey,
+      publishableKey: SupabaseConfig.clientKey,
     );
 
     return const ResultadoArranqueSupabase(

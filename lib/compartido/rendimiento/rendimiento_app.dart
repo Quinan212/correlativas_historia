@@ -1,25 +1,22 @@
-import 'package:firebase_performance/firebase_performance.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flutter/widgets.dart';
+// import 'package:firebase_performance/firebase_performance.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:flutter/widgets.dart';
 
-import '../firebase/app_firebase.dart';
+// import '../firebase/app_firebase.dart';
 
 class RendimientoApp {
   RendimientoApp._();
 
-  static bool get _enabled => !kDebugMode;
   static const bool diagnosticosHabilitados = bool.fromEnvironment(
     'ENABLE_PERFORMANCE_DIAGNOSTICS',
-    defaultValue: false,
   );
   static bool _frameDiagnosticsInstalled = false;
 
   static Future<void> configurarRecoleccion() async {
-    await asegurarAppFirebase();
-    await FirebasePerformance.instance.setPerformanceCollectionEnabled(
-      _enabled,
-    );
+    // await asegurarAppFirebase();
+    // await FirebasePerformance.instance.setPerformanceCollectionEnabled(
+    //   _enabled,
+    // );
   }
 
   static void instalarDiagnosticoFrames() {
@@ -49,44 +46,39 @@ class RendimientoApp {
     }
   }
 
-  static Future<Trace?> iniciarTraza(
+  static Future<dynamic> iniciarTraza(
     String name, {
     Map<String, String>? attributes,
   }) async {
-    if (!_enabled) return null;
-
-    await asegurarAppFirebase();
-    final trace = FirebasePerformance.instance.newTrace(name);
-    await trace.start();
-
-    for (final entry
-        in attributes?.entries ?? const <MapEntry<String, String>>[]) {
-      final value = entry.value.trim();
-      if (value.isEmpty) continue;
-      trace.putAttribute(entry.key, value);
-    }
-
-    return trace;
+    // Deshabilitado temporalmente - Firebase Performance
+    // if (!_enabled) return null;
+    // await asegurarAppFirebase();
+    // final trace = FirebasePerformance.instance.newTrace(name);
+    // await trace.start();
+    // for (final entry in attributes?.entries ?? const <MapEntry<String, String>>[]) {
+    //   final value = entry.value.trim();
+    //   if (value.isEmpty) continue;
+    //   trace.putAttribute(entry.key, value);
+    // }
+    // return trace;
+    return null;
   }
 
   static Future<void> detenerTraza(
-    Trace? trace, {
+    dynamic trace, {
     Map<String, String>? attributes,
     Map<String, int>? metrics,
   }) async {
-    if (trace == null) return;
-
-    for (final entry
-        in attributes?.entries ?? const <MapEntry<String, String>>[]) {
-      final value = entry.value.trim();
-      if (value.isEmpty) continue;
-      trace.putAttribute(entry.key, value);
-    }
-
-    for (final entry in metrics?.entries ?? const <MapEntry<String, int>>[]) {
-      trace.setMetric(entry.key, entry.value);
-    }
-
-    await trace.stop();
+    // Deshabilitado temporalmente - Firebase Performance
+    // if (trace == null) return;
+    // for (final entry in attributes?.entries ?? const <MapEntry<String, String>>[]) {
+    //   final value = entry.value.trim();
+    //   if (value.isEmpty) continue;
+    //   trace.putAttribute(entry.key, value);
+    // }
+    // for (final entry in metrics?.entries ?? const <MapEntry<String, int>>[]) {
+    //   trace.setMetric(entry.key, entry.value);
+    // }
+    // await trace.stop();
   }
 }

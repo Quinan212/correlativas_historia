@@ -3,9 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../compartido/identidad_dispositivo/identidad_dispositivo.dart';
 import '../../../compartido/supabase/supabase.dart';
+import '../../verificacion/componentes/tarjeta_solicitud_verificacion.dart';
 import '../../verificacion/modelos/solicitud_verificacion.dart';
 import '../../verificacion/proveedores/proveedores_verificacion.dart';
-import '../../verificacion/componentes/tarjeta_solicitud_verificacion.dart';
 
 class SolicitudesPendientesAdministradorPantalla extends ConsumerWidget {
   const SolicitudesPendientesAdministradorPantalla({
@@ -19,7 +19,7 @@ class SolicitudesPendientesAdministradorPantalla extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final pendingAsync = ref.watch(proveedorSolicitudesVerificacionPendientes);
-    final pendingIds = pendingAsync.valueOrNull?.map((e) => e.deviceId) ??
+    final pendingIds = pendingAsync.value?.map((e) => e.deviceId) ??
         const Iterable<String>.empty();
     final profileMapAsync = ref.watch(
       proveedorPerfilesDispositivoPorIds(
@@ -27,7 +27,7 @@ class SolicitudesPendientesAdministradorPantalla extends ConsumerWidget {
       ),
     );
     final profileMap =
-        profileMapAsync.valueOrNull ?? const <String, PerfilDispositivo>{};
+        profileMapAsync.value ?? const <String, PerfilDispositivo>{};
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -156,7 +156,7 @@ class _SolicitudesPendientesAdminEscritorioState
         error: (err, _) => Center(child: Text('Error: $err')),
         data: (items) {
           if (items.isEmpty) {
-            return _EstadoVacio(
+            return const _EstadoVacio(
               title: 'Todo al día',
               subtitle: 'No hay solicitudes pendientes de revisión.',
               icon: Icons.done_all_rounded,
@@ -184,7 +184,7 @@ class _SolicitudesPendientesAdminEscritorioState
                 ),
                 child: ListView.separated(
                   itemCount: items.length,
-                  separatorBuilder: (_, __) => Divider(
+                  separatorBuilder: (_, _) => Divider(
                     height: 1,
                     color: isDark
                         ? const Color(0xFF243041)
@@ -200,12 +200,12 @@ class _SolicitudesPendientesAdminEscritorioState
                           horizontal: 20, vertical: 12),
                       selected: isSelected,
                       selectedTileColor:
-                          theme.colorScheme.primary.withOpacity(0.08),
+                          theme.colorScheme.primary.withValues(alpha: 0.08),
                       leading: Container(
                         width: 44,
                         height: 44,
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.primary.withOpacity(0.1),
+                          color: theme.colorScheme.primary.withValues(alpha: 0.1),
                           shape: BoxShape.circle,
                         ),
                         alignment: Alignment.center,
@@ -314,7 +314,7 @@ class _VistaDetalleSolicitudPendienteState
             ? const []
             : [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.03),
+                  color: Colors.black.withValues(alpha: 0.03),
                   blurRadius: 20,
                   offset: const Offset(0, 8),
                 )
@@ -334,11 +334,11 @@ class _VistaDetalleSolicitudPendienteState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _TituloSeccion(title: 'Detalles de la solicitud'),
+                  const _TituloSeccion(title: 'Detalles de la solicitud'),
                   const SizedBox(height: 16),
                   _GrillaInfoDetalle(request: widget.request),
                   const SizedBox(height: 32),
-                  _TituloSeccion(title: 'Captura adjunta'),
+                  const _TituloSeccion(title: 'Captura adjunta'),
                   const SizedBox(height: 16),
                   _ImagePreview(imageUrl: widget.request.imageUrl),
                   const SizedBox(height: 40),
@@ -411,7 +411,7 @@ class _EncabezadoDetalle extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: 28,
-            backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
+            backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
             child: Icon(Icons.person_outline_rounded,
                 color: theme.colorScheme.primary, size: 30),
           ),
@@ -542,9 +542,9 @@ class _ImagePreview extends StatelessWidget {
       width: double.infinity,
       height: 400,
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.05),
+        color: Colors.black.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.black.withOpacity(0.1)),
+        border: Border.all(color: Colors.black.withValues(alpha: 0.1)),
       ),
       clipBehavior: Clip.antiAlias,
       child: Image.network(
@@ -554,7 +554,7 @@ class _ImagePreview extends StatelessWidget {
           if (loadingProgress == null) return child;
           return const Center(child: CircularProgressIndicator());
         },
-        errorBuilder: (_, __, ___) => const Center(
+        errorBuilder: (_, _, _) => const Center(
           child:
               Icon(Icons.broken_image_outlined, size: 48, color: Colors.grey),
         ),
@@ -593,7 +593,7 @@ class _BarraAcciones extends StatelessWidget {
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
               foregroundColor: theme.colorScheme.error,
-              side: BorderSide(color: theme.colorScheme.error.withOpacity(0.5)),
+              side: BorderSide(color: theme.colorScheme.error.withValues(alpha: 0.5)),
             ),
             child: const Text('RECHAZAR SOLICITUD',
                 style: TextStyle(fontWeight: FontWeight.w800)),
@@ -727,7 +727,7 @@ class _EstadoVacio extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 64, color: theme.hintColor.withOpacity(0.5)),
+          Icon(icon, size: 64, color: theme.hintColor.withValues(alpha: 0.5)),
           const SizedBox(height: 16),
           Text(title,
               style: theme.textTheme.titleLarge

@@ -29,7 +29,7 @@ class _InicioExamenesJerarquicosState
   int? _yearFilter;
 
   List<int> _availableYearsForCareer(String careerId) {
-    final eventos = ref.watch(proveedorTodosLosExamenes).valueOrNull;
+    final eventos = ref.watch(proveedorTodosLosExamenes).value;
     if (eventos == null) return const [1, 2, 3, 4];
 
     final years = eventos
@@ -79,7 +79,7 @@ class _InicioExamenesJerarquicosState
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _SelectorModo(
                       selected: ModoVistaExamenes.jerarquico,
@@ -596,7 +596,7 @@ class _PantallaAlcanceJerarquicoState
                     isZeus ? 10 : 8,
                   ),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         '$title de ${career.nombre} para ${widget.year}° año',

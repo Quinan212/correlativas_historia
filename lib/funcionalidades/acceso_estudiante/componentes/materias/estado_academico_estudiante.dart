@@ -56,7 +56,7 @@ class _TableroEstadoMateria extends StatelessWidget {
     final hasSourceDate = current?.sourceDate != null;
     final noteFlex = hasSourceDate ? 3 : 4;
     final conditionFlex = hasSourceDate ? 4 : 6;
-    final dateFlex = 3;
+    const dateFlex = 3;
 
     const double spacing = 10.0;
 
@@ -113,13 +113,12 @@ class _TableroEstadoMateria extends StatelessWidget {
               // ── Card chica: estado ─────────────────────────
               Expanded(
                 flex: 2,
-                child: TarjetaMetricaVidrio(
-                  padding: const EdgeInsets.all(14),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(statusIcon, size: 26, color: statusColor),
+                  child: TarjetaMetricaVidrio(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(statusIcon, size: 26, color: statusColor),
                       const Spacer(),
                       Text(
                         statusLabel,
@@ -156,14 +155,13 @@ class _TableroEstadoMateria extends StatelessWidget {
                   Expanded(
                     flex: noteFlex,
                     child: TarjetaMetricaVidrio(
-                      padding: const EdgeInsets.all(14),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(
+                          const Icon(
                             Icons.star_rounded,
                             size: 22,
-                            color: const Color(0xFFD97706),
+                            color: Color(0xFFD97706),
                           ),
                           const Spacer(),
                           Text(
@@ -194,7 +192,6 @@ class _TableroEstadoMateria extends StatelessWidget {
                   Expanded(
                     flex: conditionFlex,
                     child: TarjetaMetricaVidrio(
-                      padding: const EdgeInsets.all(14),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -243,7 +240,6 @@ class _TableroEstadoMateria extends StatelessWidget {
                   Expanded(
                     flex: dateFlex,
                     child: TarjetaMetricaVidrio(
-                      padding: const EdgeInsets.all(14),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [

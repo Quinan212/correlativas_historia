@@ -71,8 +71,8 @@ ThemeData _buildZeusExamenesTheme(ThemeData base) {
       surfaceTintColor: Colors.transparent,
       elevation: isDark ? 1.5 : 1.0,
       shadowColor: isDark
-          ? Colors.black.withOpacity(0.35)
-          : Colors.black.withOpacity(0.08),
+          ? Colors.black.withValues(alpha: 0.35)
+          : Colors.black.withValues(alpha: 0.08),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(18),
         side: BorderSide(color: outline),
@@ -98,7 +98,7 @@ ThemeData _buildZeusExamenesTheme(ThemeData base) {
     chipTheme: base.chipTheme.copyWith(
       backgroundColor: surface2,
       selectedColor:
-          isDark ? cs.primaryContainer.withOpacity(0.95) : cs.primaryContainer,
+          isDark ? cs.primaryContainer.withValues(alpha: 0.95) : cs.primaryContainer,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(999),
       ),

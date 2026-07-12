@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 class TarjetaIngreso extends StatelessWidget {
   const TarjetaIngreso({
+    super.key,
     required this.cargando,
     required this.error,
     required this.controladorCorreo,
@@ -42,22 +43,30 @@ class TarjetaIngreso extends StatelessWidget {
           LayoutBuilder(
             builder: (context, constraints) {
               final compacto = constraints.maxWidth < 420;
-              final campoCorreo = TextField(
-                controller: controladorCorreo,
-                enabled: !cargando,
-                keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(
-                  labelText: 'Correo electrónico',
-                  prefixIcon: Icon(Icons.email_rounded),
+              final campoCorreo = Semantics(
+                textField: true,
+                label: 'Correo electrónico',
+                child: TextField(
+                  controller: controladorCorreo,
+                  enabled: !cargando,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: const InputDecoration(
+                    labelText: 'Correo electrónico',
+                    prefixIcon: Icon(Icons.email_rounded),
+                  ),
                 ),
               );
-              final campoContrasena = TextField(
-                controller: controladorContrasena,
-                enabled: !cargando,
-                obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: 'Contraseña',
-                  prefixIcon: Icon(Icons.lock_rounded),
+              final campoContrasena = Semantics(
+                textField: true,
+                label: 'Contraseña',
+                child: TextField(
+                  controller: controladorContrasena,
+                  enabled: !cargando,
+                  obscureText: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Contraseña',
+                    prefixIcon: Icon(Icons.lock_rounded),
+                  ),
                 ),
               );
 
@@ -83,19 +92,27 @@ class TarjetaIngreso extends StatelessWidget {
           const SizedBox(height: 18),
           SizedBox(
             width: double.infinity,
-            child: FilledButton.icon(
-              onPressed: cargando ? null : alIniciar,
-              icon: const Icon(Icons.login_rounded),
-              label: Text(cargando ? 'Ingresando...' : 'Entrar'),
+            child: Semantics(
+              button: true,
+              label: cargando ? 'Ingresando' : 'Entrar al perfil',
+              child: FilledButton.icon(
+                onPressed: cargando ? null : alIniciar,
+                icon: const Icon(Icons.login_rounded),
+                label: Text(cargando ? 'Ingresando...' : 'Entrar'),
+              ),
             ),
           ),
           const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: cargando ? null : alInvitado,
-              icon: const Icon(Icons.person_outline_rounded),
-              label: const Text('Ingresar como Invitado'),
+            child: Semantics(
+              button: true,
+              label: 'Ingresar como invitado sin cuenta',
+              child: OutlinedButton.icon(
+                onPressed: cargando ? null : alInvitado,
+                icon: const Icon(Icons.person_outline_rounded),
+                label: const Text('Ingresar como Invitado'),
+              ),
             ),
           ),
           if (error != null) ...[

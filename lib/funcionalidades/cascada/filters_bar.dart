@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../modelos/materia.dart';
 import '../../compartido/proveedores/estado_app.dart';
+import '../../modelos/materia.dart';
 
 class FiltersBar extends StatelessWidget {
   const FiltersBar({super.key});
@@ -78,7 +78,7 @@ class FilaEtiquetasFiltros extends ConsumerWidget {
     final anio = ref.watch(filtroAnioProvider);
 
     final planAsync = ref.watch(proveedorPlan);
-    final plan = planAsync.valueOrNull;
+    final plan = planAsync.value;
     final materias = plan == null ? const <Materia>[] : plan.materias;
 
     final tiposDisponibles = materias

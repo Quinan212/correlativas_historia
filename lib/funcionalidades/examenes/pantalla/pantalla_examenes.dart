@@ -208,12 +208,12 @@ class _PantallaExamenesState extends ConsumerState<PantallaExamenes> {
             ),
           ),
           SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  BarraFiltrosExamenes(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    BarraFiltrosExamenes(
                     careerId: careerId,
                     searchController: _searchCtrl,
                     searchQuery: _searchQuery,
@@ -578,7 +578,7 @@ class _PantallaExamenesState extends ConsumerState<PantallaExamenes> {
                                 : _proximos(filtradas);
 
                             return Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 ResumenEscritorio(
                                   secciones: filtradas,

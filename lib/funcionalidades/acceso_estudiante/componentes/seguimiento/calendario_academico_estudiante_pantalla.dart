@@ -63,7 +63,6 @@ class _CalendarioAcademicoEstudiantePantallaState
           _selectedDay = DateTime(
             _visibleMonth.year,
             _visibleMonth.month,
-            1,
           );
         case _VistaCalendarioAcademico.semana:
           _selectedDay = _dateOnly(
@@ -358,7 +357,7 @@ class _CalendarioAcademicoEstudiantePantallaState
       _visibleMonth.month,
     );
     final firstWeekdayOffset =
-        DateTime(_visibleMonth.year, _visibleMonth.month, 1).weekday - 1;
+        DateTime(_visibleMonth.year, _visibleMonth.month).weekday - 1;
     const totalCells = 42;
 
     return Scaffold(
@@ -375,8 +374,6 @@ class _CalendarioAcademicoEstudiantePantallaState
         ),
       ),
       body: SafeArea(
-        top: false,
-        bottom: true,
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
           onHorizontalDragEnd: _handleHorizontalDragEnd,
@@ -475,7 +472,7 @@ class _CalendarioAcademicoEstudiantePantallaState
                           alignment: Alignment.topCenter,
                           children: <Widget>[
                             ...previousChildren,
-                            if (currentChild != null) currentChild,
+                            ?currentChild,
                           ],
                         );
                       },
@@ -500,8 +497,8 @@ class _CalendarioAcademicoEstudiantePantallaState
                             _TarjetaVidrio(
                               child: Column(
                                 children: [
-                                  Row(
-                                    children: const [
+                                  const Row(
+                                    children: [
                                       _CeldaDiaSemanaCalendario(label: 'L'),
                                       _CeldaDiaSemanaCalendario(label: 'M'),
                                       _CeldaDiaSemanaCalendario(label: 'M'),
@@ -602,8 +599,6 @@ class _CalendarioAcademicoEstudiantePantallaState
                                                     ),
                                                   ),
                                                   child: Column(
-                                                    mainAxisSize:
-                                                        MainAxisSize.max,
                                                     children: [
                                                       Text(
                                                         '$dayNumber',

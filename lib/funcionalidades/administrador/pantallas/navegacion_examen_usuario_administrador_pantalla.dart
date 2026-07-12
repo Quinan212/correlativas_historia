@@ -33,7 +33,7 @@ class NavegacionExamenUsuarioAdministradorPantalla extends ConsumerWidget {
       ),
       body: SafeArea(
         child: events.isEmpty
-            ? _EstadoVacio(
+            ? const _EstadoVacio(
                 title: 'No hay navegacion registrada',
                 subtitle:
                     'Cuando este dispositivo abra una materia de examenes o cambie de instancia, aca vas a ver el historial completo.',
@@ -111,7 +111,7 @@ class _Metric extends StatelessWidget {
       width: 170,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: theme.colorScheme.primary.withOpacity(0.08),
+        color: theme.colorScheme.primary.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -163,7 +163,7 @@ class _TimelineTile extends StatelessWidget {
             width: 42,
             height: 42,
             decoration: BoxDecoration(
-              color: theme.colorScheme.primary.withOpacity(0.10),
+              color: theme.colorScheme.primary.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(14),
             ),
             child: Icon(icon, color: theme.colorScheme.primary),
@@ -174,7 +174,7 @@ class _TimelineTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '$title ${event.matterName}${divText}${sourceText}',
+                  '$title ${event.matterName}$divText$sourceText',
                   style: theme.textTheme.bodyLarge?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),

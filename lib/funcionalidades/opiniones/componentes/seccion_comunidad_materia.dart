@@ -78,7 +78,7 @@ class _TarjetaReferenciasMateria extends ConsumerWidget {
     final summary = ref.watch(proveedorResumenResenasMateria(materia.id));
     final tendencyTexts = buildMatterReferenceInsights(summary.dimensions);
     final ownReview =
-        ref.watch(proveedorResenaMateriaPropia(materia.id)).valueOrNull;
+        ref.watch(proveedorResenaMateriaPropia(materia.id)).value;
     final verification =
         ref.watch(proveedorEstadoVerificacionMateria(materia.id));
     final showVerificationAction =
@@ -297,7 +297,7 @@ class _SeccionGaleriaFotosMateria extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final photoPosts =
-        ref.watch(proveedorPublicacionesFotoMateria(matter.id)).valueOrNull ??
+        ref.watch(proveedorPublicacionesFotoMateria(matter.id)).value ??
             const <PublicacionFotoMateria>[];
 
     return GaleriaFotosMateria(

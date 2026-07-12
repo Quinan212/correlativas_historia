@@ -1,6 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../compartido/proveedores/estado_app.dart';
 import '../../../../modelos/materia.dart';
@@ -50,7 +52,7 @@ class _TarjetaMateriaGrillaState extends ConsumerState<TarjetaMateriaGrilla> {
     final cs = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
 
-    final plan = ref.watch(proveedorPlan).valueOrNull;
+    final plan = ref.watch(proveedorPlan).value;
     final codeById = {
       for (final x in (plan?.materias ?? <Materia>[])) x.id: x.codigo
     };
@@ -79,10 +81,11 @@ class _TarjetaMateriaGrillaState extends ConsumerState<TarjetaMateriaGrilla> {
           // Bloquear doble tap: Si ya hay una materia abriéndose, ignoramos
           // los clicks siguientes para no ahogar al procesador abriendo dos
           // paneles gigantes superpuestos.
-          if (!isDesktop && ref.read(proveedorIdMateriaSeleccionada) != null)
+          if (!isDesktop && ref.read(proveedorIdMateriaSeleccionada) != null) {
             return;
+          }
 
-          HapticFeedback.lightImpact();
+          unawaited(HapticFeedback.lightImpact());
 
           if (isDesktop) {
             // En escritorio solo seleccionamos, el SidePanel reacciona
@@ -119,7 +122,7 @@ class _TarjetaMateriaGrillaState extends ConsumerState<TarjetaMateriaGrilla> {
                   ? const []
                   : [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
+                        color: Colors.black.withValues(alpha: 0.05),
                         blurRadius: 2,
                         offset: const Offset(0, 1),
                       )
@@ -138,7 +141,7 @@ class _TarjetaMateriaGrillaState extends ConsumerState<TarjetaMateriaGrilla> {
                         style: TextStyle(
                           fontSize: 15.4,
                           fontWeight: FontWeight.w800,
-                          color: titleColor.withOpacity(
+                          color: titleColor.withValues(alpha: 
                             isDark ? 0.9 : 0.8,
                           ),
                           letterSpacing: 0.5,

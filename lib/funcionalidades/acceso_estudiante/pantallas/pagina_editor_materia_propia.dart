@@ -323,7 +323,6 @@ class _PaginaEditorMateriaPropiaState
     final cs = theme.colorScheme;
     return SafeArea(
       top: false,
-      bottom: true,
       child: Column(
         children: [
           Padding(
@@ -363,9 +362,11 @@ class _PaginaEditorMateriaPropiaState
                       ),
                     ),
                   )
-                : ListView(
+                : ListView.builder(
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                    children: _filteredResults.map((m) {
+                    itemCount: _filteredResults.length,
+                    itemBuilder: (context, index) {
+                      final m = _filteredResults[index];
                       final isSelected = _selectedMateria?.id == m.id;
                       final yaAgregada =
                           widget.existingSubjectIds.contains(m.id);
@@ -494,7 +495,7 @@ class _PaginaEditorMateriaPropiaState
                           ),
                         ),
                       );
-                    }).toList(),
+                    },
                   ),
           ),
           Padding(
@@ -527,7 +528,6 @@ class _PaginaEditorMateriaPropiaState
 
     return SafeArea(
       top: false,
-      bottom: true,
       child: Column(
         children: [
           Expanded(
@@ -649,7 +649,6 @@ class _PaginaEditorMateriaPropiaState
                       child: DropdownButtonFormField<String>(
                         initialValue: _status,
                         borderRadius: BorderRadius.circular(12),
-                        isDense: true,
                         itemHeight: 56,
                         dropdownColor: theme.colorScheme.surface,
                         decoration: const InputDecoration(

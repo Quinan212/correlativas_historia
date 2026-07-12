@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../modelos/materia.dart';
-import '../../../../compartido/proveedores/estado_app.dart';
 import '../../../../compartido/componentes/etiqueta_opcion_carrera.dart';
+import '../../../../compartido/proveedores/estado_app.dart';
+import '../../../../modelos/materia.dart';
 import '../tema/estilos_calculadora.dart';
 
 class BloqueSelectoresCalculadora extends ConsumerWidget {
@@ -132,7 +132,6 @@ class BloqueSelectoresCalculadora extends ConsumerWidget {
           ),
           items: [
             const DropdownMenuItem<String?>(
-              value: null,
               child: Text('-- Seleccioná una materia --'),
             ),
             ...materiasYear.map(

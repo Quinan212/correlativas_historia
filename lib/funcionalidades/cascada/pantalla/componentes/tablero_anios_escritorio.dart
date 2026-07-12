@@ -29,7 +29,7 @@ class TableroAniosEscritorio extends StatelessWidget {
             boxShadow: [
               BoxShadow(
                 blurRadius: 6,
-                color: theme.shadowColor.withOpacity(0.06),
+                color: theme.shadowColor.withValues(alpha: 0.06),
               ),
             ],
           ),

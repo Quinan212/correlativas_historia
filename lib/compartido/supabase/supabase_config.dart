@@ -15,7 +15,6 @@ class SupabaseConfig {
 
   static const String publishableKey = String.fromEnvironment(
     'SUPABASE_PUBLISHABLE_KEY',
-    defaultValue: '',
   );
 
   static const String anonKey = String.fromEnvironment(

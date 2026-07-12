@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
 class NavegacionInferiorApp extends StatelessWidget {
-  final int
-      current; // 0 = Trayectorias, 1 = Inicio, 2 = Cascada/Mapa, 3 = Calculadora
+  final int current;
   final VoidCallback onTapTrayectorias;
   final VoidCallback onTapHome;
+  final VoidCallback onTapCenter;
   final VoidCallback onTapMap;
   final VoidCallback onTapCalc;
 
@@ -13,125 +13,215 @@ class NavegacionInferiorApp extends StatelessWidget {
     required this.current,
     required this.onTapTrayectorias,
     required this.onTapHome,
+    required this.onTapCenter,
     required this.onTapMap,
     required this.onTapCalc,
   });
 
-  static const _brand = Color(0xFF1D4ED8);
-
-  static const _bgLight = Color(0xFFFFFFFF);
-  static const _borderLight = Color(0xFFE5E7EB);
-  static const _unselectedLight = Color(0xFF6B7280);
-
-  static const _bgDark = Color(0xFF0B1220);
-  static const _borderDark = Color(0xFF243041);
-  static const _unselectedDark = Color(0xFF9CA3AF);
-
-  Widget _tile({
-    required bool selected,
-    required IconData icon,
-    required IconData filledIcon,
-    required Color color,
-  }) {
-    return Center(
-      child: Icon(selected ? filledIcon : icon, size: 30, color: color),
-    );
-  }
-
-  Widget _divider(Color c) => Container(width: 1, height: 24, color: c);
+  static const _fabDiameter = 54.0;
+  static const _fabRadius = _fabDiameter / 2;
+  static const _navBodyH = 60.0;
+  static const _fabGap = _fabDiameter + 8.0;
+  static const _indicatorH = 5.0;
+  static const _indicatorW = 36.0;
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cs = Theme.of(context).colorScheme;
+    final bottomPad = MediaQuery.of(context).padding.bottom;
+    final bg = cs.surface;
+    final brd = cs.outlineVariant;
+    final color = cs.onSurfaceVariant;
+    final bodyH = _navBodyH + bottomPad;
 
-    final bg = isDark ? _bgDark : _bgLight;
-    final brd = isDark ? _borderDark : _borderLight;
-    final unselected = isDark ? _unselectedDark : _unselectedLight;
+    return MediaQuery.withNoTextScaling(
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          SizedBox(
+            height: bodyH,
+            child: Column(
+              children: [
+                Expanded(
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final totalW = constraints.maxWidth;
+                      final tabW = (totalW - _fabGap) / 4;
+                      final left = _indicatorLeft(current, tabW);
 
-    return SafeArea(
-      top: false,
-      child: Container(
-        decoration: BoxDecoration(
-          color: bg,
-          border: Border(top: BorderSide(color: brd)),
-        ),
-        child: Row(
-          children: [
-            // TRAYECTORIAS
-            Expanded(
-              child: InkWell(
-                onTap: onTapTrayectorias,
-                splashColor: _brand.withOpacity(0.08),
-                highlightColor: _brand.withOpacity(0.04),
-                child: SizedBox(
-                  height: 60,
-                  child: _tile(
-                    selected: current == 0,
-                    icon: Icons.school_outlined,
-                    filledIcon: Icons.school_rounded,
-                    color: current == 0 ? _brand : unselected,
+                      return Stack(
+                        children: [
+                          Container(
+                            decoration: BoxDecoration(
+                              color: bg,
+                              border: Border(
+                                top: BorderSide(color: brd, width: 0.5),
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.06),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, -2),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: _item(
+                                    Icons.school_outlined,
+                                    'Inicio',
+                                    onTapTrayectorias,
+                                    color,
+                                  ),
+                                ),
+                                Expanded(
+                                  child: _item(
+                                    Icons.assignment_outlined,
+                                    'Exámenes',
+                                    onTapHome,
+                                    color,
+                                  ),
+                                ),
+                                const SizedBox(width: _fabGap),
+                                Expanded(
+                                  child: _item(
+                                    Icons.list_alt_outlined,
+                                    'Materias',
+                                    onTapMap,
+                                    color,
+                                  ),
+                                ),
+                                Expanded(
+                                  child: _item(
+                                    Icons.person_outlined,
+                                    'Datos',
+                                    onTapCalc,
+                                    color,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          AnimatedPositioned(
+                            duration: const Duration(milliseconds: 250),
+                            curve: Curves.easeOutCubic,
+                            top: 0,
+                            left: left,
+                            child: Container(
+                              width: _indicatorW,
+                              height: _indicatorH,
+                              decoration: BoxDecoration(
+                                color: cs.primary,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
                   ),
                 ),
-              ),
+                SizedBox(height: bottomPad),
+              ],
             ),
-            _divider(brd),
-
-            // INICIO
-            Expanded(
-              child: InkWell(
-                onTap: onTapHome,
-                splashColor: _brand.withOpacity(0.08),
-                highlightColor: _brand.withOpacity(0.04),
-                child: SizedBox(
-                  height: 60,
-                  child: _tile(
-                    selected: current == 1,
-                    icon: Icons.home_outlined,
-                    filledIcon: Icons.home_rounded,
-                    color: current == 1 ? _brand : unselected,
+          ),
+          Positioned(
+            top: -_fabRadius,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  GestureDetector(
+                    onTap: onTapCenter,
+                    child: Container(
+                      width: _fabDiameter,
+                      height: _fabDiameter,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: cs.primary,
+                        boxShadow: [
+                          BoxShadow(
+                            color: cs.primary.withValues(alpha: 0.35),
+                            blurRadius: 14,
+                            offset: const Offset(0, 5),
+                          ),
+                        ],
+                        border: Border.all(color: bg, width: 3),
+                      ),
+                      child: Icon(
+                        Icons.account_tree_rounded,
+                        color: cs.onPrimary,
+                        size: 24,
+                      ),
+                    ),
                   ),
-                ),
-              ),
-            ),
-            _divider(brd),
-
-            // MAPA
-            Expanded(
-              child: InkWell(
-                onTap: onTapMap,
-                splashColor: _brand.withOpacity(0.08),
-                highlightColor: _brand.withOpacity(0.04),
-                child: SizedBox(
-                  height: 60,
-                  child: _tile(
-                    selected: current == 2,
-                    icon: Icons.map_outlined,
-                    filledIcon: Icons.map,
-                    color: current == 2 ? _brand : unselected,
+                  const SizedBox(height: 2),
+                  Text(
+                    'Plan completo',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w800,
+                      color: color,
+                    ),
                   ),
-                ),
+                ],
               ),
             ),
-            _divider(brd),
+          ),
+        ],
+      ),
+    );
+  }
 
-            // CALCULADORA
-            Expanded(
-              child: InkWell(
-                onTap: onTapCalc,
-                splashColor: _brand.withOpacity(0.08),
-                highlightColor: _brand.withOpacity(0.04),
-                child: SizedBox(
-                  height: 60,
-                  child: _tile(
-                    selected: current == 3,
-                    icon: Icons.calculate_outlined,
-                    filledIcon: Icons.calculate,
-                    color: current == 3 ? _brand : unselected,
-                  ),
+  double _indicatorLeft(int idx, double tabW) {
+    final offset = (tabW - _indicatorW) / 2;
+    switch (idx) {
+      case 0:
+        return offset;
+      case 1:
+        return tabW + offset;
+      case 2:
+        return tabW * 2 + _fabGap + offset;
+      case 3:
+        return tabW * 3 + _fabGap + offset;
+      default:
+        return 0;
+    }
+  }
+
+  Widget _item(IconData icon, String label, VoidCallback onTap, Color color) {
+    return Semantics(
+      label: label,
+      button: true,
+      child: InkWell(
+        onTap: onTap,
+        splashColor: Colors.transparent,
+        highlightColor: Colors.transparent,
+        child: SizedBox(
+          height: _navBodyH,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 22, color: color),
+              const SizedBox(height: 3),
+              Text(
+                label,
+                maxLines: 1,
+                style: TextStyle(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w800,
+                  color: color,
+                  letterSpacing: 0.2,
                 ),
+                overflow: TextOverflow.ellipsis,
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

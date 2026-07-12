@@ -12,16 +12,14 @@ class RepositorioAccesoEstudiante {
   Future<DatosAccesoEstudiante> load({
     required SupabaseClient client,
     String? guestFirstName,
-    String? guestDni,
     String? guestCareerId,
   }) async {
     final response = await client.functions.invoke(
       'student-access',
       body: {
         'action': 'load',
-        if (guestFirstName != null) 'first_name': guestFirstName,
-        if (guestDni != null && guestDni.isNotEmpty) 'dni': guestDni,
-        if (guestCareerId != null) 'career_id': guestCareerId,
+        'first_name': ?guestFirstName,
+        'career_id': ?guestCareerId,
       },
     );
 
@@ -57,13 +55,13 @@ class RepositorioAccesoEstudiante {
           'action': 'update_contact',
           'contact_phone': phone,
           'contact_email': email,
-          if (firstName != null) 'first_name': firstName,
-          if (lastName != null) 'last_name': lastName,
-          if (dni != null) 'dni': dni,
-          if (careerId != null) 'career_id': careerId,
-          if (division != null) 'division': division,
-          if (currentYear != null) 'current_year': currentYear,
-          if (cohortYear != null) 'cohort_year': cohortYear,
+          'first_name': ?firstName,
+          'last_name': ?lastName,
+          'dni': ?dni,
+          'career_id': ?careerId,
+          'division': ?division,
+          'current_year': ?currentYear,
+          'cohort_year': ?cohortYear,
         },
       );
     } on FunctionException catch (error) {
@@ -102,7 +100,7 @@ class RepositorioAccesoEstudiante {
       'student-access',
       body: {
         'action': 'upsert_self_subject',
-        if (id != null) 'id': id,
+        'id': ?id,
         'subject_id': subjectId,
         'subject_name': subjectName,
         'subject_year': subjectYear,
@@ -121,7 +119,8 @@ class RepositorioAccesoEstudiante {
       );
     }
 
-    return (data?['subject'] as Map).cast<String, dynamic>();
+    return (data?['subject'] as Map<String, dynamic>?) ??
+        (() => throw StateError('No se pudo guardar la materia'))();
   }
 
   Future<void> deleteSelfSubject({

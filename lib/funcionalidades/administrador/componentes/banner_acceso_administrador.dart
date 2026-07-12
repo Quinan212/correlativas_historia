@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../proveedores/proveedores_acceso_administrador.dart';
 import '../pantallas/panel_administrador_pantalla.dart';
+import '../proveedores/proveedores_acceso_administrador.dart';
 
 class BannerAccesoAdministrador extends ConsumerWidget {
   const BannerAccesoAdministrador({super.key});

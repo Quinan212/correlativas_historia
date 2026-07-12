@@ -29,7 +29,6 @@ linter:
     - unawaited_futures
     - unnecessary_lambdas
     - avoid_dynamic_calls
-    - always_specify_types
     - avoid_bool_literals_in_conditional_expressions
     - avoid_catching_errors
     - avoid_function_literals_in_foreach_calls

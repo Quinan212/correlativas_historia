@@ -51,7 +51,7 @@ class FotosMateriasCarreraAdministradorPantalla extends ConsumerWidget {
                           growable: false,
                         );
                 if (stats.isEmpty) {
-                  return _EstadoVacio(
+                  return const _EstadoVacio(
                     title: 'No hay fotos para esta carrera',
                     subtitle:
                         'Si todavía no hay imágenes cargadas, no se muestran años ni materias vacías.',
@@ -193,7 +193,7 @@ class _TarjetaAnio extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.primary.withOpacity(0.12),
+                  color: theme.colorScheme.primary.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
@@ -214,7 +214,7 @@ class _TarjetaAnio extends StatelessWidget {
               shrinkWrap: true,
               physics: const ClampingScrollPhysics(),
               itemCount: yearStats.matters.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 8),
+              separatorBuilder: (_, _) => const SizedBox(height: 8),
               itemBuilder: (context, index) {
                 final matterStats = yearStats.matters[index];
                 return _BaldosaMateria(
@@ -284,7 +284,7 @@ class _Insignia extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: theme.colorScheme.primary.withOpacity(0.08),
+        color: theme.colorScheme.primary.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
@@ -315,7 +315,7 @@ class _EstadoVacio extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 64, color: theme.hintColor.withOpacity(0.5)),
+          Icon(icon, size: 64, color: theme.hintColor.withValues(alpha: 0.5)),
           const SizedBox(height: 16),
           Text(title,
               style: theme.textTheme.titleLarge

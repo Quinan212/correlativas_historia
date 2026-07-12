@@ -503,10 +503,10 @@ class _TarjetaPortada extends StatelessWidget {
       width: double.infinity,
       padding: EdgeInsets.all(isDesktop ? 24 : 18),
       decoration: BoxDecoration(
-        color: theme.colorScheme.primary.withOpacity(0.08),
+        color: theme.colorScheme.primary.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: theme.colorScheme.primary.withOpacity(0.14),
+          color: theme.colorScheme.primary.withValues(alpha: 0.14),
         ),
       ),
       child: Row(
@@ -516,7 +516,7 @@ class _TarjetaPortada extends StatelessWidget {
             width: isDesktop ? 60 : 44,
             height: isDesktop ? 60 : 44,
             decoration: BoxDecoration(
-              color: theme.colorScheme.primary.withOpacity(0.12),
+              color: theme.colorScheme.primary.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(16),
             ),
             child: Icon(

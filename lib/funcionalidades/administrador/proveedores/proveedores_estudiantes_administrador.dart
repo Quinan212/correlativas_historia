@@ -1,11 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 
+import '../../../compartido/supabase/supabase.dart';
 import '../../../datos/cargador_fuente_html.dart';
 import '../../../modelos/materia.dart';
-import '../../../compartido/supabase/supabase.dart';
 import '../datos/repositorio_estudiantes_administrador.dart';
-import '../modelos/estudiante_administrador.dart';
 import '../modelos/entrada_historial_estudiante_administrador.dart';
+import '../modelos/estudiante_administrador.dart';
 import '../modelos/item_nomina_materia_administrador.dart';
 import '../modelos/materia_estudiante_administrador.dart';
 

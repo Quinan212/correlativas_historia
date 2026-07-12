@@ -37,43 +37,43 @@ class _ListaExamenesEscritorioState extends State<_ListaExamenesEscritorio> {
   };
 
   late final List<_ColumnaRedimensionable> _columns = [
-    _ColumnaRedimensionable(
+    const _ColumnaRedimensionable(
       id: 'materia',
       label: 'Materia',
       minWidth: 240,
       maxWidth: 720,
     ),
-    _ColumnaRedimensionable(
+    const _ColumnaRedimensionable(
       id: 'carrera',
       label: 'Carrera',
       minWidth: 150,
       maxWidth: 320,
     ),
-    _ColumnaRedimensionable(
+    const _ColumnaRedimensionable(
       id: 'anio',
       label: 'Año',
       minWidth: 72,
       maxWidth: 130,
     ),
-    _ColumnaRedimensionable(
+    const _ColumnaRedimensionable(
       id: 'fecha',
       label: 'Fecha',
       minWidth: 96,
       maxWidth: 160,
     ),
-    _ColumnaRedimensionable(
+    const _ColumnaRedimensionable(
       id: 'hora',
       label: 'Hora',
       minWidth: 68,
       maxWidth: 120,
     ),
-    _ColumnaRedimensionable(
+    const _ColumnaRedimensionable(
       id: 'docentes',
       label: 'Docentes',
       minWidth: 230,
       maxWidth: 600,
     ),
-    _ColumnaRedimensionable(
+    const _ColumnaRedimensionable(
       id: 'acciones',
       label: '',
       minWidth: 104,

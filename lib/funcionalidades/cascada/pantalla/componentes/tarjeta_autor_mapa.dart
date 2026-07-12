@@ -22,7 +22,7 @@ class TarjetaAutorMapa extends StatelessWidget {
           BoxShadow(
             blurRadius: 4,
             offset: const Offset(0, 2),
-            color: theme.shadowColor.withOpacity(0.08),
+            color: theme.shadowColor.withValues(alpha: 0.08),
           ),
         ],
       ),

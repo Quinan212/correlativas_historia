@@ -2,8 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../modelos/materia.dart';
 import '../../compartido/proveedores/estado_app.dart';
+import '../../modelos/materia.dart';
 
 class CorrelativasList extends ConsumerWidget {
   const CorrelativasList({

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../modelos/materia.dart';
 import '../../../compartido/componentes/tarjetas_metricas.dart';
+import '../../../modelos/materia.dart';
 import '../modelos/modelos_acceso_estudiante.dart';
 
 /// Pantalla pública de detalle de materia (estado, historial, correlativas)
@@ -701,9 +701,8 @@ class _TableroEstadoMateria extends StatelessWidget {
             children: [
               Expanded(
                 flex: 3,
-                child: TarjetaMetricaVidrio(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
+                      child: TarjetaMetricaVidrio(
+                      child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -743,7 +742,6 @@ class _TableroEstadoMateria extends StatelessWidget {
               Expanded(
                 flex: 2,
                 child: TarjetaMetricaVidrio(
-                  padding: const EdgeInsets.all(14),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -782,14 +780,13 @@ class _TableroEstadoMateria extends StatelessWidget {
                 Expanded(
                   flex: noteFlex,
                   child: TarjetaMetricaVidrio(
-                    padding: const EdgeInsets.all(14),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(
+                        const Icon(
                           Icons.star_rounded,
                           size: 22,
-                          color: const Color(0xFFD97706),
+                          color: Color(0xFFD97706),
                         ),
                         const Spacer(),
                         Text(
@@ -820,8 +817,7 @@ class _TableroEstadoMateria extends StatelessWidget {
                   Expanded(
                     flex: 3,
                     child: TarjetaMetricaVidrio(
-                      padding: const EdgeInsets.all(14),
-                      child: Column(
+                    child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Icon(

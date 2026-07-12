@@ -146,7 +146,7 @@ class _BannerVerificacionLista extends StatelessWidget {
       decoration: BoxDecoration(
         color: background,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: foreground.withOpacity(0.22)),
+        border: Border.all(color: foreground.withValues(alpha: 0.22)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,

@@ -51,7 +51,6 @@ class _HojaNovedadesBody extends StatelessWidget {
     final maxSheetHeight = media.size.height * 0.82;
 
     return SafeArea(
-      top: true,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
         child: Align(
@@ -74,7 +73,7 @@ class _HojaNovedadesBody extends StatelessWidget {
                         BoxShadow(
                           blurRadius: 18,
                           offset: const Offset(0, 10),
-                          color: Colors.black.withOpacity(0.10),
+                          color: Colors.black.withValues(alpha: 0.10),
                         ),
                       ],
               ),
@@ -89,8 +88,8 @@ class _HojaNovedadesBody extends StatelessWidget {
                         height: 6,
                         decoration: BoxDecoration(
                           color: isDark
-                              ? Colors.white.withOpacity(0.18)
-                              : Colors.black.withOpacity(0.12),
+                              ? Colors.white.withValues(alpha: 0.18)
+                              : Colors.black.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(999),
                         ),
                       ),
@@ -206,7 +205,7 @@ class _ItemNovedades extends StatelessWidget {
             width: 42,
             height: 42,
             decoration: BoxDecoration(
-              color: const Color(0xFF005B7F).withOpacity(0.12),
+              color: const Color(0xFF005B7F).withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(14),
             ),
             child: Icon(icon, color: const Color(0xFF005B7F)),

@@ -49,7 +49,7 @@ class TarjetaRegimenCorrelatividades extends ConsumerWidget {
           BoxShadow(
             blurRadius: 8,
             offset: const Offset(0, 8),
-            color: theme.shadowColor.withOpacity(0.1),
+            color: theme.shadowColor.withValues(alpha: 0.1),
           ),
         ],
       ),
@@ -317,7 +317,7 @@ class _LargeNormaCard extends StatelessWidget {
             width: 56,
             height: 56,
             decoration: BoxDecoration(
-              color: cs.primary.withOpacity(0.1),
+              color: cs.primary.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -416,7 +416,7 @@ class _LargeInstitutionCard extends StatelessWidget {
               color: cs.surface,
               shape: BoxShape.circle,
               border: Border.all(
-                color: cs.outlineVariant.withOpacity(0.5),
+                color: cs.outlineVariant.withValues(alpha: 0.5),
                 width: 1,
               ),
             ),

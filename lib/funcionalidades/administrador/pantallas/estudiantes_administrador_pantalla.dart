@@ -5,12 +5,12 @@ import '../../../compartido/supabase/supabase.dart';
 import '../datos/repositorio_estudiantes_administrador.dart';
 import '../modelos/estudiante_administrador.dart';
 import '../proveedores/proveedores_estudiantes_administrador.dart';
-import 'estudiantes/selector_carrera.dart';
-import 'estudiantes/formulario_estudiante.dart';
 import 'estudiantes/carga_masiva_estudiantes.dart';
-import 'estudiantes/utilidades_administrador.dart';
-import 'estudiantes/tabla_alumnos.dart';
+import 'estudiantes/formulario_estudiante.dart';
 import 'estudiantes/panel_academico.dart';
+import 'estudiantes/selector_carrera.dart';
+import 'estudiantes/tabla_alumnos.dart';
+import 'estudiantes/utilidades_administrador.dart';
 
 class EstudiantesAdministradorPantalla extends ConsumerStatefulWidget {
   const EstudiantesAdministradorPantalla({
@@ -447,8 +447,8 @@ class _EstudiantesAdministradorPantallaState
               : _careerId,
           currentYear: parts.length > 4 ? int.tryParse(parts[4]) : _currentYear,
           division: _normalizeDivision(parts.length > 5 ? parts[5] : null),
-          isNewStudent: parts.length > 6 ? !_truthy(parts[6]) : true,
-          isRepeating: parts.length > 6 ? _truthy(parts[6]) : false,
+          isNewStudent: parts.length <= 6 || !_truthy(parts[6]),
+          isRepeating: parts.length > 6 && _truthy(parts[6]),
           cohortYear: int.tryParse(_cohortCtrl.text.trim()),
         ),
       );

@@ -2,17 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../verificacion/pantallas/dispositivo_verificacion_pantalla.dart';
-import '../../verificacion/pantallas/solicitudes_verificacion_pantalla.dart';
 import '../../verificacion/pantallas/enviar_verificacion_pantalla.dart';
+import '../../verificacion/pantallas/solicitudes_verificacion_pantalla.dart';
 import '../proveedores/proveedores_acceso_administrador.dart';
 import 'actividad_administrador_pantalla.dart';
-import 'limpieza_administrador_pantalla.dart';
+import 'estudiantes_administrador_pantalla.dart';
 import 'eventos_examen_administrador_pantalla.dart';
+import 'fotos_materias_administrador_pantalla.dart';
+import 'limpieza_administrador_pantalla.dart';
 import 'navegacion_examen_administrador_pantalla.dart';
 import 'navegacion_materia_administrador_pantalla.dart';
-import 'fotos_materias_administrador_pantalla.dart';
 import 'solicitudes_pendientes_administrador_pantalla.dart';
-import 'estudiantes_administrador_pantalla.dart';
 
 class AccesoAdministradorPantalla extends ConsumerStatefulWidget {
   const AccesoAdministradorPantalla({

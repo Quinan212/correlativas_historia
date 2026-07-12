@@ -18,7 +18,7 @@ class SeccionComentariosMateria extends ConsumerWidget {
       ),
     );
     final commentProfiles =
-        commentProfilesAsync.valueOrNull ?? const <String, PerfilDispositivo>{};
+        commentProfilesAsync.value ?? const <String, PerfilDispositivo>{};
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

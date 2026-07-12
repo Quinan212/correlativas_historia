@@ -97,8 +97,8 @@ class _FeatureGlyph extends StatelessWidget {
         borderRadius: BorderRadius.circular(ui.lerpDouble(10, 14, t) ?? 14),
         border: Border.all(
           color: Color.lerp(
-            cs.outlineVariant.withOpacity(isDark ? 0.28 : 0.55),
-            cs.primary.withOpacity(isDark ? 0.42 : 0.22),
+            cs.outlineVariant.withValues(alpha: isDark ? 0.28 : 0.55),
+            cs.primary.withValues(alpha: isDark ? 0.42 : 0.22),
             t,
           )!,
         ),
@@ -107,7 +107,7 @@ class _FeatureGlyph extends StatelessWidget {
         icon,
         size: ui.lerpDouble(14, 18, t) ?? 18,
         color: Color.lerp(
-          cs.onSurfaceVariant.withOpacity(0.78),
+          cs.onSurfaceVariant.withValues(alpha: 0.78),
           cs.primary,
           t,
         ),
@@ -132,13 +132,13 @@ class _CircleAction extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(999),
         border: Border.all(
-          color: cs.outlineVariant.withOpacity(isDark ? 0.35 : 0.75),
+          color: cs.outlineVariant.withValues(alpha: isDark ? 0.35 : 0.75),
         ),
       ),
       child: Icon(
         icon,
         size: 18,
-        color: cs.onSurface.withOpacity(0.74),
+        color: cs.onSurface.withValues(alpha: 0.74),
       ),
     );
   }

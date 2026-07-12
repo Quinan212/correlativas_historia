@@ -93,7 +93,8 @@ class _AccionCircularRapida extends StatelessWidget {
                   shape: BoxShape.circle,
                   color: circleColor ?? scheme.primary.withValues(alpha: 0.10),
                   border: Border.all(
-                    color: circleBorderColor ??
+                    color:
+                        circleBorderColor ??
                         scheme.primary.withValues(alpha: 0.08),
                   ),
                 ),
@@ -235,11 +236,19 @@ class _FranjaResumen extends StatelessWidget {
     required this.payload,
     required this.plan,
     required this.entries,
+    this.onTapAprobadas,
+    this.onTapCursando,
+    this.onTapHabilitadas,
+    this.onTapPlanTotal,
   });
 
   final DatosAccesoEstudiante payload;
   final List<Materia> plan;
   final List<_CurriculumEntry> entries;
+  final VoidCallback? onTapAprobadas;
+  final VoidCallback? onTapCursando;
+  final VoidCallback? onTapHabilitadas;
+  final VoidCallback? onTapPlanTotal;
 
   @override
   Widget build(BuildContext context) {
@@ -252,12 +261,11 @@ class _FranjaResumen extends StatelessWidget {
         )
         .length;
     final inProgress = entries
-        .where(
-          (e) => e.current != null && _isSubjectInProgress(e.current!),
-        )
+        .where((e) => e.current != null && _isSubjectInProgress(e.current!))
         .length;
-    final available =
-        entries.where((e) => e.current == null && e.available).length;
+    final available = entries
+        .where((e) => e.current == null && e.available)
+        .length;
     final progress = totalPlan == 0 ? 0.0 : approved / totalPlan;
 
     return LayoutBuilder(
@@ -270,26 +278,34 @@ class _FranjaResumen extends StatelessWidget {
         return Column(
           children: [
             Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 SizedBox(
                   width: largeWidth,
-                  height: tileHeight,
-                  child: _TarjetaProgresoGrande(
-                    progress: progress,
-                    approved: approved,
-                    totalPlan: totalPlan,
+                  child: GestureDetector(
+                    onTap: onTapAprobadas,
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(minHeight: tileHeight),
+                      child: _TarjetaProgresoGrande(
+                        progress: progress,
+                        approved: approved,
+                        totalPlan: totalPlan,
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(width: spacing),
                 Expanded(
-                  child: SizedBox(
-                    height: tileHeight,
-                    child: TarjetaMetrica(
-                      icon: Icons.check_circle_rounded,
-                      label: 'Aprobadas',
-                      value: '$approved',
-                      padding: const EdgeInsets.all(10),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(minHeight: tileHeight),
+                    child: GestureDetector(
+                      onTap: onTapAprobadas,
+                      child: TarjetaMetrica(
+                        icon: Icons.check_circle_rounded,
+                        label: 'Aprobadas',
+                        value: '$approved',
+                        padding: const EdgeInsets.all(10),
+                      ),
                     ),
                   ),
                 ),
@@ -297,38 +313,53 @@ class _FranjaResumen extends StatelessWidget {
             ),
             const SizedBox(height: spacing),
             Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                SizedBox(
-                  width: thirdWidth,
-                  height: tileHeight,
-                  child: TarjetaMetrica(
-                    icon: Icons.lock_open_rounded,
-                    label: 'Habilitadas',
-                    value: '$available',
-                    padding: const EdgeInsets.all(10),
+                ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: tileHeight),
+                  child: GestureDetector(
+                    onTap: onTapHabilitadas,
+                    child: SizedBox(
+                      width: thirdWidth,
+                      child: TarjetaMetrica(
+                        icon: Icons.lock_open_rounded,
+                        label: 'Habilitadas',
+                        value: '$available',
+                        padding: const EdgeInsets.all(10),
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(width: spacing),
-                SizedBox(
-                  width: thirdWidth,
-                  height: tileHeight,
-                  child: TarjetaMetrica(
-                    icon: Icons.play_circle_rounded,
-                    label: 'Cursando',
-                    value: '$inProgress',
-                    padding: const EdgeInsets.all(10),
+                ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: tileHeight),
+                  child: GestureDetector(
+                    onTap: onTapCursando,
+                    child: SizedBox(
+                      width: thirdWidth,
+                      child: TarjetaMetrica(
+                        icon: Icons.play_circle_rounded,
+                        label: 'Cursando',
+                        value: '$inProgress',
+                        padding: const EdgeInsets.all(10),
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(width: spacing),
-                SizedBox(
-                  width: thirdWidth,
-                  height: tileHeight,
-                  child: TarjetaMetrica(
-                    icon: Icons.menu_book_rounded,
-                    label: 'Plan total',
-                    value: '$totalPlan',
-                    padding: const EdgeInsets.all(10),
+                ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: tileHeight),
+                  child: GestureDetector(
+                    onTap: onTapPlanTotal,
+                    child: SizedBox(
+                      width: thirdWidth,
+                      child: TarjetaMetrica(
+                        icon: Icons.menu_book_rounded,
+                        label: 'Plan total',
+                        value: '$totalPlan',
+                        padding: const EdgeInsets.all(10),
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -357,7 +388,6 @@ class _TarjetaProgresoGrande extends StatelessWidget {
     return _TarjetaVidrio(
       padding: const EdgeInsets.all(12),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           SizedBox(
             width: 56,
@@ -368,8 +398,9 @@ class _TarjetaProgresoGrande extends StatelessWidget {
                 CircularProgressIndicator(
                   value: progress,
                   strokeWidth: 6,
-                  backgroundColor:
-                      theme.colorScheme.primary.withValues(alpha: 0.10),
+                  backgroundColor: theme.colorScheme.primary.withValues(
+                    alpha: 0.10,
+                  ),
                 ),
                 Center(
                   child: Text(
@@ -398,12 +429,10 @@ class _TarjetaProgresoGrande extends StatelessWidget {
                 const SizedBox(height: 3),
                 Text(
                   '$approved de $totalPlan materias ya están acreditadas en tu recorrido.',
-                  maxLines: 3,
-                  overflow: TextOverflow.visible,
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                     fontSize: 11.5,
-                    height: 1.15,
+                    height: 1.2,
                   ),
                 ),
               ],
@@ -436,9 +465,7 @@ class _ExamShortcutBanner extends StatelessWidget {
           decoration: BoxDecoration(
             color: scheme.secondaryContainer.withValues(alpha: 0.46),
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(
-              color: scheme.secondary.withValues(alpha: 0.14),
-            ),
+            border: Border.all(color: scheme.secondary.withValues(alpha: 0.14)),
           ),
           child: Row(
             children: [
@@ -475,129 +502,485 @@ class _ExamShortcutBanner extends StatelessWidget {
   }
 }
 
-class _AccionesSecundariasAccesoEstudiante extends StatelessWidget {
-  const _AccionesSecundariasAccesoEstudiante({
-    required this.onOpenInicio,
+class _GrillaAccionesEstudiante extends StatelessWidget {
+  const _GrillaAccionesEstudiante({
+    required this.onOpenSelfSubjects,
     required this.onOpenPlan,
     required this.onOpenEscenarios,
     required this.onOpenAyuda,
-  });
-
-  final VoidCallback onOpenInicio;
-  final VoidCallback onOpenPlan;
-  final VoidCallback onOpenEscenarios;
-  final VoidCallback onOpenAyuda;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: _AccionCircularRapida(
-            icon: Icons.home_rounded,
-            label: 'Inicio',
-            onTap: onOpenInicio,
-            circleColor: Colors.white,
-            circleBorderColor: Theme.of(context).colorScheme.outline.withValues(
-                  alpha: 0.12,
-                ),
-          ),
-        ),
-        Expanded(
-          child: _AccionCircularRapida(
-            icon: Icons.account_tree_rounded,
-            label: 'Plan completo',
-            onTap: onOpenPlan,
-            circleColor: Colors.white,
-            circleBorderColor: Theme.of(context).colorScheme.outline.withValues(
-                  alpha: 0.12,
-                ),
-          ),
-        ),
-        Expanded(
-          child: _AccionCircularRapida(
-            icon: Icons.auto_graph_rounded,
-            label: 'Escenarios',
-            onTap: onOpenEscenarios,
-            circleColor: Colors.white,
-            circleBorderColor: Theme.of(context).colorScheme.outline.withValues(
-                  alpha: 0.12,
-                ),
-          ),
-        ),
-        Expanded(
-          child: _AccionCircularRapida(
-            icon: Icons.help_rounded,
-            label: 'Ayuda',
-            onTap: onOpenAyuda,
-            circleColor: Colors.white,
-            circleBorderColor: Theme.of(context).colorScheme.outline.withValues(
-                  alpha: 0.12,
-                ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _AccionesAnaliticasAccesoEstudiante extends StatelessWidget {
-  const _AccionesAnaliticasAccesoEstudiante({
     required this.onOpenNextSteps,
     required this.onOpenProgress,
     required this.onOpenAcademicCalendar,
-    required this.onOpenSelfSubjects,
+    required this.onOpenReimaginedTrajectory,
+    required this.onOpenCurriculum,
   });
 
+  final VoidCallback onOpenSelfSubjects;
+  final VoidCallback onOpenPlan;
+  final VoidCallback onOpenEscenarios;
+  final VoidCallback onOpenAyuda;
   final VoidCallback onOpenNextSteps;
   final VoidCallback onOpenProgress;
   final VoidCallback onOpenAcademicCalendar;
-  final VoidCallback onOpenSelfSubjects;
+  final VoidCallback onOpenReimaginedTrajectory;
+  final VoidCallback onOpenCurriculum;
 
   @override
   Widget build(BuildContext context) {
-    final outline =
-        Theme.of(context).colorScheme.outline.withValues(alpha: 0.12);
+    final outline = Theme.of(
+      context,
+    ).colorScheme.outline.withValues(alpha: 0.12);
 
-    return Row(
-      children: [
-        Expanded(
-          child: _AccionCircularRapida(
-            icon: Icons.flag_outlined,
-            label: 'Pr\u00f3ximos pasos',
-            onTap: onOpenNextSteps,
-            circleColor: Colors.white,
-            circleBorderColor: outline,
-          ),
-        ),
-        Expanded(
-          child: _AccionCircularRapida(
-            icon: Icons.insights_outlined,
-            label: 'Mi avance',
-            onTap: onOpenProgress,
-            circleColor: Colors.white,
-            circleBorderColor: outline,
-          ),
-        ),
-        Expanded(
-          child: _AccionCircularRapida(
-            icon: Icons.calendar_month_outlined,
-            label: 'Calendario',
-            onTap: onOpenAcademicCalendar,
-            circleColor: Colors.white,
-            circleBorderColor: outline,
-          ),
-        ),
-        Expanded(
-          child: _AccionCircularRapida(
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        const double spacing = 8;
+        final double itemWidth = (constraints.maxWidth - (spacing * 3)) / 4;
+        final List<Widget> actions = <Widget>[
+          _AccionCircularRapida(
             icon: Icons.edit_note_rounded,
             label: 'Mi registro',
             onTap: onOpenSelfSubjects,
             circleColor: Colors.white,
             circleBorderColor: outline,
           ),
+          _AccionCircularRapida(
+            icon: Icons.account_tree_rounded,
+            label: 'Plan completo',
+            onTap: onOpenPlan,
+            circleColor: Colors.white,
+            circleBorderColor: outline,
+          ),
+          _AccionCircularRapida(
+            icon: Icons.auto_graph_rounded,
+            label: 'Escenarios',
+            onTap: onOpenEscenarios,
+            circleColor: Colors.white,
+            circleBorderColor: outline,
+          ),
+          _AccionCircularRapida(
+            icon: Icons.help_rounded,
+            label: 'Ayuda',
+            onTap: onOpenAyuda,
+            circleColor: Colors.white,
+            circleBorderColor: outline,
+          ),
+          _AccionCircularRapida(
+            icon: Icons.flag_outlined,
+            label: 'Próximos pasos',
+            onTap: onOpenNextSteps,
+            circleColor: Colors.white,
+            circleBorderColor: outline,
+          ),
+          _AccionCircularRapida(
+            icon: Icons.insights_outlined,
+            label: 'Mi avance',
+            onTap: onOpenProgress,
+            circleColor: Colors.white,
+            circleBorderColor: outline,
+          ),
+          _AccionCircularRapida(
+            icon: Icons.calendar_month_outlined,
+            label: 'Calendario',
+            onTap: onOpenAcademicCalendar,
+            circleColor: Colors.white,
+            circleBorderColor: outline,
+          ),
+          /* _AccionCircularRapida(
+            icon: Icons.layers_rounded,
+            label: '1',
+            onTap: onOpenReimaginedTrajectory,
+            circleColor: Colors.white,
+            circleBorderColor: outline,
+          ), */
+          _AccionCircularRapida(
+            icon: Icons.menu_book_rounded,
+            label: 'Diseños',
+            onTap: onOpenCurriculum,
+            circleColor: Colors.white,
+            circleBorderColor: outline,
+          ),
+        ];
+
+        return Wrap(
+          spacing: spacing,
+          runSpacing: 12,
+          children: actions
+              .map((Widget action) => SizedBox(width: itemWidth, child: action))
+              .toList(growable: false),
+        );
+      },
+    );
+  }
+}
+
+// Sección promocional al final de Trayectorias con efecto "stacked cards"
+// sincronizado al scroll: las tarjetas empiezan desplegadas (se ven todas)
+// y al bajar se van apilando una por una. Si se sube, se desapilan.
+class _PromocionalTrayectoriasHeaderDelegate
+    extends SliverPersistentHeaderDelegate {
+  static const List<_CardPromocional> _items = <_CardPromocional>[
+    _CardPromocional(
+      assetPath: 'assets/banners/historia/recorrido/01.jpg',
+      eyebrow: 'Recorrido sugerido',
+      title: 'Repasá los núcleos del primer año',
+      cta: 'Conocé más',
+      alignment: Alignment.center,
+    ),
+    _CardPromocional(
+      assetPath: 'assets/banners/historia/recorrido/02.jpg',
+      eyebrow: 'Seguimiento',
+      title: 'Volvé a tus tramos con más movimiento',
+      cta: 'Ver avance',
+      alignment: Alignment.center,
+    ),
+    _CardPromocional(
+      assetPath: 'assets/banners/historia/recorrido/03.jpg',
+      eyebrow: 'Proyección',
+      title: 'Visualizá el trayecto que sigue',
+      cta: 'Planificar',
+      alignment: Alignment.center,
+    ),
+    _CardPromocional(
+      assetPath: 'assets/banners/historia/recorrido/04.jpg',
+      eyebrow: 'Tu carrera',
+      title: 'Descubrí más sobre tu plan',
+      cta: 'Explorar',
+      alignment: Alignment.topCenter,
+    ),
+  ];
+
+  _PromocionalTrayectoriasHeaderDelegate({required this.viewportHeight});
+
+  final double viewportHeight;
+
+  static const double _cardHeight = 340.0;
+  static const double _cardGap = 28.0;
+  static const double _stackedSpread = 5.0;
+  static const double _horizontalPadding = 16.0;
+  static const double _sectionTopPadding = 16.0;
+  static const double _sectionHeaderHeight = 72.0;
+  static const double _sectionHeaderGap = 24.0;
+  static const double _bottomPadding = 16.0;
+  static const double _pinTravel = 24.0;
+
+  static const double _fullSpread = _cardHeight + _cardGap;
+
+  double get _cardsStartTop =>
+      _sectionTopPadding + _sectionHeaderHeight + _sectionHeaderGap;
+
+  double get _headerTop => _sectionTopPadding;
+
+  double get _stackScrollExtent =>
+      (_items.length - 1) * (_fullSpread - _stackedSpread);
+
+  double get _stackedHeight =>
+      _cardsStartTop +
+      _cardHeight +
+      ((_items.length - 1) * _stackedSpread) +
+      _bottomPadding;
+
+  @override
+  double get maxExtent => _stackedHeight + _pinTravel + _stackScrollExtent;
+
+  @override
+  double get minExtent => _stackedHeight;
+
+  double _naturalTopFor(int index) => _cardsStartTop + (index * _fullSpread);
+
+  double _stackedTopFor(int index) => _cardsStartTop + (index * _stackedSpread);
+
+  double _topFor(int index, double scroll) {
+    final double naturalTop = _naturalTopFor(index);
+    final double stackedTop = _stackedTopFor(index);
+    return math.max(stackedTop, naturalTop - scroll);
+  }
+
+  double _progressFor(int index, double scroll) {
+    if (index >= _items.length - 1) return 0;
+    final double top = _topFor(index, scroll);
+    final double nextTop = _topFor(index + 1, scroll);
+    final double distance = nextTop - top;
+    final double progress = 1 - (distance / _cardHeight);
+    return progress.clamp(0.0, 1.0);
+  }
+
+  double _depthFor(int index, double scroll) {
+    if (index == _items.length - 1) return 0;
+    final double naturalTop = _naturalTopFor(index);
+    final double stackedTop = _stackedTopFor(index);
+    final double travel = naturalTop - stackedTop;
+    if (travel <= 0) return 0;
+    final double currentTop = _topFor(index, scroll);
+    return ((currentTop - stackedTop) / travel).clamp(0.0, 1.0);
+  }
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    final double scroll = math
+        .max(shrinkOffset - _pinTravel, 0.0)
+        .clamp(0.0, _stackScrollExtent);
+
+    final ThemeData theme = Theme.of(context);
+
+    return Stack(
+      clipBehavior: Clip.none,
+      children: <Widget>[
+        Positioned.fill(
+          child: ColoredBox(color: theme.scaffoldBackgroundColor),
+        ),
+        ...List<Widget>.generate(_items.length, (int index) {
+          final _CardPromocional item = _items[index];
+          final double top = _topFor(index, scroll);
+          return Positioned(
+            left: _horizontalPadding,
+            right: _horizontalPadding,
+            top: top,
+            child: _CardPromocionalTrayectorias(
+              item: item,
+              collisionProgress: _progressFor(index, scroll),
+              depthProgress: _depthFor(index, scroll),
+              cardHeight: _cardHeight,
+            ),
+          );
+        }),
+        Positioned(
+          left: _horizontalPadding,
+          right: _horizontalPadding,
+          top: _headerTop,
+          child: const _InicioSugerenciasTrayectorias(
+            height: _sectionHeaderHeight,
+          ),
         ),
       ],
     );
   }
+
+  @override
+  bool shouldRebuild(
+    covariant _PromocionalTrayectoriasHeaderDelegate oldDelegate,
+  ) {
+    return oldDelegate.viewportHeight != viewportHeight;
+  }
+}
+
+class _InicioSugerenciasTrayectorias extends StatelessWidget {
+  const _InicioSugerenciasTrayectorias({this.height});
+
+  final double? height;
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final ColorScheme scheme = theme.colorScheme;
+
+    return SizedBox(
+      height: height,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+        decoration: BoxDecoration(
+          color: theme.scaffoldBackgroundColor,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: scheme.outline.withValues(alpha: 0.10)),
+        ),
+        child: Row(
+          children: <Widget>[
+            Expanded(
+              child: Text(
+                'Sugerencias',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w900,
+                  color: scheme.onSurface,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CardPromocionalTrayectorias extends StatelessWidget {
+  const _CardPromocionalTrayectorias({
+    required this.item,
+    required this.collisionProgress,
+    required this.depthProgress,
+    required this.cardHeight,
+  });
+
+  final _CardPromocional item;
+  final double collisionProgress;
+  final double depthProgress;
+  final double cardHeight;
+
+  ColorFilter _brightnessFilter(double brightness) {
+    return ColorFilter.matrix(<double>[
+      brightness,
+      0,
+      0,
+      0,
+      0,
+      0,
+      brightness,
+      0,
+      0,
+      0,
+      0,
+      0,
+      brightness,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+    ]);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final ColorScheme scheme = theme.colorScheme;
+
+    final double stackProgress = Curves.easeOutCubic.transform(
+      collisionProgress.clamp(0.0, 1.0),
+    );
+    final double scale = 1 - (stackProgress * 0.06);
+    final double brightness = 1 - (stackProgress * 0.40);
+    final double translateY = stackProgress * -6.0;
+    final double shadowOpacity = 0.12 + (depthProgress * 0.10);
+
+    return Transform.translate(
+      offset: Offset(0, translateY),
+      child: Transform.scale(
+        scale: scale,
+        child: ColorFiltered(
+          colorFilter: _brightnessFilter(brightness),
+          child: Container(
+            height: cardHeight,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(28),
+              boxShadow: <BoxShadow>[
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: shadowOpacity),
+                  blurRadius: 22,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(28),
+              child: Stack(
+                fit: StackFit.expand,
+                children: <Widget>[
+                  ColoredBox(color: scheme.surfaceContainerHighest),
+                  Transform.scale(
+                    scale: 1.08,
+                    child: Image.asset(
+                      item.assetPath,
+                      fit: BoxFit.cover,
+                      alignment: item.alignment,
+                    ),
+                  ),
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        stops: const <double>[0.0, 0.35, 0.75, 1.0],
+                        colors: <Color>[
+                          Colors.black.withValues(alpha: 0.22),
+                          Colors.black.withValues(alpha: 0.06),
+                          Colors.black.withValues(alpha: 0.26),
+                          Colors.black.withValues(alpha: 0.64),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Align(
+                          alignment: Alignment.topRight,
+                          child: Container(
+                            width: 28,
+                            height: 28,
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.18),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.close_rounded,
+                              size: 16,
+                              color: Colors.white.withValues(alpha: 0.92),
+                            ),
+                          ),
+                        ),
+                        const Spacer(),
+
+                        Text(
+                          item.title,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w900,
+                            height: 1.05,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: <Widget>[
+                            Text(
+                              item.cta,
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: Colors.white.withValues(alpha: 0.92),
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Icon(
+                              Icons.arrow_forward_rounded,
+                              size: 16,
+                              color: Colors.white.withValues(alpha: 0.92),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CardPromocional {
+  const _CardPromocional({
+    required this.assetPath,
+    required this.eyebrow,
+    required this.title,
+    required this.cta,
+    required this.alignment,
+  });
+
+  final String assetPath;
+  final String eyebrow;
+  final String title;
+  final String cta;
+  final Alignment alignment;
 }

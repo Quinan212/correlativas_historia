@@ -38,39 +38,16 @@ class BarraFiltrosExamenes extends StatelessWidget {
     final examCareerOptions = kCareers
         .where(
           (c) =>
-              c.id == 'historia' || c.id == 'geografia' || c.id == 'politica',
+              c.id == 'historia' ||
+              c.id == 'geografia' ||
+              c.id == 'politica' ||
+              c.id == 'musica',
         )
         .toList();
 
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: isDark ? cs.surface : Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isDark ? cs.outlineVariant : const Color(0xFFD1D5DB),
-        ),
-      ),
-      padding: const EdgeInsets.all(12),
-      child: Column(
+    return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Lectura situada de mesas y llamados',
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w800,
-              color: cs.onSurface,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Esta pantalla no reemplaza cronogramas de cátedra ni avisos institucionales. Sirve para cruzar el plan con fechas publicadas, coloquios y movimientos concretos de cursada.',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: cs.onSurfaceVariant,
-              height: 1.35,
-            ),
-          ),
-          const SizedBox(height: 12),
           LayoutBuilder(
             builder: (context, constraints) {
               return Container(
@@ -228,7 +205,6 @@ class BarraFiltrosExamenes extends StatelessWidget {
             ),
           ),
         ],
-      ),
     );
   }
 }

@@ -216,7 +216,7 @@ class _PantallaEventosExamenGlobalAdminState
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount: filtered.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 10),
+                      separatorBuilder: (_, _) => const SizedBox(height: 10),
                       itemBuilder: (context, index) {
                         final event = filtered[index];
                         return _TarjetaEventoExamen(

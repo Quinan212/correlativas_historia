@@ -1,6 +1,7 @@
 // lib/compartido/proveedores/estado_app.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 
 import '../../datos/cargador_fuente_html.dart';
 import '../../modelos/materia.dart';
@@ -149,6 +150,10 @@ final proveedorPlan = FutureProvider<DatosPlan>((ref) async {
 
 final proveedorIndiceRouter = StateProvider<int>((_) => 0);
 
+/// Sección activa de la barra de navegación inferior móvil.
+/// 0 = Trayectorias, 1 = Exámenes, 2 = Materias, 3 = Datos.
+final proveedorSeccionNav = StateProvider<int>((_) => 0);
+
 // =================== MAP FILTERS ===================
 
 final proveedorTerminoBusqueda = StateProvider<String>((_) => '');
@@ -161,11 +166,11 @@ final proveedorModoCompacto = StateProvider<bool>((_) => false);
 final proveedorZoom = StateProvider<double>((_) => 1.0);
 
 final proveedorControladorTransformacion =
-    Provider.autoDispose<TransformationController>((ref) {
+    Provider<TransformationController>((ref) {
   final c = TransformationController();
   ref.onDispose(c.dispose);
   return c;
-});
+}, isAutoDispose: true);
 
 // =================== SELECTION ===================
 

@@ -81,7 +81,7 @@ class EstilosCalculadora {
     return BoxDecoration(
       color: fondoTarjeta(context),
       borderRadius: BorderRadius.circular(16),
-      border: Border.all(color: bordeTarjeta(context), width: 1),
+      border: Border.all(color: bordeTarjeta(context)),
       boxShadow: const [
         BoxShadow(blurRadius: 10, color: Color(0x14000000)),
       ],
@@ -200,7 +200,7 @@ class EstilosCalculadora {
     final isDark = esOscuro(context);
 
     return (
-      bg: isDark ? oscurecer(cs.surface, 0.20) : const Color(0xFFF3F4F6),
+      bg: isDark ? oscurecer(cs.surface) : const Color(0xFFF3F4F6),
       bd: isDark ? cs.outlineVariant : const Color(0xFFE5E7EB),
       fg: cs.onSurface,
     );

@@ -40,7 +40,6 @@ class _ContenedorHojaMobile extends StatelessWidget {
     final bottomInset = mq.viewInsets.bottom;
 
     return SafeArea(
-      bottom: true,
       top: false,
       child: Container(
         decoration: BoxDecoration(

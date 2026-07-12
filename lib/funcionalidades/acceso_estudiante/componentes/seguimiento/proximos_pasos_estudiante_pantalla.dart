@@ -161,8 +161,6 @@ class _ProximosPasosEstudiantePantalla extends StatelessWidget {
         title: const Text('Pr\u00f3ximos pasos'),
       ),
       body: SafeArea(
-        top: false,
-        bottom: true,
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
           children: [

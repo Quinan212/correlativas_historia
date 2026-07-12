@@ -16,7 +16,7 @@ final proveedorRepositorioVerificacion = Provider<RepositorioVerificacion>(
 final proveedorOpcionesMateriasVerificacion =
     Provider<List<OpcionMateriaVerificacion>>(
   (ref) {
-    final plan = ref.watch(proveedorPlan).valueOrNull;
+    final plan = ref.watch(proveedorPlan).value;
     if (plan == null) return const <OpcionMateriaVerificacion>[];
     final items = plan.materias
         .map(
@@ -104,10 +104,10 @@ class OpcionMateriaVerificacion {
 final proveedorEstadoVerificacionMateria =
     Provider.family<EstadoVerificacionMateria, String>((ref, matterId) {
   final requests =
-      ref.watch(proveedorSolicitudesVerificacionPropias).valueOrNull ??
+      ref.watch(proveedorSolicitudesVerificacionPropias).value ??
           const <SolicitudVerificacion>[];
   final approvedMatterIds =
-      ref.watch(proveedorIdsMateriasAprobadas).valueOrNull ?? const <String>{};
+      ref.watch(proveedorIdsMateriasAprobadas).value ?? const <String>{};
 
   if (approvedMatterIds.contains(matterId)) {
     final approvedRequest = requests

@@ -52,7 +52,6 @@ class TarjetaMateriaPropia extends StatelessWidget {
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: cs.outlineVariant.withValues(alpha: 0.5),
-              strokeAlign: BorderSide.strokeAlignInside,
             ),
           ),
           child: Column(

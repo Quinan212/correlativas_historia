@@ -35,7 +35,7 @@ class BotonCerrarDetalle extends StatelessWidget {
                       BoxShadow(
                         blurRadius: 10,
                         offset: const Offset(0, 6),
-                        color: Colors.black.withOpacity(0.08),
+                        color: Colors.black.withValues(alpha: 0.08),
                       ),
                     ],
             ),
@@ -95,7 +95,7 @@ class BarraInferiorDetalle extends StatelessWidget {
                   BoxShadow(
                     blurRadius: 6,
                     offset: const Offset(0, 3),
-                    color: Colors.black.withOpacity(0.04),
+                    color: Colors.black.withValues(alpha: 0.04),
                   ),
                 ],
         ),
@@ -139,12 +139,12 @@ class AgarreDetalle extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     final base = isDark
-        ? Colors.white.withOpacity(0.18)
-        : Colors.black.withOpacity(0.12);
+        ? Colors.white.withValues(alpha: 0.18)
+        : Colors.black.withValues(alpha: 0.12);
 
     final highlight = isDark
-        ? Colors.white.withOpacity(0.22)
-        : Colors.white.withOpacity(0.55);
+        ? Colors.white.withValues(alpha: 0.22)
+        : Colors.white.withValues(alpha: 0.55);
 
     return Padding(
       padding: const EdgeInsets.only(top: 6, bottom: 6),
@@ -161,7 +161,7 @@ class AgarreDetalle extends StatelessWidget {
                   color: base,
                   borderRadius: BorderRadius.circular(999),
                   border: Border.all(
-                    color: cs.outlineVariant.withOpacity(isDark ? 0.35 : 0.55),
+                    color: cs.outlineVariant.withValues(alpha: isDark ? 0.35 : 0.55),
                     width: 1,
                   ),
                   boxShadow: isDark
@@ -170,7 +170,7 @@ class AgarreDetalle extends StatelessWidget {
                           BoxShadow(
                             blurRadius: 10,
                             offset: const Offset(0, 6),
-                            color: Colors.black.withOpacity(0.08),
+                            color: Colors.black.withValues(alpha: 0.08),
                           ),
                         ],
                 ),

@@ -41,7 +41,7 @@ class DispositivoVerificacionPantalla extends ConsumerWidget {
                   child: ownProfileAsync.when(
                     data: (profile) {
                       final detectedDeviceLabel =
-                          deviceLabelAsync.valueOrNull ?? 'Dispositivo';
+                          deviceLabelAsync.value ?? 'Dispositivo';
                       final effectiveDeviceLabel = _resolverEtiquetaDispositivo(
                         profile?.deviceLabel,
                         detectedDeviceLabel,

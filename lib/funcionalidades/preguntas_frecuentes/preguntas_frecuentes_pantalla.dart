@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 
 /// ===================== Estado de búsqueda =====================
 final proveedorBusquedaPreguntasFrecuentes = StateProvider<String>((_) => '');
@@ -409,7 +410,7 @@ class PantallaPreguntasFrecuentes extends ConsumerWidget {
               child: Padding(
                 padding: EdgeInsets.fromLTRB(16, 12, 16, 24),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _PortadaPreguntasFrecuentes(),
                     SizedBox(height: 12),

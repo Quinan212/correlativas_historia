@@ -72,7 +72,7 @@ class _LimpiezaAdministradorPantallaState
           IconButton(
             onPressed: _runningAction != null
                 ? null
-                : () => setState(() => _selectedActions.clear()),
+                : () => setState(_selectedActions.clear),
             icon: const Icon(Icons.deselect_rounded),
             tooltip: 'Limpiar selección',
           ),
@@ -254,7 +254,7 @@ class _LimpiezaAdministradorPantallaState
     }
 
     if (mounted) {
-      setState(() => _selectedActions.clear());
+      setState(_selectedActions.clear);
     }
   }
 

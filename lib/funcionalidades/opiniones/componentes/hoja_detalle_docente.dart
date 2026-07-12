@@ -73,11 +73,11 @@ class _PaginaDetalleDocente extends ConsumerWidget {
             ),
           ),
         )
-        .valueOrNull;
+        .value;
     final verification =
         ref.watch(proveedorEstadoVerificacionMateria(matterId));
     final reviews =
-        ref.watch(proveedorResenasDocente(docente.id)).valueOrNull ??
+        ref.watch(proveedorResenasDocente(docente.id)).value ??
             const <ResenaDocente>[];
 
     final matterNameById = <String, String>{
@@ -95,7 +95,7 @@ class _PaginaDetalleDocente extends ConsumerWidget {
                     commentedReviews.map((item) => item.deviceId)),
               ),
             )
-            .valueOrNull ??
+            .value ??
         const <String, PerfilDispositivo>{};
 
     return Scaffold(
@@ -494,7 +494,7 @@ class _TarjetaSeccion extends StatelessWidget {
                 BoxShadow(
                   blurRadius: 6,
                   offset: const Offset(0, 3),
-                  color: Colors.black.withOpacity(0.035),
+                  color: Colors.black.withValues(alpha: 0.035),
                 ),
               ],
       ),

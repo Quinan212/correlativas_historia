@@ -54,6 +54,17 @@ class App extends ConsumerWidget {
         title: 'Mapa y Calculadora de Correlatividades',
         debugShowCheckedModeBanner: false,
         showPerformanceOverlay: RendimientoApp.diagnosticosHabilitados,
+        builder: (context, child) {
+          if (child == null) {
+            return const SizedBox.shrink();
+          }
+
+          return MediaQuery.withClampedTextScaling(
+            minScaleFactor: 0.95,
+            maxScaleFactor: 1.10,
+            child: child,
+          );
+        },
         locale: const Locale('es', 'AR'),
         localizationsDelegates: GlobalMaterialLocalizations.delegates,
         supportedLocales: const <Locale>[Locale('es', 'AR')],
@@ -75,6 +86,7 @@ class MainScreen extends ConsumerStatefulWidget {
 
 class _MainScreenState extends ConsumerState<MainScreen> {
   bool _checkedWhatsNew = false;
+  final _trayectoriasNavKey = GlobalKey<NavigatorState>();
 
   @override
   void didChangeDependencies() {
@@ -90,24 +102,32 @@ class _MainScreenState extends ConsumerState<MainScreen> {
   @override
   Widget build(BuildContext context) {
     final routerIndex = ref.watch(proveedorIndiceRouter).clamp(0, 4);
-    final adminStatus =
-        ref.watch(proveedorEstadoDispositivoAdministrador).valueOrNull;
+    final seccionNav = ref.watch(proveedorSeccionNav);
+    final adminStatus = ref
+        .watch(proveedorEstadoDispositivoAdministrador)
+        .value;
     final showAdminFab = adminStatus?.isAdmin == true;
     final width = MediaQuery.of(context).size.width;
     final isDesktop = width >= 900;
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final loggedIn =
+        ref.watch(proveedorClienteSupabase)?.auth.currentSession != null;
+    final showNavBar = !isDesktop && loggedIn;
 
     final adminFabBottom = isDesktop ? 20.0 : (routerIndex == 1 ? 92.0 : 10.0);
 
     Widget content = IndexedStack(
       index: routerIndex,
-      children: const [
-        AccesoEstudiantePantalla(key: ValueKey('trayectorias')),
-        PantallaInicioMapa(key: ValueKey('inicio_mapa')),
-        PantallaMapaCorrelatividades(key: ValueKey('cascada')),
-        PantallaCalculadora(key: ValueKey('calculadora')),
-        PantallaPreguntasFrecuentes(key: ValueKey('faq')),
+      children: [
+        _TabNavigator(
+          navigatorKey: _trayectoriasNavKey,
+          child: const AccesoEstudiantePantalla(key: ValueKey('trayectorias')),
+        ),
+        const PantallaInicioMapa(key: ValueKey('inicio_mapa')),
+        const PantallaMapaCorrelatividades(key: ValueKey('cascada')),
+        const PantallaCalculadora(key: ValueKey('calculadora')),
+        const PantallaPreguntasFrecuentes(key: ValueKey('faq')),
       ],
     );
 
@@ -131,15 +151,18 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                 child: Padding(
                   padding: const EdgeInsets.only(bottom: 20),
                   child: IconButton(
-                    icon: Icon(isDark
-                        ? Icons.light_mode_rounded
-                        : Icons.dark_mode_rounded),
+                    icon: Icon(
+                      isDark
+                          ? Icons.light_mode_rounded
+                          : Icons.dark_mode_rounded,
+                    ),
                     onPressed: () {
                       final cur = ref.read(proveedorModoTema);
-                      ref.read(proveedorModoTema.notifier).state =
-                          cur == ThemeMode.dark
-                              ? ThemeMode.light
-                              : ThemeMode.dark;
+                      ref
+                          .read(proveedorModoTema.notifier)
+                          .state = cur == ThemeMode.dark
+                          ? ThemeMode.light
+                          : ThemeMode.dark;
                     },
                   ),
                 ),
@@ -186,42 +209,81 @@ class _MainScreenState extends ConsumerState<MainScreen> {
       );
     }
 
-    return Scaffold(
-      body: content,
-      floatingActionButton: Padding(
-        padding: EdgeInsets.only(bottom: adminFabBottom),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            if (showAdminFab)
-              FloatingActionButton.small(
-                heroTag: 'admin_access_fab',
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => const AccesoAdministradorPantalla(),
-                    ),
-                  );
-                },
-                child: const Icon(Icons.admin_panel_settings_rounded),
-              ),
-          ],
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        if (_trayectoriasNavKey.currentState?.canPop() ?? false) {
+          _trayectoriasNavKey.currentState!.pop();
+        }
+      },
+      child: Scaffold(
+        body: content,
+        floatingActionButton: Padding(
+          padding: EdgeInsets.only(bottom: adminFabBottom),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              if (showAdminFab)
+                FloatingActionButton.small(
+                  heroTag: 'admin_access_fab',
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => const AccesoAdministradorPantalla(),
+                      ),
+                    );
+                  },
+                  child: const Icon(Icons.admin_panel_settings_rounded),
+                ),
+            ],
+          ),
         ),
+        bottomNavigationBar: showNavBar
+            ? NavegacionInferiorApp(
+                current: seccionNav,
+                onTapTrayectorias: () {
+                  ref.read(proveedorSeccionNav.notifier).state = 0;
+                  ref.read(proveedorIndiceRouter.notifier).state = 0;
+                },
+                onTapHome: () {
+                  ref.read(proveedorIndiceRouter.notifier).state = 0;
+                  ref.read(proveedorSeccionNav.notifier).state = 1;
+                },
+                onTapCenter: () {
+                  ref.read(proveedorSeccionNav.notifier).state = 0;
+                  ref.read(proveedorIndiceRouter.notifier).state = 2;
+                },
+                onTapMap: () {
+                  ref.read(proveedorIndiceRouter.notifier).state = 0;
+                  ref.read(proveedorSeccionNav.notifier).state = 2;
+                },
+                onTapCalc: () {
+                  ref.read(proveedorIndiceRouter.notifier).state = 0;
+                  ref.read(proveedorSeccionNav.notifier).state = 3;
+                },
+              )
+            : null,
       ),
-      bottomNavigationBar: isDesktop
-          ? null
-          : NavegacionInferiorApp(
-              current: routerIndex,
-              onTapTrayectorias: () =>
-                  ref.read(proveedorIndiceRouter.notifier).state = 0,
-              onTapHome: () =>
-                  ref.read(proveedorIndiceRouter.notifier).state = 1,
-              onTapMap: () =>
-                  ref.read(proveedorIndiceRouter.notifier).state = 2,
-              onTapCalc: () =>
-                  ref.read(proveedorIndiceRouter.notifier).state = 3,
-            ),
+    );
+  }
+}
+
+/// Navigator anidado para una pestaña del [IndexedStack].
+/// Las rutas empujadas desde dentro quedan dentro del body de [MainScreen],
+/// por lo que la [NavegacionInferiorApp] siempre permanece visible.
+class _TabNavigator extends StatelessWidget {
+  final GlobalKey<NavigatorState> navigatorKey;
+  final Widget child;
+
+  const _TabNavigator({required this.navigatorKey, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Navigator(
+      key: navigatorKey,
+      onGenerateRoute: (_) => MaterialPageRoute<void>(builder: (_) => child),
     );
   }
 }

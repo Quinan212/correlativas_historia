@@ -72,7 +72,7 @@ class _BarraLateralEscritorio extends StatelessWidget {
             (career) => _ItemBarraLateral(
               label: career.nombre,
               detail:
-                  '${stats.mesasByCareer[career.id] ?? 0} mesas · ${stats.coloquiosByCareer[career.id] ?? 0} coloquios',
+                  '${(stats.mesasByCareer as Map)[career.id] ?? 0} mesas · ${(stats.coloquiosByCareer as Map)[career.id] ?? 0} coloquios',
               icon: Icons.school_rounded,
               selected: selectedCareerId == career.id,
               onTap: () => onCareerChanged(career.id),

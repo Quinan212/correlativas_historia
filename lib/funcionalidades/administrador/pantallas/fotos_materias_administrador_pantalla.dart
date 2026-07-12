@@ -38,7 +38,7 @@ class FotosMateriasAdministradorPantalla extends ConsumerWidget {
             child: statsAsync.when(
               data: (items) {
                 if (items.isEmpty) {
-                  return _EstadoVacio(
+                  return const _EstadoVacio(
                     title: 'Todavía no hay fotos cargadas',
                     subtitle:
                         'Cuando aparezcan fotos de materia, van a listarse primero por carrera y luego por año y materia.',
@@ -207,7 +207,7 @@ class _TarjetaCarrera extends StatelessWidget {
                 width: 52,
                 height: 52,
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.primary.withOpacity(0.12),
+                  color: theme.colorScheme.primary.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 alignment: Alignment.center,
@@ -270,7 +270,7 @@ class _EstadoVacio extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 64, color: theme.hintColor.withOpacity(0.5)),
+            Icon(icon, size: 64, color: theme.hintColor.withValues(alpha: 0.5)),
             const SizedBox(height: 16),
             Text(
               title,

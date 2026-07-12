@@ -95,7 +95,7 @@ class _TextoAutoDesplazableState extends State<TextoAutoDesplazable>
           text: TextSpan(text: widget.text, style: style),
           maxLines: 1,
           textDirection: textDirection,
-        )..layout(maxWidth: double.infinity);
+        )..layout();
 
         final textWidth = textPainter.width;
         final overflow = textWidth - maxWidth;

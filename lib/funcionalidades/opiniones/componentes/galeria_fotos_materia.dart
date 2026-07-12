@@ -452,7 +452,7 @@ class _PaginadorVistaPreviaFotoMateriaState
   Widget build(BuildContext context) {
     final currentPost = _posts[_currentIndex];
     final adminStatus =
-        ref.watch(proveedorEstadoDispositivoAdministrador).valueOrNull;
+        ref.watch(proveedorEstadoDispositivoAdministrador).value;
     final canModerate = adminStatus?.isAdmin == true;
     return Scaffold(
       appBar: AppBar(

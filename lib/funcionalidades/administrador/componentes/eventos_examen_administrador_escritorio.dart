@@ -334,7 +334,7 @@ class _EstadisticasEventosExamen {
   }
 }
 
-List<dynamic> get _adminCareers => kCareers
+  List<CareerInfo> get _adminCareers => kCareers
     .where(
       (career) =>
           career.id == 'historia' ||

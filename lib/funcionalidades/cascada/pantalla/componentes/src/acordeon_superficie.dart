@@ -36,7 +36,7 @@ class _AccordionSurface extends StatelessWidget {
     final closedTitleStyle =
         (theme.textTheme.titleMedium ?? const TextStyle()).copyWith(
       fontWeight: FontWeight.w700,
-      color: cs.onSurface.withOpacity(0.92),
+      color: cs.onSurface.withValues(alpha: 0.92),
       height: 1.1,
       letterSpacing: -0.15,
     );
@@ -274,8 +274,8 @@ class _AccordionSurface extends StatelessWidget {
                             width: double.infinity,
                             height: 1,
                             color: isDark
-                                ? Colors.white.withOpacity(0.06)
-                                : Colors.black.withOpacity(0.06),
+                                ? Colors.white.withValues(alpha: 0.06)
+                                : Colors.black.withValues(alpha: 0.06),
                           ),
                           const SizedBox(height: 12),
                           for (var i = 0; i < data.bullets.length; i++) ...[
@@ -349,7 +349,7 @@ class _AccordionBullet extends StatelessWidget {
           height: 8,
           margin: const EdgeInsets.only(top: 6),
           decoration: BoxDecoration(
-            color: cs.primary.withOpacity(0.88),
+            color: cs.primary.withValues(alpha: 0.88),
             shape: BoxShape.circle,
           ),
         ),

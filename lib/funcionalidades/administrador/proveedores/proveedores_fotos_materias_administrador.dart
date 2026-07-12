@@ -1,9 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../datos/cargador_fuente_html.dart';
-import '../../../modelos/materia.dart';
 import '../../../compartido/proveedores/estado_app.dart';
 import '../../../compartido/supabase/supabase.dart';
+import '../../../datos/cargador_fuente_html.dart';
+import '../../../modelos/materia.dart';
 import '../../opiniones/modelos/publicacion_foto_materia.dart';
 
 class EstadisticasFotosMateriaAdministrador {
@@ -41,7 +41,7 @@ class EstadisticasFotosCarreraAdministrador {
 }
 
 final proveedorResumenFotosMateriasAdministrador =
-    FutureProvider.autoDispose<List<EstadisticasFotosCarreraAdministrador>>(
+    FutureProvider<List<EstadisticasFotosCarreraAdministrador>>(
         (ref) async {
   final bootstrap = ref.watch(proveedorArranqueSupabase);
   final client = ref.watch(proveedorClienteSupabase);
@@ -148,7 +148,7 @@ final proveedorResumenFotosMateriasAdministrador =
     return a.career.nombre.compareTo(b.career.nombre);
   });
   return result;
-});
+}, isAutoDispose: true);
 
 List<Materia> _applyInstitutionOverrides(
   List<Materia> materias,

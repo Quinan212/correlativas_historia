@@ -38,8 +38,6 @@ class _ProgresoEstudiantePantalla extends StatelessWidget {
         title: const Text('Mi avance'),
       ),
       body: SafeArea(
-        top: false,
-        bottom: true,
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
           children: [

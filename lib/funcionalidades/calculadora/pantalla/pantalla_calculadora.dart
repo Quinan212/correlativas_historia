@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../modelos/materia.dart';
 import '../../../compartido/proveedores/estado_app.dart';
+import '../../../modelos/materia.dart';
 import '../evaluation_panel.dart';
-import 'utilidades/iterables.dart';
 import 'componentes/banner_colapsable_calculadora.dart';
 import 'componentes/bloque_selectores_calculadora.dart';
 import 'componentes/resumen_materia_calculadora.dart';
-import 'componentes/tarjeta_portada_calculadora.dart';
-import 'componentes/tarjeta_paso_calculadora.dart';
 import 'componentes/tarjeta_espera_calculadora.dart';
+import 'componentes/tarjeta_paso_calculadora.dart';
+import 'componentes/tarjeta_portada_calculadora.dart';
+import 'utilidades/iterables.dart';
 
 class PantallaCalculadora extends ConsumerWidget {
   const PantallaCalculadora({super.key});
@@ -34,7 +34,6 @@ class PantallaCalculadora extends ConsumerWidget {
       backgroundColor: isDark ? cs.surface : kPageBgLight,
       body: SafeArea(
         top: false,
-        bottom: true,
         child: CustomScrollView(
           slivers: [
             SliverPersistentHeader(
@@ -80,10 +79,10 @@ class PantallaCalculadora extends ConsumerWidget {
                   if (!isDesktop) {
                     return Padding(
                       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          const TarjetaPortadaCalculadora(),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const TarjetaPortadaCalculadora(),
                           const SizedBox(height: 12),
                           const TarjetaPasoCalculadora(
                             numero: 1,
@@ -133,28 +132,28 @@ class PantallaCalculadora extends ConsumerWidget {
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            SizedBox(
+                            const SizedBox(
                               width: 360,
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
-                                  const TarjetaPortadaCalculadora(),
+                                  TarjetaPortadaCalculadora(),
                                   const SizedBox(height: 16),
-                                  const TarjetaPasoCalculadora(
+                                  TarjetaPasoCalculadora(
                                     numero: 1,
                                     titulo: 'Elegí la carrera de referencia',
                                     subtitulo:
                                         'La lectura cambia según el plan y la institución que tomás como referencia.',
                                   ),
                                   const SizedBox(height: 12),
-                                  const TarjetaPasoCalculadora(
+                                  TarjetaPasoCalculadora(
                                     numero: 2,
                                     titulo: 'Ubica el tramo del plan',
                                     subtitulo:
                                         'Elegí el año donde se ubica la materia para leer sus condiciones de cursada.',
                                   ),
                                   const SizedBox(height: 12),
-                                  const TarjetaPasoCalculadora(
+                                  TarjetaPasoCalculadora(
                                     numero: 3,
                                     titulo: 'Pon la materia en contexto',
                                     subtitulo:
@@ -166,7 +165,7 @@ class PantallaCalculadora extends ConsumerWidget {
                             const SizedBox(width: 20),
                             Expanded(
                               child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   BloqueSelectoresCalculadora(
                                       materiasYear: materiasYear),

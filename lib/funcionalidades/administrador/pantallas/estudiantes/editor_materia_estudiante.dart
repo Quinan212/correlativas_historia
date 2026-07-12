@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../../../modelos/materia.dart';
 import '../../modelos/estudiante_administrador.dart';
 import '../../modelos/materia_estudiante_administrador.dart';
-import '../../../../modelos/materia.dart';
 import 'utilidades_administrador.dart';
 
 class DialogoEditorMateria extends StatefulWidget {

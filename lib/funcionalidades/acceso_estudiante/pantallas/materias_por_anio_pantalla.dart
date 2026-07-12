@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../modelos/materia.dart';
-import '../modelos/modelos_acceso_estudiante.dart';
 import '../componentes/tarjeta_materia_propia.dart';
+import '../modelos/modelos_acceso_estudiante.dart';
 
 class MateriasPorAnioPantalla extends StatelessWidget {
   const MateriasPorAnioPantalla({
@@ -51,7 +51,6 @@ class MateriasPorAnioPantalla extends StatelessWidget {
       ),
       body: SafeArea(
         top: false,
-        bottom: true,
         child: subjects.isEmpty
             ? Center(
                 child: Padding(
@@ -65,31 +64,41 @@ class MateriasPorAnioPantalla extends StatelessWidget {
                   ),
                 ),
               )
-            : ListView(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+            : Column(
                 children: [
-                  Text(
-                    '${subjects.length} materias en $year° año',
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w900,
+                  Expanded(
+                    child: ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                      itemCount: subjects.length + 2,
+                      itemBuilder: (context, index) {
+                        if (index == 0) {
+                          return Text(
+                            '${subjects.length} materias en $year° año',
+                            style: theme.textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.w900,
+                            ),
+                          );
+                        }
+                        if (index == 1) {
+                          return const SizedBox(height: 16);
+                        }
+                        final subject = subjects[index - 2];
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: TarjetaMateriaPropia(
+                            subject: subject,
+                            onEdit: () async {
+                              final bool deleted = await onEdit(existing: subject);
+                              if (deleted && context.mounted) {
+                                Navigator.of(context).pop();
+                              }
+                            },
+                            busy: busy,
+                          ),
+                        );
+                      },
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  for (final subject in subjects) ...[
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
-                      child: TarjetaMateriaPropia(
-                        subject: subject,
-                        onEdit: () async {
-                          final bool deleted = await onEdit(existing: subject);
-                          if (deleted && context.mounted) {
-                            Navigator.of(context).pop();
-                          }
-                        },
-                        busy: busy,
-                      ),
-                    ),
-                  ],
                 ],
               ),
       ),

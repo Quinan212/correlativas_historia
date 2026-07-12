@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'supabase_bootstrap.dart';
 import 'proveedores_supabase.dart';
+import 'supabase_bootstrap.dart';
 
 class BannerEstadoSupabase extends ConsumerWidget {
   const BannerEstadoSupabase({super.key});

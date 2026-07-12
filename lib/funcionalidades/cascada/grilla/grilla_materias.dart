@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart' show ScrollDirection;
 import 'package:flutter/scheduler.dart' show Ticker;
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../compartido/proveedores/estado_app.dart';
+import '../../../modelos/materia.dart';
+import 'componentes/tarjeta_materia_grilla.dart';
 import 'utilidades/cuatrimestre.dart';
 import 'utilidades/orden_materias.dart';
-import 'componentes/tarjeta_materia_grilla.dart';
 
 class _TokensGrilla {
   static const borderLight = Color(0xFFE5E7EB);
@@ -183,8 +184,6 @@ class _AutoScrollingHorizontalStripState
                     child: Container(
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
                           colors: [bgColor, bgColor.withValues(alpha: 0.0)],
                         ),
                       ),
@@ -261,7 +260,6 @@ class _GrillaVisualizacionState extends ConsumerState<GrillaVisualizacion> {
           ? null
           : Border.all(
               color: cs.outlineVariant,
-              width: 1,
             ),
       boxShadow: widget.borderless || isDark
           ? const []
@@ -358,7 +356,7 @@ class _GrillaVisualizacionState extends ConsumerState<GrillaVisualizacion> {
     ];
 
     for (int i = 0; i < yearMaterias.length; i++) {
-      final m = yearMaterias[i];
+      final m = yearMaterias[i] as Materia;
 
       if (m.cuatri != lastCuatri) {
         rowChildren.add(

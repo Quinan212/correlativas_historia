@@ -62,7 +62,7 @@ class DocenteTile extends ConsumerWidget {
             ),
           ),
         )
-        .valueOrNull;
+        .value;
 
     return InkWell(
       onTap: () {

@@ -157,7 +157,7 @@ class _DatosEstudiantePantallaState extends State<_DatosEstudiantePantalla> {
     final theme = Theme.of(context);
     final student = widget.student;
     final scheme = theme.colorScheme;
-    final primaryBlue = const Color(0xFF0E5E86);
+    const primaryBlue = Color(0xFF0E5E86);
     final editableCareers = kCareers
         .where(
           (career) => const {
@@ -202,7 +202,6 @@ class _DatosEstudiantePantallaState extends State<_DatosEstudiantePantalla> {
       ),
       body: SafeArea(
         top: false,
-        bottom: true,
         child: SingleChildScrollView(
           padding: EdgeInsets.fromLTRB(
             16,
@@ -304,22 +303,20 @@ class _DatosEstudiantePantallaState extends State<_DatosEstudiantePantalla> {
                             }
                           },
                         ),
-                        const SizedBox(height: 12),
-                        DropdownButtonFormField<String>(
-                          initialValue: _selectedDivision,
-                          decoration:
-                              const InputDecoration(labelText: 'División'),
-                          items: const [
-                            DropdownMenuItem(value: 'A', child: Text('A')),
-                            DropdownMenuItem(value: 'B', child: Text('B')),
-                          ],
+                        const SizedBox(height: 6),
+                        _DropdownEstiloExamenes<String>(
+                          value: _selectedDivision,
                           onChanged: (value) {
                             if (value != null) {
                               setState(() => _selectedDivision = value);
                             }
                           },
+                          items: const [
+                            _DropdownEstiloItem('A', 'División A'),
+                            _DropdownEstiloItem('B', 'División B'),
+                          ],
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 6),
                         _DropdownEnteroEstudiante(
                           label: 'Año actual',
                           values: _aniosValidos,
@@ -334,7 +331,7 @@ class _DatosEstudiantePantallaState extends State<_DatosEstudiantePantalla> {
                           onChanged: (value) =>
                               setState(() => _selectedYear = value),
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 6),
                         _DropdownEnteroEstudiante(
                           label: 'Cohorte',
                           values: _cohortesValidas,
@@ -563,10 +560,14 @@ class _MateriasEstudiantePantalla extends StatefulWidget {
   const _MateriasEstudiantePantalla({
     required this.payload,
     required this.planFuture,
+    this.initialYear = 0,
+    this.initialStatus = 'todos',
   });
 
   final DatosAccesoEstudiante payload;
   final Future<List<Materia>> planFuture;
+  final int initialYear;
+  final String initialStatus;
 
   @override
   State<_MateriasEstudiantePantalla> createState() =>
@@ -576,8 +577,15 @@ class _MateriasEstudiantePantalla extends StatefulWidget {
 class _MateriasEstudiantePantallaState
     extends State<_MateriasEstudiantePantalla> {
   final TextEditingController _searchCtrl = TextEditingController();
-  int _selectedYear = 0;
-  String _selectedStatus = 'todos';
+  late int _selectedYear;
+  late String _selectedStatus;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedYear = widget.initialYear;
+    _selectedStatus = widget.initialStatus;
+  }
 
   @override
   void dispose() {
@@ -612,7 +620,6 @@ class _MateriasEstudiantePantallaState
       ),
       body: SafeArea(
         top: false,
-        bottom: true,
         child: FutureBuilder<List<Materia>>(
           future: widget.planFuture,
           builder: (context, snapshot) {
@@ -897,6 +904,94 @@ class _BotonAccionDatos extends StatelessWidget {
   }
 }
 
+class _DropdownEstiloExamenes<T> extends StatelessWidget {
+  const _DropdownEstiloExamenes({
+    required this.value,
+    required this.items,
+    required this.onChanged,
+    this.label,
+    this.selectedBuilder,
+  });
+
+  final T value;
+  final List<_DropdownEstiloItem<T>> items;
+  final ValueChanged<T?> onChanged;
+  final String? label;
+  final Widget Function(T value)? selectedBuilder;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      height: 52,
+      decoration: BoxDecoration(
+        color: isDark ? cs.surface : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isDark
+              ? cs.outlineVariant
+              : const Color(0xFFD1D5DB),
+        ),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<T>(
+          value: value,
+          isExpanded: true,
+          dropdownColor: isDark ? cs.surface : Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          icon: Icon(
+            Icons.keyboard_arrow_down_rounded,
+            color: cs.onSurfaceVariant,
+          ),
+          selectedItemBuilder: (context) {
+            return items.map((item) {
+              return Align(
+                alignment: Alignment.centerLeft,
+                child: selectedBuilder != null
+                    ? selectedBuilder!(item.value)
+                    : Text(
+                        item.label,
+                        style: TextStyle(color: cs.onSurface),
+                      ),
+              );
+            }).toList();
+          },
+          items: items
+              .map((item) => DropdownMenuItem<T>(
+                    value: item.value,
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: selectedBuilder != null
+                              ? selectedBuilder!(item.value)
+                              : Text(item.label),
+                        ),
+                        if (item.value == value)
+                          Icon(
+                            Icons.check_rounded,
+                            size: 18,
+                            color: cs.primary,
+                          ),
+                      ],
+                    ),
+                  ))
+              .toList(),
+          onChanged: onChanged,
+        ),
+      ),
+    );
+  }
+}
+
+class _DropdownEstiloItem<T> {
+  final T value;
+  final String label;
+  const _DropdownEstiloItem(this.value, this.label);
+}
+
 class _DropdownEnteroEstudiante extends StatelessWidget {
   const _DropdownEnteroEstudiante({
     required this.label,
@@ -915,23 +1010,14 @@ class _DropdownEnteroEstudiante extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: DropdownButtonFormField<int>(
-        value: selectedValue,
-        decoration: InputDecoration(
-          labelText: label,
-          isDense: true,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-        items: values
-            .map((e) => DropdownMenuItem(
-                  value: e,
-                  child: Text(valueLabel(e)),
-                ))
-            .toList(),
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: _DropdownEstiloExamenes<int>(
+        value: selectedValue ?? values.first,
         onChanged: onChanged,
+        items: values
+            .map((e) => _DropdownEstiloItem(e, valueLabel(e)))
+            .toList(),
+        selectedBuilder: (v) => Text(valueLabel(v)),
       ),
     );
   }
@@ -950,24 +1036,24 @@ class _DropdownCarreraEstudiante extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: DropdownButtonFormField<String>(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: _DropdownEstiloExamenes<String>(
         value: value,
-        decoration: InputDecoration(
-          labelText: 'Carrera',
-          isDense: true,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-        items: careers
-            .map((e) => DropdownMenuItem<String>(
-                  value: e.id,
-                  child: Text(e.nombre),
-                ))
-            .toList(),
         onChanged: onChanged,
+        items: careers
+            .map((e) => _DropdownEstiloItem(e.id, e.nombre))
+            .toList(),
+          selectedBuilder: (v) {
+            final career = careers.firstWhere((c) => c.id == v);
+            return EtiquetaCarreraExamenes(
+              career: career,
+              textColor: cs.onSurface,
+              iconSize: 20,
+              iconShiftX: -4,
+            );
+          },
       ),
     );
   }

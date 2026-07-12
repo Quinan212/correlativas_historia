@@ -13,8 +13,7 @@ final proveedorRepositorioResenasOpiniones =
   (ref) => const RepositorioResenasOpiniones(),
 );
 
-final proveedorResenasMateria = StreamProvider.autoDispose
-    .family<List<ResenaMateria>, String>((ref, matterId) async* {
+final proveedorResenasMateria = StreamProvider.family<List<ResenaMateria>, String>((ref, matterId) async* {
   final client = ref.watch(proveedorClienteSupabase);
   if (client == null) {
     yield const <ResenaMateria>[];
@@ -23,10 +22,9 @@ final proveedorResenasMateria = StreamProvider.autoDispose
 
   final repo = ref.watch(proveedorRepositorioResenasOpiniones);
   yield* repo.watchResenaMaterias(client: client, matterId: matterId);
-});
+}, isAutoDispose: true);
 
-final proveedorResenaMateriaPropia = FutureProvider.autoDispose
-    .family<ResenaMateria?, String>((ref, matterId) async {
+final proveedorResenaMateriaPropia = FutureProvider.family<ResenaMateria?, String>((ref, matterId) async {
   final client = ref.watch(proveedorClienteSupabase);
   if (client == null) {
     return null;
@@ -39,18 +37,17 @@ final proveedorResenaMateriaPropia = FutureProvider.autoDispose
     deviceId: deviceId,
     matterId: matterId,
   );
-});
+}, isAutoDispose: true);
 
 final proveedorResumenResenasMateria =
-    Provider.autoDispose.family<ResumenResenasMateria, String>((ref, matterId) {
+    Provider.family<ResumenResenasMateria, String>((ref, matterId) {
   final repo = ref.watch(proveedorRepositorioResenasOpiniones);
-  final reviews = ref.watch(proveedorResenasMateria(matterId)).valueOrNull ??
+  final reviews = ref.watch(proveedorResenasMateria(matterId)).value ??
       const <ResenaMateria>[];
   return repo.resumirMateria(reviews);
-});
+}, isAutoDispose: true);
 
-final proveedorPublicacionesFotoMateria = StreamProvider.autoDispose
-    .family<List<PublicacionFotoMateria>, String>((ref, matterId) async* {
+final proveedorPublicacionesFotoMateria = StreamProvider.family<List<PublicacionFotoMateria>, String>((ref, matterId) async* {
   final client = ref.watch(proveedorClienteSupabase);
   if (client == null) {
     yield const <PublicacionFotoMateria>[];
@@ -59,10 +56,9 @@ final proveedorPublicacionesFotoMateria = StreamProvider.autoDispose
 
   final repo = ref.watch(proveedorRepositorioResenasOpiniones);
   yield* repo.watchPublicacionFotoMaterias(client: client, matterId: matterId);
-});
+}, isAutoDispose: true);
 
-final proveedorResenasDocente = StreamProvider.autoDispose
-    .family<List<ResenaDocente>, String>((ref, teacherId) async* {
+final proveedorResenasDocente = StreamProvider.family<List<ResenaDocente>, String>((ref, teacherId) async* {
   final client = ref.watch(proveedorClienteSupabase);
   if (client == null) {
     yield const <ResenaDocente>[];
@@ -71,10 +67,10 @@ final proveedorResenasDocente = StreamProvider.autoDispose
 
   final repo = ref.watch(proveedorRepositorioResenasOpiniones);
   yield* repo.watchResenaDocentes(client: client, teacherId: teacherId);
-});
+}, isAutoDispose: true);
 
 final proveedorResenasDocentePropiasPorMateria =
-    FutureProvider.autoDispose.family<Map<String, ResenaDocente>, String>((
+    FutureProvider.family<Map<String, ResenaDocente>, String>((
   ref,
   matterId,
 ) async {
@@ -90,7 +86,7 @@ final proveedorResenasDocentePropiasPorMateria =
     deviceId: deviceId,
     matterId: matterId,
   );
-});
+}, isAutoDispose: true);
 
 final proveedorResenaDocentePropia =
     Provider.family<AsyncValue<ResenaDocente?>, AlcanceResenaDocente>(
@@ -101,12 +97,12 @@ final proveedorResenaDocentePropia =
 });
 
 final proveedorResumenResenasDocente =
-    Provider.autoDispose.family<DocenteRatingResumen, String>((ref, teacherId) {
+    Provider.family<DocenteRatingResumen, String>((ref, teacherId) {
   final repo = ref.watch(proveedorRepositorioResenasOpiniones);
-  final reviews = ref.watch(proveedorResenasDocente(teacherId)).valueOrNull ??
+  final reviews = ref.watch(proveedorResenasDocente(teacherId)).value ??
       const <ResenaDocente>[];
   return repo.resumirDocente(reviews);
-});
+}, isAutoDispose: true);
 
 final proveedorMateriaPuedeResenar =
     Provider.family<bool, String>((ref, matterId) {

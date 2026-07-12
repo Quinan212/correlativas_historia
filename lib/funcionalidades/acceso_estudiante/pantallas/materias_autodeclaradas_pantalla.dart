@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../compartido/supabase/supabase.dart';
 import '../../../datos/cargador_fuente_html.dart';
 import '../../../modelos/materia.dart';
-import '../../../compartido/supabase/supabase.dart';
+import '../componentes/tarjeta_selector_anio.dart';
 import '../datos/repositorio_acceso_estudiante.dart';
 import '../modelos/modelos_acceso_estudiante.dart';
-import '../componentes/tarjeta_selector_anio.dart';
 import 'materias_por_anio_pantalla.dart';
 import 'pagina_editor_materia_propia.dart';
 
@@ -205,7 +205,7 @@ class _MateriasAutodeclaradasPantallaState
       ),
       body: SafeArea(
         top: false,
-        bottom: true,
+
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
           children: [
@@ -238,7 +238,7 @@ class _MateriasAutodeclaradasPantallaState
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
-                onPressed: _busy || _plan.isEmpty ? null : () => _openEditor(),
+                onPressed: _busy || _plan.isEmpty ? null : _openEditor,
                 icon: const Icon(Icons.add_rounded),
                 label: const Text('Agregar materia a mi registro'),
                 style: OutlinedButton.styleFrom(

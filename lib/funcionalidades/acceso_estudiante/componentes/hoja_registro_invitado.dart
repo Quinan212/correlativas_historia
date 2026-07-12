@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class HojaRegistroInvitado extends StatefulWidget {
-  const HojaRegistroInvitado({required this.onStart});
+  const HojaRegistroInvitado({super.key, required this.onStart});
 
   final void Function(String name, String dni, String careerId) onStart;
 
@@ -101,7 +101,7 @@ class _HojaRegistroInvitadoState extends State<HojaRegistroInvitado> {
           ),
           const SizedBox(height: 16),
           DropdownButtonFormField<String>(
-            value: _selectedCareer,
+            initialValue: _selectedCareer,
             decoration: const InputDecoration(
               labelText: 'Carrera que cursás',
               prefixIcon: Icon(Icons.school_rounded),

@@ -22,9 +22,7 @@ class _InstitutionLogoMark extends StatelessWidget {
       decoration: BoxDecoration(
         color: scheme.surface,
         borderRadius: BorderRadius.circular(size * 0.22),
-        border: Border.all(
-          color: scheme.primary.withValues(alpha: 0.16),
-        ),
+        border: Border.all(color: scheme.primary.withValues(alpha: 0.16)),
       ),
       child: assetPath == null
           ? Icon(
@@ -36,10 +34,8 @@ class _InstitutionLogoMark extends StatelessWidget {
               fit: BoxFit.cover,
               cacheWidth: 96,
               cacheHeight: 96,
-              errorBuilder: (_, __, ___) => Icon(
-                Icons.school_rounded,
-                color: scheme.primary,
-              ),
+              errorBuilder: (_, _, _) =>
+                  Icon(Icons.school_rounded, color: scheme.primary),
             ),
     );
   }
@@ -99,7 +95,7 @@ class _BannerPortada extends StatelessWidget {
       child: Padding(
         padding: EdgeInsets.fromLTRB(
           16,
-          MediaQuery.of(context).padding.top + 56,
+          16,
           16,
           hasLoadedStudent ? 16 : 24,
         ),
@@ -183,11 +179,11 @@ class _BannerPortada extends StatelessWidget {
   }
 }
 
-class _EncabezadoEstudianteFijo extends StatelessWidget {
+class _EncabezadoEstudianteFijo extends StatefulWidget {
   const _EncabezadoEstudianteFijo({
     required this.loggedIn,
     required this.student,
-    required this.compact,
+    required this.scrollController,
     required this.movementCount,
     required this.onOpenHistory,
     required this.onRefresh,
@@ -196,132 +192,153 @@ class _EncabezadoEstudianteFijo extends StatelessWidget {
 
   final bool loggedIn;
   final PerfilAccesoEstudiante? student;
-  final bool compact;
+  final ScrollController scrollController;
   final int movementCount;
   final VoidCallback? onOpenHistory;
   final Future<void> Function()? onRefresh;
   final VoidCallback? onOpenAccountSheet;
 
   @override
+  State<_EncabezadoEstudianteFijo> createState() =>
+      _EncabezadoEstudianteFijoState();
+}
+
+class _EncabezadoEstudianteFijoState extends State<_EncabezadoEstudianteFijo> {
+  bool _compact = false;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    widget.scrollController.removeListener(_onScroll);
+    super.dispose();
+  }
+
+  void _onScroll() {
+    final compact = widget.scrollController.hasClients &&
+        widget.scrollController.offset > 180;
+    if (compact != _compact && mounted) {
+      setState(() => _compact = compact);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final currentStudent = student;
+    final currentStudent = widget.student;
     final firstName = currentStudent?.firstName.trim() ?? '';
-    final greetingName =
-        firstName.isEmpty ? 'alumno' : firstName.split(RegExp(r'\s+')).first;
+    final greetingName = firstName.isEmpty
+        ? 'alumno'
+        : firstName.split(RegExp(r'\s+')).first;
+    final compact = _compact;
 
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.fromLTRB(
-        14,
-        MediaQuery.of(context).padding.top + 6,
-        14,
-        8,
-      ),
-      decoration: const BoxDecoration(
-        color: Color(0xFF0E5E86),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          InkWell(
-            onTap: onOpenAccountSheet,
-            borderRadius: BorderRadius.circular(14),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 2),
-              child: Row(
-                children: [
-                  _InstitutionLogoMark(
-                    loggedIn: loggedIn,
-                    assetPath: currentStudent == null
-                        ? null
-                        : _institutionLogoAssetFor(currentStudent.careerId),
-                    size: 38,
-                  ),
-                  const SizedBox(width: 10),
-                  SizedBox(
-                    width: 170,
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 2),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
+    final TextStyle? titleStyle = theme.textTheme.titleMedium?.copyWith(
+      fontWeight: FontWeight.w900,
+      color: Colors.white,
+      fontSize: 17,
+    );
+
+    return RepaintBoundary(
+      child: Container(
+        width: double.infinity,
+        padding: EdgeInsets.fromLTRB(
+          14,
+          MediaQuery.of(context).padding.top + 6,
+          14,
+          8,
+        ),
+        decoration: const BoxDecoration(color: Color(0xFF0E5E86)),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            InkWell(
+              onTap: widget.onOpenAccountSheet,
+              borderRadius: BorderRadius.circular(14),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 2),
+                child: Row(
+                  children: [
+                    _InstitutionLogoMark(
+                      loggedIn: widget.loggedIn,
+                      assetPath: currentStudent == null
+                          ? null
+                          : _institutionLogoAssetFor(currentStudent.careerId),
+                      size: 38,
+                    ),
+                    const SizedBox(width: 10),
+                    SizedBox(
+                      width: 170,
+                      height: 24,
+                      child: Stack(
+                        fit: StackFit.expand,
                         children: [
-                          Row(
-                            children: [
-                              AnimatedOpacity(
-                                duration: const Duration(milliseconds: 220),
-                                opacity: compact ? 0 : 1,
-                                child: AnimatedSlide(
-                                  duration: const Duration(milliseconds: 220),
-                                  offset: compact
-                                      ? const Offset(-0.12, 0)
-                                      : Offset.zero,
-                                  child: Text(
-                                    'Hola,',
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style:
-                                        theme.textTheme.titleMedium?.copyWith(
-                                      fontWeight: FontWeight.w900,
-                                      color: Colors.white,
-                                      fontSize: 17,
-                                    ),
-                                  ),
-                                ),
+                          AnimatedOpacity(
+                            duration: const Duration(milliseconds: 140),
+                            curve: Curves.easeOut,
+                            opacity: compact ? 0 : 1,
+                            child: AnimatedSlide(
+                              duration: const Duration(milliseconds: 140),
+                              curve: Curves.easeOut,
+                              offset: compact
+                                  ? const Offset(-0.06, 0)
+                                  : Offset.zero,
+                              child: Text(
+                                'Hola, $greetingName',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: titleStyle,
                               ),
-                              AnimatedContainer(
-                                duration: const Duration(milliseconds: 220),
-                                width: compact ? 0 : 8,
+                            ),
+                          ),
+                          AnimatedOpacity(
+                            duration: const Duration(milliseconds: 140),
+                            curve: Curves.easeOut,
+                            opacity: compact ? 1 : 0,
+                            child: AnimatedSlide(
+                              duration: const Duration(milliseconds: 140),
+                              curve: Curves.easeOut,
+                              offset: compact
+                                  ? Offset.zero
+                                  : const Offset(0.06, 0),
+                              child: Text(
+                                greetingName,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: titleStyle,
                               ),
-                              Expanded(
-                                child: AnimatedSlide(
-                                  duration: const Duration(milliseconds: 220),
-                                  offset: compact
-                                      ? const Offset(-0.22, 0)
-                                      : Offset.zero,
-                                  child: Text(
-                                    greetingName,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style:
-                                        theme.textTheme.titleMedium?.copyWith(
-                                      fontWeight: FontWeight.w900,
-                                      color: Colors.white,
-                                      fontSize: 17,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
+                            ),
                           ),
                         ],
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
-          const Spacer(),
-          const SizedBox(width: 8),
-          if (loggedIn)
-            _BotonIconoPortada(
-              icon: Icons.notifications_none_rounded,
-              badge: movementCount,
-              tooltip: 'Movimientos',
-              onTap: onOpenHistory,
-              compact: true,
-            ),
-          if (loggedIn) const SizedBox(width: 6),
-          if (onRefresh != null)
-            _BotonIconoPortada(
-              icon: Icons.refresh_rounded,
-              tooltip: 'Actualizar',
-              onTap: onRefresh,
-              compact: true,
-            ),
-        ],
+            const Spacer(),
+            const SizedBox(width: 8),
+            if (widget.loggedIn)
+              _BotonIconoPortada(
+                icon: Icons.notifications_none_rounded,
+                badge: widget.movementCount,
+                tooltip: 'Movimientos',
+                onTap: widget.onOpenHistory,
+                compact: true,
+              ),
+            if (widget.loggedIn) const SizedBox(width: 6),
+            if (widget.onRefresh != null)
+              _BotonIconoPortada(
+                icon: Icons.refresh_rounded,
+                tooltip: 'Actualizar',
+                onTap: widget.onRefresh,
+                compact: true,
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -359,11 +376,7 @@ class _BotonIconoPortada extends StatelessWidget {
             SizedBox(
               width: size,
               height: size,
-              child: Icon(
-                icon,
-                color: Colors.white,
-                size: compact ? 20 : 24,
-              ),
+              child: Icon(icon, color: Colors.white, size: compact ? 20 : 24),
             ),
             if (badge > 0)
               Positioned(

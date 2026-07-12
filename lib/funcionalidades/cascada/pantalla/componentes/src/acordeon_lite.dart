@@ -91,12 +91,12 @@ class _LitePremiumAccordionItem extends StatelessWidget {
                         height: 30,
                         decoration: BoxDecoration(
                           color: isDark
-                              ? cs.surfaceContainerHighest.withOpacity(0.22)
+                              ? cs.surfaceContainerHighest.withValues(alpha: 0.22)
                               : Colors.white,
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
                             color: isDark
-                                ? cs.outlineVariant.withOpacity(0.5)
+                                ? cs.outlineVariant.withValues(alpha: 0.5)
                                 : const Color(0xFFD0D6DE),
                           ),
                         ),

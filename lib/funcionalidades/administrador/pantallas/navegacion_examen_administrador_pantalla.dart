@@ -40,7 +40,7 @@ class NavegacionExamenAdministradorPantalla extends ConsumerWidget {
             child: overviewAsync.when(
               data: (overview) {
                 if (overview.events.isEmpty) {
-                  return _EstadoVacio(
+                  return const _EstadoVacio(
                     title: 'Todavía no hay visitas registradas',
                     subtitle:
                         'Cuando los usuarios abran exámenes o cambien entre instancias, acá vas a ver el historial por día, mes y total.',

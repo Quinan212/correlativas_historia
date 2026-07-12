@@ -23,21 +23,20 @@ class TarjetaMetricaVidrio extends StatelessWidget {
       decoration: BoxDecoration(
         color: highlight
             ? (isDark
-                ? cs.primary.withOpacity(0.15)
-                : cs.primary.withOpacity(0.05))
+                ? cs.primary.withValues(alpha: 0.15)
+                : cs.primary.withValues(alpha: 0.05))
             : (isDark ? cs.surface : Colors.white),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
           color: highlight
-              ? cs.primary.withOpacity(0.3)
+              ? cs.primary.withValues(alpha: 0.3)
               : (isDark ? cs.outlineVariant : const Color(0xFFE5E7EB)),
-          width: 1,
         ),
         boxShadow: [
           BoxShadow(
             blurRadius: 8,
             offset: const Offset(0, 6),
-            color: theme.shadowColor.withOpacity(isDark ? 0.15 : 0.06),
+            color: theme.shadowColor.withValues(alpha: isDark ? 0.15 : 0.06),
           ),
         ],
       ),

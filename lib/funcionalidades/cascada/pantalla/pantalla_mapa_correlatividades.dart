@@ -76,7 +76,7 @@ class PantallaMapaCorrelatividades extends ConsumerWidget {
                       child: Padding(
                         padding: const EdgeInsets.only(top: 12, bottom: 16),
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const SizedBox(height: 12),
                             if (isDesktop && isWindowsDesktop) ...[
@@ -169,7 +169,7 @@ class _PanelLateralEscritorio extends ConsumerWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 25,
             offset: const Offset(-4, 0),
           ),
@@ -191,7 +191,7 @@ class _PanelLateralEscritorio extends ConsumerWidget {
               icon: const Icon(Icons.close_rounded),
               style: IconButton.styleFrom(
                 backgroundColor:
-                    isDark ? Colors.black26 : Colors.black.withOpacity(0.05),
+                    isDark ? Colors.black26 : Colors.black.withValues(alpha: 0.05),
               ),
             ),
           ),

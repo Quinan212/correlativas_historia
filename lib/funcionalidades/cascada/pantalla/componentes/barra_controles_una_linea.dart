@@ -118,7 +118,7 @@ class _BarraControlesUnaLineaState
       return InputDecoration(
         filled: true,
         fillColor: isDark
-            ? cs.surface.withOpacity(120 / 255)
+            ? cs.surface.withValues(alpha: 120 / 255)
             : const Color(0xFFF3F4F6),
         isDense: true,
         contentPadding:
@@ -172,7 +172,7 @@ class _BarraControlesUnaLineaState
     final inlinePrompt = Container(
       height: _h,
       decoration: BoxDecoration(
-        color: isDark ? cs.surface.withOpacity(120 / 255) : Colors.white,
+        color: isDark ? cs.surface.withValues(alpha: 120 / 255) : Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isDark ? cs.outlineVariant : const Color(0xFFD1D5DB),
@@ -213,7 +213,7 @@ class _BarraControlesUnaLineaState
         boxShadow: [
           BoxShadow(
             blurRadius: 6,
-            color: theme.shadowColor.withOpacity(0.12),
+            color: theme.shadowColor.withValues(alpha: 0.12),
           ),
         ],
       ),

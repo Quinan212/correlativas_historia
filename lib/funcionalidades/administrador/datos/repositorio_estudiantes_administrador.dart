@@ -1,7 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../modelos/estudiante_administrador.dart';
 import '../modelos/entrada_historial_estudiante_administrador.dart';
+import '../modelos/estudiante_administrador.dart';
 import '../modelos/item_nomina_materia_administrador.dart';
 import '../modelos/materia_estudiante_administrador.dart';
 

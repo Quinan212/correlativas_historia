@@ -27,7 +27,7 @@ class PanelDetalleMateria extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final planAsync = ref.watch(proveedorPlan);
-    final plan = planAsync.valueOrNull;
+    final plan = planAsync.value;
     final selectedId =
         ref.watch(proveedorIdMateriaSeleccionada) ?? initialMateriaId;
     if (selectedId == null) {
@@ -215,7 +215,7 @@ class PanelDetalleMateria extends ConsumerWidget {
             Divider(
               height: 18,
               thickness: 1,
-              color: cs.outlineVariant.withOpacity(0.55),
+              color: cs.outlineVariant.withValues(alpha: 0.55),
             ),
         ],
       ),
@@ -302,7 +302,7 @@ class _DeferredSectionPlaceholder extends StatelessWidget {
                   BoxShadow(
                     blurRadius: 6,
                     offset: const Offset(0, 3),
-                    color: Colors.black.withOpacity(0.035),
+                    color: Colors.black.withValues(alpha: 0.035),
                   ),
                 ],
         ),
@@ -380,7 +380,7 @@ class _HeaderBox extends StatelessWidget {
                   BoxShadow(
                     blurRadius: 6,
                     offset: const Offset(0, 3),
-                    color: Colors.black.withOpacity(0.04),
+                    color: Colors.black.withValues(alpha: 0.04),
                   ),
                 ],
         ),
@@ -453,7 +453,7 @@ class _SectionBox extends StatelessWidget {
                   BoxShadow(
                     blurRadius: 6,
                     offset: const Offset(0, 3),
-                    color: Colors.black.withOpacity(0.035),
+                    color: Colors.black.withValues(alpha: 0.035),
                   ),
                 ],
         ),

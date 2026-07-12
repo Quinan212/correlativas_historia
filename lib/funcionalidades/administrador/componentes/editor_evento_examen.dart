@@ -322,7 +322,7 @@ class _EditorEventoExamenAdministradorState
     final selected = await showDatePicker(
       context: context,
       initialDate: _fecha ?? DateTime.now(),
-      firstDate: DateTime(2025, 1, 1),
+      firstDate: DateTime(2025),
       lastDate: DateTime(2035, 12, 31),
     );
     if (selected != null) setState(() => _fecha = selected);

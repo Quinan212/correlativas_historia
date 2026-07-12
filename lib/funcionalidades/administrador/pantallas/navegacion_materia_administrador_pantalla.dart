@@ -39,7 +39,7 @@ class NavegacionMateriaAdministradorPantalla extends ConsumerWidget {
             child: overviewAsync.when(
               data: (overview) {
                 if (overview.events.isEmpty) {
-                  return _EstadoVacio(
+                  return const _EstadoVacio(
                     title: 'Todavía no hay visitas registradas',
                     subtitle:
                         'Cuando los usuarios naveguen por materias y correlativas, acá vas a ver el historial por día, mes y total.',
@@ -135,7 +135,7 @@ class NavegacionMateriaAdministradorPantalla extends ConsumerWidget {
                               child: ListView.separated(
                                 scrollDirection: Axis.horizontal,
                                 itemCount: viewEvents.length,
-                                separatorBuilder: (_, __) =>
+                                separatorBuilder: (_, _) =>
                                     const SizedBox(width: 12),
                                 itemBuilder: (context, index) => SizedBox(
                                   width: 280,

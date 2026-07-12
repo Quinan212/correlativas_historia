@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../modelos/materia.dart';
 import '../../../../compartido/supabase/supabase.dart';
+import '../../../../modelos/materia.dart';
 import '../../modelos/estudiante_administrador.dart';
-import '../../modelos/materia_estudiante_administrador.dart';
 import '../../modelos/item_nomina_materia_administrador.dart';
+import '../../modelos/materia_estudiante_administrador.dart';
 import '../../proveedores/proveedores_estudiantes_administrador.dart';
-import 'utilidades_administrador.dart';
-import 'editor_materia_estudiante.dart';
-import 'historial_estudiante.dart';
 import 'componentes/tab_materia_masiva.dart';
 import 'componentes/tab_trayectoria.dart';
+import 'editor_materia_estudiante.dart';
+import 'historial_estudiante.dart';
+import 'utilidades_administrador.dart';
 
 class PanelAcademicoEstudiante extends ConsumerStatefulWidget {
   const PanelAcademicoEstudiante({
@@ -518,7 +518,7 @@ class _PanelAcademicoEstudianteState
     final client = ref.read(proveedorClienteSupabase);
     if (client == null || _selectedRosterStudentIds.isEmpty) return;
     final roster =
-        rosterAsync.valueOrNull ?? const <ItemNominaMateriaAdministrador>[];
+        rosterAsync.value ?? const <ItemNominaMateriaAdministrador>[];
     final selected = roster
         .where((item) => _selectedRosterStudentIds.contains(item.studentId))
         .toList(growable: false);

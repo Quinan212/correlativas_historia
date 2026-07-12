@@ -92,7 +92,7 @@ class ResumenNavegacionMateriaAdministrador {
 }
 
 final proveedorResumenNavegacionMateriaAdministrador =
-    FutureProvider.autoDispose<ResumenNavegacionMateriaAdministrador>(
+    FutureProvider<ResumenNavegacionMateriaAdministrador>(
         (ref) async {
   final client = ref.watch(proveedorClienteSupabase);
   if (client == null) {
@@ -148,7 +148,7 @@ final proveedorResumenNavegacionMateriaAdministrador =
     }
     final counters = perDevice.putIfAbsent(
       event.deviceId,
-      () => _DeviceCounters(),
+      _DeviceCounters.new,
     );
     counters.total += 1;
     if (event.eventType == 'view') {
@@ -191,20 +191,19 @@ final proveedorResumenNavegacionMateriaAdministrador =
     events: events,
     deviceSummaries: summaries,
   );
-});
+}, isAutoDispose: true);
 
 final proveedorEventosNavegacionMateriaPorDispositivoAdministrador = Provider
-    .autoDispose
     .family<List<EventoNavegacionMateriaAdministrador>, String>(
   (ref, deviceId) {
     final events = ref
             .watch(proveedorResumenNavegacionMateriaAdministrador)
-            .valueOrNull
+            .value
             ?.events ??
         const <EventoNavegacionMateriaAdministrador>[];
     final visibleDeviceIds = ref
             .watch(proveedorResumenNavegacionMateriaAdministrador)
-            .valueOrNull
+            .value
             ?.deviceSummaries
             .map((summary) => summary.deviceId)
             .toSet() ??
@@ -214,6 +213,7 @@ final proveedorEventosNavegacionMateriaPorDispositivoAdministrador = Provider
         .where((event) => event.deviceId == deviceId)
         .toList(growable: false);
   },
+  isAutoDispose: true,
 );
 
 class _DeviceCounters {

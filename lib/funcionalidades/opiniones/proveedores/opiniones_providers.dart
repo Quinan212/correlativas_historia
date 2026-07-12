@@ -40,14 +40,14 @@ final opinionesCatalogoProvider =
 
 final docentesPorMateriaProvider =
     Provider.family<List<DocenteLite>, String>((ref, materiaId) {
-  final catalogo = ref.watch(opinionesCatalogoProvider).valueOrNull;
+  final catalogo = ref.watch(opinionesCatalogoProvider).value;
   if (catalogo == null) return const <DocenteLite>[];
   return catalogo.docentesPorMateria[materiaId] ?? const <DocenteLite>[];
 });
 
 final docenteBaseProvider =
     Provider.family<DocenteComunidadBase?, String>((ref, docenteId) {
-  final catalogo = ref.watch(opinionesCatalogoProvider).valueOrNull;
+  final catalogo = ref.watch(opinionesCatalogoProvider).value;
   if (catalogo == null) return null;
   return catalogo.docentes[docenteId];
 });

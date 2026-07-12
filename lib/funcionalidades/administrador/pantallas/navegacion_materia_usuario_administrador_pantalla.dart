@@ -32,7 +32,7 @@ class NavegacionMateriaUsuarioAdministradorPantalla extends ConsumerWidget {
       ),
       body: SafeArea(
         child: events.isEmpty
-            ? _EstadoVacio(
+            ? const _EstadoVacio(
                 title: 'Aún no hay navegación registrada',
                 subtitle:
                     'Cuando este dispositivo abra materias o salte entre correlativas, acá vas a ver el historial completo.',
@@ -113,7 +113,7 @@ class _Metric extends StatelessWidget {
       width: 170,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: theme.colorScheme.primary.withOpacity(0.08),
+        color: theme.colorScheme.primary.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -163,7 +163,7 @@ class _TimelineTile extends StatelessWidget {
             width: 42,
             height: 42,
             decoration: BoxDecoration(
-              color: theme.colorScheme.primary.withOpacity(0.10),
+              color: theme.colorScheme.primary.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(14),
             ),
             child: Icon(icon, color: theme.colorScheme.primary),

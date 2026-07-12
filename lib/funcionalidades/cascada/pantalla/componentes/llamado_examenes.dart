@@ -99,7 +99,7 @@ class _LlamadoExamenesState extends State<LlamadoExamenes>
           border: Border.all(color: border),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(isDark ? 0.22 : 0.06),
+              color: Colors.black.withValues(alpha: isDark ? 0.22 : 0.06),
               blurRadius: 12,
               offset: const Offset(0, 8),
             ),
@@ -113,10 +113,10 @@ class _LlamadoExamenesState extends State<LlamadoExamenes>
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color: cs.primary.withOpacity(isDark ? 0.18 : 0.12),
+                color: cs.primary.withValues(alpha: isDark ? 0.18 : 0.12),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: cs.primary.withOpacity(isDark ? 0.35 : 0.25),
+                  color: cs.primary.withValues(alpha: isDark ? 0.35 : 0.25),
                 ),
               ),
               child: Icon(

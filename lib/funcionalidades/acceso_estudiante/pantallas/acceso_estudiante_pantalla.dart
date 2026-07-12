@@ -1,20 +1,23 @@
+import 'dart:async';
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../compartido/componentes/tarjetas_metricas.dart';
+import '../../../compartido/proveedores/estado_app.dart';
+import '../../../compartido/supabase/supabase.dart';
+import '../../../compartido/utilidades/sanitizar_texto.dart';
 import '../../../datos/cargador_fuente_html.dart';
 import '../../../funcionalidades/calculadora/pantalla/pantalla_calculadora.dart';
-import '../../../funcionalidades/cascada/pantalla/pantalla_inicio_mapa.dart';
 import '../../../funcionalidades/cascada/pantalla/pantalla_mapa_correlatividades.dart';
+import '../../../funcionalidades/curriculum/pantalla/pantalla_disenos_curriculares.dart';
+import '../../../funcionalidades/examenes/componentes/etiqueta_carrera_examenes.dart';
 import '../../../funcionalidades/examenes/examenes_pantalla.dart';
 import '../../../funcionalidades/preguntas_frecuentes/preguntas_frecuentes_pantalla.dart';
 import '../../../modelos/materia.dart';
-import '../../../compartido/supabase/supabase.dart';
-import '../../../compartido/utilidades/sanitizar_texto.dart';
-import '../../../compartido/componentes/tarjetas_metricas.dart';
-import '../../../compartido/componentes/navegacion_inferior.dart';
-import '../../../compartido/proveedores/estado_app.dart';
 import '../datos/repositorio_acceso_estudiante.dart';
 import '../modelos/modelos_acceso_estudiante.dart';
 import 'materias_autodeclaradas_pantalla.dart';
@@ -31,6 +34,7 @@ part '../componentes/seguimiento/calendario_academico_estudiante_pantalla.dart';
 part '../componentes/comunes/componentes_comunes_estudiante.dart';
 part '../dominio/entrada_plan_estudios.dart';
 part '../componentes/acceso/registro_invitado_estudiante.dart';
+part '../componentes/seguimiento/trayectoria_reimaginada_estudiante_pantalla.dart';
 
 class AccesoEstudiantePantalla extends ConsumerStatefulWidget {
   const AccesoEstudiantePantalla({super.key});
@@ -48,35 +52,27 @@ class _AccesoEstudiantePantallaState
   final ScrollController _scrollController = ScrollController();
 
   bool _loading = false;
-  bool _compactHeader = false;
   String? _error;
   DatosAccesoEstudiante? _payload;
   Future<List<Materia>>? _planFuture;
   int _seenNotificationsCount = 0;
+  /// ID de sesión: se incrementa cada vez que se abre una nueva sección del
+  /// nav bar. Permite que el .then() de un push anterior no resetee el provider
+  /// si ya se cambio de sección antes de que terminara la animación de salida.
+  int _navSession = 0;
 
   @override
   void initState() {
     super.initState();
-    _scrollController.addListener(_handleScroll);
     final client = ref.read(proveedorClienteSupabase);
     if (client?.auth.currentSession != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _loadTrajectory());
     }
   }
 
-  void _handleScroll() {
-    final compact =
-        _scrollController.hasClients && _scrollController.offset > 180;
-    if (compact != _compactHeader && mounted) {
-      setState(() => _compactHeader = compact);
-    }
-  }
-
   @override
   void dispose() {
-    _scrollController
-      ..removeListener(_handleScroll)
-      ..dispose();
+    _scrollController.dispose();
     _emailCtrl.dispose();
     _passwordCtrl.dispose();
     super.dispose();
@@ -127,9 +123,9 @@ class _AccesoEstudiantePantallaState
           bottom: MediaQuery.of(context).viewInsets.bottom,
         ),
         child: _HojaRegistroInvitado(
-          onStart: (name, dni, careerId) {
+          onStart: (name, careerId) {
             Navigator.pop(context);
-            _guestLogin(name, dni, careerId);
+            _guestLogin(name, careerId);
           },
         ),
       ),
@@ -137,7 +133,7 @@ class _AccesoEstudiantePantallaState
   }
 
   Future<void> _guestLogin(
-      String firstName, String dni, String careerId) async {
+      String firstName, String careerId) async {
     final client = ref.read(proveedorClienteSupabase);
     if (client == null) {
       setState(() => _error = 'Supabase no está listo');
@@ -154,7 +150,6 @@ class _AccesoEstudiantePantallaState
       await _repo.load(
         client: client,
         guestFirstName: firstName,
-        guestDni: dni,
         guestCareerId: careerId,
       );
       await _loadTrajectory(
@@ -204,22 +199,13 @@ class _AccesoEstudiantePantallaState
   void _openExamenes() {
     final careerId = _payload?.student.careerId;
     prewarmExamenesData(ref, careerId: careerId);
-    Navigator.of(context).push(buildExamenesRoute());
-  }
-
-  void _openInicioMapa() {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => _conNavegacionInferior(const PantallaInicioMapa()),
-      ),
-    );
+    Navigator.of(context, rootNavigator: true).push(buildExamenesRoute());
   }
 
   void _openPlanCompleto() {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) =>
-            _conNavegacionInferior(const PantallaMapaCorrelatividades()),
+        builder: (_) => const PantallaMapaCorrelatividades(),
       ),
     );
   }
@@ -227,7 +213,7 @@ class _AccesoEstudiantePantallaState
   void _openEscenarios() {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => _conNavegacionInferior(const PantallaCalculadora()),
+        builder: (_) => const PantallaCalculadora(),
       ),
     );
   }
@@ -235,8 +221,7 @@ class _AccesoEstudiantePantallaState
   void _openAyuda() {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) =>
-            _conNavegacionInferior(const PantallaPreguntasFrecuentes()),
+        builder: (_) => const PantallaPreguntasFrecuentes(),
       ),
     );
   }
@@ -248,16 +233,14 @@ class _AccesoEstudiantePantallaState
         await (_planFuture ?? _loadPlanForCareer(payload.student.careerId));
     final entries = _buildCurriculumEntries(payload.combinedSubjects, plan);
     if (!mounted) return;
-    Navigator.of(context).push(
+    unawaited(Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => _conNavegacionInferior(
-          _ProximosPasosEstudiantePantalla(
-            payload: payload,
-            entries: entries,
-          ),
+        builder: (_) => _ProximosPasosEstudiantePantalla(
+          payload: payload,
+          entries: entries,
         ),
       ),
-    );
+    ));
   }
 
   Future<void> _openProgress() async {
@@ -267,16 +250,14 @@ class _AccesoEstudiantePantallaState
         await (_planFuture ?? _loadPlanForCareer(payload.student.careerId));
     final entries = _buildCurriculumEntries(payload.combinedSubjects, plan);
     if (!mounted) return;
-    Navigator.of(context).push(
+    unawaited(Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => _conNavegacionInferior(
-          _ProgresoEstudiantePantalla(
-            payload: payload,
-            entries: entries,
-          ),
+        builder: (_) => _ProgresoEstudiantePantalla(
+          payload: payload,
+          entries: entries,
         ),
       ),
-    );
+    ));
   }
 
   Future<void> _openAcademicCalendar() async {
@@ -286,16 +267,14 @@ class _AccesoEstudiantePantallaState
         await (_planFuture ?? _loadPlanForCareer(payload.student.careerId));
     final entries = _buildCurriculumEntries(payload.combinedSubjects, plan);
     if (!mounted) return;
-    Navigator.of(context).push(
+    unawaited(Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => _conNavegacionInferior(
-          _CalendarioAcademicoEstudiantePantalla(
-            payload: payload,
-            entries: entries,
-          ),
+        builder: (_) => _CalendarioAcademicoEstudiantePantalla(
+          payload: payload,
+          entries: entries,
         ),
       ),
-    );
+    ));
   }
 
   void _openNotifications() async {
@@ -313,20 +292,20 @@ class _AccesoEstudiantePantallaState
     }
 
     if (!mounted) return;
-    Navigator.of(context).push(
+    unawaited(Navigator.of(context, rootNavigator: true).push(
       MaterialPageRoute<void>(
         builder: (context) => _NotificacionesEstudiantePantalla(
           history: payload.history,
           entries: entries,
         ),
       ),
-    );
+    ));
   }
 
   void _showStudentData() {
     final student = _payload?.student;
     if (student == null) return;
-    Navigator.of(context).push(
+    Navigator.of(context, rootNavigator: true).push(
       MaterialPageRoute<void>(
         builder: (context) => _DatosEstudiantePantalla(
           student: student,
@@ -417,7 +396,7 @@ class _AccesoEstudiantePantallaState
   void _abrirPantallaMaterias() {
     final payload = _payload;
     if (payload == null) return;
-    Navigator.of(context).push(
+    Navigator.of(context, rootNavigator: true).push(
       MaterialPageRoute<void>(
         builder: (context) => _MateriasEstudiantePantalla(
           payload: payload,
@@ -428,15 +407,63 @@ class _AccesoEstudiantePantallaState
     );
   }
 
+  void _abrirPantallaMateriasConFiltro(
+    List<_CurriculumEntry> entries,
+    bool Function(_CurriculumEntry) match,
+    String status,
+  ) {
+    final payload = _payload;
+    if (payload == null) return;
+    final counts = <int, int>{1: 0, 2: 0, 3: 0, 4: 0};
+    for (final e in entries) {
+      if (match(e)) counts[e.materia.anio] = (counts[e.materia.anio] ?? 0) + 1;
+    }
+    final year = counts.entries.reduce((a, b) => a.value >= b.value ? a : b).key;
+    Navigator.of(context, rootNavigator: true).push(
+      MaterialPageRoute<void>(
+        builder: (context) => _MateriasEstudiantePantalla(
+          payload: payload,
+          planFuture:
+              _planFuture ?? _loadPlanForCareer(payload.student.careerId),
+          initialYear: year,
+          initialStatus: status,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openCurriculum() async {
+    unawaited(Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => const PantallaDisenosCurriculares(),
+      ),
+    ));
+  }
+
+  Future<void> _openReimaginedTrajectory() async {
+    final payload = _payload;
+    if (payload == null) return;
+    final plan =
+        await (_planFuture ?? _loadPlanForCareer(payload.student.careerId));
+    final entries = _buildCurriculumEntries(payload.combinedSubjects, plan);
+    if (!mounted) return;
+    unawaited(Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => _TrayectoriaReimaginadaEstudiantePantalla(
+          payload: payload,
+          entries: entries,
+        ),
+      ),
+    ));
+  }
+
   void _openSelfSubjects() {
     final payload = _payload;
     if (payload == null) return;
     Navigator.of(context)
         .push(
       MaterialPageRoute<void>(
-        builder: (_) => _conNavegacionInferior(
-          MateriasAutodeclaradasPantalla(payload: payload),
-        ),
+        builder: (_) => MateriasAutodeclaradasPantalla(payload: payload),
       ),
     )
         .then((_) {
@@ -446,31 +473,68 @@ class _AccesoEstudiantePantallaState
     });
   }
 
-  Widget _conNavegacionInferior(Widget child) {
-    return Consumer(
-      builder: (context, ref, _) {
-        final current = ref.watch(proveedorIndiceRouter).clamp(0, 4);
-
-        void navigateTo(int index) {
-          ref.read(proveedorIndiceRouter.notifier).state = index;
-          Navigator.of(context).popUntil((route) => route.isFirst);
-        }
-
-        return Scaffold(
-          body: child,
-          bottomNavigationBar: MediaQuery.sizeOf(context).width >= 900
-              ? null
-              : NavegacionInferiorApp(
-                  current: current,
-                  onTapTrayectorias: () => navigateTo(0),
-                  onTapHome: () => navigateTo(1),
-                  onTapMap: () => navigateTo(2),
-                  onTapCalc: () => navigateTo(3),
-                ),
-        );
-      },
-    );
+  /// Abre la pantalla de Exámenes dentro del navigator anidado
+  /// (la barra de navegación sigue visible).
+  void _openExamenesNavBar() {
+    final sessionId = _navSession;
+    final careerId = _payload?.student.careerId;
+    prewarmExamenesData(ref, careerId: careerId);
+    Navigator.of(context).push(buildExamenesRoute()).then((_) {
+      if (mounted && _navSession == sessionId) {
+        ref.read(proveedorSeccionNav.notifier).state = 0;
+      }
+    });
   }
+
+  /// Abre la pantalla de Materias dentro del navigator anidado.
+  void _abrirMateriasNavBar() {
+    final payload = _payload;
+    if (payload == null) {
+      ref.read(proveedorSeccionNav.notifier).state = 0;
+      return;
+    }
+    final sessionId = _navSession;
+    Navigator.of(context)
+        .push(
+      MaterialPageRoute<void>(
+        builder: (context) => _MateriasEstudiantePantalla(
+          payload: payload,
+          planFuture:
+              _planFuture ?? _loadPlanForCareer(payload.student.careerId),
+        ),
+      ),
+    )
+        .then((_) {
+      if (mounted && _navSession == sessionId) {
+        ref.read(proveedorSeccionNav.notifier).state = 0;
+      }
+    });
+  }
+
+  /// Abre la pantalla de Datos del estudiante dentro del navigator anidado.
+  void _abrirDatosNavBar() {
+    final student = _payload?.student;
+    if (student == null) {
+      ref.read(proveedorSeccionNav.notifier).state = 0;
+      return;
+    }
+    final sessionId = _navSession;
+    Navigator.of(context)
+        .push(
+      MaterialPageRoute<void>(
+        builder: (context) => _DatosEstudiantePantalla(
+          student: student,
+          onSaveContact: _saveStudentContact,
+        ),
+      ),
+    )
+        .then((_) {
+      if (mounted && _navSession == sessionId) {
+        ref.read(proveedorSeccionNav.notifier).state = 0;
+      }
+    });
+  }
+
 
   Future<void> _saveStudentContact({
     required String phone,
@@ -505,21 +569,46 @@ class _AccesoEstudiantePantallaState
 
   @override
   Widget build(BuildContext context) {
+    // Escucha la sección activa del nav bar y navega dentro del navigator anidado.
+    ref.listen<int>(proveedorSeccionNav, (prev, next) {
+      if (next == prev) return;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _navSession++; // Invalida los .then() de secciones anteriores.
+        if (next == 0) {
+          Navigator.of(context).popUntil((r) => r.isFirst);
+        } else if (next == 1) {
+          Navigator.of(context).popUntil((r) => r.isFirst);
+          _openExamenesNavBar();
+        } else if (next == 2) {
+          Navigator.of(context).popUntil((r) => r.isFirst);
+          _abrirMateriasNavBar();
+        } else if (next == 3) {
+          Navigator.of(context).popUntil((r) => r.isFirst);
+          _abrirDatosNavBar();
+        }
+      });
+    });
+
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final loggedIn =
         ref.watch(proveedorClienteSupabase)?.auth.currentSession != null;
     final student = _payload?.student;
+    final topOffset = MediaQuery.of(context).padding.top + 56.0;
 
     return Scaffold(
       backgroundColor:
           isDark ? const Color(0xFF050816) : const Color(0xFFF6F8FC),
       body: Stack(
         children: [
-          ListView(
-            controller: _scrollController,
-            padding: const EdgeInsets.only(bottom: 144),
-            children: [
+          Padding(
+            padding: EdgeInsets.only(top: topOffset),
+            child: CustomScrollView(
+              controller: _scrollController,
+              slivers: [
+                SliverToBoxAdapter(
+                  child:
               _BannerPortada(
                 loggedIn: loggedIn,
                 student: student,
@@ -533,8 +622,10 @@ class _AccesoEstudiantePantallaState
                 onShowStudentData: _payload == null ? null : _showStudentData,
                 onOpenAccountSheet: _payload == null ? null : _abrirHojaCuenta,
               ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                ),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
                 child: Column(
                   children: [
                     if (!loggedIn) ...[
@@ -562,22 +653,24 @@ class _AccesoEstudiantePantallaState
                                 payload: _payload!,
                                 plan: plan,
                                 entries: entries,
+                                onTapAprobadas: () => _abrirPantallaMateriasConFiltro(entries, (e) => e.current != null && _isSubjectApproved(e.current!), 'aprobadas'),
+                                onTapCursando: () => _abrirPantallaMateriasConFiltro(entries, (e) => e.current != null && _isSubjectInProgress(e.current!), 'cursando'),
+                                onTapHabilitadas: () => _abrirPantallaMateriasConFiltro(entries, (e) => e.current == null && e.available, 'habilitadas'),
+                                onTapPlanTotal: _openCurriculum,
                               ),
                               const SizedBox(height: 12),
                               _ExamShortcutBanner(onTap: _openExamenes),
                               const SizedBox(height: 14),
-                              _AccionesSecundariasAccesoEstudiante(
-                                onOpenInicio: _openInicioMapa,
+                              _GrillaAccionesEstudiante(
+                                onOpenSelfSubjects: _openSelfSubjects,
                                 onOpenPlan: _openPlanCompleto,
                                 onOpenEscenarios: _openEscenarios,
                                 onOpenAyuda: _openAyuda,
-                              ),
-                              const SizedBox(height: 12),
-                              _AccionesAnaliticasAccesoEstudiante(
                                 onOpenNextSteps: _openNextSteps,
                                 onOpenProgress: _openProgress,
                                 onOpenAcademicCalendar: _openAcademicCalendar,
-                                onOpenSelfSubjects: _openSelfSubjects,
+                                onOpenReimaginedTrajectory: _openReimaginedTrajectory,
+                                onOpenCurriculum: _openCurriculum,
                               ),
                             ],
                           );
@@ -593,12 +686,24 @@ class _AccesoEstudiantePantallaState
                   ],
                 ),
               ),
-            ],
-          ),
-          _EncabezadoEstudianteFijo(
+            ),
+            if (loggedIn && _payload != null)
+              SliverPersistentHeader(
+                pinned: true,
+                delegate: _PromocionalTrayectoriasHeaderDelegate(
+                  viewportHeight: MediaQuery.sizeOf(context).height - topOffset,
+                ),
+              ),
+            const SliverToBoxAdapter(
+              child: SizedBox(height: 144),
+            ),
+          ],
+        ),
+      ),
+      _EncabezadoEstudianteFijo(
             loggedIn: loggedIn,
             student: student,
-            compact: _compactHeader,
+            scrollController: _scrollController,
             movementCount:
                 (_payload?.history.length ?? 0) - _seenNotificationsCount,
             onOpenHistory: _payload == null ? null : _openNotifications,

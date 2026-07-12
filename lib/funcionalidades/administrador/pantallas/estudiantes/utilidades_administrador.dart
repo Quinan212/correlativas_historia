@@ -85,7 +85,6 @@ class SelectorNuloDropdown extends StatelessWidget {
       decoration: InputDecoration(labelText: label),
       items: [
         const DropdownMenuItem<String?>(
-          value: null,
           child: Text(
             'Sin detalle',
             maxLines: 1,

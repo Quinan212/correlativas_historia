@@ -155,15 +155,7 @@ class ServicioNotificacionesPush {
       return;
     }
 
-    await messaging.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
-      provisional: false,
-      announcement: false,
-      carPlay: false,
-      criticalAlert: false,
-    );
+    await messaging.requestPermission();
     await _requestAndroidNotificationsPermission();
 
     final refreshedSettings = await messaging.getNotificationSettings();

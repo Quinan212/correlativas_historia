@@ -38,7 +38,7 @@ class ActividadAdministradorPantalla extends ConsumerWidget {
             child: observedDevicesAsync.when(
               data: (items) {
                 if (items.isEmpty) {
-                  return _EstadoVacio(
+                  return const _EstadoVacio(
                     title: 'Sin actividad reciente',
                     subtitle:
                         'Por ahora no aparece actividad en dispositivos activos.',

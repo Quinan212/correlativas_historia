@@ -89,7 +89,7 @@ class _TarjetaAsistenteContextualState
             : const Color(0xFFF8FBFF),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: theme.colorScheme.primary.withOpacity(0.25),
+          color: theme.colorScheme.primary.withValues(alpha: 0.25),
         ),
       ),
       child: Column(

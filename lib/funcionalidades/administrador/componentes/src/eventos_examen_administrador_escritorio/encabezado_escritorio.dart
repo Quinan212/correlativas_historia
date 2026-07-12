@@ -169,7 +169,7 @@ class _FiltroAnio extends StatelessWidget {
           isDense: true,
         ),
         items: const [
-          DropdownMenuItem<int?>(value: null, child: Text('Todos')),
+          DropdownMenuItem<int?>(child: Text('Todos')),
           DropdownMenuItem<int?>(value: 1, child: Text('1er año')),
           DropdownMenuItem<int?>(value: 2, child: Text('2do año')),
           DropdownMenuItem<int?>(value: 3, child: Text('3er año')),

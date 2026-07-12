@@ -1,15 +1,15 @@
 import 'dart:async';
 
-import 'package:firebase_performance/firebase_performance.dart';
+// import 'package:firebase_performance/firebase_performance.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../modelos/materia.dart';
 import '../../../../compartido/identidad_dispositivo/identidad_dispositivo.dart';
 import '../../../../compartido/navegacion/ruta_suave.dart';
-import '../../../../compartido/rendimiento/rendimiento_app.dart';
 import '../../../../compartido/proveedores/estado_app.dart';
+import '../../../../compartido/rendimiento/rendimiento_app.dart';
 import '../../../../compartido/supabase/supabase.dart';
+import '../../../../modelos/materia.dart';
 import '../../panel_detalle/componentes/controles_superiores.dart';
 import '../../panel_detalle/panel_detalle_materia.dart';
 import '../../proveedores/repositorio_analiticas_navegacion_materias.dart';
@@ -46,7 +46,7 @@ class _DetalleMateriaPage extends ConsumerStatefulWidget {
 class _DetalleMateriaPageState extends ConsumerState<_DetalleMateriaPage> {
   final ScrollController _scrollCtrl = ScrollController();
   ProviderSubscription<String?>? _selectedMateriaSubscription;
-  late final Future<Trace?> _detailOpenTrace;
+  late final Future<dynamic> _detailOpenTrace;
   final RepositorioAnaliticasNavegacionMaterias _analytics =
       const RepositorioAnaliticasNavegacionMaterias();
   bool _initialViewTracked = false;
@@ -132,7 +132,7 @@ class _DetalleMateriaPageState extends ConsumerState<_DetalleMateriaPage> {
   }
 
   Materia? _findMatterById(String id) {
-    final plan = ref.read(proveedorPlan).valueOrNull;
+    final plan = ref.read(proveedorPlan).value;
     if (plan == null) return null;
     for (final matter in plan.materias) {
       if (matter.id == id) return matter;
@@ -142,7 +142,7 @@ class _DetalleMateriaPageState extends ConsumerState<_DetalleMateriaPage> {
 
   @override
   Widget build(BuildContext context) {
-    final planReady = ref.watch(proveedorPlan).valueOrNull != null;
+    final planReady = ref.watch(proveedorPlan).value != null;
     if (planReady && !_initialViewTracked) {
       _initialViewTracked = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {

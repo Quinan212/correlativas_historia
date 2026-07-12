@@ -48,7 +48,7 @@ class BannerColapsableMapa extends SliverPersistentHeaderDelegate {
     return Material(
       color: c2,
       elevation: overlapsContent ? 2 : 0,
-      shadowColor: Colors.black.withOpacity(0.25),
+      shadowColor: Colors.black.withValues(alpha: 0.25),
       child: Column(
         children: [
           SizedBox(

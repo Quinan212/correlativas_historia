@@ -62,7 +62,7 @@ class EtiquetaOpcionCarrera extends StatelessWidget {
                       cacheWidth: 64,
                       cacheHeight: 64,
                       filterQuality: FilterQuality.low,
-                      errorBuilder: (_, __, ___) => _fallbackIcon(context),
+                      errorBuilder: (_, _, _) => _fallbackIcon(context),
                     ),
                   ),
                 ),
@@ -79,7 +79,7 @@ class EtiquetaOpcionCarrera extends StatelessWidget {
   Widget _fallbackIcon(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     return Container(
-      color: cs.primary.withOpacity(0.14),
+      color: cs.primary.withValues(alpha: 0.14),
       alignment: Alignment.center,
       child: Icon(
         Icons.school_rounded,
