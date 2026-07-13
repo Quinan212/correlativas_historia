@@ -583,6 +583,64 @@ class _ExamShortcutBanner extends StatelessWidget {
   }
 }
 
+class _SageAccessBanner extends StatelessWidget {
+  const _SageAccessBanner({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            color: scheme.primaryContainer.withValues(alpha: 0.52),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: scheme.primary.withValues(alpha: 0.16)),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.account_balance_outlined, color: scheme.primary),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Acceder a SAGE',
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Gestión académica de Entre Ríos',
+                      softWrap: true,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Icon(Icons.chevron_right_rounded, color: scheme.onSurfaceVariant),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _GrillaAccionesEstudiante extends StatelessWidget {
   const _GrillaAccionesEstudiante({
     required this.onOpenSelfSubjects,

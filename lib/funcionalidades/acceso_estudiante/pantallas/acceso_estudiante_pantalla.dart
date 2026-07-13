@@ -22,6 +22,7 @@ import '../../../modelos/materia.dart';
 import '../datos/repositorio_acceso_estudiante.dart';
 import '../modelos/modelos_acceso_estudiante.dart';
 import 'materias_autodeclaradas_pantalla.dart';
+import 'pantalla_sage.dart';
 
 part '../componentes/acceso/encabezado_y_portada_estudiante.dart';
 part '../componentes/panel/panel_estudiante.dart';
@@ -67,6 +68,8 @@ class _AccesoEstudiantePantallaState
   /// nav bar. Permite que el .then() de un push anterior no resetee el provider
   /// si ya se cambio de sección antes de que terminara la animación de salida.
   int _navSession = 0;
+  bool _showSage = false;
+  PantallaSage? _sageHost;
 
   @override
   void initState() {
@@ -299,6 +302,19 @@ class _AccesoEstudiantePantallaState
     final careerId = _payload?.student.careerId;
     prewarmExamenesData(ref, careerId: careerId);
     Navigator.of(context, rootNavigator: true).push(buildExamenesRoute());
+  }
+
+  void _openSage() {
+    _sageHost ??= PantallaSage(
+      key: const ValueKey('sage-persistent-host'),
+      onClose: _closeSage,
+    );
+    setState(() => _showSage = true);
+  }
+
+  void _closeSage() {
+    if (!mounted) return;
+    setState(() => _showSage = false);
   }
 
   void _openPlanCompleto() {
@@ -801,6 +817,9 @@ class _AccesoEstudiantePantallaState
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         _navSession++; // Invalida los .then() de secciones anteriores.
+        if (next != 0 && _showSage) {
+          setState(() => _showSage = false);
+        }
         if (next == 0) {
           Navigator.of(context).popUntil((r) => r.isFirst);
         } else if (next == 1) {
@@ -824,7 +843,7 @@ class _AccesoEstudiantePantallaState
     _scheduleBannerPortadaMeasurement();
     const headerCornerBandHeight = 24.0;
 
-    return Scaffold(
+    final panel = Scaffold(
       backgroundColor: isDark
           ? const Color(0xFF050816)
           : const Color(0xFFF6F8FC),
@@ -954,6 +973,8 @@ class _AccesoEstudiantePantallaState
                                     const SizedBox(height: 12),
                                     _ExamShortcutBanner(onTap: _openExamenes),
                                     const SizedBox(height: 14),
+                                    _SageAccessBanner(onTap: _openSage),
+                                    const SizedBox(height: 14),
                                     _GrillaAccionesEstudiante(
                                       onOpenSelfSubjects: _openSelfSubjects,
                                       onOpenPlan: _openPlanCompleto,
@@ -1015,6 +1036,11 @@ class _AccesoEstudiantePantallaState
         ],
       ),
     );
+
+    final sageHost = _sageHost;
+    if (sageHost == null) return panel;
+
+    return IndexedStack(index: _showSage ? 1 : 0, children: [panel, sageHost]);
   }
 
   String _toLoginEmail(String value) {

@@ -29,6 +29,11 @@ dependencies:
   crypto: ^3.0.5
   http: ^1.6.0
   path_provider: ^2.1.6
+  share_plus: ^13.1.0
+  webview_flutter: 4.14.1
+  webview_flutter_android: 4.13.0
+  open_filex: ^4.7.0
+  pdfx: 2.9.2
   # firebase_performance: ^0.11.4+3 # Deshabilitado temporalmente - usa plugin KGP incompatible
 
 dev_dependencies:
