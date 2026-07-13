@@ -11,10 +11,7 @@ import 'materias_por_anio_pantalla.dart';
 import 'pagina_editor_materia_propia.dart';
 
 class MateriasAutodeclaradasPantalla extends ConsumerStatefulWidget {
-  const MateriasAutodeclaradasPantalla({
-    super.key,
-    required this.payload,
-  });
+  const MateriasAutodeclaradasPantalla({super.key, required this.payload});
 
   final DatosAccesoEstudiante payload;
 
@@ -79,9 +76,9 @@ class _MateriasAutodeclaradasPantallaState
       );
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('No se pudo eliminar: $error')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('No se pudo eliminar: $error')));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -158,9 +155,9 @@ class _MateriasAutodeclaradasPantallaState
       );
     } catch (error) {
       if (!mounted) return false;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('No se pudo guardar: $error')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('No se pudo guardar: $error')));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -173,12 +170,7 @@ class _MateriasAutodeclaradasPantallaState
     final cs = theme.colorScheme;
     const primaryBlue = Color(0xFF0E5E86);
 
-    final grouped = <int, List<MateriaEstudiante>>{
-      1: [],
-      2: [],
-      3: [],
-      4: [],
-    };
+    final grouped = <int, List<MateriaEstudiante>>{1: [], 2: [], 3: [], 4: []};
     for (final s in _allSubjects) {
       grouped[s.subjectYear ?? 1]!.add(s);
     }

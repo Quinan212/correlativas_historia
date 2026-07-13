@@ -52,6 +52,7 @@ class _PantallaSageState extends State<PantallaSage> {
   bool _historyAutoLoadRunning = false;
   bool _historyNeedsFreshDom = false;
   bool _reportInFlight = false;
+  Completer<Uri>? _pendingReportUrl;
   final Set<String> _historyAutoAttemptedCareerIds = <String>{};
   Timer? _historyPollTimer;
   int _loadRequestCount = 0;
@@ -97,7 +98,15 @@ class _PantallaSageState extends State<PantallaSage> {
     );
 
     _controller = WebViewController()
-      ..setJavaScriptMode(JavaScriptMode.unrestricted);
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..addJavaScriptChannel(
+        'SageReportBridge',
+        onMessageReceived: _onSageReportMessage,
+      )
+      ..addJavaScriptChannel(
+        'SageDiagnosticBridge',
+        onMessageReceived: _onSageDiagnosticMessage,
+      );
     if (kDebugMode &&
         Platform.isAndroid &&
         navigationDelegate.platform is AndroidNavigationDelegate) {
@@ -106,9 +115,10 @@ class _PantallaSageState extends State<PantallaSage> {
       debugPrint('[SAGE] Android DownloadListener conectado');
     }
     unawaited(
-      _controller
-          .setNavigationDelegate(navigationDelegate)
-          .then((_) => _loadInitialPage()),
+      _controller.setNavigationDelegate(navigationDelegate).then((_) async {
+        await _installReportDiagnostics();
+        await _loadInitialPage();
+      }),
     );
     _historyPollTimer = Timer.periodic(
       const Duration(seconds: 2),
@@ -122,10 +132,303 @@ class _PantallaSageState extends State<PantallaSage> {
         .then((value) => value is String ? value : jsonEncode(value));
   }
 
+  // ignore: unused_element
+  Future<void> _installReportBridge() async {
+    try {
+      final raw = await _evaluateJavascript(r'''(() => {
+        const root = window;
+        const main = root.document.querySelector('iframe#Main');
+        const alumnos = main?.contentDocument?.querySelector('iframe#frm_alumnos');
+        const escolares = alumnos?.contentDocument?.querySelector('iframe#frm_alumnos_escolares');
+        const flutterBridge = root.SageReportBridge;
+        const allowedPaths = new Set([
+          '/alumnos_v2/ns_reporte_estado_alumno_carrera.php',
+          '/alumnos_v2/ns_reporte_analitico.php',
+          '/alumnos_v2/ns_reporte_examenes_rendidos.php',
+        ]);
+        if (!flutterBridge || typeof flutterBridge.postMessage !== 'function') {
+          return JSON.stringify({state:'channel_unavailable', patched:0});
+        }
+        const contexts = [
+          {target:root, label:'root'},
+          {target:main?.contentWindow, label:'main'},
+          {target:alumnos?.contentWindow, label:'alumnos'},
+          {target:escolares?.contentWindow, label:'escolares'},
+        ];
+        const installInto = (targetWin, label) => {
+          if (!targetWin) return {label, state:'missing'};
+          try {
+            const installed = targetWin.__flutterSageReportBridgeV2;
+            if (installed?.wrapper && targetWin.open === installed.wrapper) {
+              return {label, state:'reused'};
+            }
+            const originalOpen = targetWin.open.bind(targetWin);
+            const wrapper = function(url, target, features) {
+              try {
+                const resolved = new URL(String(url), targetWin.location.href);
+                const normalizedPath = resolved.pathname.toLowerCase().replace(/\/+$/, '');
+                const allowed = resolved.protocol === 'https:' &&
+                  resolved.hostname.toLowerCase() === 'sage.entrerios.gov.ar' &&
+                  allowedPaths.has(normalizedPath);
+                if (allowed) {
+                  flutterBridge.postMessage(JSON.stringify({
+                    type:'sage_report_url',
+                    url:resolved.href,
+                  }));
+                  return {closed:false, close(){}, focus(){}, blur(){}};
+                }
+              } catch (_) {}
+              return originalOpen(url, target, features);
+            };
+            targetWin.open = wrapper;
+            targetWin.__flutterSageReportBridgeV2 = {wrapper, originalOpen, label};
+            return {label, state:'patched'};
+          } catch (_) {
+            return {label, state:'inaccessible'};
+          }
+        };
+        const states = contexts.map(item => installInto(item.target, item.label));
+        const result = {
+          state: states.some(item => item.state === 'patched' || item.state === 'reused')
+            ? 'ready' : 'bridge_install_failed',
+          patched: states.filter(item => item.state === 'patched' || item.state === 'reused').length,
+          states,
+        };
+        return JSON.stringify(result);
+      })()''');
+      if (kDebugMode) {
+        dynamic decoded;
+        try {
+          decoded = jsonDecode(raw);
+          if (decoded is String) decoded = jsonDecode(decoded);
+        } catch (_) {}
+        final states = decoded is Map && decoded['states'] is List
+            ? decoded['states'] as List
+            : const <dynamic>[];
+        bool stateFor(String label, String state) => states.any(
+          (item) =>
+              item is Map &&
+              item['label'] == label &&
+              (item['state'] == state ||
+                  (state == 'active' &&
+                      (item['state'] == 'patched' ||
+                          item['state'] == 'reused'))),
+        );
+        debugPrint(
+          '[SAGE report] channel_available=${decoded is Map && decoded['state'] != 'channel_unavailable'}',
+        );
+        debugPrint('[SAGE report] patched_root=${stateFor('root', 'active')}');
+        debugPrint('[SAGE report] patched_main=${stateFor('main', 'active')}');
+        debugPrint(
+          '[SAGE report] patched_alumnos=${stateFor('alumnos', 'active')}',
+        );
+        debugPrint(
+          '[SAGE report] patched_escolares=${stateFor('escolares', 'active')}',
+        );
+      }
+    } catch (_) {
+      if (kDebugMode) debugPrint('[SAGE report] bridge_install_failed=true');
+    }
+  }
+
+  Future<void> _installReportDiagnostics() async {
+    try {
+      await _evaluateJavascript(r'''(() => {
+        const root = window;
+        const bridge = root.SageDiagnosticBridge;
+        if (!bridge || typeof bridge.postMessage !== 'function') return false;
+        const main = root.document.querySelector('iframe#Main');
+        const alumnos = main?.contentDocument?.querySelector('iframe#frm_alumnos');
+        const escolares = alumnos?.contentDocument?.querySelector('iframe#frm_alumnos_escolares');
+        const contexts = [
+          {target:root, label:'root'},
+          {target:main?.contentWindow, label:'main'},
+          {target:alumnos?.contentWindow, label:'alumnos'},
+          {target:escolares?.contentWindow, label:'escolares'},
+        ];
+        const send = value => {
+          try { bridge.postMessage(JSON.stringify(value)); } catch (_) {}
+        };
+        const lastSegment = value => {
+          try {
+            const parsed = new URL(String(value), root.location.href);
+            return parsed.pathname.split('/').filter(Boolean).pop() || '/';
+          } catch (_) { return 'invalid'; }
+        };
+        const install = item => {
+          const target = item.target;
+          if (!target) return {label:item.label, state:'missing'};
+          try {
+            if (target.__sageReportDiagnosticsV1) return {label:item.label, state:'reused'};
+            const originalOpen = target.open.bind(target);
+            target.open = function(url, name, features) {
+              let schemeAllowed = false;
+              let hostAllowed = false;
+              let pathAllowed = false;
+              let empty = false;
+              try {
+                empty = String(url ?? '') === '';
+                const resolved = new URL(String(url), target.location.href);
+                schemeAllowed = resolved.protocol === 'https:';
+                hostAllowed = resolved.hostname.toLowerCase() === 'sage.entrerios.gov.ar';
+                pathAllowed = /ns_reporte_/.test(resolved.pathname.toLowerCase());
+                send({event:'open', owner:item.label, url_empty:empty,
+                  scheme_allowed:schemeAllowed, host_allowed:hostAllowed,
+                  path_allowed:pathAllowed, last_path_segment:lastSegment(resolved.href)});
+              } catch (_) {
+                send({event:'open', owner:item.label, url_empty:empty,
+                  scheme_allowed:false, host_allowed:false, path_allowed:false,
+                  last_path_segment:'invalid'});
+              }
+              return originalOpen(url, name, features);
+            };
+            const formSubmit = target.HTMLFormElement?.prototype?.submit;
+            if (formSubmit) target.HTMLFormElement.prototype.submit = function() {
+              const action = this.getAttribute('action') || target.location.href;
+              let parsed;
+              try { parsed = new URL(action, target.location.href); } catch (_) {}
+              send({event:'form_submit', owner:item.label,
+                method:(this.getAttribute('method') || 'get').toUpperCase(),
+                target_present:Boolean(this.getAttribute('target')),
+                action_scheme:parsed?.protocol || 'invalid',
+                action_host:parsed?.hostname || 'invalid',
+                action_last_path_segment:parsed ? lastSegment(parsed.href) : 'invalid'});
+              return formSubmit.apply(this, arguments);
+            };
+            const requestSubmit = target.HTMLFormElement?.prototype?.requestSubmit;
+            if (requestSubmit) target.HTMLFormElement.prototype.requestSubmit = function() {
+              const action = this.getAttribute('action') || target.location.href;
+              let parsed;
+              try { parsed = new URL(action, target.location.href); } catch (_) {}
+              send({event:'form_submit', owner:item.label,
+                method:(this.getAttribute('method') || 'get').toUpperCase(),
+                target_present:Boolean(this.getAttribute('target')),
+                action_scheme:parsed?.protocol || 'invalid',
+                action_host:parsed?.hostname || 'invalid',
+                action_last_path_segment:parsed ? lastSegment(parsed.href) : 'invalid'});
+              return requestSubmit.apply(this, arguments);
+            };
+            target.document?.addEventListener('click', event => {
+              const anchor = event.target?.closest?.('a');
+              if (!anchor) return;
+              let parsed;
+              try { parsed = new URL(anchor.href, target.location.href); } catch (_) {}
+              send({event:'anchor_click', owner:item.label,
+                target_blank:anchor.target === '_blank',
+                href_scheme:parsed?.protocol || 'invalid',
+                href_host:parsed?.hostname || 'invalid',
+                href_last_path_segment:parsed ? lastSegment(parsed.href) : 'invalid'});
+            }, true);
+            let previousPath = String(target.location.pathname || '');
+            target.setInterval(() => {
+              const nextPath = String(target.location.pathname || '');
+              if (nextPath !== previousPath) {
+                send({event:'location_change', owner:item.label, last_path_segment:lastSegment(nextPath)});
+                previousPath = nextPath;
+              }
+            }, 250);
+            const originalFetch = target.fetch;
+            if (typeof originalFetch === 'function') target.fetch = function(input, init) {
+              let parsed;
+              try { parsed = new URL(typeof input === 'string' ? input : input.url, target.location.href); } catch (_) {}
+              send({event:'fetch', owner:item.label, method:(init?.method || input?.method || 'GET').toUpperCase(),
+                host:parsed?.hostname || 'invalid', last_path_segment:parsed ? lastSegment(parsed.href) : 'invalid'});
+              return originalFetch.apply(this, arguments);
+            };
+            const originalXhrOpen = target.XMLHttpRequest?.prototype?.open;
+            if (originalXhrOpen) target.XMLHttpRequest.prototype.open = function(method, url) {
+              let parsed;
+              try { parsed = new URL(String(url), target.location.href); } catch (_) {}
+              send({event:'xhr', owner:item.label, method:String(method || 'GET').toUpperCase(),
+                host:parsed?.hostname || 'invalid', last_path_segment:parsed ? lastSegment(parsed.href) : 'invalid'});
+              return originalXhrOpen.apply(this, arguments);
+            };
+            target.__sageReportDiagnosticsV1 = true;
+            send({event:'context_ready', context:item.label,
+              channel_type:typeof target.SageReportBridge,
+              top_channel_type:typeof target.top?.SageReportBridge,
+              parent_channel_type:typeof target.parent?.SageReportBridge});
+            send({event:'sage_report_probe', context:item.label});
+            return {label:item.label, state:'patched'};
+          } catch (_) { return {label:item.label, state:'inaccessible'}; }
+        };
+        const states = contexts.map(install);
+        send({event:'diagnostics_ready', states});
+        return true;
+      })()''');
+    } catch (_) {
+      if (kDebugMode) {
+        debugPrint('[SAGE report] diagnostic_install_failed=true');
+      }
+    }
+  }
+
+  void _onSageReportMessage(JavaScriptMessage message) {
+    unawaited(_handleSageReportMessage(message));
+  }
+
+  void _onSageDiagnosticMessage(JavaScriptMessage message) {
+    if (!kDebugMode) return;
+    try {
+      dynamic value = jsonDecode(message.message);
+      if (value is String) value = jsonDecode(value);
+      if (value is Map) {
+        debugPrint(
+          '[SAGE diagnostic] ${value['event'] ?? 'unknown'} ${jsonEncode(value)}',
+        );
+      }
+    } catch (_) {
+      debugPrint('[SAGE diagnostic] message_invalid=true');
+    }
+  }
+
+  Future<void> _handleSageReportMessage(JavaScriptMessage message) async {
+    Map<String, dynamic>? payload;
+    try {
+      final decoded = jsonDecode(message.message);
+      if (decoded is Map) payload = Map<String, dynamic>.from(decoded);
+    } catch (_) {
+      if (kDebugMode) debugPrint('[SAGE report bridge] message_received=false');
+      return;
+    }
+    if (payload?['type'] != 'sage_report_url' || payload?['url'] is! String) {
+      if (kDebugMode) debugPrint('[SAGE report bridge] message_received=false');
+      return;
+    }
+    if (kDebugMode) debugPrint('[SAGE report bridge] message_received=true');
+    if (kDebugMode) debugPrint('[SAGE report V3] message_received=true');
+    final uri = Uri.tryParse(payload!['url'] as String);
+    if (uri == null || !_isAllowedReportUri(uri)) {
+      if (kDebugMode) debugPrint('[SAGE report bridge] uri_allowed=false');
+      return;
+    }
+    if (kDebugMode) debugPrint('[SAGE report bridge] uri_allowed=true');
+    if (kDebugMode) debugPrint('[SAGE report V3] uri_allowed=true');
+    final pending = _pendingReportUrl;
+    if (pending != null && !pending.isCompleted) {
+      pending.complete(uri);
+      return;
+    }
+    await _procesarDescargaWeb(uri: uri);
+    if (kDebugMode) debugPrint('[SAGE report] download_started=true');
+  }
+
+  bool _isAllowedReportUri(Uri uri) {
+    const allowedPaths = <String>{
+      '/alumnos_v2/NS_reporte_estado_alumno_carrera.php',
+      '/alumnos_v2/NS_reporte_analitico.php',
+      '/alumnos_v2/NS_reporte_examenes_rendidos.php',
+    };
+    return uri.scheme == 'https' &&
+        uri.host.toLowerCase() == 'sage.entrerios.gov.ar' &&
+        allowedPaths.contains(uri.path);
+  }
+
   Future<void> _probeHistory() async {
     if (_historyProbeRunning || _isClosing) return;
     _historyProbeRunning = true;
     try {
+      await _installReportDiagnostics();
       final result = await _historialController.cargar(
         _evaluateJavascript,
         timeout: const Duration(seconds: 3),
@@ -349,10 +652,14 @@ class _PantallaSageState extends State<PantallaSage> {
       return;
     }
     setState(() => _reportInFlight = true);
+    final pending = Completer<Uri>();
+    _pendingReportUrl = pending;
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(const SnackBar(content: Text('Preparando reporte…')));
     try {
+      await _installReportBridge();
+      await _installReportDiagnostics();
       final report = await _historialController.pulsarReporte(
         _evaluateJavascript,
         career,
@@ -367,18 +674,60 @@ class _PantallaSageState extends State<PantallaSage> {
           'report_click_dispatched=${report.estado == EstadoReporteSage.iniciado}; '
           'state=${report.estado.name}',
         );
+        debugPrint('[SAGE report] button_found=${report.reportButtonFound}');
+        debugPrint('[SAGE report] inline_onclick=${report.inlineOnclick}');
+        debugPrint('[SAGE report] jquery_handlers=${report.jqueryHandlers}');
+        debugPrint('[SAGE report] bridge_patched=${report.bridgePatched}');
+        debugPrint(
+          '[SAGE report] function_owner=${report.functionOwner ?? 'missing'}',
+        );
+        debugPrint(
+          '[SAGE report] click_dispatched=${report.estado == EstadoReporteSage.iniciado}',
+        );
       }
-      if (report.estado != EstadoReporteSage.iniciado && mounted) {
+      if (report.estado == EstadoReporteSage.iniciado) {
+        try {
+          final uri = await pending.future.timeout(const Duration(seconds: 5));
+          await _procesarDescargaWeb(uri: uri);
+          if (kDebugMode) debugPrint('[SAGE report V3] download_started=true');
+        } on TimeoutException {
+          if (kDebugMode) debugPrint('[SAGE report] timeout=true');
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('SAGE no generó el enlace del reporte.'),
+              ),
+            );
+          }
+        }
+      } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(_reportErrorMessage(report.estado))),
         );
       }
     } finally {
+      if (identical(_pendingReportUrl, pending)) _pendingReportUrl = null;
       if (mounted) setState(() => _reportInFlight = false);
     }
   }
 
   String _reportErrorMessage(EstadoReporteSage state) => switch (state) {
+    EstadoReporteSage.channelUnavailable =>
+      'No se pudo conectar el reporte con la aplicación.',
+    EstadoReporteSage.bridgeInstallFailed =>
+      'No se pudo preparar la descarga del reporte.',
+    EstadoReporteSage.reportFunctionMissing =>
+      'SAGE no mostró la función del reporte.',
+    EstadoReporteSage.reportFunctionStructureChanged =>
+      'SAGE cambió la forma de generar este reporte.',
+    EstadoReporteSage.reportFunctionTransformUnsafe =>
+      'No se pudo preparar el reporte de forma segura.',
+    EstadoReporteSage.reportFunctionCompileBlocked =>
+      'El navegador de SAGE bloqueó la preparación del reporte.',
+    EstadoReporteSage.reportFunctionPatchFailed =>
+      'No se pudo conectar el reporte con la aplicación.',
+    EstadoReporteSage.carreraAmbigua =>
+      'La carrera seleccionada no es unívoca en SAGE.',
     EstadoReporteSage.carreraNoEncontrada =>
       'No se encontró la carrera actual en SAGE.',
     EstadoReporteSage.subgrillaCargando =>
@@ -389,6 +738,8 @@ class _PantallaSageState extends State<PantallaSage> {
       'No se encontró el paginador de la carrera.',
     EstadoReporteSage.botonNoEncontrado =>
       'No se encontró ese reporte en la subgrilla.',
+    EstadoReporteSage.clickError => 'SAGE no permitió ejecutar el reporte.',
+    EstadoReporteSage.timeout => 'SAGE no generó el enlace del reporte.',
     _ => 'No se pudo iniciar el reporte de SAGE.',
   };
 
@@ -398,15 +749,9 @@ class _PantallaSageState extends State<PantallaSage> {
   }
 
   Future<void> _restoreThenShowOriginal() async {
-    final restored = await _historialController.restaurarPantallaOriginal(
-      _evaluateJavascript,
-    );
-    if (!restored && await _controller.canGoBack()) {
-      await _controller.goBack();
-      await Future<void>.delayed(const Duration(milliseconds: 700));
-    } else {
-      await Future<void>.delayed(const Duration(milliseconds: 1000));
-    }
+    await _installReportBridge();
+    await _historialController.instalarReportesV3(_evaluateJavascript);
+    await Future<void>.delayed(const Duration(milliseconds: 300));
     if (mounted) setState(() => _nativeHistoryVisible = false);
   }
 

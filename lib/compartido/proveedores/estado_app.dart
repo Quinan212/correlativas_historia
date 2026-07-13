@@ -154,6 +154,8 @@ final proveedorIndiceRouter = StateProvider<int>((_) => 0);
 /// 0 = Trayectorias, 1 = Exámenes, 2 = Materias, 3 = Datos.
 final proveedorSeccionNav = StateProvider<int>((_) => 0);
 
+final proveedorSageActivo = StateProvider<bool>((_) => false);
+
 // =================== MAP FILTERS ===================
 
 final proveedorTerminoBusqueda = StateProvider<String>((_) => '');

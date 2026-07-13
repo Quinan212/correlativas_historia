@@ -17,7 +17,8 @@ class _DatosEstudiantePantalla extends StatefulWidget {
     String? division,
     int? currentYear,
     int? cohortYear,
-  }) onSaveContact;
+  })
+  onSaveContact;
 
   @override
   State<_DatosEstudiantePantalla> createState() =>
@@ -65,8 +66,8 @@ class _DatosEstudiantePantallaState extends State<_DatosEstudiantePantalla> {
       _ => 'A',
     };
     _dniCtrl = TextEditingController(
-        text:
-            widget.student.dni.startsWith('guest_') ? '' : widget.student.dni);
+      text: widget.student.dni.startsWith('guest_') ? '' : widget.student.dni,
+    );
     _selectedCareer = widget.student.careerId;
     _selectedYear = widget.student.currentYear;
     _selectedCohort = widget.student.cohortYear;
@@ -108,9 +109,9 @@ class _DatosEstudiantePantallaState extends State<_DatosEstudiantePantalla> {
       );
       if (!mounted) return;
       setState(() => _editing = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Datos actualizados.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Datos actualizados.')));
     } on DniEnUsoException {
       if (!mounted) return;
       await _mostrarDniEnUso();
@@ -147,9 +148,9 @@ class _DatosEstudiantePantallaState extends State<_DatosEstudiantePantalla> {
     if (value.trim().isEmpty) return;
     await Clipboard.setData(ClipboardData(text: value));
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$label copiado.')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('$label copiado.')));
   }
 
   @override
@@ -269,15 +270,17 @@ class _DatosEstudiantePantallaState extends State<_DatosEstudiantePantalla> {
                       if (_editing) ...[
                         TextField(
                           controller: _nameCtrl,
-                          decoration:
-                              const InputDecoration(labelText: 'Nombres'),
+                          decoration: const InputDecoration(
+                            labelText: 'Nombres',
+                          ),
                           textCapitalization: TextCapitalization.words,
                         ),
                         const SizedBox(height: 12),
                         TextField(
                           controller: _lastNameCtrl,
-                          decoration:
-                              const InputDecoration(labelText: 'Apellido'),
+                          decoration: const InputDecoration(
+                            labelText: 'Apellido',
+                          ),
                           textCapitalization: TextCapitalization.words,
                         ),
                         const SizedBox(height: 12),
@@ -285,7 +288,7 @@ class _DatosEstudiantePantallaState extends State<_DatosEstudiantePantalla> {
                           controller: _dniCtrl,
                           keyboardType: TextInputType.number,
                           inputFormatters: [
-                            FilteringTextInputFormatter.digitsOnly
+                            FilteringTextInputFormatter.digitsOnly,
                           ],
                           maxLength: 9,
                           decoration: const InputDecoration(
@@ -352,7 +355,9 @@ class _DatosEstudiantePantallaState extends State<_DatosEstudiantePantalla> {
                                   width: 24,
                                   height: 24,
                                   child: CircularProgressIndicator(
-                                      color: Colors.white, strokeWidth: 2),
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
                                 )
                               : const Text('Guardar cambios'),
                         ),
@@ -360,8 +365,9 @@ class _DatosEstudiantePantallaState extends State<_DatosEstudiantePantalla> {
                           const SizedBox(height: 8),
                           Text(
                             _error!,
-                            style: theme.textTheme.bodySmall
-                                ?.copyWith(color: theme.colorScheme.error),
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.error,
+                            ),
                           ),
                         ],
                       ] else ...[
@@ -388,7 +394,9 @@ class _DatosEstudiantePantallaState extends State<_DatosEstudiantePantalla> {
                           label: 'Carrera',
                           value: _etiquetaCarrera(student.careerId),
                           onCopy: () => _copyValue(
-                              'Carrera', _etiquetaCarrera(student.careerId)),
+                            'Carrera',
+                            _etiquetaCarrera(student.careerId),
+                          ),
                         ),
                         _BaldosaDatosEstudiante(
                           label: 'Año actual',
@@ -425,7 +433,8 @@ class _DatosEstudiantePantallaState extends State<_DatosEstudiantePantalla> {
                       _BaldosaDatosEstudiante(
                         label: 'Estado',
                         value: _etiquetaEstadoInscripcion(
-                            student.enrollmentStatus),
+                          student.enrollmentStatus,
+                        ),
                         onCopy: () => _copyValue(
                           'Estado',
                           _etiquetaEstadoInscripcion(student.enrollmentStatus),
@@ -652,9 +661,7 @@ class _MateriasEstudiantePantallaState
 }
 
 class _SeccionDatosEstudiante extends StatelessWidget {
-  const _SeccionDatosEstudiante({
-    required this.child,
-  });
+  const _SeccionDatosEstudiante({required this.child});
 
   final Widget child;
 
@@ -695,11 +702,7 @@ class _BotonTabDatosEstudiante extends StatelessWidget {
         decoration: BoxDecoration(
           color: selected ? Colors.white : Colors.transparent,
           borderRadius: BorderRadius.circular(13),
-          border: selected
-              ? Border.all(
-                  color: const Color(0xFFD9E2EE),
-                )
-              : null,
+          border: selected ? Border.all(color: const Color(0xFFD9E2EE)) : null,
         ),
         child: Text(
           label,
@@ -770,10 +773,7 @@ class _BaldosaDatosEstudiante extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          _BotonAccionDatos(
-            icon: Icons.content_copy_rounded,
-            onTap: onCopy,
-          ),
+          _BotonAccionDatos(icon: Icons.content_copy_rounded, onTap: onCopy),
         ],
       ),
     );
@@ -861,9 +861,9 @@ class _BaldosaEditableEstudiante extends StatelessWidget {
                 : () {
                     final text = value.isEmpty ? hint : value;
                     Clipboard.setData(ClipboardData(text: text));
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('$label copiado.')),
-                    );
+                    ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(SnackBar(content: Text('$label copiado.')));
                   },
           ),
         ],
@@ -873,10 +873,7 @@ class _BaldosaEditableEstudiante extends StatelessWidget {
 }
 
 class _BotonAccionDatos extends StatelessWidget {
-  const _BotonAccionDatos({
-    required this.icon,
-    required this.onTap,
-  });
+  const _BotonAccionDatos({required this.icon, required this.onTap});
 
   final IconData icon;
   final VoidCallback? onTap;
@@ -894,11 +891,7 @@ class _BotonAccionDatos extends StatelessWidget {
           color: theme.colorScheme.primary.withValues(alpha: 0.08),
           shape: BoxShape.circle,
         ),
-        child: Icon(
-          icon,
-          color: theme.colorScheme.primary,
-          size: 20,
-        ),
+        child: Icon(icon, color: theme.colorScheme.primary, size: 20),
       ),
     );
   }
@@ -930,9 +923,7 @@ class _DropdownEstiloExamenes<T> extends StatelessWidget {
         color: isDark ? cs.surface : Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isDark
-              ? cs.outlineVariant
-              : const Color(0xFFD1D5DB),
+          color: isDark ? cs.outlineVariant : const Color(0xFFD1D5DB),
         ),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -952,32 +943,27 @@ class _DropdownEstiloExamenes<T> extends StatelessWidget {
                 alignment: Alignment.centerLeft,
                 child: selectedBuilder != null
                     ? selectedBuilder!(item.value)
-                    : Text(
-                        item.label,
-                        style: TextStyle(color: cs.onSurface),
-                      ),
+                    : Text(item.label, style: TextStyle(color: cs.onSurface)),
               );
             }).toList();
           },
           items: items
-              .map((item) => DropdownMenuItem<T>(
-                    value: item.value,
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: selectedBuilder != null
-                              ? selectedBuilder!(item.value)
-                              : Text(item.label),
-                        ),
-                        if (item.value == value)
-                          Icon(
-                            Icons.check_rounded,
-                            size: 18,
-                            color: cs.primary,
-                          ),
-                      ],
-                    ),
-                  ))
+              .map(
+                (item) => DropdownMenuItem<T>(
+                  value: item.value,
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: selectedBuilder != null
+                            ? selectedBuilder!(item.value)
+                            : Text(item.label),
+                      ),
+                      if (item.value == value)
+                        Icon(Icons.check_rounded, size: 18, color: cs.primary),
+                    ],
+                  ),
+                ),
+              )
               .toList(),
           onChanged: onChanged,
         ),
@@ -1042,18 +1028,16 @@ class _DropdownCarreraEstudiante extends StatelessWidget {
       child: _DropdownEstiloExamenes<String>(
         value: value,
         onChanged: onChanged,
-        items: careers
-            .map((e) => _DropdownEstiloItem(e.id, e.nombre))
-            .toList(),
-          selectedBuilder: (v) {
-            final career = careers.firstWhere((c) => c.id == v);
-            return EtiquetaCarreraExamenes(
-              career: career,
-              textColor: cs.onSurface,
-              iconSize: 20,
-              iconShiftX: -4,
-            );
-          },
+        items: careers.map((e) => _DropdownEstiloItem(e.id, e.nombre)).toList(),
+        selectedBuilder: (v) {
+          final career = careers.firstWhere((c) => c.id == v);
+          return EtiquetaCarreraExamenes(
+            career: career,
+            textColor: cs.onSurface,
+            iconSize: 20,
+            iconShiftX: -4,
+          );
+        },
       ),
     );
   }

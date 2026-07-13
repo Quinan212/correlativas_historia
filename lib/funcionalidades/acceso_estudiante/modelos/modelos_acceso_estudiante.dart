@@ -36,12 +36,12 @@ class PerfilAccesoEstudiante {
   String get fullName => '$lastName, $firstName';
 
   String get yearLabel => switch (currentYear ?? 1) {
-        1 => '1er año',
-        2 => '2do año',
-        3 => '3er año',
-        4 => '4to año',
-        _ => '1er año',
-      };
+    1 => '1er año',
+    2 => '2do año',
+    3 => '3er año',
+    4 => '4to año',
+    _ => '1er año',
+  };
 
   factory PerfilAccesoEstudiante.fromJson(Map<String, dynamic> json) {
     int? parseInt(dynamic value) {
@@ -132,7 +132,8 @@ class EntradaHistorialEstudiante {
     return EntradaHistorialEstudiante(
       eventType: (json['event_type'] ?? '').toString(),
       createdAt: DateTime.tryParse((json['created_at'] ?? '').toString()),
-      payload: (json['payload'] as Map?)?.cast<String, dynamic>() ??
+      payload:
+          (json['payload'] as Map?)?.cast<String, dynamic>() ??
           <String, dynamic>{},
     );
   }
@@ -153,8 +154,9 @@ class DatosAccesoEstudiante {
 
   List<MateriaEstudiante> get combinedSubjects {
     final selfIds = selfSubjects.map((s) => s.subjectId).toSet();
-    final filteredOfficial =
-        subjects.where((s) => !selfIds.contains(s.subjectId)).toList();
+    final filteredOfficial = subjects
+        .where((s) => !selfIds.contains(s.subjectId))
+        .toList();
     return [...filteredOfficial, ...selfSubjects];
   }
 
@@ -165,21 +167,19 @@ class DatosAccesoEstudiante {
       ),
       subjects: (json['subjects'] as List? ?? const [])
           .whereType<Map>()
-          .map((row) => MateriaEstudiante.fromJson(
-                row.cast<String, dynamic>(),
-              ))
+          .map((row) => MateriaEstudiante.fromJson(row.cast<String, dynamic>()))
           .toList(growable: false),
       history: (json['history'] as List? ?? const [])
           .whereType<Map>()
-          .map((row) => EntradaHistorialEstudiante.fromJson(
-                row.cast<String, dynamic>(),
-              ))
+          .map(
+            (row) => EntradaHistorialEstudiante.fromJson(
+              row.cast<String, dynamic>(),
+            ),
+          )
           .toList(growable: false),
       selfSubjects: (json['self_subjects'] as List? ?? const [])
           .whereType<Map>()
-          .map((row) => MateriaEstudiante.fromJson(
-                row.cast<String, dynamic>(),
-              ))
+          .map((row) => MateriaEstudiante.fromJson(row.cast<String, dynamic>()))
           .toList(growable: false),
     );
   }
@@ -191,16 +191,16 @@ String? _emptyToNull(dynamic value) {
 }
 
 String nombreMesAcademico(DateTime date) => const <String>[
-      'Enero',
-      'Febrero',
-      'Marzo',
-      'Abril',
-      'Mayo',
-      'Junio',
-      'Julio',
-      'Agosto',
-      'Septiembre',
-      'Octubre',
-      'Noviembre',
-      'Diciembre',
-    ][date.month - 1];
+  'Enero',
+  'Febrero',
+  'Marzo',
+  'Abril',
+  'Mayo',
+  'Junio',
+  'Julio',
+  'Agosto',
+  'Septiembre',
+  'Octubre',
+  'Noviembre',
+  'Diciembre',
+][date.month - 1];

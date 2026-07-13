@@ -75,10 +75,12 @@ class _TarjetaMaterias extends StatelessWidget {
     }
 
     final filteredEntries = entries
-        .where((entry) =>
-            (selectedYear == 0 || entry.materia.anio == selectedYear) &&
-            matchesStatus(entry) &&
-            matchesSearch(entry))
+        .where(
+          (entry) =>
+              (selectedYear == 0 || entry.materia.anio == selectedYear) &&
+              matchesStatus(entry) &&
+              matchesSearch(entry),
+        )
         .toList(growable: false);
     final grouped = <int, List<_CurriculumEntry>>{
       1: <_CurriculumEntry>[],
@@ -90,25 +92,15 @@ class _TarjetaMaterias extends StatelessWidget {
       grouped[entry.materia.anio]!.add(entry);
     }
     final approvedCount = entries
-        .where(
-          (e) => e.current != null && _isSubjectApproved(e.current!),
-        )
+        .where((e) => e.current != null && _isSubjectApproved(e.current!))
         .length;
     final inProgressCount = entries
-        .where(
-          (e) => e.current != null && _isSubjectInProgress(e.current!),
-        )
+        .where((e) => e.current != null && _isSubjectInProgress(e.current!))
         .length;
     final availableCount = entries
-        .where(
-          (e) => e.current == null && e.available,
-        )
+        .where((e) => e.current == null && e.available)
         .length;
-    final blockedCount = entries
-        .where(
-          _isEntryBlocked,
-        )
-        .length;
+    final blockedCount = entries.where(_isEntryBlocked).length;
     final yearsToShow = selectedYear == 0 ? const [1, 2, 3, 4] : [selectedYear];
 
     return Column(
@@ -308,8 +300,9 @@ class _GrupoMateriasAnio extends StatelessWidget {
       return current != null &&
           current.status.toLowerCase().trim() == 'aprobada';
     }).length;
-    final blocked =
-        entries.where((e) => e.current == null && !e.available).length;
+    final blocked = entries
+        .where((e) => e.current == null && !e.available)
+        .length;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -455,9 +448,7 @@ class _DetalleMateriaEstudiantePantalla extends StatelessWidget {
     final unlocks = _subjectsUnlockedBy(entry, allEntries);
 
     return Scaffold(
-      appBar: _BannerDetalleMateria(
-        title: entry.materia.displayNombre,
-      ),
+      appBar: _BannerDetalleMateria(title: entry.materia.displayNombre),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
         children: [
@@ -496,9 +487,7 @@ class _DetalleMateriaEstudiantePantalla extends StatelessWidget {
                     Column(
                       children: [
                         for (final unlock in unlocks.take(8)) ...[
-                          _UnlockRow(
-                            title: unlock.materia.displayNombre,
-                          ),
+                          _UnlockRow(title: unlock.materia.displayNombre),
                           const SizedBox(height: 10),
                         ],
                         if (unlocks.length > 8)
@@ -608,9 +597,7 @@ class _BannerDetalleMateria extends StatelessWidget
 }
 
 class _UnlockRow extends StatelessWidget {
-  const _UnlockRow({
-    required this.title,
-  });
+  const _UnlockRow({required this.title});
 
   final String title;
 

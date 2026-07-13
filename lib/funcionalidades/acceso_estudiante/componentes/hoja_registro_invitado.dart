@@ -22,8 +22,9 @@ class _HojaRegistroInvitadoState extends State<HojaRegistroInvitado> {
   };
 
   void _submit() {
-    final name =
-        _nameCtrl.text.trim().isEmpty ? 'Invitado' : _nameCtrl.text.trim();
+    final name = _nameCtrl.text.trim().isEmpty
+        ? 'Invitado'
+        : _nameCtrl.text.trim();
     final dni = _dniCtrl.text.replaceAll(RegExp(r'\D'), '').trim();
     widget.onStart(name, dni, _selectedCareer);
   }
@@ -107,10 +108,7 @@ class _HojaRegistroInvitadoState extends State<HojaRegistroInvitado> {
               prefixIcon: Icon(Icons.school_rounded),
             ),
             items: _careers.entries.map((e) {
-              return DropdownMenuItem(
-                value: e.key,
-                child: Text(e.value),
-              );
+              return DropdownMenuItem(value: e.key, child: Text(e.value));
             }).toList(),
             onChanged: (value) {
               if (value != null) {

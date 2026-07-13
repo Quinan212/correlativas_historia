@@ -21,17 +21,28 @@ enum EstadoCargaMateriasSage {
 
 enum EstadoReporteSage {
   iniciado,
+  channelUnavailable,
+  bridgeInstallFailed,
+  reportFunctionMissing,
+  reportFunctionStructureChanged,
+  reportFunctionTransformUnsafe,
+  reportFunctionCompileBlocked,
+  reportFunctionPatchFailed,
+  carreraAmbigua,
   carreraNoEncontrada,
   subgrillaCargando,
   subgridNoExpandido,
   pagerNoEncontrado,
   botonNoEncontrado,
+  clickError,
+  timeout,
   error,
 }
 
 enum EstadoResolverFilaSage {
   resuelta,
   esperandoPagina,
+  carreraAmbigua,
   carreraNoEncontrada,
   incompatible,
   error,
@@ -42,6 +53,7 @@ enum EstadoSubgrillaSage {
   expandedLoading,
   collapsed,
   staleSubgrid,
+  careerAmbiguous,
   missing,
   timeout,
   error,
@@ -59,6 +71,8 @@ class CarreraHistorialSage {
   const CarreraHistorialSage({
     required this.gridRowId,
     this.internalId,
+    this.careerContextId,
+    this.careerKey = '',
     required this.nombre,
     required this.institucion,
     required this.anioInicio,
@@ -77,6 +91,12 @@ class CarreraHistorialSage {
 
   /// Identificador interno de SAGE, conservado solo como dato de la fila.
   final String? internalId;
+
+  /// Contexto de carrera entregado por B1 (idsuborgCarrera), si SAGE lo expone.
+  final String? careerContextId;
+
+  /// Clave estructural de carrera + institución + año, sin datos del alumno.
+  final String careerKey;
 
   @Deprecated('Usar gridRowId para localizar controles de jqGrid.')
   String get idInterno => internalId ?? gridRowId;
@@ -99,6 +119,8 @@ class CarreraHistorialSage {
     return CarreraHistorialSage(
       gridRowId: gridRowId ?? this.gridRowId,
       internalId: internalId,
+      careerContextId: careerContextId,
+      careerKey: careerKey,
       nombre: nombre,
       institucion: institucion,
       anioInicio: anioInicio,
@@ -163,6 +185,10 @@ class ResultadoReporteSage {
     this.subgridReady = false,
     this.pagerFound = false,
     this.reportButtonFound = false,
+    this.bridgePatched = 0,
+    this.functionOwner,
+    this.inlineOnclick = false,
+    this.jqueryHandlers = false,
   });
 
   final EstadoReporteSage estado;
@@ -171,6 +197,10 @@ class ResultadoReporteSage {
   final bool subgridReady;
   final bool pagerFound;
   final bool reportButtonFound;
+  final int bridgePatched;
+  final String? functionOwner;
+  final bool inlineOnclick;
+  final bool jqueryHandlers;
 }
 
 class ResultadoResolverFilaSage {

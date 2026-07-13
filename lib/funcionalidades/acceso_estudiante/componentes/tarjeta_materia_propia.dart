@@ -50,9 +50,7 @@ class TarjetaMateriaPropia extends StatelessWidget {
           decoration: BoxDecoration(
             color: cs.surface,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: cs.outlineVariant.withValues(alpha: 0.5),
-            ),
+            border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.5)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -87,7 +85,9 @@ class TarjetaMateriaPropia extends StatelessWidget {
                           runSpacing: 6,
                           children: [
                             _EtiquetaMini(
-                                label: statusLabel, color: statusColor),
+                              label: statusLabel,
+                              color: statusColor,
+                            ),
                             if (subject.grade != null)
                               _EtiquetaMini(
                                 label:
@@ -100,9 +100,7 @@ class TarjetaMateriaPropia extends StatelessWidget {
                               _EtiquetaMini(
                                 label: subject.sourceDate != null
                                     ? nombreMesAcademico(subject.sourceDate!)
-                                    : _etiquetaPeriodo(
-                                        subject.academicPeriod,
-                                      ),
+                                    : _etiquetaPeriodo(subject.academicPeriod),
                                 color: const Color(0xFF0E7490),
                               ),
                             if (subject.subjectYear != null)

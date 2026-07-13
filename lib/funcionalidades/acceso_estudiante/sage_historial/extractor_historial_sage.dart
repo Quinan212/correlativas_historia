@@ -47,6 +47,8 @@ class ExtractorHistorialSage {
           (row) => CarreraHistorialSage(
             gridRowId: _string(row['gridRowId'] ?? row['id']),
             internalId: _nullableString(row['internalId']),
+            careerContextId: _nullableString(row['careerContextId']),
+            careerKey: _string(row['careerKey']),
             nombre: _string(row['career']),
             institucion: _string(row['institution']),
             anioInicio: _int(row['startYear']),
@@ -265,9 +267,17 @@ class ExtractorHistorialSage {
     const careers = rows.map(row => ({
       gridRowId: String(row.gridRowId ?? row.id ?? ''),
       internalId: String(row.internalId ?? row.id ?? ''),
+      careerContextId: String(
+        row.idsuborgCarrera ?? row.idsuborg_carrera ?? row.careerContextId ?? '',
+      ),
       career: String(row.carrera ?? ''),
       institution: String(row.suborganizacion ?? ''),
       startYear: String(row.anio_inscripcion ?? ''),
+      careerKey: [
+        row.carrera ?? '',
+        row.suborganizacion ?? '',
+        row.anio_inscripcion ?? '',
+      ].map(value => String(value).trim().replace(/\s+/g, ' ').toLowerCase()).join('|'),
       status: String(row.estado ?? ''),
       enrollmentStatus: String(row.estado_inscripcion ?? ''),
       inProgress: String(row.materias_cursando ?? ''),

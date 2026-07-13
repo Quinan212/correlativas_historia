@@ -20,26 +20,26 @@ class _TableroEstadoMateria extends StatelessWidget {
     final Color statusColor = isApproved
         ? const Color(0xFF2EAD57)
         : isInProgress
-            ? const Color(0xFF1E6FDB)
-            : isBlocked
-                ? const Color(0xFFDC2626)
-                : cs.onSurfaceVariant;
+        ? const Color(0xFF1E6FDB)
+        : isBlocked
+        ? const Color(0xFFDC2626)
+        : cs.onSurfaceVariant;
 
     final IconData statusIcon = isApproved
         ? Icons.check_circle_rounded
         : isInProgress
-            ? Icons.play_circle_rounded
-            : isBlocked
-                ? Icons.block_rounded
-                : Icons.remove_circle_outline_rounded;
+        ? Icons.play_circle_rounded
+        : isBlocked
+        ? Icons.block_rounded
+        : Icons.remove_circle_outline_rounded;
 
     final String statusLabel = isApproved
         ? 'Aprobada'
         : isInProgress
-            ? 'Cursando'
-            : isBlocked
-                ? 'No disponible'
-                : 'Sin cursar';
+        ? 'Cursando'
+        : isBlocked
+        ? 'No disponible'
+        : 'Sin cursar';
 
     // ── nota ──────────────────────────────────────────────
     final String? noteLabel = current?.grade != null
@@ -48,8 +48,8 @@ class _TableroEstadoMateria extends StatelessWidget {
     final String? periodLabel = current?.sourceDate != null
         ? nombreMesAcademico(current!.sourceDate!)
         : (current?.academicPeriod.isNotEmpty ?? false)
-            ? _etiquetaPeriodo(current!.academicPeriod)
-            : null;
+        ? _etiquetaPeriodo(current!.academicPeriod)
+        : null;
     final String? condLabel = current?.detailStatus != null
         ? _etiquetaDetalle(current!.detailStatus!)
         : null;
@@ -113,12 +113,12 @@ class _TableroEstadoMateria extends StatelessWidget {
               // ── Card chica: estado ─────────────────────────
               Expanded(
                 flex: 2,
-                  child: TarjetaMetricaVidrio(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(statusIcon, size: 26, color: statusColor),
+                child: TarjetaMetricaVidrio(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(statusIcon, size: 26, color: statusColor),
                       const Spacer(),
                       Text(
                         statusLabel,
@@ -198,19 +198,19 @@ class _TableroEstadoMateria extends StatelessWidget {
                           Icon(
                             condLabel.toLowerCase().contains('directa')
                                 ? Icons.verified_rounded
-                                : condLabel
-                                        .toLowerCase()
-                                        .contains('extraordinaria')
-                                    ? Icons.warning_amber_rounded
-                                    : Icons.event_available_rounded,
+                                : condLabel.toLowerCase().contains(
+                                    'extraordinaria',
+                                  )
+                                ? Icons.warning_amber_rounded
+                                : Icons.event_available_rounded,
                             size: 22,
                             color: condLabel.toLowerCase().contains('directa')
                                 ? const Color(0xFF2EAD57)
-                                : condLabel
-                                        .toLowerCase()
-                                        .contains('extraordinaria')
-                                    ? const Color(0xFFD97706)
-                                    : cs.primary,
+                                : condLabel.toLowerCase().contains(
+                                    'extraordinaria',
+                                  )
+                                ? const Color(0xFFD97706)
+                                : cs.primary,
                           ),
                           const Spacer(),
                           Text(
@@ -375,12 +375,7 @@ class _LineaMetaMateria extends StatelessWidget {
       children: [
         Icon(icon, size: 16, color: iconColor),
         const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            label,
-            style: style,
-          ),
-        ),
+        Expanded(child: Text(label, style: style)),
       ],
     );
   }

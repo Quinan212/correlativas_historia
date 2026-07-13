@@ -88,7 +88,9 @@ class MateriasPorAnioPantalla extends StatelessWidget {
                           child: TarjetaMateriaPropia(
                             subject: subject,
                             onEdit: () async {
-                              final bool deleted = await onEdit(existing: subject);
+                              final bool deleted = await onEdit(
+                                existing: subject,
+                              );
                               if (deleted && context.mounted) {
                                 Navigator.of(context).pop();
                               }

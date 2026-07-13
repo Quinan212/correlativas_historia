@@ -29,8 +29,7 @@ class PaginaEditorMateriaPropia extends StatefulWidget {
       _PaginaEditorMateriaPropiaState();
 }
 
-class _PaginaEditorMateriaPropiaState
-    extends State<PaginaEditorMateriaPropia> {
+class _PaginaEditorMateriaPropiaState extends State<PaginaEditorMateriaPropia> {
   int _step = 0;
   Materia? _selectedMateria;
 
@@ -55,8 +54,8 @@ class _PaginaEditorMateriaPropiaState
       text: existingGrade == null
           ? ''
           : existingGrade % 1 == 0
-              ? existingGrade.toInt().toString()
-              : existingGrade.toString(),
+          ? existingGrade.toInt().toString()
+          : existingGrade.toString(),
     );
     _status = widget.existing?.status ?? 'cursando';
     _period = (widget.existing?.academicPeriod.isNotEmpty == true)
@@ -79,13 +78,13 @@ class _PaginaEditorMateriaPropiaState
     final id = existing.subjectId;
     final name = existing.subjectName;
     _selectedMateria = widget.plan.cast<Materia?>().firstWhere(
-          (m) =>
-              m!.id == id ||
-              m.nombre == id ||
-              m.displayNombre == id ||
-              m.displayNombre == name,
-          orElse: () => null,
-        );
+      (m) =>
+          m!.id == id ||
+          m.nombre == id ||
+          m.displayNombre == id ||
+          m.displayNombre == name,
+      orElse: () => null,
+    );
   }
 
   @override
@@ -101,18 +100,19 @@ class _PaginaEditorMateriaPropiaState
     final query = _searchCtrl.text.trim().toLowerCase();
     setState(() {
       if (query.isEmpty) {
-        _filteredResults =
-            _selectedMateria != null ? [_selectedMateria!] : const [];
+        _filteredResults = _selectedMateria != null
+            ? [_selectedMateria!]
+            : const [];
       } else {
-        _filteredResults = widget.plan.where((m) {
-          final name = m.displayNombre.toLowerCase();
-          return name.contains(query);
-        }).toList()
-          ..sort((a, b) {
-            final byYear = a.anio.compareTo(b.anio);
-            if (byYear != 0) return byYear;
-            return a.displayNombre.compareTo(b.displayNombre);
-          });
+        _filteredResults =
+            widget.plan.where((m) {
+              final name = m.displayNombre.toLowerCase();
+              return name.contains(query);
+            }).toList()..sort((a, b) {
+              final byYear = a.anio.compareTo(b.anio);
+              if (byYear != 0) return byYear;
+              return a.displayNombre.compareTo(b.displayNombre);
+            });
         if (_selectedMateria != null &&
             !_filteredResults.any((m) => m.id == _selectedMateria!.id)) {
           _selectedMateria = null;
@@ -137,8 +137,8 @@ class _PaginaEditorMateriaPropiaState
     final reqs = materia.correlativasDetalladas.isNotEmpty
         ? materia.correlativasDetalladas
         : materia.correlativas
-            .map((id) => CorrelativaDetallada(id: id, type: 'A', nombre: id))
-            .toList();
+              .map((id) => CorrelativaDetallada(id: id, type: 'A', nombre: id))
+              .toList();
 
     final byId = <String, MateriaEstudiante>{};
     for (final s in subjects) {
@@ -151,8 +151,8 @@ class _PaginaEditorMateriaPropiaState
       final status = ref == null
           ? null
           : (ref.status.toLowerCase().trim() == 'aprobada'
-              ? 'aprobada'
-              : ref.status.toLowerCase().trim());
+                ? 'aprobada'
+                : ref.status.toLowerCase().trim());
       final ok = switch (req.type.toUpperCase()) {
         'R' => status == 'regular' || status == 'aprobada',
         _ => status == 'aprobada',
@@ -253,10 +253,12 @@ class _PaginaEditorMateriaPropiaState
     final isEditing = widget.existing != null;
     const primaryBlue = Color(0xFF0E5E86);
 
-    final examOutline =
-        isDark ? const Color(0xFF263448) : const Color(0xFFD2DCE8);
-    final examSurface =
-        isDark ? const Color(0xFF0D1726) : const Color(0xFFF8FAFC);
+    final examOutline = isDark
+        ? const Color(0xFF263448)
+        : const Color(0xFFD2DCE8);
+    final examSurface = isDark
+        ? const Color(0xFF0D1726)
+        : const Color(0xFFF8FAFC);
     final examInputTheme = InputDecorationTheme(
       filled: true,
       fillColor: examSurface,
@@ -305,9 +307,11 @@ class _PaginaEditorMateriaPropiaState
               Navigator.of(context).pop();
             }
           },
-          icon: Icon(_step == 1 && !isEditing
-              ? Icons.arrow_back_rounded
-              : Icons.close_rounded),
+          icon: Icon(
+            _step == 1 && !isEditing
+                ? Icons.arrow_back_rounded
+                : Icons.close_rounded,
+          ),
         ),
       ),
       body: Theme(
@@ -368,8 +372,9 @@ class _PaginaEditorMateriaPropiaState
                     itemBuilder: (context, index) {
                       final m = _filteredResults[index];
                       final isSelected = _selectedMateria?.id == m.id;
-                      final yaAgregada =
-                          widget.existingSubjectIds.contains(m.id);
+                      final yaAgregada = widget.existingSubjectIds.contains(
+                        m.id,
+                      );
                       final noCumple = !yaAgregada && !_cumpleCorrelativas(m);
                       final bloqueada = yaAgregada || noCumple;
                       return Padding(
@@ -385,18 +390,21 @@ class _PaginaEditorMateriaPropiaState
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
                                   color: isSelected && !bloqueada
-                                      ? const Color(0xFF0E5E86)
-                                          .withValues(alpha: 0.08)
+                                      ? const Color(
+                                          0xFF0E5E86,
+                                        ).withValues(alpha: 0.08)
                                       : theme.colorScheme.surface,
                                   borderRadius: BorderRadius.circular(14),
                                   border: Border.all(
                                     color: bloqueada
-                                        ? cs.outlineVariant
-                                            .withValues(alpha: 0.4)
+                                        ? cs.outlineVariant.withValues(
+                                            alpha: 0.4,
+                                          )
                                         : isSelected
-                                            ? const Color(0xFF0E5E86)
-                                            : const Color(0xFFD2DCE8)
-                                                .withValues(alpha: 0.5),
+                                        ? const Color(0xFF0E5E86)
+                                        : const Color(
+                                            0xFFD2DCE8,
+                                          ).withValues(alpha: 0.5),
                                     width: isSelected && !bloqueada ? 2 : 1,
                                   ),
                                 ),
@@ -407,12 +415,12 @@ class _PaginaEditorMateriaPropiaState
                                       height: 36,
                                       decoration: BoxDecoration(
                                         color: isSelected && !bloqueada
-                                            ? const Color(0xFF0E5E86)
-                                                .withValues(alpha: 0.15)
+                                            ? const Color(
+                                                0xFF0E5E86,
+                                              ).withValues(alpha: 0.15)
                                             : cs.surfaceContainerHighest
-                                                .withValues(alpha: 0.5),
-                                        borderRadius:
-                                            BorderRadius.circular(10),
+                                                  .withValues(alpha: 0.5),
+                                        borderRadius: BorderRadius.circular(10),
                                       ),
                                       child: Center(
                                         child: Text(
@@ -435,12 +443,11 @@ class _PaginaEditorMateriaPropiaState
                                         children: [
                                           Text(
                                             m.displayNombre,
-                                            style: theme
-                                                .textTheme.titleSmall
+                                            style: theme.textTheme.titleSmall
                                                 ?.copyWith(
-                                              fontWeight: FontWeight.w800,
-                                              height: 1.2,
-                                            ),
+                                                  fontWeight: FontWeight.w800,
+                                                  height: 1.2,
+                                                ),
                                             maxLines: 2,
                                             overflow: TextOverflow.ellipsis,
                                           ),
@@ -448,26 +455,27 @@ class _PaginaEditorMateriaPropiaState
                                             const SizedBox(height: 2),
                                             Text(
                                               'Ya agregada',
-                                              style: theme
-                                                  .textTheme.labelSmall
+                                              style: theme.textTheme.labelSmall
                                                   ?.copyWith(
-                                                color: cs.onSurfaceVariant
-                                                    .withValues(alpha: 0.55),
-                                                fontWeight: FontWeight.w600,
-                                              ),
+                                                    color: cs.onSurfaceVariant
+                                                        .withValues(
+                                                          alpha: 0.55,
+                                                        ),
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
                                             ),
                                           ],
                                           if (noCumple) ...[
                                             const SizedBox(height: 2),
                                             Text(
                                               'No cumple correlativas',
-                                              style: theme
-                                                  .textTheme.labelSmall
+                                              style: theme.textTheme.labelSmall
                                                   ?.copyWith(
-                                                color: const Color(0xFFDC2626)
-                                                    .withValues(alpha: 0.65),
-                                                fontWeight: FontWeight.w600,
-                                              ),
+                                                    color: const Color(
+                                                      0xFFDC2626,
+                                                    ).withValues(alpha: 0.65),
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
                                             ),
                                           ],
                                         ],
@@ -484,8 +492,9 @@ class _PaginaEditorMateriaPropiaState
                                         yaAgregada
                                             ? Icons.check_circle_outline_rounded
                                             : Icons.lock_outline_rounded,
-                                        color: cs.onSurfaceVariant
-                                            .withValues(alpha: 0.3),
+                                        color: cs.onSurfaceVariant.withValues(
+                                          alpha: 0.3,
+                                        ),
                                         size: 22,
                                       ),
                                   ],
@@ -550,8 +559,9 @@ class _PaginaEditorMateriaPropiaState
                           width: 40,
                           height: 40,
                           decoration: BoxDecoration(
-                            color:
-                                const Color(0xFF0E5E86).withValues(alpha: 0.15),
+                            color: const Color(
+                              0xFF0E5E86,
+                            ).withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: const Center(
@@ -617,8 +627,9 @@ class _PaginaEditorMateriaPropiaState
                           width: 40,
                           height: 40,
                           decoration: BoxDecoration(
-                            color:
-                                const Color(0xFF0E5E86).withValues(alpha: 0.15),
+                            color: const Color(
+                              0xFF0E5E86,
+                            ).withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: const Center(
@@ -651,16 +662,20 @@ class _PaginaEditorMateriaPropiaState
                         borderRadius: BorderRadius.circular(12),
                         itemHeight: 56,
                         dropdownColor: theme.colorScheme.surface,
-                        decoration: const InputDecoration(
-                          labelText: 'Estado',
-                        ),
+                        decoration: const InputDecoration(labelText: 'Estado'),
                         items: const [
                           DropdownMenuItem(
-                              value: 'cursando', child: Text('Cursando')),
+                            value: 'cursando',
+                            child: Text('Cursando'),
+                          ),
                           DropdownMenuItem(
-                              value: 'regular', child: Text('Regular')),
+                            value: 'regular',
+                            child: Text('Regular'),
+                          ),
                           DropdownMenuItem(
-                              value: 'aprobada', child: Text('Aprobada')),
+                            value: 'aprobada',
+                            child: Text('Aprobada'),
+                          ),
                           DropdownMenuItem(
                             value: 'no_regularizada',
                             child: Text('No regularizada'),
@@ -680,7 +695,8 @@ class _PaginaEditorMateriaPropiaState
                         controller: _gradeCtrl,
                         enabled: _status != 'cursando',
                         keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true),
+                          decimal: true,
+                        ),
                         decoration: InputDecoration(
                           labelText: 'Nota',
                           hintText: _status == 'cursando' ? '—' : '7',
@@ -716,9 +732,7 @@ class _PaginaEditorMateriaPropiaState
                     if (picked != null) setState(() => _date = picked);
                   },
                   child: InputDecorator(
-                    decoration: const InputDecoration(
-                      labelText: 'Fecha',
-                    ),
+                    decoration: const InputDecoration(labelText: 'Fecha'),
                     child: Text(
                       _date == null
                           ? 'Sin fecha'

@@ -15,6 +15,11 @@ import 'package:webview_flutter_android/webview_flutter_android.dart';
 import '../sage_historial/controlador_historial_sage.dart';
 import '../sage_historial/modelos_historial_sage.dart';
 import '../sage_historial/pantalla_historial_sage.dart';
+import '../sage_navegacion/detector_navegacion_sage.dart';
+import '../sage_navegacion/modelos_navegacion_sage.dart';
+import '../sage_navegacion/pantalla_carga_sage.dart';
+import '../sage_navegacion/pantalla_modulos_sage.dart';
+import '../sage_navegacion/pantalla_submodulos_sage.dart';
 import 'pantalla_visor_pdf_sage.dart';
 
 class PantallaSage extends StatefulWidget {
@@ -40,20 +45,35 @@ class _PantallaSageState extends State<PantallaSage> {
       ValueNotifier<_DownloadState>(const _DownloadState.idle());
   final ControladorHistorialSage _historialController =
       ControladorHistorialSage();
+  static const _navigationDetector = DetectorNavegacionSage();
 
   Uri? _activeDownloadUri;
   DateTime? _activeDownloadStartedAt;
   DateTime? _firstPageStartedAt;
   bool _isClosing = false;
+  bool _navigationProbeRunning = false;
   bool _historyProbeRunning = false;
   bool _nativeHistoryVisible = false;
+  bool _nativeModulesVisible = false;
+  bool _nativeSubmodulesVisible = false;
+  bool _nativeLoadingVisible = false;
+  String _nativeLoadingMessage = 'Preparando tus servicios académicos…';
+  String? _navigationActionInFlight;
+  ResultadoDeteccionNavegacionSage? _lastNavigationResult;
+  String? _navigationOriginSignature;
+  EstadoNavegacionSage? _navigationOriginState;
+  String? _navigationOriginPath;
+  DateTime? _navigationActionStartedAt;
+  bool _navigationAwaitingTransition = false;
   EstadoHistorialSage _historyState = EstadoHistorialSage.esperandoPagina;
   HistorialNivelSuperiorSage? _history;
   bool _historyAutoLoadRunning = false;
   bool _historyNeedsFreshDom = false;
   bool _reportInFlight = false;
+  Completer<Uri>? _pendingReportUrl;
   final Set<String> _historyAutoAttemptedCareerIds = <String>{};
   Timer? _historyPollTimer;
+  Timer? _navigationDebounceTimer;
   int _loadRequestCount = 0;
 
   @override
@@ -66,16 +86,29 @@ class _PantallaSageState extends State<PantallaSage> {
       onProgress: (progress) {
         _navigationProgress.value = progress.clamp(0, 100);
       },
-      onPageStarted: (_) {
+      onPageStarted: (url) {
         _firstPageStartedAt ??= DateTime.now();
         _navigationProgress.value = 0;
         _mainFrameError.value = null;
+        final uri = Uri.tryParse(url);
+        final isPrivatePregase =
+            uri != null &&
+            uri.host.toLowerCase() == 'sage.entrerios.gov.ar' &&
+            uri.path.toLowerCase().startsWith('/pregase/') &&
+            !uri.path.toLowerCase().startsWith('/login/');
+        if (isPrivatePregase && mounted) {
+          setState(() {
+            _nativeLoadingVisible = true;
+            _nativeLoadingMessage = 'Preparando tus servicios académicos…';
+          });
+        }
       },
       onPageFinished: (_) {
         _navigationProgress.value = 100;
         _mainFrameError.value = null;
         _logFirstPageTiming();
-        unawaited(_probeHistory());
+        unawaited(_installNavigationObservers());
+        _requestSageProbe();
       },
       onWebResourceError: (error) {
         if (error.isForMainFrame != true) return;
@@ -97,7 +130,22 @@ class _PantallaSageState extends State<PantallaSage> {
     );
 
     _controller = WebViewController()
-      ..setJavaScriptMode(JavaScriptMode.unrestricted);
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..addJavaScriptChannel(
+        'SageReportBridge',
+        onMessageReceived: _onSageReportMessage,
+      )
+      ..addJavaScriptChannel(
+        'SageDiagnosticBridge',
+        onMessageReceived: _onSageDiagnosticMessage,
+      )
+      ..addJavaScriptChannel(
+        'SageNavigationBridge',
+        onMessageReceived: (_) {
+          unawaited(_installNavigationObservers());
+          _scheduleNavigationProbe();
+        },
+      );
     if (kDebugMode &&
         Platform.isAndroid &&
         navigationDelegate.platform is AndroidNavigationDelegate) {
@@ -106,13 +154,27 @@ class _PantallaSageState extends State<PantallaSage> {
       debugPrint('[SAGE] Android DownloadListener conectado');
     }
     unawaited(
-      _controller
-          .setNavigationDelegate(navigationDelegate)
-          .then((_) => _loadInitialPage()),
+      _controller.setNavigationDelegate(navigationDelegate).then((_) async {
+        await _installReportDiagnostics();
+        await _loadInitialPage();
+      }),
     );
     _historyPollTimer = Timer.periodic(
       const Duration(seconds: 2),
-      (_) => unawaited(_probeHistory()),
+      (_) => _requestSageProbe(),
+    );
+  }
+
+  void _requestSageProbe() {
+    unawaited(_probeNavigationAndApply());
+    unawaited(_probeHistoryAndApply());
+  }
+
+  void _scheduleNavigationProbe() {
+    _navigationDebounceTimer?.cancel();
+    _navigationDebounceTimer = Timer(
+      const Duration(milliseconds: 180),
+      () => unawaited(_probeNavigationAndApply()),
     );
   }
 
@@ -122,7 +184,442 @@ class _PantallaSageState extends State<PantallaSage> {
         .then((value) => value is String ? value : jsonEncode(value));
   }
 
-  Future<void> _probeHistory() async {
+  Future<void> _installNavigationObservers() async {
+    try {
+      await _evaluateJavascript(r'''(() => {
+        const root = window;
+        const bridge = root.SageNavigationBridge;
+        if (!bridge || typeof bridge.postMessage !== 'function') return false;
+        const notify = (() => {
+          let timer = null;
+          return () => {
+            clearTimeout(timer);
+            timer = setTimeout(() => bridge.postMessage('changed'), 120);
+          };
+        })();
+        const seen = new Set();
+        const install = win => {
+          if (!win || seen.has(win)) return;
+          seen.add(win);
+          let doc;
+          try { doc = win.document; } catch (_) { return; }
+          if (!doc?.documentElement) return;
+          if (doc.__flutterSageNavigationObserverDocument !== doc) {
+            try { doc.__flutterSageNavigationObserver?.disconnect(); } catch (_) {}
+            const observer = new MutationObserver(notify);
+            observer.observe(doc.documentElement, {
+              childList: true,
+              subtree: true,
+              characterData: true,
+              attributes: true,
+              attributeFilter: ['src', 'href', 'class', 'style'],
+            });
+            doc.__flutterSageNavigationObserver = observer;
+            doc.__flutterSageNavigationObserverDocument = doc;
+          }
+          doc.querySelectorAll('iframe').forEach(frame => {
+            if (!frame.__flutterSageNavigationLoadListener) {
+              frame.addEventListener('load', notify, {passive: true});
+              frame.__flutterSageNavigationLoadListener = true;
+            }
+            try { install(frame.contentWindow); } catch (_) {}
+          });
+        };
+        install(root);
+        return true;
+      })()''');
+    } catch (_) {
+      if (kDebugMode) {
+        debugPrint('[SAGE navegación] observer_install=false');
+      }
+    }
+  }
+
+  // ignore: unused_element
+  Future<void> _installReportBridge() async {
+    try {
+      final raw = await _evaluateJavascript(r'''(() => {
+        const root = window;
+        const main = root.document.querySelector('iframe#Main');
+        const alumnos = main?.contentDocument?.querySelector('iframe#frm_alumnos');
+        const escolares = alumnos?.contentDocument?.querySelector('iframe#frm_alumnos_escolares');
+        const flutterBridge = root.SageReportBridge;
+        const allowedPaths = new Set([
+          '/alumnos_v2/ns_reporte_estado_alumno_carrera.php',
+          '/alumnos_v2/ns_reporte_analitico.php',
+          '/alumnos_v2/ns_reporte_examenes_rendidos.php',
+        ]);
+        if (!flutterBridge || typeof flutterBridge.postMessage !== 'function') {
+          return JSON.stringify({state:'channel_unavailable', patched:0});
+        }
+        const contexts = [
+          {target:root, label:'root'},
+          {target:main?.contentWindow, label:'main'},
+          {target:alumnos?.contentWindow, label:'alumnos'},
+          {target:escolares?.contentWindow, label:'escolares'},
+        ];
+        const installInto = (targetWin, label) => {
+          if (!targetWin) return {label, state:'missing'};
+          try {
+            const installed = targetWin.__flutterSageReportBridgeV2;
+            if (installed?.wrapper && targetWin.open === installed.wrapper) {
+              return {label, state:'reused'};
+            }
+            const originalOpen = targetWin.open.bind(targetWin);
+            const wrapper = function(url, target, features) {
+              try {
+                const resolved = new URL(String(url), targetWin.location.href);
+                const normalizedPath = resolved.pathname.toLowerCase().replace(/\/+$/, '');
+                const allowed = resolved.protocol === 'https:' &&
+                  resolved.hostname.toLowerCase() === 'sage.entrerios.gov.ar' &&
+                  allowedPaths.has(normalizedPath);
+                if (allowed) {
+                  flutterBridge.postMessage(JSON.stringify({
+                    type:'sage_report_url',
+                    url:resolved.href,
+                  }));
+                  return {closed:false, close(){}, focus(){}, blur(){}};
+                }
+              } catch (_) {}
+              return originalOpen(url, target, features);
+            };
+            targetWin.open = wrapper;
+            targetWin.__flutterSageReportBridgeV2 = {wrapper, originalOpen, label};
+            return {label, state:'patched'};
+          } catch (_) {
+            return {label, state:'inaccessible'};
+          }
+        };
+        const states = contexts.map(item => installInto(item.target, item.label));
+        const result = {
+          state: states.some(item => item.state === 'patched' || item.state === 'reused')
+            ? 'ready' : 'bridge_install_failed',
+          patched: states.filter(item => item.state === 'patched' || item.state === 'reused').length,
+          states,
+        };
+        return JSON.stringify(result);
+      })()''');
+      if (kDebugMode) {
+        dynamic decoded;
+        try {
+          decoded = jsonDecode(raw);
+          if (decoded is String) decoded = jsonDecode(decoded);
+        } catch (_) {}
+        final states = decoded is Map && decoded['states'] is List
+            ? decoded['states'] as List
+            : const <dynamic>[];
+        bool stateFor(String label, String state) => states.any(
+          (item) =>
+              item is Map &&
+              item['label'] == label &&
+              (item['state'] == state ||
+                  (state == 'active' &&
+                      (item['state'] == 'patched' ||
+                          item['state'] == 'reused'))),
+        );
+        debugPrint(
+          '[SAGE report] channel_available=${decoded is Map && decoded['state'] != 'channel_unavailable'}',
+        );
+        debugPrint('[SAGE report] patched_root=${stateFor('root', 'active')}');
+        debugPrint('[SAGE report] patched_main=${stateFor('main', 'active')}');
+        debugPrint(
+          '[SAGE report] patched_alumnos=${stateFor('alumnos', 'active')}',
+        );
+        debugPrint(
+          '[SAGE report] patched_escolares=${stateFor('escolares', 'active')}',
+        );
+      }
+    } catch (_) {
+      if (kDebugMode) debugPrint('[SAGE report] bridge_install_failed=true');
+    }
+  }
+
+  Future<void> _installReportDiagnostics() async {
+    try {
+      await _evaluateJavascript(r'''(() => {
+        const root = window;
+        const bridge = root.SageDiagnosticBridge;
+        if (!bridge || typeof bridge.postMessage !== 'function') return false;
+        const main = root.document.querySelector('iframe#Main');
+        const alumnos = main?.contentDocument?.querySelector('iframe#frm_alumnos');
+        const escolares = alumnos?.contentDocument?.querySelector('iframe#frm_alumnos_escolares');
+        const contexts = [
+          {target:root, label:'root'},
+          {target:main?.contentWindow, label:'main'},
+          {target:alumnos?.contentWindow, label:'alumnos'},
+          {target:escolares?.contentWindow, label:'escolares'},
+        ];
+        const send = value => {
+          try { bridge.postMessage(JSON.stringify(value)); } catch (_) {}
+        };
+        const lastSegment = value => {
+          try {
+            const parsed = new URL(String(value), root.location.href);
+            return parsed.pathname.split('/').filter(Boolean).pop() || '/';
+          } catch (_) { return 'invalid'; }
+        };
+        const install = item => {
+          const target = item.target;
+          if (!target) return {label:item.label, state:'missing'};
+          try {
+            if (target.__sageReportDiagnosticsV1) return {label:item.label, state:'reused'};
+            const originalOpen = target.open.bind(target);
+            target.open = function(url, name, features) {
+              let schemeAllowed = false;
+              let hostAllowed = false;
+              let pathAllowed = false;
+              let empty = false;
+              try {
+                empty = String(url ?? '') === '';
+                const resolved = new URL(String(url), target.location.href);
+                schemeAllowed = resolved.protocol === 'https:';
+                hostAllowed = resolved.hostname.toLowerCase() === 'sage.entrerios.gov.ar';
+                pathAllowed = /ns_reporte_/.test(resolved.pathname.toLowerCase());
+                send({event:'open', owner:item.label, url_empty:empty,
+                  scheme_allowed:schemeAllowed, host_allowed:hostAllowed,
+                  path_allowed:pathAllowed, last_path_segment:lastSegment(resolved.href)});
+              } catch (_) {
+                send({event:'open', owner:item.label, url_empty:empty,
+                  scheme_allowed:false, host_allowed:false, path_allowed:false,
+                  last_path_segment:'invalid'});
+              }
+              return originalOpen(url, name, features);
+            };
+            const formSubmit = target.HTMLFormElement?.prototype?.submit;
+            if (formSubmit) target.HTMLFormElement.prototype.submit = function() {
+              const action = this.getAttribute('action') || target.location.href;
+              let parsed;
+              try { parsed = new URL(action, target.location.href); } catch (_) {}
+              send({event:'form_submit', owner:item.label,
+                method:(this.getAttribute('method') || 'get').toUpperCase(),
+                target_present:Boolean(this.getAttribute('target')),
+                action_scheme:parsed?.protocol || 'invalid',
+                action_host:parsed?.hostname || 'invalid',
+                action_last_path_segment:parsed ? lastSegment(parsed.href) : 'invalid'});
+              return formSubmit.apply(this, arguments);
+            };
+            const requestSubmit = target.HTMLFormElement?.prototype?.requestSubmit;
+            if (requestSubmit) target.HTMLFormElement.prototype.requestSubmit = function() {
+              const action = this.getAttribute('action') || target.location.href;
+              let parsed;
+              try { parsed = new URL(action, target.location.href); } catch (_) {}
+              send({event:'form_submit', owner:item.label,
+                method:(this.getAttribute('method') || 'get').toUpperCase(),
+                target_present:Boolean(this.getAttribute('target')),
+                action_scheme:parsed?.protocol || 'invalid',
+                action_host:parsed?.hostname || 'invalid',
+                action_last_path_segment:parsed ? lastSegment(parsed.href) : 'invalid'});
+              return requestSubmit.apply(this, arguments);
+            };
+            target.document?.addEventListener('click', event => {
+              const anchor = event.target?.closest?.('a');
+              if (!anchor) return;
+              let parsed;
+              try { parsed = new URL(anchor.href, target.location.href); } catch (_) {}
+              send({event:'anchor_click', owner:item.label,
+                target_blank:anchor.target === '_blank',
+                href_scheme:parsed?.protocol || 'invalid',
+                href_host:parsed?.hostname || 'invalid',
+                href_last_path_segment:parsed ? lastSegment(parsed.href) : 'invalid'});
+            }, true);
+            let previousPath = String(target.location.pathname || '');
+            target.setInterval(() => {
+              const nextPath = String(target.location.pathname || '');
+              if (nextPath !== previousPath) {
+                send({event:'location_change', owner:item.label, last_path_segment:lastSegment(nextPath)});
+                previousPath = nextPath;
+              }
+            }, 250);
+            const originalFetch = target.fetch;
+            if (typeof originalFetch === 'function') target.fetch = function(input, init) {
+              let parsed;
+              try { parsed = new URL(typeof input === 'string' ? input : input.url, target.location.href); } catch (_) {}
+              send({event:'fetch', owner:item.label, method:(init?.method || input?.method || 'GET').toUpperCase(),
+                host:parsed?.hostname || 'invalid', last_path_segment:parsed ? lastSegment(parsed.href) : 'invalid'});
+              return originalFetch.apply(this, arguments);
+            };
+            const originalXhrOpen = target.XMLHttpRequest?.prototype?.open;
+            if (originalXhrOpen) target.XMLHttpRequest.prototype.open = function(method, url) {
+              let parsed;
+              try { parsed = new URL(String(url), target.location.href); } catch (_) {}
+              send({event:'xhr', owner:item.label, method:String(method || 'GET').toUpperCase(),
+                host:parsed?.hostname || 'invalid', last_path_segment:parsed ? lastSegment(parsed.href) : 'invalid'});
+              return originalXhrOpen.apply(this, arguments);
+            };
+            target.__sageReportDiagnosticsV1 = true;
+            send({event:'context_ready', context:item.label,
+              channel_type:typeof target.SageReportBridge,
+              top_channel_type:typeof target.top?.SageReportBridge,
+              parent_channel_type:typeof target.parent?.SageReportBridge});
+            send({event:'sage_report_probe', context:item.label});
+            return {label:item.label, state:'patched'};
+          } catch (_) { return {label:item.label, state:'inaccessible'}; }
+        };
+        const states = contexts.map(install);
+        send({event:'diagnostics_ready', states});
+        return true;
+      })()''');
+    } catch (_) {
+      if (kDebugMode) {
+        debugPrint('[SAGE report] diagnostic_install_failed=true');
+      }
+    }
+  }
+
+  void _onSageReportMessage(JavaScriptMessage message) {
+    unawaited(_handleSageReportMessage(message));
+  }
+
+  void _onSageDiagnosticMessage(JavaScriptMessage message) {
+    if (!kDebugMode) return;
+    try {
+      dynamic value = jsonDecode(message.message);
+      if (value is String) value = jsonDecode(value);
+      if (value is Map) {
+        debugPrint(
+          '[SAGE diagnostic] ${value['event'] ?? 'unknown'} ${jsonEncode(value)}',
+        );
+      }
+    } catch (_) {
+      debugPrint('[SAGE diagnostic] message_invalid=true');
+    }
+  }
+
+  Future<void> _handleSageReportMessage(JavaScriptMessage message) async {
+    Map<String, dynamic>? payload;
+    try {
+      final decoded = jsonDecode(message.message);
+      if (decoded is Map) payload = Map<String, dynamic>.from(decoded);
+    } catch (_) {
+      if (kDebugMode) debugPrint('[SAGE report bridge] message_received=false');
+      return;
+    }
+    if (payload?['type'] != 'sage_report_url' || payload?['url'] is! String) {
+      if (kDebugMode) debugPrint('[SAGE report bridge] message_received=false');
+      return;
+    }
+    if (kDebugMode) debugPrint('[SAGE report bridge] message_received=true');
+    if (kDebugMode) debugPrint('[SAGE report V3] message_received=true');
+    final uri = Uri.tryParse(payload!['url'] as String);
+    if (uri == null || !_isAllowedReportUri(uri)) {
+      if (kDebugMode) debugPrint('[SAGE report bridge] uri_allowed=false');
+      return;
+    }
+    if (kDebugMode) debugPrint('[SAGE report bridge] uri_allowed=true');
+    if (kDebugMode) debugPrint('[SAGE report V3] uri_allowed=true');
+    final pending = _pendingReportUrl;
+    if (pending != null && !pending.isCompleted) {
+      pending.complete(uri);
+      return;
+    }
+    await _procesarDescargaWeb(uri: uri);
+    if (kDebugMode) debugPrint('[SAGE report] download_started=true');
+  }
+
+  bool _isAllowedReportUri(Uri uri) {
+    const allowedPaths = <String>{
+      '/alumnos_v2/NS_reporte_estado_alumno_carrera.php',
+      '/alumnos_v2/NS_reporte_analitico.php',
+      '/alumnos_v2/NS_reporte_examenes_rendidos.php',
+    };
+    return uri.scheme == 'https' &&
+        uri.host.toLowerCase() == 'sage.entrerios.gov.ar' &&
+        allowedPaths.contains(uri.path);
+  }
+
+  Future<void> _probeNavigationAndApply() async {
+    if (_navigationProbeRunning || _isClosing) return;
+    _navigationProbeRunning = true;
+    try {
+      final result = await _probeSageNavigation();
+      unawaited(_installNavigationObservers());
+      if (!mounted) return;
+
+      if (_navigationAwaitingTransition) {
+        final transitionConfirmed = cambioNavegacionSageConfirmado(
+          resultado: result,
+          firmaOrigen: _navigationOriginSignature,
+          estadoOrigen: _navigationOriginState,
+        );
+        final intermediateOtherPage =
+            result.estado == EstadoNavegacionSage.otraPagina &&
+            result.documentoActivo?.pathname == _navigationOriginPath;
+        final timedOut =
+            _navigationActionStartedAt != null &&
+            DateTime.now().difference(_navigationActionStartedAt!) >
+                const Duration(seconds: 8);
+        if (transitionConfirmed && !intermediateOtherPage) {
+          _navigationAwaitingTransition = false;
+          _navigationActionInFlight = null;
+          _navigationOriginSignature = null;
+          _navigationOriginState = null;
+          _navigationOriginPath = null;
+          _navigationActionStartedAt = null;
+        } else if (timedOut) {
+          setState(() {
+            _navigationAwaitingTransition = false;
+            _navigationActionInFlight = null;
+            _nativeLoadingVisible = false;
+            _navigationOriginSignature = null;
+            _navigationOriginState = null;
+            _navigationOriginPath = null;
+            _navigationActionStartedAt = null;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('SAGE no confirmó el cambio de pantalla.'),
+            ),
+          );
+          return;
+        } else {
+          return;
+        }
+      }
+
+      if (_nativeHistoryVisible &&
+          result.estado != EstadoNavegacionSage.login &&
+          result.estado != EstadoNavegacionSage.sesionVencida) {
+        return;
+      }
+      setState(() {
+        switch (result.estado) {
+          case EstadoNavegacionSage.modulos:
+            _nativeHistoryVisible = false;
+            _nativeModulesVisible = true;
+            _nativeSubmodulesVisible = false;
+            _nativeLoadingVisible = false;
+            _navigationActionInFlight = null;
+          case EstadoNavegacionSage.submodulosLegajoUnico:
+            _nativeHistoryVisible = false;
+            _nativeModulesVisible = false;
+            _nativeSubmodulesVisible = true;
+            _nativeLoadingVisible = false;
+            _navigationActionInFlight = null;
+          case EstadoNavegacionSage.login:
+          case EstadoNavegacionSage.sesionVencida:
+            _nativeHistoryVisible = false;
+            _nativeModulesVisible = false;
+            _nativeSubmodulesVisible = false;
+            _nativeLoadingVisible = false;
+          case EstadoNavegacionSage.otraPagina:
+            _nativeModulesVisible = false;
+            _nativeSubmodulesVisible = false;
+            _nativeLoadingVisible = false;
+          case EstadoNavegacionSage.desconocido:
+            if (result.shellPrivado) {
+              _nativeLoadingVisible = true;
+              _nativeLoadingMessage = 'Preparando tus servicios académicos…';
+            }
+          case EstadoNavegacionSage.error:
+            _nativeLoadingVisible = false;
+        }
+      });
+    } finally {
+      _navigationProbeRunning = false;
+    }
+  }
+
+  Future<void> _probeHistoryAndApply() async {
     if (_historyProbeRunning || _isClosing) return;
     _historyProbeRunning = true;
     try {
@@ -141,6 +638,9 @@ class _PantallaSageState extends State<PantallaSage> {
       if (!mounted) return;
       if (result.pantallaDetectada) {
         setState(() {
+          _nativeModulesVisible = false;
+          _nativeSubmodulesVisible = false;
+          _nativeLoadingVisible = false;
           if (result.historial != null) {
             _history = _historyNeedsFreshDom
                 ? result.historial!
@@ -152,9 +652,7 @@ class _PantallaSageState extends State<PantallaSage> {
         });
         if (kDebugMode) {
           debugPrint('[SAGE historial] frame_detected');
-          debugPrint(
-            '[SAGE historial] native_view_visible=$_nativeHistoryVisible',
-          );
+          debugPrint('[SAGE historial] native_view_visible=true');
         }
         final careers = _history?.carreras;
         if (result.estado == EstadoHistorialSage.disponible &&
@@ -176,6 +674,405 @@ class _PantallaSageState extends State<PantallaSage> {
     } finally {
       _historyProbeRunning = false;
     }
+  }
+
+  Future<ResultadoDeteccionNavegacionSage> _probeSageNavigation() async {
+    try {
+      final raw = await _evaluateJavascript(r'''(() => {
+        const root = window;
+        const known = /(modulo|submodulo|legajo|certificado|inscrip|consulta|tutor|alumno|ingresar|sesion)/i;
+        const output = {host:'', pathname:'', hasMain:false, headings:[], links:[], documents:[]};
+        const seen = new Set();
+        const visit = (win, depth = 0, frameId = 'root', frameName = '', isRoot = false) => {
+          if (!win || seen.has(win)) return;
+          seen.add(win);
+          let doc;
+          try { doc = win.document; } catch (_) { return; }
+          if (!doc) return;
+          try {
+            const host = String(win.location.hostname || '');
+            const pathname = String(win.location.pathname || '');
+            let visible = true;
+            if (!isRoot) {
+              const frame = win.frameElement;
+              const rect = frame?.getBoundingClientRect?.();
+              const style = frame ? getComputedStyle(frame) : null;
+              visible = Boolean(
+                frame && style?.display !== 'none' &&
+                style?.visibility !== 'hidden' &&
+                Number(style?.opacity ?? 1) !== 0 && rect &&
+                rect.width > 0 && rect.height > 0,
+              );
+            }
+            const headings = [];
+            const links = [];
+            const normalize = value => String(value || '')
+              .toLowerCase()
+              .normalize('NFD')
+              .replace(/[\u0300-\u036f]/g, '')
+              .replace(/\s+/g, ' ')
+              .trim();
+            if (isRoot) {
+              output.host = host;
+              output.pathname = pathname;
+              output.hasMain = Boolean(doc.querySelector('iframe#Main'));
+            }
+            doc.querySelectorAll('h1,h2,h3,h4,.ui-widget-header,.titulo').forEach(node => {
+              const text = String(node.textContent || '').replace(/\s+/g,' ').trim();
+              if (text && known.test(text)) headings.push(text.slice(0,120));
+            });
+            const title = String(doc.title || '').replace(/\s+/g,' ').trim();
+            if (title && known.test(title)) headings.push(title.slice(0,120));
+            doc.querySelectorAll('*').forEach(node => {
+              const text = normalize(node.textContent);
+              if (text === 'modulos' || text === 'submodulos') {
+                headings.push(text);
+              }
+            });
+            doc
+              .querySelectorAll(
+                'a[href],[onclick],button,[role="button"],td,li,div,span',
+              )
+              .forEach(anchor => {
+              const text = String(anchor.textContent || '').replace(/\s+/g,' ').trim();
+              if (!text || !known.test(text)) return;
+              let parsed;
+              try { parsed = new URL(anchor.getAttribute('href') || win.location.href, win.location.href); } catch (_) { return; }
+              const sameHost = parsed.hostname.toLowerCase() === host.toLowerCase();
+              if (!sameHost && parsed.hostname) return;
+              links.push({text:text.slice(0,160), pathname:parsed.pathname, hrefValid:true});
+            });
+            output.documents.push({
+              host, pathname, frameId, frameName, depth, visible,
+              headings:[...new Set(headings)], links:links.slice(0,80),
+            });
+            doc.querySelectorAll('iframe').forEach((frame, index) => {
+              try {
+                const childId = String(frame.id || `iframe-${depth + 1}-${index}`);
+                const childName = String(frame.name || '');
+                visit(frame.contentWindow, depth + 1, childId, childName);
+              } catch (_) {}
+            });
+          } catch (_) {}
+        };
+        visit(root, 0, 'root', '', true);
+        output.headings = [...new Set(output.headings)];
+        output.links = output.documents.flatMap(document => document.links).slice(0,80);
+        return JSON.stringify(output);
+      })()''');
+      dynamic decoded = jsonDecode(raw);
+      if (decoded is String) decoded = jsonDecode(decoded);
+      if (decoded is! Map) {
+        return const ResultadoDeteccionNavegacionSage(
+          estado: EstadoNavegacionSage.desconocido,
+          documentoActivo: null,
+          firma: '',
+          shellPrivado: false,
+        );
+      }
+      final capture = CapturaNavegacionSage.fromJson(
+        Map<String, dynamic>.from(decoded),
+      );
+      final result = _navigationDetector.detectarResultado(capture);
+      _lastNavigationResult = result;
+      if (kDebugMode) {
+        debugPrint(
+          '[SAGE navegación] selected_path=${result.documentoActivo?.pathname ?? '/'}; '
+          'selected_frame=${result.documentoActivo?.frameId ?? 'root'}; '
+          'documents=${capture.documentos.length}; state=${result.estado.name}; '
+          'signature=${result.firma}',
+        );
+      }
+      return result;
+    } catch (_) {
+      return const ResultadoDeteccionNavegacionSage(
+        estado: EstadoNavegacionSage.error,
+        documentoActivo: null,
+        firma: '',
+        shellPrivado: false,
+      );
+    }
+  }
+
+  Future<bool> _activateSageLink(OpcionSubmoduloSage option) async {
+    if (_navigationActionInFlight != null) return false;
+    final activeDocument = _lastNavigationResult?.documentoActivo;
+    _navigationOriginSignature = _lastNavigationResult?.firma;
+    _navigationOriginState = _lastNavigationResult?.estado;
+    _navigationOriginPath = activeDocument?.pathname;
+    _navigationActionStartedAt = DateTime.now();
+    _navigationAwaitingTransition = false;
+    setState(() {
+      _navigationActionInFlight = option.titulo;
+      _nativeLoadingVisible = true;
+      _nativeLoadingMessage = 'Abriendo ${option.titulo}…';
+    });
+    final labels = <String>[option.titulo, ...option.etiquetasAlternativas];
+    final normalizedLabels = labels.map(DetectorNavegacionSage.normalizar);
+    final domPathCandidates = activeDocument?.enlaces.where((link) {
+      if (!link.hrefValido || link.pathname.isEmpty) return false;
+      final text = DetectorNavegacionSage.normalizar(link.texto);
+      return normalizedLabels.any(
+        (label) => text == label || text.contains(label),
+      );
+    }).toList();
+    domPathCandidates?.sort((a, b) {
+      final aText = DetectorNavegacionSage.normalizar(a.texto);
+      final bText = DetectorNavegacionSage.normalizar(b.texto);
+      final aExact = normalizedLabels.contains(aText) ? 1 : 0;
+      final bExact = normalizedLabels.contains(bText) ? 1 : 0;
+      return bExact.compareTo(aExact) != 0
+          ? bExact.compareTo(aExact)
+          : aText.length.compareTo(bText.length);
+    });
+    final nonCurrentDomPathCandidates = domPathCandidates
+        ?.where(
+          (candidate) =>
+              candidate.pathname.toLowerCase() !=
+              activeDocument?.pathname.toLowerCase(),
+        )
+        .toList();
+    final domPathCandidate =
+        nonCurrentDomPathCandidates != null &&
+            nonCurrentDomPathCandidates.isNotEmpty
+        ? nonCurrentDomPathCandidates.first
+        : (domPathCandidates != null && domPathCandidates.isNotEmpty
+              ? domPathCandidates.first
+              : null);
+    final officialPath = option.pathname ?? domPathCandidate?.pathname;
+    final pathJson = jsonEncode(officialPath);
+    final labelsJson = jsonEncode(labels);
+    final documentJson = jsonEncode({
+      'frameId': activeDocument?.frameId ?? '',
+      'frameName': activeDocument?.frameName ?? '',
+      'pathname': activeDocument?.pathname ?? '',
+      'depth': activeDocument?.profundidad ?? 0,
+    });
+    try {
+      final raw = await _evaluateJavascript('''(() => {
+        const expectedPath = $pathJson;
+        const expectedDocument = $documentJson;
+        const labels = $labelsJson.map(value => String(value).toLowerCase()
+          .normalize('NFD').replace(/[\\u0300-\\u036f]/g,'')
+          .replace(/\\s+/g,' ').trim());
+        const seen = new Set();
+        const normalize = value => String(value || '').toLowerCase()
+          .normalize('NFD').replace(/[\\u0300-\\u036f]/g,'')
+          .replace(/\\s+/g,' ').trim();
+        const documents = [];
+        const collect = (win, depth = 0, frameId = 'root', frameName = '') => {
+          if (!win || seen.has(win)) return;
+          seen.add(win);
+          let doc;
+          try { doc = win.document; } catch (_) { return; }
+          if (!doc) return;
+          documents.push({
+            win, doc, depth, frameId, frameName,
+            pathname:String(win.location.pathname || ''),
+          });
+          doc.querySelectorAll('iframe').forEach((frame, index) => {
+            try {
+              collect(
+                frame.contentWindow,
+                depth + 1,
+                String(frame.id || ('iframe-' + (depth + 1) + '-' + index)),
+                String(frame.name || ''),
+              );
+            } catch (_) {}
+          });
+        };
+        collect(window);
+        const target = documents.find(item =>
+          item.frameId === String(expectedDocument.frameId || '') &&
+          item.frameName === String(expectedDocument.frameName || '') &&
+          item.pathname.toLowerCase() === String(expectedDocument.pathname || '').toLowerCase() &&
+          item.depth === Number(expectedDocument.depth || 0)
+        );
+        if (!target) return JSON.stringify({found:false, activated:false});
+        const selector = [
+          'a[href]', 'button', 'input[type="button"]',
+          'input[type="submit"]', '[role="button"]', '[onclick]',
+          'td', 'li', 'div'
+        ].join(',');
+        const actionableSelector = [
+          'a[href]', 'button', 'input[type="button"]',
+          'input[type="submit"]', '[role="button"]', '[onclick]'
+        ].join(',');
+        const nodeDepth = node => {
+          let depth = 0;
+          let current = node;
+          while (current?.parentElement) {
+            depth++;
+            current = current.parentElement;
+          }
+          return depth;
+        };
+        const candidates = [];
+        target.doc.querySelectorAll(selector).forEach(node => {
+          const text = normalize(node.textContent || node.value);
+          let parsed = null;
+          try {
+            const href = node.getAttribute?.('href');
+            if (href) parsed = new URL(href, target.win.location.href);
+          } catch (_) {}
+          if (parsed?.hostname && parsed.hostname.toLowerCase() !== 'sage.entrerios.gov.ar') return;
+          const pathMatch = Boolean(expectedPath && parsed &&
+            parsed.pathname.toLowerCase() === String(expectedPath).toLowerCase());
+          const exact = labels.some(label => text === label);
+          const textMatch = labels.some(label => text.includes(label));
+          if (!pathMatch && !textMatch) return;
+          candidates.push({node, text, exact, pathMatch, depth:nodeDepth(node)});
+        });
+        candidates.sort((a, b) =>
+          Number(b.exact) - Number(a.exact) ||
+          Number(b.pathMatch) - Number(a.pathMatch) ||
+          a.text.length - b.text.length ||
+          b.depth - a.depth
+        );
+        if (!candidates.length) {
+          return JSON.stringify({found:false, activated:false});
+        }
+        const resolveActionable = node => {
+          if (node.matches?.(actionableSelector)) return node;
+          const descendant = node.querySelector?.(actionableSelector);
+          if (descendant) return descendant;
+          const ancestor = node.closest?.(actionableSelector);
+          if (ancestor) return ancestor;
+          let current = node.parentElement;
+          let levels = 0;
+          while (current && levels < 5) {
+            if (current.matches?.(actionableSelector)) return current;
+            const jq = target.win.jQuery;
+            if (jq && typeof jq._data === 'function') {
+              const events = jq._data(current, 'events');
+              if (events?.click?.length) return current;
+            }
+            current = current.parentElement;
+            levels++;
+          }
+          return null;
+        };
+        const candidate = candidates[0];
+        const actionable = resolveActionable(candidate.node);
+        if (!actionable) {
+          return JSON.stringify({found:true, activated:false});
+        }
+        let mechanism = null;
+        let activated = false;
+        const jq = target.win.jQuery;
+        const jqEvents = jq && typeof jq._data === 'function'
+          ? jq._data(actionable, 'events')
+          : null;
+        if (actionable.matches?.(actionableSelector)) {
+          actionable.click();
+          mechanism = 'native_click';
+          activated = true;
+        } else if (jqEvents?.click?.length) {
+          jq(actionable).trigger('click');
+          mechanism = 'jquery_click';
+          activated = true;
+        }
+        return JSON.stringify({
+          found:true,
+          activated,
+          mechanism,
+          tag:String(actionable.tagName || '').toUpperCase(),
+          frameId:target.frameId,
+          pathnameBefore:target.pathname,
+          matchedBy:candidate.exact ? 'exact_text' : (candidate.pathMatch ? 'pathname' : 'text'),
+        });
+      })()''');
+      dynamic decoded = jsonDecode(raw);
+      if (decoded is String) decoded = jsonDecode(decoded);
+      final found = decoded is Map && decoded['found'] == true;
+      final activated = decoded is Map && decoded['activated'] == true;
+      final activationSucceeded = activacionNavegacionSageExitosa(
+        found: found,
+        activated: activated,
+      );
+      if (!mounted) return activationSucceeded;
+      if (kDebugMode && decoded is Map) {
+        debugPrint(
+          '[SAGE acción] option=${option.titulo}; '
+          'frame=${decoded['frameId'] ?? ''}; tag=${decoded['tag'] ?? ''}; '
+          'mechanism=${decoded['mechanism'] ?? ''}; found=$found; '
+          'activated=$activated; matched_by=${decoded['matchedBy'] ?? ''}',
+        );
+      }
+      if (!activationSucceeded) {
+        setState(() {
+          _navigationActionInFlight = null;
+          _nativeLoadingVisible = false;
+        });
+        unawaited(_showNavigationActionFailure(option));
+        return false;
+      }
+      _navigationAwaitingTransition = true;
+      _scheduleNavigationProbe();
+      unawaited(_installNavigationObservers());
+      return true;
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _navigationActionInFlight = null;
+          _nativeLoadingVisible = false;
+        });
+        unawaited(_showNavigationActionFailure(option));
+      }
+      return false;
+    }
+  }
+
+  Future<void> _showNavigationActionFailure(OpcionSubmoduloSage option) async {
+    if (!mounted) return;
+    final retry = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('No se pudo abrir la opción'),
+        content: const Text('No se pudo activar esta opción en SAGE.'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(false);
+              _showOriginalNavigation();
+            },
+            child: const Text('Ver página original'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Reintentar'),
+          ),
+        ],
+      ),
+    );
+    if (retry == true) unawaited(_activateSageLink(option));
+  }
+
+  void _openLegajoModule() {
+    unawaited(
+      _activateSageLink(
+        const OpcionSubmoduloSage(
+          titulo: 'Legajo Único Alumno',
+          icono: 0xe151,
+          pathname: '/pregase/menuprincipal_nuevo.php',
+          etiquetasAlternativas: ['legajo unico alumno'],
+        ),
+      ),
+    );
+  }
+
+  void _showOriginalNavigation() {
+    if (!mounted) return;
+    setState(() {
+      _nativeModulesVisible = false;
+      _nativeSubmodulesVisible = false;
+      _nativeLoadingVisible = false;
+      _navigationActionInFlight = null;
+      _navigationAwaitingTransition = false;
+      _navigationOriginSignature = null;
+      _navigationOriginState = null;
+      _navigationOriginPath = null;
+    });
   }
 
   HistorialNivelSuperiorSage _mergeMasterHistory(
@@ -349,10 +1246,14 @@ class _PantallaSageState extends State<PantallaSage> {
       return;
     }
     setState(() => _reportInFlight = true);
+    final pending = Completer<Uri>();
+    _pendingReportUrl = pending;
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(const SnackBar(content: Text('Preparando reporte…')));
     try {
+      await _installReportBridge();
+      await _installReportDiagnostics();
       final report = await _historialController.pulsarReporte(
         _evaluateJavascript,
         career,
@@ -367,18 +1268,60 @@ class _PantallaSageState extends State<PantallaSage> {
           'report_click_dispatched=${report.estado == EstadoReporteSage.iniciado}; '
           'state=${report.estado.name}',
         );
+        debugPrint('[SAGE report] button_found=${report.reportButtonFound}');
+        debugPrint('[SAGE report] inline_onclick=${report.inlineOnclick}');
+        debugPrint('[SAGE report] jquery_handlers=${report.jqueryHandlers}');
+        debugPrint('[SAGE report] bridge_patched=${report.bridgePatched}');
+        debugPrint(
+          '[SAGE report] function_owner=${report.functionOwner ?? 'missing'}',
+        );
+        debugPrint(
+          '[SAGE report] click_dispatched=${report.estado == EstadoReporteSage.iniciado}',
+        );
       }
-      if (report.estado != EstadoReporteSage.iniciado && mounted) {
+      if (report.estado == EstadoReporteSage.iniciado) {
+        try {
+          final uri = await pending.future.timeout(const Duration(seconds: 5));
+          await _procesarDescargaWeb(uri: uri);
+          if (kDebugMode) debugPrint('[SAGE report V3] download_started=true');
+        } on TimeoutException {
+          if (kDebugMode) debugPrint('[SAGE report] timeout=true');
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('SAGE no generó el enlace del reporte.'),
+              ),
+            );
+          }
+        }
+      } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(_reportErrorMessage(report.estado))),
         );
       }
     } finally {
+      if (identical(_pendingReportUrl, pending)) _pendingReportUrl = null;
       if (mounted) setState(() => _reportInFlight = false);
     }
   }
 
   String _reportErrorMessage(EstadoReporteSage state) => switch (state) {
+    EstadoReporteSage.channelUnavailable =>
+      'No se pudo conectar el reporte con la aplicación.',
+    EstadoReporteSage.bridgeInstallFailed =>
+      'No se pudo preparar la descarga del reporte.',
+    EstadoReporteSage.reportFunctionMissing =>
+      'SAGE no mostró la función del reporte.',
+    EstadoReporteSage.reportFunctionStructureChanged =>
+      'SAGE cambió la forma de generar este reporte.',
+    EstadoReporteSage.reportFunctionTransformUnsafe =>
+      'No se pudo preparar el reporte de forma segura.',
+    EstadoReporteSage.reportFunctionCompileBlocked =>
+      'El navegador de SAGE bloqueó la preparación del reporte.',
+    EstadoReporteSage.reportFunctionPatchFailed =>
+      'No se pudo conectar el reporte con la aplicación.',
+    EstadoReporteSage.carreraAmbigua =>
+      'La carrera seleccionada no es unívoca en SAGE.',
     EstadoReporteSage.carreraNoEncontrada =>
       'No se encontró la carrera actual en SAGE.',
     EstadoReporteSage.subgrillaCargando =>
@@ -389,6 +1332,8 @@ class _PantallaSageState extends State<PantallaSage> {
       'No se encontró el paginador de la carrera.',
     EstadoReporteSage.botonNoEncontrado =>
       'No se encontró ese reporte en la subgrilla.',
+    EstadoReporteSage.clickError => 'SAGE no permitió ejecutar el reporte.',
+    EstadoReporteSage.timeout => 'SAGE no generó el enlace del reporte.',
     _ => 'No se pudo iniciar el reporte de SAGE.',
   };
 
@@ -398,15 +1343,9 @@ class _PantallaSageState extends State<PantallaSage> {
   }
 
   Future<void> _restoreThenShowOriginal() async {
-    final restored = await _historialController.restaurarPantallaOriginal(
-      _evaluateJavascript,
-    );
-    if (!restored && await _controller.canGoBack()) {
-      await _controller.goBack();
-      await Future<void>.delayed(const Duration(milliseconds: 700));
-    } else {
-      await Future<void>.delayed(const Duration(milliseconds: 1000));
-    }
+    await _installReportBridge();
+    await _historialController.instalarReportesV3(_evaluateJavascript);
+    await Future<void>.delayed(const Duration(milliseconds: 300));
     if (mounted) setState(() => _nativeHistoryVisible = false);
   }
 
@@ -873,6 +1812,7 @@ class _PantallaSageState extends State<PantallaSage> {
   @override
   void dispose() {
     _historyPollTimer?.cancel();
+    _navigationDebounceTimer?.cancel();
     _httpClient.close();
     _navigationProgress.dispose();
     _mainFrameError.dispose();
@@ -891,7 +1831,11 @@ class _PantallaSageState extends State<PantallaSage> {
         if (!didPop) unawaited(_handleBack());
       },
       child: Scaffold(
-        appBar: _nativeHistoryVisible
+        appBar:
+            _nativeHistoryVisible ||
+                _nativeModulesVisible ||
+                _nativeSubmodulesVisible ||
+                _nativeLoadingVisible
             ? null
             : AppBar(
                 backgroundColor: const Color(0xFF0E5E86),
@@ -899,7 +1843,7 @@ class _PantallaSageState extends State<PantallaSage> {
                 elevation: 0,
                 leading: IconButton(
                   tooltip: 'Volver',
-                  onPressed: _handleBack,
+                  onPressed: widget.onClose ?? _handleBack,
                   icon: const Icon(Icons.arrow_back_rounded),
                 ),
                 title: const Text('SAGE'),
@@ -915,7 +1859,12 @@ class _PantallaSageState extends State<PantallaSage> {
           children: [
             const SizedBox.expand(),
             Visibility(
-              visible: !_nativeHistoryVisible,
+              visible: webViewSageVisible(
+                historial: _nativeHistoryVisible,
+                modulos: _nativeModulesVisible,
+                submodulos: _nativeSubmodulesVisible,
+                carga: _nativeLoadingVisible,
+              ),
               maintainState: true,
               child: WebViewWidget(
                 key: const ValueKey('sage-webview-persistent'),
@@ -934,6 +1883,27 @@ class _PantallaSageState extends State<PantallaSage> {
                   onBack: _handleBack,
                   reportsEnabled: !_reportInFlight,
                 ),
+              ),
+            if (_nativeModulesVisible)
+              Positioned.fill(
+                child: PantallaModulosSage(
+                  onOpenLegajo: _openLegajoModule,
+                  onRefresh: _retry,
+                  onBack: widget.onClose ?? _showOriginalNavigation,
+                  loadingTitle: _navigationActionInFlight,
+                ),
+              ),
+            if (_nativeSubmodulesVisible)
+              Positioned.fill(
+                child: PantallaSubmodulosSage(
+                  onSelect: (option) => unawaited(_activateSageLink(option)),
+                  onBack: widget.onClose ?? _showOriginalNavigation,
+                  loadingTitle: _navigationActionInFlight,
+                ),
+              ),
+            if (_nativeLoadingVisible)
+              Positioned.fill(
+                child: PantallaCargaSage(mensaje: _nativeLoadingMessage),
               ),
             ValueListenableBuilder<int>(
               valueListenable: _navigationProgress,

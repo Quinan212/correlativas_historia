@@ -39,9 +39,12 @@ class ControladorHistorialSage {
   ) async {
     final raw = await evaluateJavascript(
       _resolveRowScript(
-        jsonEncode(carrera.internalId ?? ''),
+        jsonEncode(carrera.careerContextId ?? ''),
+        jsonEncode(carrera.careerKey),
+        jsonEncode(carrera.gridRowId),
         jsonEncode(carrera.nombre),
         jsonEncode(carrera.institucion),
+        jsonEncode(carrera.anioInicio?.toString() ?? ''),
       ),
     );
     final decoded = _decode(raw);
@@ -50,6 +53,7 @@ class ControladorHistorialSage {
         'resolved' => EstadoResolverFilaSage.resuelta,
         'waiting' => EstadoResolverFilaSage.esperandoPagina,
         'incompatible' => EstadoResolverFilaSage.incompatible,
+        'career_ambiguous' => EstadoResolverFilaSage.carreraAmbigua,
         'career_not_found' => EstadoResolverFilaSage.carreraNoEncontrada,
         _ => EstadoResolverFilaSage.error,
       },
@@ -62,9 +66,11 @@ class ControladorHistorialSage {
     EvaluarJavascript evaluateJavascript,
     CarreraHistorialSage carrera, {
     String? reportTitle,
+    bool restoreOriginal = true,
     Duration timeout = const Duration(seconds: 20),
   }) async {
-    if (!await restaurarPantallaOriginal(evaluateJavascript)) {
+    if (restoreOriginal &&
+        !await restaurarPantallaOriginal(evaluateJavascript)) {
       return const ResultadoSubgrillaSage(estado: EstadoSubgrillaSage.missing);
     }
     final deadline = DateTime.now().add(timeout);
@@ -73,9 +79,12 @@ class ControladorHistorialSage {
     while (DateTime.now().isBefore(deadline)) {
       final raw = await evaluateJavascript(
         _prepareSubgridScript(
-          jsonEncode(carrera.internalId ?? ''),
+          jsonEncode(carrera.careerContextId ?? ''),
+          jsonEncode(carrera.careerKey),
+          jsonEncode(carrera.gridRowId),
           jsonEncode(carrera.nombre),
           jsonEncode(carrera.institucion),
+          jsonEncode(carrera.anioInicio?.toString() ?? ''),
           jsonEncode(reportTitle),
           !expansionRequested,
         ),
@@ -83,7 +92,10 @@ class ControladorHistorialSage {
       last = _parseSubgridResult(raw);
       if (last.expandCalled) expansionRequested = true;
       if (last.estado == EstadoSubgrillaSage.expandedReady) return last;
-      if (last.estado == EstadoSubgrillaSage.missing) return last;
+      if (last.estado == EstadoSubgrillaSage.missing ||
+          last.estado == EstadoSubgrillaSage.careerAmbiguous) {
+        return last;
+      }
       await Future<void>.delayed(const Duration(milliseconds: 350));
     }
     return last == null
@@ -157,7 +169,13 @@ class ControladorHistorialSage {
       evaluateJavascript,
       carrera,
       reportTitle: title,
+      restoreOriginal: false,
     );
+    if (prepared.estado == EstadoSubgrillaSage.careerAmbiguous) {
+      return const ResultadoReporteSage(
+        estado: EstadoReporteSage.carreraAmbigua,
+      );
+    }
     if (prepared.gridRowId == null ||
         prepared.estado == EstadoSubgrillaSage.missing) {
       return ResultadoReporteSage(
@@ -187,18 +205,62 @@ class ControladorHistorialSage {
         pagerFound: prepared.pagerFound,
       );
     }
+    final patchRaw = await evaluateJavascript(_v3BootstrapScript());
+    final patch = _decode(patchRaw);
+    final patchState = patch?['state']?.toString();
+    if (patchState != 'ready') {
+      return ResultadoReporteSage(
+        estado: switch (patchState) {
+          'channel_unavailable' => EstadoReporteSage.channelUnavailable,
+          'report_function_missing' => EstadoReporteSage.reportFunctionMissing,
+          'report_function_structure_changed' =>
+            EstadoReporteSage.reportFunctionStructureChanged,
+          'report_function_transform_unsafe' =>
+            EstadoReporteSage.reportFunctionTransformUnsafe,
+          'report_function_compile_blocked' =>
+            EstadoReporteSage.reportFunctionCompileBlocked,
+          _ => EstadoReporteSage.reportFunctionPatchFailed,
+        },
+        rowResolved: true,
+        subgridReady: true,
+        pagerFound: prepared.pagerFound,
+        reportButtonFound: true,
+      );
+    }
     final raw = await evaluateJavascript(
       _reportScript(jsonEncode(prepared.gridRowId), jsonEncode(title)),
     );
-    final state = _decode(raw)?['state']?.toString();
+    final decoded = _decode(raw);
+    final state = decoded?['state']?.toString();
     return ResultadoReporteSage(
-      estado: state == 'started'
-          ? EstadoReporteSage.iniciado
-          : EstadoReporteSage.error,
+      estado: switch (state) {
+        'click_dispatched' => EstadoReporteSage.iniciado,
+        'channel_unavailable' => EstadoReporteSage.channelUnavailable,
+        'bridge_install_failed' => EstadoReporteSage.bridgeInstallFailed,
+        'report_function_missing' => EstadoReporteSage.reportFunctionMissing,
+        'report_function_structure_changed' =>
+          EstadoReporteSage.reportFunctionStructureChanged,
+        'report_function_transform_unsafe' =>
+          EstadoReporteSage.reportFunctionTransformUnsafe,
+        'report_function_compile_blocked' =>
+          EstadoReporteSage.reportFunctionCompileBlocked,
+        'report_function_patch_failed' =>
+          EstadoReporteSage.reportFunctionPatchFailed,
+        'career_ambiguous' => EstadoReporteSage.carreraAmbigua,
+        'subgrid_not_expanded' => EstadoReporteSage.subgridNoExpandido,
+        'pager_not_found' => EstadoReporteSage.pagerNoEncontrado,
+        'report_button_not_found' => EstadoReporteSage.botonNoEncontrado,
+        'click_error' => EstadoReporteSage.clickError,
+        _ => EstadoReporteSage.error,
+      },
       rowResolved: true,
       subgridReady: true,
       pagerFound: prepared.pagerFound,
       reportButtonFound: true,
+      bridgePatched: _int(decoded?['patched']) ?? 0,
+      functionOwner: decoded?['functionOwner']?.toString(),
+      inlineOnclick: decoded?['inlineOnclick'] == true,
+      jqueryHandlers: decoded?['jqueryHandlers'] == true,
     );
   }
 
@@ -231,6 +293,11 @@ class ControladorHistorialSage {
     }
   }
 
+  Future<bool> instalarReportesV3(EvaluarJavascript evaluateJavascript) async {
+    final decoded = _decode(await evaluateJavascript(_v3BootstrapScript()));
+    return decoded?['state'] == 'ready';
+  }
+
   Future<bool> actualizar(EvaluarJavascript evaluateJavascript) async {
     if (!await restaurarPantallaOriginal(evaluateJavascript)) return false;
     await Future<void>.delayed(const Duration(milliseconds: 500));
@@ -256,10 +323,19 @@ class ControladorHistorialSage {
     }
   }
 
+  int? _int(Object? value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return int.tryParse(value?.toString() ?? '');
+  }
+
   static String _resolveRowScript(
-    String internalIdArgument,
+    String contextIdArgument,
+    String careerKeyArgument,
+    String gridRowIdArgument,
     String careerArgument,
     String institutionArgument,
+    String startYearArgument,
   ) =>
       '''(() => {
     const main = document.querySelector('iframe#Main');
@@ -267,9 +343,12 @@ class ControladorHistorialSage {
     const escolares = alumnos?.contentDocument?.querySelector('iframe#frm_alumnos_escolares');
     const frame = escolares?.contentDocument;
     const win = escolares?.contentWindow;
-    const internalId = $internalIdArgument;
+    const contextId = $contextIdArgument;
+    const careerKey = $careerKeyArgument;
+    const currentGridRowId = $gridRowIdArgument;
     const careerName = $careerArgument;
     const institution = $institutionArgument;
+    const startYear = $startYearArgument;
     if (!frame || !win) return JSON.stringify({state:'waiting'});
     if (win.location.host !== 'sage.entrerios.gov.ar') return JSON.stringify({state:'incompatible'});
     if (!win.location.pathname.endsWith('/alumnos_v2/NS_historial_alumnado.php')) return JSON.stringify({state:'waiting'});
@@ -279,20 +358,32 @@ class ControladorHistorialSage {
     let rowIds = [];
     try { rowIds = (grid.jqGrid('getDataIDs') || []).map(String); } catch (_) {}
     const normalize = value => String(value ?? '').trim().replace(/\\s+/g, ' ').toLowerCase();
-    let resolvedId = rowIds.find(rowId => {
+    const rowData = rowId => {
       let data = {};
       try { data = grid.jqGrid('getRowData', rowId) || {}; } catch (_) {}
-      return internalId !== '' && String(data.id ?? '') === String(internalId);
-    });
+      return data;
+    };
+    const rowContext = data => String(
+      data.idsuborgCarrera ?? data.idsuborg_carrera ?? data.careerContextId ?? '',
+    );
+    const rowCareerKey = data => [
+      data.carrera ?? '', data.suborganizacion ?? '', data.anio_inscripcion ?? '',
+    ].map(value => normalize(value)).join('|');
+    const uniqueMatch = predicate => {
+      const matches = rowIds.filter(rowId => predicate(rowData(rowId), rowId));
+      return matches.length === 1 ? matches[0] : matches.length > 1 ? 'ambiguous' : '';
+    };
+    let resolvedId = contextId === '' ? '' : uniqueMatch(data => rowContext(data) === contextId);
+    if (resolvedId === 'ambiguous') return JSON.stringify({state:'career_ambiguous'});
     if (!resolvedId) {
-      const wantedCareer = normalize(careerName);
-      const wantedInstitution = normalize(institution);
-      resolvedId = rowIds.find(rowId => {
-        let data = {};
-        try { data = grid.jqGrid('getRowData', rowId) || {}; } catch (_) {}
-        return normalize(data.carrera) === wantedCareer && normalize(data.suborganizacion) === wantedInstitution;
-      });
+      resolvedId = uniqueMatch(data => (careerKey !== '' && rowCareerKey(data) === careerKey) || (
+        normalize(data.carrera) === normalize(careerName) &&
+        normalize(data.suborganizacion) === normalize(institution) &&
+        (startYear === '' || normalize(data.anio_inscripcion) === normalize(startYear))
+      ));
     }
+    if (resolvedId === 'ambiguous') return JSON.stringify({state:'career_ambiguous'});
+    if (!resolvedId && rowIds.map(String).includes(String(currentGridRowId))) resolvedId = String(currentGridRowId);
     if (!resolvedId) return JSON.stringify({state:'career_not_found'});
     const masterRow = frame.getElementById(String(resolvedId));
     return JSON.stringify({
@@ -309,7 +400,8 @@ class ControladorHistorialSage {
         'expanded_loading' => EstadoSubgrillaSage.expandedLoading,
         'collapsed' => EstadoSubgrillaSage.collapsed,
         'stale_subgrid' => EstadoSubgrillaSage.staleSubgrid,
-        'career_not_found' ||
+        'career_not_found' => EstadoSubgrillaSage.missing,
+        'career_ambiguous' => EstadoSubgrillaSage.careerAmbiguous,
         'master_row_not_found' ||
         'master_dom_row_not_found' => EstadoSubgrillaSage.missing,
         _ => EstadoSubgrillaSage.error,
@@ -329,9 +421,12 @@ class ControladorHistorialSage {
   }
 
   static String _prepareSubgridScript(
-    String internalIdArgument,
+    String contextIdArgument,
+    String careerKeyArgument,
+    String gridRowIdArgument,
     String careerArgument,
     String institutionArgument,
+    String startYearArgument,
     String titleArgument,
     bool allowExpand,
   ) =>
@@ -341,9 +436,12 @@ class ControladorHistorialSage {
     const escolares = alumnos?.contentDocument?.querySelector('iframe#frm_alumnos_escolares');
     const frame = escolares?.contentDocument;
     const win = escolares?.contentWindow;
-    const internalId = $internalIdArgument;
+    const contextId = $contextIdArgument;
+    const careerKey = $careerKeyArgument;
+    const currentGridRowId = $gridRowIdArgument;
     const careerName = $careerArgument;
     const institution = $institutionArgument;
+    const startYear = $startYearArgument;
     const reportTitle = $titleArgument;
     const allowExpand = ${allowExpand ? 'true' : 'false'};
     if (!frame || !win) return JSON.stringify({state:'waiting'});
@@ -355,20 +453,32 @@ class ControladorHistorialSage {
     let rowIds = [];
     try { rowIds = (grid.jqGrid('getDataIDs') || []).map(String); } catch (_) {}
     const normalize = value => String(value ?? '').trim().replace(/\\s+/g, ' ').toLowerCase();
-    let gridRowId = rowIds.find(rowId => {
+    const rowData = rowId => {
       let data = {};
       try { data = grid.jqGrid('getRowData', rowId) || {}; } catch (_) {}
-      return internalId !== '' && String(data.id ?? '') === String(internalId);
-    });
+      return data;
+    };
+    const rowContext = data => String(
+      data.idsuborgCarrera ?? data.idsuborg_carrera ?? data.careerContextId ?? '',
+    );
+    const rowCareerKey = data => [
+      data.carrera ?? '', data.suborganizacion ?? '', data.anio_inscripcion ?? '',
+    ].map(value => normalize(value)).join('|');
+    const uniqueMatch = predicate => {
+      const matches = rowIds.filter(rowId => predicate(rowData(rowId), rowId));
+      return matches.length === 1 ? matches[0] : matches.length > 1 ? 'ambiguous' : '';
+    };
+    let gridRowId = contextId === '' ? '' : uniqueMatch(data => rowContext(data) === contextId);
+    if (gridRowId === 'ambiguous') return JSON.stringify({state:'career_ambiguous'});
     if (!gridRowId) {
-      const wantedCareer = normalize(careerName);
-      const wantedInstitution = normalize(institution);
-      gridRowId = rowIds.find(rowId => {
-        let data = {};
-        try { data = grid.jqGrid('getRowData', rowId) || {}; } catch (_) {}
-        return normalize(data.carrera) === wantedCareer && normalize(data.suborganizacion) === wantedInstitution;
-      });
+      gridRowId = uniqueMatch(data => (careerKey !== '' && rowCareerKey(data) === careerKey) || (
+        normalize(data.carrera) === normalize(careerName) &&
+        normalize(data.suborganizacion) === normalize(institution) &&
+        (startYear === '' || normalize(data.anio_inscripcion) === normalize(startYear))
+      ));
     }
+    if (gridRowId === 'ambiguous') return JSON.stringify({state:'career_ambiguous'});
+    if (!gridRowId && rowIds.map(String).includes(String(currentGridRowId))) gridRowId = String(currentGridRowId);
     if (!gridRowId) return JSON.stringify({state:'career_not_found'});
     const masterRow = frame.getElementById(String(gridRowId));
     if (!masterRow?.matches('tr.jqgrow')) return JSON.stringify({state:'master_dom_row_not_found', gridRowId:String(gridRowId)});
@@ -417,10 +527,203 @@ class ControladorHistorialSage {
       transcriptButtonFound:Boolean(transcriptButton), recordButtonFound:Boolean(recordButton),
       expandCalled
     });
+      })()''';
+
+  static String _v3BootstrapScript() => r'''(() => {
+    const root = window;
+    const diagnosticBridge = root.SageDiagnosticBridge;
+    const sendDebug = (event, fields = {}) => {
+      try {
+        diagnosticBridge?.postMessage(JSON.stringify({event:'v3_' + event, ...fields}));
+      } catch (_) {}
+    };
+    const main = root.document.querySelector('iframe#Main');
+    const alumnos = main?.contentDocument?.querySelector('iframe#frm_alumnos');
+    const escolares = alumnos?.contentDocument?.querySelector('iframe#frm_alumnos_escolares');
+    const escolaresWin = escolares?.contentWindow;
+    const bridge = root.SageReportBridge || escolaresWin?.SageReportBridge || escolaresWin?.top?.SageReportBridge;
+    if (!bridge || typeof bridge.postMessage !== 'function') {
+      return JSON.stringify({state:'channel_unavailable'});
+    }
+    if (!escolaresWin) return JSON.stringify({state:'report_function_missing'});
+
+    const names = [
+      ['imprimir_estado_alumno', 'estado_alumno'],
+      ['imprimir_analitico', 'analitico'],
+      ['imprimir_examenes_rendidos', 'examenes_rendidos'],
+    ];
+    const targets = [
+      'window.location.href', 'document.location.href', 'parent.location.href',
+      'top.location.href', 'self.location.href', 'location.href',
+    ];
+    const hash = source => {
+      let value = 2166136261;
+      for (let index = 0; index < source.length; index += 1) {
+        value = Math.imul(value ^ source.charCodeAt(index), 16777619) >>> 0;
+      }
+      return value.toString(16);
+    };
+    const identifier = value => /[A-Za-z0-9_$]/.test(value || '');
+    const skip = (source, index) => {
+      const quote = source[index];
+      if (quote === '\'' || quote === '"' || quote === '`') {
+        let cursor = index + 1;
+        while (cursor < source.length) {
+          if (source[cursor] === '\\') cursor += 2;
+          else if (source[cursor] === quote) return cursor + 1;
+          else cursor += 1;
+        }
+        return source.length;
+      }
+      if (quote === '/' && source[index + 1] === '/') {
+        const end = source.indexOf('\n', index + 2);
+        return end < 0 ? source.length : end + 1;
+      }
+      if (quote === '/' && source[index + 1] === '*') {
+        const end = source.indexOf('*/', index + 2);
+        return end < 0 ? source.length : end + 2;
+      }
+      return index;
+    };
+    const whitespace = (source, index) => {
+      while (index < source.length && /\s/.test(source[index])) index += 1;
+      return index;
+    };
+    const expressionEnd = (source, start) => {
+      let parentheses = 0;
+      let brackets = 0;
+      let braces = 0;
+      let index = start;
+      while (index < source.length) {
+        const next = skip(source, index);
+        if (next !== index) { index = next; continue; }
+        const character = source[index];
+        if (character === '(') parentheses += 1;
+        else if (character === ')' && parentheses > 0) parentheses -= 1;
+        else if (character === '[') brackets += 1;
+        else if (character === ']' && brackets > 0) brackets -= 1;
+        else if (character === '{') braces += 1;
+        else if (character === '}') {
+          if (braces > 0) braces -= 1;
+          else if (parentheses === 0 && brackets === 0) return index;
+        } else if (character === ';' && parentheses === 0 && brackets === 0 && braces === 0) {
+          return index;
+        }
+        index += 1;
+      }
+      return source.length;
+    };
+    const assignments = source => {
+      const found = [];
+      let index = 0;
+      while (index < source.length) {
+        const next = skip(source, index);
+        if (next !== index) { index = next; continue; }
+        const target = targets.find(value => {
+          if (!source.startsWith(value, index)) return false;
+          return !identifier(index === 0 ? '' : source[index - 1]);
+        });
+        if (!target) { index += 1; continue; }
+        let equals = whitespace(source, index + target.length);
+        if (source[equals] !== '=' || source[equals + 1] === '=') {
+          index += target.length;
+          continue;
+        }
+        const start = whitespace(source, equals + 1);
+        const end = expressionEnd(source, start);
+        found.push({target, targetStart:index, expressionStart:start, expressionEnd:end});
+        index = end;
+      }
+      return found;
+    };
+    const unsafeMechanism = source => {
+      const lower = source.toLowerCase();
+      return ['window.open', 'form.submit', 'requestsubmit', 'fetch(',
+        'xmlhttprequest', 'location.assign', 'location.replace']
+        .some(value => lower.includes(value));
+    };
+    const installEmitter = () => {
+      if (escolaresWin.__flutterCaptureSageReportV3?.__sageV3Emitter) return true;
+      escolaresWin.__flutterCaptureSageReportV3 = function(reportType, rawValue) {
+        try {
+          sendDebug('patched_function_called', {value:true});
+          const resolved = new URL(String(rawValue), escolaresWin.location.href);
+          const normalizedPath = resolved.pathname.toLowerCase().replace(/\/+$/, '');
+          const allowedPaths = new Set([
+            '/alumnos_v2/ns_reporte_estado_alumno_carrera.php',
+            '/alumnos_v2/ns_reporte_analitico.php',
+            '/alumnos_v2/ns_reporte_examenes_rendidos.php',
+          ]);
+          const schemeAllowed = resolved.protocol === 'https:';
+          const hostAllowed = resolved.hostname.toLowerCase() === 'sage.entrerios.gov.ar';
+          const pathAllowed = allowedPaths.has(normalizedPath);
+          sendDebug('scheme_allowed', {value:schemeAllowed});
+          sendDebug('host_allowed', {value:hostAllowed});
+          sendDebug('path_allowed', {value:pathAllowed});
+          if (!schemeAllowed || !hostAllowed || !pathAllowed) {
+            bridge.postMessage(JSON.stringify({
+              type:'sage_report_rejected', reportType, schemeAllowed, hostAllowed,
+              pathAllowed, lastSegment:resolved.pathname.split('/').filter(Boolean).pop()?.toLowerCase() || '',
+            }));
+            return;
+          }
+          bridge.postMessage(JSON.stringify({type:'sage_report_url', reportType, url:resolved.href}));
+          sendDebug('bridge_message_sent', {value:true});
+        } catch (_) {
+          bridge.postMessage(JSON.stringify({type:'sage_report_capture_error', reportType}));
+        }
+      };
+      escolaresWin.__flutterCaptureSageReportV3.__sageV3Emitter = true;
+      return true;
+    };
+    const patchOne = (name, reportType) => {
+      const original = escolaresWin[name];
+      if (typeof original !== 'function') return {state:'report_function_missing', name};
+      if (original.__flutterSageReportPatchedV3) return {state:'patched', name, reused:true};
+      const source = Function.prototype.toString.call(original);
+      const found = assignments(source);
+      const functionHash = hash(source);
+      sendDebug('function_found', {value:true, name});
+      sendDebug('function_hash', {value:functionHash, name});
+      sendDebug('assignment_count', {value:found.length, name});
+      if (found.length === 0) return {state:'report_function_structure_changed', name};
+      if (found.length !== 1) return {state:'report_function_transform_unsafe', name};
+      if (unsafeMechanism(source)) return {state:'report_function_transform_unsafe', name};
+      const assignment = found[0];
+      const transformedSource = source.slice(0, assignment.targetStart) +
+        'return window.__flutterCaptureSageReportV3(' + JSON.stringify(reportType) + ', ' +
+        source.slice(assignment.expressionStart, assignment.expressionEnd) + ')' +
+        source.slice(assignment.expressionEnd);
+      let transformed;
+      try {
+        transformed = escolaresWin.Function('return (' + transformedSource + ')')();
+      } catch (_) {
+        return {state:'report_function_compile_blocked', name};
+      }
+      if (typeof transformed !== 'function') return {state:'report_function_compile_blocked', name};
+      transformed.__flutterSageReportPatchedV3 = true;
+      transformed.__flutterSageOriginalHash = functionHash;
+      transformed.__flutterSageOriginalFunction = original;
+      escolaresWin[name] = transformed;
+      sendDebug('transform_safe', {value:true, name});
+      sendDebug('compile_success', {value:true, name});
+      sendDebug('patch_installed', {value:true, name});
+      return {state:'patched', name};
+    };
+    root.__flutterInstallSageReportV3 = () => {
+      if (!installEmitter()) return {state:'report_function_patch_failed'};
+      const results = names.map(item => patchOne(item[0], item[1]));
+      const failed = results.find(item => item.state !== 'patched');
+      if (failed) return failed;
+      return {state:'ready', patched:results.length, results};
+    };
+    const result = root.__flutterInstallSageReportV3();
+    return JSON.stringify(result);
   })()''';
 
   static String _reportScript(String idArgument, String titleArgument) =>
       '''(() => {
+    const root = window;
     const main = document.querySelector('iframe#Main');
     const alumnos = main?.contentDocument?.querySelector('iframe#frm_alumnos');
     const escolares = alumnos?.contentDocument?.querySelector('iframe#frm_alumnos_escolares');
@@ -428,36 +731,25 @@ class ControladorHistorialSage {
     const win = escolares?.contentWindow;
     const gridRowId = $idArgument;
     const title = $titleArgument;
-    if (!frame || !win?.jQuery) return JSON.stringify({state:'error'});
+    if (!frame || !win?.jQuery) return JSON.stringify({state:'subgrid_not_expanded'});
     const masterRow = frame.getElementById(String(gridRowId));
     const subgridContainer = masterRow?.nextElementSibling;
-    const dynamicTable = Array.from(
-      subgridContainer?.querySelectorAll('table') || [],
-    ).find(table => String(table.id).endsWith('_t'));
+    const dynamicTable = Array.from(subgridContainer?.querySelectorAll('table') || [])
+      .find(table => String(table.id).endsWith('_t'));
     if (!masterRow || !dynamicTable) return JSON.stringify({state:'subgrid_not_expanded'});
     const pager = frame.getElementById('p_' + dynamicTable.id);
     if (!pager) return JSON.stringify({state:'pager_not_found'});
     const button = pager.querySelector('.ui-pg-button[title="' + title + '"]');
     if (!button) return JSON.stringify({state:'report_button_not_found'});
-    try {
-      const targetElements = [button, ...button.querySelectorAll('[target]')];
-      const originalTargets = targetElements.map(item => item.getAttribute('target'));
-      targetElements.forEach(item => item.setAttribute('target', '_self'));
-      win.jQuery(button).trigger('click');
-      setTimeout(() => {
-        const currentPath = String(win.location.pathname || '').toLowerCase();
-        if (!currentPath.endsWith('/ns_historial_alumnado.php')) {
-          try { win.history.back(); } catch (_) {}
-        }
-      }, 2500);
-      targetElements.forEach((item, index) => {
-        const target = originalTargets[index];
-        if (target == null) item.removeAttribute('target');
-        else item.setAttribute('target', target);
-      });
-      return JSON.stringify({state:'started'});
-    } catch (_) {
-      return JSON.stringify({state:'error'});
-    }
+    const patch = root.__flutterInstallSageReportV3?.();
+    if (!patch || patch.state !== 'ready') return JSON.stringify(patch || {state:'report_function_patch_failed'});
+    const inlineOnclick = Boolean(button.getAttribute('onclick')) || typeof button.onclick === 'function';
+    let jqueryHandlers = false;
+    try { jqueryHandlers = Boolean(win.jQuery._data?.(button, 'events')?.click?.length); } catch (_) {}
+    if (jqueryHandlers) win.jQuery(button).trigger('click');
+    else if (inlineOnclick) button.click();
+    else return JSON.stringify({state:'click_error'});
+    return JSON.stringify({state:'click_dispatched', patched:patch.patched || 0,
+      functionOwner:'escolares', inlineOnclick, jqueryHandlers});
   })()''';
 }

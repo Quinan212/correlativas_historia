@@ -34,11 +34,7 @@ List<_CurriculumEntry> _buildCurriculumEntries(
           byId: subjectById,
           byName: subjectByName,
         ),
-        available: _missingCorrelativas(
-          materia,
-          subjects,
-          plan,
-        ).isEmpty,
+        available: _missingCorrelativas(materia, subjects, plan).isEmpty,
         missing: _missingCorrelativas(materia, subjects, plan),
       ),
   ];
@@ -106,13 +102,7 @@ List<CorrelativaDetallada> _resolvedRequirements(Materia materia) {
     return materia.correlativasDetalladas;
   }
   return materia.correlativas
-      .map(
-        (id) => CorrelativaDetallada(
-          id: id,
-          type: 'A',
-          nombre: id,
-        ),
-      )
+      .map((id) => CorrelativaDetallada(id: id, type: 'A', nombre: id))
       .toList(growable: false);
 }
 
@@ -156,7 +146,9 @@ MateriaEstudiante? _matchRequirementSubject(
 }
 
 String _displayNameForRequirement(
-    CorrelativaDetallada req, List<Materia> plan) {
+  CorrelativaDetallada req,
+  List<Materia> plan,
+) {
   final reqKey = _norm(req.id);
   for (final materia in plan) {
     if (_norm(materia.id) == reqKey ||
@@ -190,8 +182,12 @@ String _subjectCreditDetail(MateriaEstudiante current) {
     'Aprobada en ${(current.sourceDate != null ? nombreMesAcademico(current.sourceDate!) : _etiquetaPeriodo(current.academicPeriod)).toLowerCase()}',
   ];
   if (current.detailStatus != null) {
-    parts.add(_etiquetaMetodoAcreditacion(
-        current.academicPeriod, current.detailStatus!));
+    parts.add(
+      _etiquetaMetodoAcreditacion(
+        current.academicPeriod,
+        current.detailStatus!,
+      ),
+    );
   }
   if (current.grade != null) {
     parts.add('Nota ${current.grade!.toStringAsFixed(0)}');
@@ -307,10 +303,12 @@ List<_PasoHistorialMateria> _subjectHistorySteps(
     final payload = item.payload;
     final status = _norm(payload['status']?.toString() ?? '');
     final eventType = _norm(item.eventType);
-    final isApproved = status == 'aprobada' ||
+    final isApproved =
+        status == 'aprobada' ||
         eventType.contains('aprob') ||
         eventType.contains('approve');
-    final isEnrollment = !isApproved &&
+    final isEnrollment =
+        !isApproved &&
         (eventType.contains('inscrip') ||
             eventType.contains('enroll') ||
             eventType.contains('upsert') ||
@@ -319,7 +317,7 @@ List<_PasoHistorialMateria> _subjectHistorySteps(
 
     final historyDateLabel =
         _historyDateLabel(_parseHistoryDate(payload['source_date'])) ??
-            _historyDateLabel(item.createdAt);
+        _historyDateLabel(item.createdAt);
 
     if (isEnrollment && steps.every((step) => step.label != 'Inscripción')) {
       steps.add(
@@ -403,12 +401,12 @@ List<_MovimientoEstudiante> _buildStudentMovements(
     if (name == null || name.isEmpty) return null;
     final normalized = _norm(name);
     return entries.cast<_CurriculumEntry?>().firstWhere(
-          (e) =>
-              _norm(e!.materia.id) == normalized ||
-              _norm(e.materia.displayNombre) == normalized ||
-              _norm(e.materia.nombre) == normalized,
-          orElse: () => null,
-        );
+      (e) =>
+          _norm(e!.materia.id) == normalized ||
+          _norm(e.materia.displayNombre) == normalized ||
+          _norm(e.materia.nombre) == normalized,
+      orElse: () => null,
+    );
   }
 
   for (final entry in history) {
@@ -418,10 +416,12 @@ List<_MovimientoEstudiante> _buildStudentMovements(
     final subjectName = payload['subject_name']?.toString().trim() ?? '';
     final dateLabel = _historyDateLabel(entry.createdAt);
     final dayKey = dateLabel ?? 'sin-fecha';
-    final isApproved = status == 'aprobada' ||
+    final isApproved =
+        status == 'aprobada' ||
         eventType.contains('aprob') ||
         eventType.contains('approve');
-    final isEnrollment = !isApproved &&
+    final isEnrollment =
+        !isApproved &&
         (eventType.contains('inscrip') ||
             eventType.contains('enroll') ||
             eventType.contains('upsert') ||
@@ -487,9 +487,11 @@ List<_MovimientoEstudiante> _buildStudentMovements(
   }
 
   movements.sort((a, b) {
-    final aDate = _parseDisplayDate(a.dateLabel) ??
+    final aDate =
+        _parseDisplayDate(a.dateLabel) ??
         DateTime.fromMillisecondsSinceEpoch(0);
-    final bDate = _parseDisplayDate(b.dateLabel) ??
+    final bDate =
+        _parseDisplayDate(b.dateLabel) ??
         DateTime.fromMillisecondsSinceEpoch(0);
     return bDate.compareTo(aDate);
   });
@@ -517,29 +519,29 @@ List<_EventoCalendarioAcademico> _buildAcademicCalendarEvents(
     final status = _estadoMateriaParaRequisito(current);
     final (title, detail, icon, color) = switch (status) {
       'aprobada' => (
-          'Aprob\u00f3 ${entry.materia.displayNombre}',
-          _subjectCreditDetail(current),
-          Icons.check_circle_rounded,
-          const Color(0xFF2EAD57),
-        ),
+        'Aprob\u00f3 ${entry.materia.displayNombre}',
+        _subjectCreditDetail(current),
+        Icons.check_circle_rounded,
+        const Color(0xFF2EAD57),
+      ),
       'regular' => (
-          'Regulariz\u00f3 ${entry.materia.displayNombre}',
-          'Materia regularizada',
-          Icons.verified_rounded,
-          const Color(0xFF2B6F96),
-        ),
+        'Regulariz\u00f3 ${entry.materia.displayNombre}',
+        'Materia regularizada',
+        Icons.verified_rounded,
+        const Color(0xFF2B6F96),
+      ),
       'cursando' => (
-          'Comenz\u00f3 ${entry.materia.displayNombre}',
-          'Inicio de cursada',
-          Icons.school_rounded,
-          const Color(0xFF7C3AED),
-        ),
+        'Comenz\u00f3 ${entry.materia.displayNombre}',
+        'Inicio de cursada',
+        Icons.school_rounded,
+        const Color(0xFF7C3AED),
+      ),
       _ => (
-          entry.materia.displayNombre,
-          'Movimiento acad\u00e9mico',
-          Icons.event_note_rounded,
-          const Color(0xFF64748B),
-        ),
+        entry.materia.displayNombre,
+        'Movimiento acad\u00e9mico',
+        Icons.event_note_rounded,
+        const Color(0xFF64748B),
+      ),
     };
 
     addEvent(
@@ -616,7 +618,8 @@ String _historyCreditDetail(Map<String, dynamic> payload) {
   if (grade != null && grade.toString().trim().isNotEmpty) {
     final parsed = num.tryParse(grade.toString());
     parts.add(
-        parsed == null ? 'Nota $grade' : 'Nota ${parsed.toStringAsFixed(0)}');
+      parsed == null ? 'Nota $grade' : 'Nota ${parsed.toStringAsFixed(0)}',
+    );
   }
   return parts.join(' · ');
 }
@@ -737,8 +740,7 @@ String _institutionLogoAssetFor(String careerId) {
     'artes_visuales' => 'assets/career_icons/logo_artes.png',
     'historia' ||
     'geografia' ||
-    'politica' =>
-      'assets/career_icons/career_logo.png',
+    'politica' => 'assets/career_icons/career_logo.png',
     _ => 'assets/career_icons/career_logo.png',
   };
 }

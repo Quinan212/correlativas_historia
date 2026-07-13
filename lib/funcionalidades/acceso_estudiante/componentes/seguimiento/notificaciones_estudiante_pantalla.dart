@@ -12,9 +12,10 @@ class _NotificacionesEstudiantePantalla extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final movements = _buildStudentMovements(history, entries)
-        .take(24)
-        .toList(growable: false);
+    final movements = _buildStudentMovements(
+      history,
+      entries,
+    ).take(24).toList(growable: false);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF6F8FC),
@@ -103,11 +104,7 @@ class _FilaMovimientoEstudiante extends StatelessWidget {
                 ),
               ),
               alignment: Alignment.center,
-              child: Icon(
-                movement.icon,
-                color: movement.color,
-                size: 28,
-              ),
+              child: Icon(movement.icon, color: movement.color, size: 28),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -153,8 +150,9 @@ class _FilaMovimientoEstudiante extends StatelessWidget {
               const SizedBox(width: 8),
               Icon(
                 Icons.chevron_right_rounded,
-                color:
-                    theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+                color: theme.colorScheme.onSurfaceVariant.withValues(
+                  alpha: 0.4,
+                ),
               ),
             ],
           ],

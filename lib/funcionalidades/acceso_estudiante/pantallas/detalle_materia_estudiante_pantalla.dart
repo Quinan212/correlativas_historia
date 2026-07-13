@@ -42,17 +42,17 @@ class DetalleMateriaEstudiantePantalla extends StatelessWidget {
                   current != null && _isSubjectApproved(current)
                       ? 'Lo que desbloquea'
                       : 'Correlativas',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w900,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
                 ),
                 const SizedBox(height: 10),
                 if (current != null && _isSubjectApproved(current)) ...[
                   Text(
                     'Aprobar esta materia te permite avanzar en estas materias:',
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   if (unlocks.isEmpty)
@@ -70,13 +70,11 @@ class DetalleMateriaEstudiantePantalla extends StatelessWidget {
                         if (unlocks.length > 8)
                           Text(
                             '+ ${unlocks.length - 8} materias más',
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodyMedium
+                            style: Theme.of(context).textTheme.bodyMedium
                                 ?.copyWith(
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onSurfaceVariant,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
                                 ),
                           ),
                       ],
@@ -92,8 +90,8 @@ class DetalleMateriaEstudiantePantalla extends StatelessWidget {
                   Text(
                     'Te faltan estas correlativas:',
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ),
                   const SizedBox(height: 10),
                   Wrap(
@@ -131,16 +129,12 @@ class DetalleMateriaEstudiantePantalla extends StatelessWidget {
     );
   }
 
-  MateriaEstudiante? _matchCurrentSubject(
-    Map<String, MateriaEstudiante> byId,
-  ) {
+  MateriaEstudiante? _matchCurrentSubject(Map<String, MateriaEstudiante> byId) {
     final key = _norm(materia.id);
     return byId[key];
   }
 
-  List<String> _missingCorrelativas(
-    Map<String, MateriaEstudiante> byId,
-  ) {
+  List<String> _missingCorrelativas(Map<String, MateriaEstudiante> byId) {
     final reqs = _resolvedRequirements(materia);
     final missing = <String>[];
 
@@ -257,10 +251,12 @@ class DetalleMateriaEstudiantePantalla extends StatelessWidget {
       final payload = item.payload;
       final status = _norm(payload['status']?.toString() ?? '');
       final eventType = _norm(item.eventType);
-      final isApproved = status == 'aprobada' ||
+      final isApproved =
+          status == 'aprobada' ||
           eventType.contains('aprob') ||
           eventType.contains('approve');
-      final isEnrollment = !isApproved &&
+      final isEnrollment =
+          !isApproved &&
           (eventType.contains('inscrip') ||
               eventType.contains('enroll') ||
               eventType.contains('upsert') ||
@@ -269,16 +265,18 @@ class DetalleMateriaEstudiantePantalla extends StatelessWidget {
 
       final historyDateLabel =
           _historyDateLabel(_parseHistoryDate(payload['source_date'])) ??
-              _historyDateLabel(item.createdAt);
+          _historyDateLabel(item.createdAt);
 
       if (isEnrollment && steps.every((step) => step.label != 'Inscripción')) {
-        steps.add(_PasoHistorialMateria(
-          label: 'Inscripción',
-          detail: 'Alta de la materia',
-          dateLabel: historyDateLabel,
-          color: const Color(0xFF2B6F96),
-          icon: Icons.edit_note_rounded,
-        ));
+        steps.add(
+          _PasoHistorialMateria(
+            label: 'Inscripción',
+            detail: 'Alta de la materia',
+            dateLabel: historyDateLabel,
+            color: const Color(0xFF2B6F96),
+            icon: Icons.edit_note_rounded,
+          ),
+        );
       }
 
       if (isApproved) {
@@ -663,26 +661,26 @@ class _TableroEstadoMateria extends StatelessWidget {
     final Color statusColor = isApproved
         ? const Color(0xFF2EAD57)
         : isInProgress
-            ? const Color(0xFF1E6FDB)
-            : isBlocked
-                ? const Color(0xFFDC2626)
-                : cs.onSurfaceVariant;
+        ? const Color(0xFF1E6FDB)
+        : isBlocked
+        ? const Color(0xFFDC2626)
+        : cs.onSurfaceVariant;
 
     final IconData statusIcon = isApproved
         ? Icons.check_circle_rounded
         : isInProgress
-            ? Icons.play_circle_rounded
-            : isBlocked
-                ? Icons.block_rounded
-                : Icons.remove_circle_outline_rounded;
+        ? Icons.play_circle_rounded
+        : isBlocked
+        ? Icons.block_rounded
+        : Icons.remove_circle_outline_rounded;
 
     final String statusLabel = isApproved
         ? 'Aprobada'
         : isInProgress
-            ? 'Cursando'
-            : isBlocked
-                ? 'No disponible'
-                : 'Sin cursar';
+        ? 'Cursando'
+        : isBlocked
+        ? 'No disponible'
+        : 'Sin cursar';
 
     final String? noteLabel = current?.grade != null
         ? 'Nota ${current!.grade!.toStringAsFixed(0)}'
@@ -701,8 +699,8 @@ class _TableroEstadoMateria extends StatelessWidget {
             children: [
               Expanded(
                 flex: 3,
-                      child: TarjetaMetricaVidrio(
-                      child: Column(
+                child: TarjetaMetricaVidrio(
+                  child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -817,7 +815,7 @@ class _TableroEstadoMateria extends StatelessWidget {
                   Expanded(
                     flex: 3,
                     child: TarjetaMetricaVidrio(
-                    child: Column(
+                      child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Icon(
@@ -915,9 +913,9 @@ class _CompactInsignia extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              fontWeight: FontWeight.w800,
-              color: color,
-            ),
+          fontWeight: FontWeight.w800,
+          color: color,
+        ),
       ),
     );
   }

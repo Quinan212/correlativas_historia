@@ -40,16 +40,16 @@ class _CalendarioAcademicoEstudiantePantallaState
     _events = _buildAcademicCalendarEvents(widget.entries);
     final latestDate = _events.isEmpty
         ? DateTime.now()
-        : _events.map((event) => event.date).reduce(
-              (a, b) => a.isAfter(b) ? a : b,
-            );
+        : _events
+              .map((event) => event.date)
+              .reduce((a, b) => a.isAfter(b) ? a : b);
     _visibleMonth = DateTime(latestDate.year, latestDate.month);
     _selectedDay = _dateOnly(latestDate);
   }
 
   DateTime get _weekStart => _selectedDay.subtract(
-        Duration(days: _selectedDay.weekday - DateTime.monday),
-      );
+    Duration(days: _selectedDay.weekday - DateTime.monday),
+  );
 
   void _movePeriod(int direction) {
     setState(() {
@@ -60,19 +60,14 @@ class _CalendarioAcademicoEstudiantePantallaState
             _visibleMonth.year,
             _visibleMonth.month + direction,
           );
-          _selectedDay = DateTime(
-            _visibleMonth.year,
-            _visibleMonth.month,
-          );
+          _selectedDay = DateTime(_visibleMonth.year, _visibleMonth.month);
         case _VistaCalendarioAcademico.semana:
           _selectedDay = _dateOnly(
             _selectedDay.add(Duration(days: 7 * direction)),
           );
           _visibleMonth = DateTime(_selectedDay.year, _selectedDay.month);
         case _VistaCalendarioAcademico.dia:
-          _selectedDay = _dateOnly(
-            _selectedDay.add(Duration(days: direction)),
-          );
+          _selectedDay = _dateOnly(_selectedDay.add(Duration(days: direction)));
           _visibleMonth = DateTime(_selectedDay.year, _selectedDay.month);
       }
     });
@@ -133,29 +128,29 @@ class _CalendarioAcademicoEstudiantePantallaState
   }
 
   String _weekdayName(DateTime value) => const <String>[
-        'lunes',
-        'martes',
-        'mi\u00e9rcoles',
-        'jueves',
-        'viernes',
-        's\u00e1bado',
-        'domingo',
-      ][value.weekday - 1];
+    'lunes',
+    'martes',
+    'mi\u00e9rcoles',
+    'jueves',
+    'viernes',
+    's\u00e1bado',
+    'domingo',
+  ][value.weekday - 1];
 
   String _monthName(DateTime value) => const <String>[
-        'enero',
-        'febrero',
-        'marzo',
-        'abril',
-        'mayo',
-        'junio',
-        'julio',
-        'agosto',
-        'septiembre',
-        'octubre',
-        'noviembre',
-        'diciembre',
-      ][value.month - 1];
+    'enero',
+    'febrero',
+    'marzo',
+    'abril',
+    'mayo',
+    'junio',
+    'julio',
+    'agosto',
+    'septiembre',
+    'octubre',
+    'noviembre',
+    'diciembre',
+  ][value.month - 1];
 
   String _shortMonth(DateTime value) => _monthName(value).substring(0, 3);
 
@@ -187,8 +182,9 @@ class _CalendarioAcademicoEstudiantePantallaState
       );
     }
 
-    final accentColor =
-        isSelected ? theme.colorScheme.primary : dayEvents.first.color;
+    final accentColor = isSelected
+        ? theme.colorScheme.primary
+        : dayEvents.first.color;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
@@ -220,10 +216,7 @@ class _CalendarioAcademicoEstudiantePantallaState
     }
   }
 
-  Widget _buildCalendarModeLabel(
-    String text,
-    _VistaCalendarioAcademico view,
-  ) {
+  Widget _buildCalendarModeLabel(String text, _VistaCalendarioAcademico view) {
     return FittedBox(
       fit: BoxFit.scaleDown,
       child: Row(
@@ -231,11 +224,7 @@ class _CalendarioAcademicoEstudiantePantallaState
         children: [
           _buildCalendarModeIcon(view),
           const SizedBox(width: 7),
-          Text(
-            text,
-            maxLines: 1,
-            overflow: TextOverflow.clip,
-          ),
+          Text(text, maxLines: 1, overflow: TextOverflow.clip),
         ],
       ),
     );
@@ -483,10 +472,7 @@ class _CalendarioAcademicoEstudiantePantallaState
                         ).animate(animation);
                         return FadeTransition(
                           opacity: animation,
-                          child: SlideTransition(
-                            position: slide,
-                            child: child,
-                          ),
+                          child: SlideTransition(position: slide, child: child),
                         );
                       },
                       child: Column(
@@ -513,8 +499,8 @@ class _CalendarioAcademicoEstudiantePantallaState
                                     builder: (context, constraints) {
                                       final double cellWidth =
                                           (constraints.maxWidth -
-                                                  (_monthGridSpacing * 6)) /
-                                              7;
+                                              (_monthGridSpacing * 6)) /
+                                          7;
                                       final double cellHeight = cellWidth
                                           .clamp(
                                             _monthCellMinHeight,
@@ -523,8 +509,8 @@ class _CalendarioAcademicoEstudiantePantallaState
                                           .toDouble();
                                       final double gridHeight =
                                           (cellHeight * _monthGridRows) +
-                                              (_monthGridSpacing *
-                                                  (_monthGridRows - 1));
+                                          (_monthGridSpacing *
+                                              (_monthGridRows - 1));
 
                                       return SizedBox(
                                         height: gridHeight,
@@ -535,12 +521,14 @@ class _CalendarioAcademicoEstudiantePantallaState
                                           itemCount: totalCells,
                                           gridDelegate:
                                               SliverGridDelegateWithFixedCrossAxisCount(
-                                            crossAxisCount: 7,
-                                            mainAxisSpacing: _monthGridSpacing,
-                                            crossAxisSpacing: _monthGridSpacing,
-                                            childAspectRatio:
-                                                cellWidth / cellHeight,
-                                          ),
+                                                crossAxisCount: 7,
+                                                mainAxisSpacing:
+                                                    _monthGridSpacing,
+                                                crossAxisSpacing:
+                                                    _monthGridSpacing,
+                                                childAspectRatio:
+                                                    cellWidth / cellHeight,
+                                              ),
                                           itemBuilder: (context, index) {
                                             final dayNumber =
                                                 index - firstWeekdayOffset + 1;
@@ -553,49 +541,61 @@ class _CalendarioAcademicoEstudiantePantallaState
                                               _visibleMonth.month,
                                               dayNumber,
                                             );
-                                            final dayEvents = eventsByDay[
-                                                    _dateOnly(date)] ??
-                                                const <_EventoCalendarioAcademico>[];
-                                            final isSelected =
-                                                _isSameDay(date, _selectedDay);
+                                            final dayEvents =
+                                                eventsByDay[_dateOnly(date)] ??
+                                                const <
+                                                  _EventoCalendarioAcademico
+                                                >[];
+                                            final isSelected = _isSameDay(
+                                              date,
+                                              _selectedDay,
+                                            );
 
                                             return Material(
                                               color: Colors.transparent,
                                               child: InkWell(
                                                 borderRadius:
                                                     BorderRadius.circular(16),
-                                                onTap: () => setState(() =>
-                                                    _selectedDay =
-                                                        _dateOnly(date)),
+                                                onTap: () => setState(
+                                                  () => _selectedDay =
+                                                      _dateOnly(date),
+                                                ),
                                                 child: Container(
                                                   clipBehavior: Clip.hardEdge,
                                                   padding:
                                                       const EdgeInsets.fromLTRB(
-                                                    4,
-                                                    5,
-                                                    4,
-                                                    4,
-                                                  ),
+                                                        4,
+                                                        5,
+                                                        4,
+                                                        4,
+                                                      ),
                                                   decoration: BoxDecoration(
                                                     color: isSelected
                                                         ? theme
-                                                            .colorScheme.primary
-                                                            .withValues(
-                                                                alpha: 0.12)
+                                                              .colorScheme
+                                                              .primary
+                                                              .withValues(
+                                                                alpha: 0.12,
+                                                              )
                                                         : Colors.white,
                                                     borderRadius:
                                                         BorderRadius.circular(
-                                                            16),
+                                                          16,
+                                                        ),
                                                     border: Border.all(
                                                       color: isSelected
-                                                          ? theme.colorScheme
-                                                              .primary
-                                                              .withValues(
-                                                                  alpha: 0.26)
-                                                          : theme.colorScheme
-                                                              .outline
-                                                              .withValues(
-                                                                  alpha: 0.16),
+                                                          ? theme
+                                                                .colorScheme
+                                                                .primary
+                                                                .withValues(
+                                                                  alpha: 0.26,
+                                                                )
+                                                          : theme
+                                                                .colorScheme
+                                                                .outline
+                                                                .withValues(
+                                                                  alpha: 0.16,
+                                                                ),
                                                     ),
                                                   ),
                                                   child: Column(
@@ -605,19 +605,21 @@ class _CalendarioAcademicoEstudiantePantallaState
                                                         maxLines: 1,
                                                         overflow:
                                                             TextOverflow.clip,
-                                                        style: theme.textTheme
+                                                        style: theme
+                                                            .textTheme
                                                             .labelLarge
                                                             ?.copyWith(
-                                                          fontWeight:
-                                                              FontWeight.w900,
-                                                          color: isSelected
-                                                              ? theme
-                                                                  .colorScheme
-                                                                  .primary
-                                                              : theme
-                                                                  .colorScheme
-                                                                  .onSurface,
-                                                        ),
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w900,
+                                                              color: isSelected
+                                                                  ? theme
+                                                                        .colorScheme
+                                                                        .primary
+                                                                  : theme
+                                                                        .colorScheme
+                                                                        .onSurface,
+                                                            ),
                                                       ),
                                                       const Spacer(),
                                                       SizedBox(
@@ -625,10 +627,10 @@ class _CalendarioAcademicoEstudiantePantallaState
                                                         child: Center(
                                                           child:
                                                               _buildMonthEventIndicator(
-                                                            context,
-                                                            dayEvents,
-                                                            isSelected,
-                                                          ),
+                                                                context,
+                                                                dayEvents,
+                                                                isSelected,
+                                                              ),
                                                         ),
                                                       ),
                                                     ],
@@ -681,17 +683,21 @@ class _CalendarioAcademicoEstudiantePantallaState
                                           : _detailSectionContentMinHeight,
                                     ),
                                     child: AnimatedSize(
-                                      duration:
-                                          const Duration(milliseconds: 220),
-                                      reverseDuration:
-                                          const Duration(milliseconds: 180),
+                                      duration: const Duration(
+                                        milliseconds: 220,
+                                      ),
+                                      reverseDuration: const Duration(
+                                        milliseconds: 180,
+                                      ),
                                       curve: Curves.easeInOutCubic,
                                       alignment: Alignment.topCenter,
                                       child: AnimatedCrossFade(
-                                        duration:
-                                            const Duration(milliseconds: 220),
-                                        reverseDuration:
-                                            const Duration(milliseconds: 180),
+                                        duration: const Duration(
+                                          milliseconds: 220,
+                                        ),
+                                        reverseDuration: const Duration(
+                                          milliseconds: 180,
+                                        ),
                                         sizeCurve: Curves.easeInOutCubic,
                                         firstCurve: Curves.easeOutCubic,
                                         secondCurve: Curves.easeOutCubic,
@@ -707,11 +713,12 @@ class _CalendarioAcademicoEstudiantePantallaState
                                               'No hay movimientos o acreditaciones guardadas para este d\u00eda.',
                                               style: theme.textTheme.bodyLarge
                                                   ?.copyWith(
-                                                fontSize: 14,
-                                                height: 1.2,
-                                                color: theme.colorScheme
-                                                    .onSurfaceVariant,
-                                              ),
+                                                    fontSize: 14,
+                                                    height: 1.2,
+                                                    color: theme
+                                                        .colorScheme
+                                                        .onSurfaceVariant,
+                                                  ),
                                             ),
                                           ),
                                         ),
@@ -757,10 +764,7 @@ class _CalendarioAcademicoEstudiantePantallaState
 }
 
 class _IconoModoCalendario extends StatelessWidget {
-  const _IconoModoCalendario({
-    required this.filas,
-    required this.columnas,
-  });
+  const _IconoModoCalendario({required this.filas, required this.columnas});
 
   final int filas;
   final int columnas;
@@ -903,9 +907,7 @@ class _BaldosaEventoCalendarioAcademico extends StatelessWidget {
           decoration: BoxDecoration(
             color: event.color.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(
-              color: event.color.withValues(alpha: 0.16),
-            ),
+            border: Border.all(color: event.color.withValues(alpha: 0.16)),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -944,8 +946,9 @@ class _BaldosaEventoCalendarioAcademico extends StatelessWidget {
                 const SizedBox(width: 10),
                 Icon(
                   Icons.chevron_right_rounded,
-                  color: theme.colorScheme.onSurfaceVariant
-                      .withValues(alpha: 0.42),
+                  color: theme.colorScheme.onSurfaceVariant.withValues(
+                    alpha: 0.42,
+                  ),
                 ),
               ],
             ],

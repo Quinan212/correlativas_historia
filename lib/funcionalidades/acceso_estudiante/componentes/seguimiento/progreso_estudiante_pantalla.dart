@@ -133,10 +133,7 @@ class _ProgresoEstudiantePantalla extends StatelessWidget {
 }
 
 class _TarjetaProgresoAnio extends StatelessWidget {
-  const _TarjetaProgresoAnio({
-    required this.year,
-    required this.entries,
-  });
+  const _TarjetaProgresoAnio({required this.year, required this.entries});
 
   final int year;
   final List<_CurriculumEntry> entries;

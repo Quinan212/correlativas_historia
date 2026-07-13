@@ -83,10 +83,7 @@ class _EtiquetaEstado extends StatelessWidget {
 }
 
 class _CompactInsignia extends StatelessWidget {
-  const _CompactInsignia({
-    required this.label,
-    required this.color,
-  });
+  const _CompactInsignia({required this.label, required this.color});
 
   final String label;
   final Color color;
@@ -103,9 +100,9 @@ class _CompactInsignia extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              fontWeight: FontWeight.w800,
-              color: color,
-            ),
+          fontWeight: FontWeight.w800,
+          color: color,
+        ),
       ),
     );
   }

@@ -14,13 +14,15 @@ class _HojaRegistroInvitadoState extends State<_HojaRegistroInvitado> {
   String _selectedCareer = 'historia';
 
   List<CareerInfo> get _sheetCareers => kCareers
-      .where((c) => [
-            'artes_visuales',
-            'historia',
-            'geografia',
-            'politica',
-            'musica',
-          ].contains(c.id))
+      .where(
+        (c) => [
+          'artes_visuales',
+          'historia',
+          'geografia',
+          'politica',
+          'musica',
+        ].contains(c.id),
+      )
       .toList();
 
   Widget _buildCareerRow(CareerInfo c, ColorScheme scheme) {
@@ -40,11 +42,8 @@ class _HojaRegistroInvitadoState extends State<_HojaRegistroInvitado> {
               cacheWidth: 64,
               cacheHeight: 64,
               filterQuality: FilterQuality.low,
-              errorBuilder: (_, _, _) => Icon(
-                Icons.school_rounded,
-                size: 18,
-                color: scheme.onSurface,
-              ),
+              errorBuilder: (_, _, _) =>
+                  Icon(Icons.school_rounded, size: 18, color: scheme.onSurface),
             ),
           ),
           const SizedBox(width: 8),
@@ -65,8 +64,9 @@ class _HojaRegistroInvitadoState extends State<_HojaRegistroInvitado> {
   }
 
   void _submit() {
-    final name =
-        _nameCtrl.text.trim().isEmpty ? 'Invitado' : _nameCtrl.text.trim();
+    final name = _nameCtrl.text.trim().isEmpty
+        ? 'Invitado'
+        : _nameCtrl.text.trim();
     widget.onStart(name, _selectedCareer);
   }
 
@@ -140,9 +140,7 @@ class _HojaRegistroInvitadoState extends State<_HojaRegistroInvitado> {
                   decoration: BoxDecoration(
                     color: scheme.surface,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: scheme.outlineVariant,
-                    ),
+                    border: Border.all(color: scheme.outlineVariant),
                   ),
                   padding: const EdgeInsets.symmetric(horizontal: 14),
                   child: DropdownButtonHideUnderline(
@@ -158,12 +156,14 @@ class _HojaRegistroInvitadoState extends State<_HojaRegistroInvitado> {
                         color: scheme.onSurfaceVariant,
                       ),
                       selectedItemBuilder: (context) {
-                        return _sheetCareers.map((c) {
-                          return Align(
-                            alignment: Alignment.centerLeft,
-                            child: _buildCareerRow(c, scheme),
-                          );
-                        }).toList(growable: false);
+                        return _sheetCareers
+                            .map((c) {
+                              return Align(
+                                alignment: Alignment.centerLeft,
+                                child: _buildCareerRow(c, scheme),
+                              );
+                            })
+                            .toList(growable: false);
                       },
                       items: _sheetCareers
                           .map(
@@ -171,9 +171,7 @@ class _HojaRegistroInvitadoState extends State<_HojaRegistroInvitado> {
                               value: c.id,
                               child: Row(
                                 children: [
-                                  Expanded(
-                                    child: _buildCareerRow(c, scheme),
-                                  ),
+                                  Expanded(child: _buildCareerRow(c, scheme)),
                                   if (c.id == _selectedCareer) ...[
                                     Icon(
                                       Icons.check_rounded,

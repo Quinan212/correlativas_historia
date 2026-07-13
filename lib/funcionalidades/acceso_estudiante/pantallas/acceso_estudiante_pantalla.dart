@@ -309,11 +309,13 @@ class _AccesoEstudiantePantallaState
       key: const ValueKey('sage-persistent-host'),
       onClose: _closeSage,
     );
+    ref.read(proveedorSageActivo.notifier).state = true;
     setState(() => _showSage = true);
   }
 
   void _closeSage() {
     if (!mounted) return;
+    ref.read(proveedorSageActivo.notifier).state = false;
     setState(() => _showSage = false);
   }
 
@@ -818,6 +820,7 @@ class _AccesoEstudiantePantallaState
         if (!mounted) return;
         _navSession++; // Invalida los .then() de secciones anteriores.
         if (next != 0 && _showSage) {
+          ref.read(proveedorSageActivo.notifier).state = false;
           setState(() => _showSage = false);
         }
         if (next == 0) {

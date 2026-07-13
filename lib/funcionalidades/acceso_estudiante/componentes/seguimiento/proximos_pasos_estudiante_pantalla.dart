@@ -80,21 +80,25 @@ class _ProximosPasosEstudiantePantalla extends StatelessWidget {
     final availableEntries = entries
         .where((entry) => entry.current == null && entry.available)
         .toList(growable: false);
-    final pendingFinals = entries.where((entry) {
-      final current = entry.current;
-      if (current == null || _isSubjectApproved(current)) return false;
-      return _estadoMateriaParaRequisito(current) == 'regular' ||
-          _isSubjectInProgress(current);
-    }).toList(growable: false);
-    final missingContact = (student.contactPhone?.trim().isEmpty ?? true) ||
+    final pendingFinals = entries
+        .where((entry) {
+          final current = entry.current;
+          if (current == null || _isSubjectApproved(current)) return false;
+          return _estadoMateriaParaRequisito(current) == 'regular' ||
+              _isSubjectInProgress(current);
+        })
+        .toList(growable: false);
+    final missingContact =
+        (student.contactPhone?.trim().isEmpty ?? true) ||
         (student.contactEmail?.trim().isEmpty ?? true);
 
     _CurriculumEntry? bestCandidate;
     var bestUnlockCount = 0;
     for (final entry in availableEntries) {
-      final unlockCount = _subjectsUnlockedBy(entry, entries)
-          .where((candidate) => candidate.current == null)
-          .length;
+      final unlockCount = _subjectsUnlockedBy(
+        entry,
+        entries,
+      ).where((candidate) => candidate.current == null).length;
       if (unlockCount > bestUnlockCount) {
         bestUnlockCount = unlockCount;
         bestCandidate = entry;
@@ -129,9 +133,9 @@ class _ProximosPasosEstudiantePantalla extends StatelessWidget {
         detail: pendingFinals.isEmpty
             ? 'No hay materias en curso pendientes de cierre.'
             : pendingFinals
-                .take(2)
-                .map((entry) => entry.materia.displayNombre)
-                .join(' \u00b7 '),
+                  .take(2)
+                  .map((entry) => entry.materia.displayNombre)
+                  .join(' \u00b7 '),
       ),
       if (bestCandidate != null)
         _ItemProximoPaso(

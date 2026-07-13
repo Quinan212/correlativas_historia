@@ -120,7 +120,8 @@ class _MainScreenState extends ConsumerState<MainScreen> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final loggedIn = ref.watch(proveedorSesionActivaSupabase);
-    final showNavBar = !isDesktop && loggedIn;
+    final sageActivo = ref.watch(proveedorSageActivo);
+    final showNavBar = !isDesktop && loggedIn && !sageActivo;
 
     ref.listen<bool>(proveedorSesionActivaSupabase, (previous, next) {
       if (previous == next) return;
