@@ -31,6 +31,10 @@ DocumentoNavegacionSage documento({
   bool visible = true,
   int depth = 0,
   String frameId = 'root',
+  bool hasList2 = false,
+  bool hasTabs = false,
+  bool hasSchoolFrame = false,
+  bool hasHistoryOption = false,
 }) {
   return DocumentoNavegacionSage(
     host: 'sage.entrerios.gov.ar',
@@ -39,6 +43,10 @@ DocumentoNavegacionSage documento({
     frameName: '',
     profundidad: depth,
     visible: visible,
+    hasList2: hasList2,
+    hasTabs: hasTabs,
+    hasSchoolFrame: hasSchoolFrame,
+    hasHistoryOption: hasHistoryOption,
     encabezados: headings,
     enlaces: [
       for (final text in links)
@@ -138,7 +146,7 @@ void main() {
     },
   );
 
-  test('una ruta posterior bloquea enlaces residuales de submódulos', () {
+  test('un listado activo tiene prioridad sobre enlaces residuales', () {
     final value = CapturaNavegacionSage(
       host: 'sage.entrerios.gov.ar',
       pathname: '/pregase/index.php',
@@ -161,10 +169,11 @@ void main() {
           headings: const ['Listado de alumnos'],
           depth: 1,
           frameId: 'Main',
+          hasList2: true,
         ),
       ],
     );
-    expect(detector.detectar(value), EstadoNavegacionSage.otraPagina);
+    expect(detector.detectar(value), EstadoNavegacionSage.listadoLegajos);
   });
 
   test('un documento activo con encabezado y enlaces es submódulos válido', () {
@@ -350,5 +359,103 @@ void main() {
     );
     expect(result.documentoActivo?.frameId, 'frm_alumnos');
     expect(result.documentoActivo?.pathname, '/dic/Listar2.php');
+  });
+
+  test('listado de legajos tiene prioridad sobre el menú residual', () {
+    final value = CapturaNavegacionSage(
+      host: 'sage.entrerios.gov.ar',
+      pathname: '/pregase/index.php',
+      tieneMain: true,
+      encabezados: const [],
+      enlaces: const [],
+      documentos: [
+        documento(
+          pathname: '/pregase/menuprincipal_nuevo.php',
+          headings: const ['Submódulos'],
+          links: const [
+            'Legajo Alumnos',
+            'Certificado de Alumno Regular. N. Superior',
+            'Inscripción a una nueva materia (Nivel Superior)',
+          ],
+        ),
+        documento(
+          pathname: '/dic/Listar2.php',
+          headings: const ['Listado de alumnos'],
+          depth: 1,
+          frameId: 'frm_alumnos',
+          hasList2: true,
+        ),
+      ],
+    );
+    expect(detector.detectar(value), EstadoNavegacionSage.listadoLegajos);
+  });
+
+  test('tabs con Escolares se clasifica como secciones del legajo', () {
+    final value = CapturaNavegacionSage(
+      host: 'sage.entrerios.gov.ar',
+      pathname: '/pregase/index.php',
+      tieneMain: true,
+      encabezados: const [],
+      enlaces: const [],
+      documentos: [
+        documento(
+          pathname: '/dic/tabs.php',
+          headings: const ['Legajo'],
+          links: const ['Escolares'],
+          hasTabs: true,
+        ),
+      ],
+    );
+    expect(detector.detectar(value), EstadoNavegacionSage.seccionesLegajo);
+  });
+
+  test('frame Escolares con historial se clasifica como etapa escolar', () {
+    final value = CapturaNavegacionSage(
+      host: 'sage.entrerios.gov.ar',
+      pathname: '/dic/tabs.php',
+      tieneMain: true,
+      encabezados: const [],
+      enlaces: const [],
+      documentos: [
+        documento(
+          pathname: '/dic/tabs.php',
+          headings: const ['Secciones'],
+          links: const ['Escolares'],
+          frameId: 'frm_alumnos',
+          depth: 1,
+          hasTabs: true,
+        ),
+        documento(
+          pathname: '/dic/tabs.php',
+          headings: const ['Nivel Superior - Historial'],
+          links: const ['Nivel Superior - Historial'],
+          frameId: 'frm_alumnos_escolares',
+          depth: 2,
+          hasSchoolFrame: true,
+          hasHistoryOption: true,
+        ),
+      ],
+    );
+    expect(detector.detectar(value), EstadoNavegacionSage.escolares);
+  });
+
+  test('el hijo solo no activa Escolares sin el padre correcto', () {
+    final value = CapturaNavegacionSage(
+      host: 'sage.entrerios.gov.ar',
+      pathname: '/dic/tabs.php',
+      tieneMain: true,
+      encabezados: const [],
+      enlaces: const [],
+      documentos: [
+        documento(
+          pathname: '/dic/tabs.php',
+          headings: const ['Nivel Superior - Historial'],
+          frameId: 'frm_alumnos_escolares',
+          hasSchoolFrame: true,
+          hasHistoryOption: true,
+        ),
+      ],
+    );
+    expect(detector.detectar(value), isNot(EstadoNavegacionSage.escolares));
   });
 }

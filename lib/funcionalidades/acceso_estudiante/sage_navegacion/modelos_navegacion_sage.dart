@@ -3,6 +3,9 @@ enum EstadoNavegacionSage {
   login,
   modulos,
   submodulosLegajoUnico,
+  listadoLegajos,
+  seccionesLegajo,
+  escolares,
   otraPagina,
   sesionVencida,
   error,
@@ -46,7 +49,17 @@ bool webViewSageVisible({
   required bool modulos,
   required bool submodulos,
   required bool carga,
-}) => !historial && !modulos && !submodulos && !carga;
+  bool legajo = false,
+  bool secciones = false,
+  bool escolares = false,
+}) =>
+    !historial &&
+    !modulos &&
+    !submodulos &&
+    !carga &&
+    !legajo &&
+    !secciones &&
+    !escolares;
 
 class EnlaceNavegacionSage {
   const EnlaceNavegacionSage({
@@ -78,6 +91,10 @@ class DocumentoNavegacionSage {
     required this.visible,
     required this.encabezados,
     required this.enlaces,
+    this.hasList2 = false,
+    this.hasTabs = false,
+    this.hasSchoolFrame = false,
+    this.hasHistoryOption = false,
   });
 
   final String host;
@@ -88,6 +105,10 @@ class DocumentoNavegacionSage {
   final bool visible;
   final List<String> encabezados;
   final List<EnlaceNavegacionSage> enlaces;
+  final bool hasList2;
+  final bool hasTabs;
+  final bool hasSchoolFrame;
+  final bool hasHistoryOption;
 
   factory DocumentoNavegacionSage.fromJson(Map<String, dynamic> json) {
     final links = json['links'];
@@ -107,6 +128,10 @@ class DocumentoNavegacionSage {
           if (value is Map<String, dynamic>)
             EnlaceNavegacionSage.fromJson(value),
       ],
+      hasList2: json['hasList2'] == true,
+      hasTabs: json['hasTabs'] == true,
+      hasSchoolFrame: json['hasSchoolFrame'] == true,
+      hasHistoryOption: json['hasHistoryOption'] == true,
     );
   }
 }

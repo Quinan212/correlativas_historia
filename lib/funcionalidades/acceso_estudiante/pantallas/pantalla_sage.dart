@@ -15,6 +15,12 @@ import 'package:webview_flutter_android/webview_flutter_android.dart';
 import '../sage_historial/controlador_historial_sage.dart';
 import '../sage_historial/modelos_historial_sage.dart';
 import '../sage_historial/pantalla_historial_sage.dart';
+import '../sage_legajo/ejecutor_legajo_sage.dart';
+import '../sage_legajo/extractor_legajo_sage.dart';
+import '../sage_legajo/modelos_legajo_sage.dart';
+import '../sage_legajo/pantalla_escolares_sage.dart';
+import '../sage_legajo/pantalla_mi_legajo_sage.dart';
+import '../sage_legajo/pantalla_secciones_legajo_sage.dart';
 import '../sage_navegacion/detector_navegacion_sage.dart';
 import '../sage_navegacion/modelos_navegacion_sage.dart';
 import '../sage_navegacion/pantalla_carga_sage.dart';
@@ -56,6 +62,9 @@ class _PantallaSageState extends State<PantallaSage> {
   bool _nativeHistoryVisible = false;
   bool _nativeModulesVisible = false;
   bool _nativeSubmodulesVisible = false;
+  bool _nativeLegajoVisible = false;
+  bool _nativeSeccionesLegajoVisible = false;
+  bool _nativeEscolaresVisible = false;
   bool _nativeLoadingVisible = false;
   String _nativeLoadingMessage = 'Preparando tus servicios académicos…';
   String? _navigationActionInFlight;
@@ -74,6 +83,10 @@ class _PantallaSageState extends State<PantallaSage> {
   final Set<String> _historyAutoAttemptedCareerIds = <String>{};
   Timer? _historyPollTimer;
   Timer? _navigationDebounceTimer;
+  ResultadoExtraccionLegajoSage? _legajoExtraction;
+  String? _legajoActionInFlight;
+  String? _legajoOriginSignature;
+  TipoAccionLegajoSage _tipoAccionLegajo = TipoAccionLegajoSage.ninguna;
   int _loadRequestCount = 0;
 
   @override
@@ -532,15 +545,29 @@ class _PantallaSageState extends State<PantallaSage> {
     _navigationProbeRunning = true;
     try {
       final result = await _probeSageNavigation();
+      final legajoResult = await _probeLegajoIfRelevant(result);
       unawaited(_installNavigationObservers());
       if (!mounted) return;
 
       if (_navigationAwaitingTransition) {
-        final transitionConfirmed = cambioNavegacionSageConfirmado(
-          resultado: result,
-          firmaOrigen: _navigationOriginSignature,
-          estadoOrigen: _navigationOriginState,
-        );
+        final escolaresConfirmed =
+            _tipoAccionLegajo == TipoAccionLegajoSage.abrirEscolares &&
+            legajoResult?.etapa == EtapaLegajoSage.escolares &&
+            legajoResult!.parentFrameFound &&
+            legajoResult.childFrameFound &&
+            legajoResult.childReady;
+        final legajoTransitionConfirmed =
+            _tipoAccionLegajo != TipoAccionLegajoSage.abrirHistorial &&
+            legajoResult?.disponible == true &&
+            legajoResult!.firma != _legajoOriginSignature;
+        final transitionConfirmed =
+            cambioNavegacionSageConfirmado(
+              resultado: result,
+              firmaOrigen: _navigationOriginSignature,
+              estadoOrigen: _navigationOriginState,
+            ) ||
+            legajoTransitionConfirmed ||
+            escolaresConfirmed;
         final intermediateOtherPage =
             result.estado == EstadoNavegacionSage.otraPagina &&
             result.documentoActivo?.pathname == _navigationOriginPath;
@@ -548,28 +575,56 @@ class _PantallaSageState extends State<PantallaSage> {
             _navigationActionStartedAt != null &&
             DateTime.now().difference(_navigationActionStartedAt!) >
                 const Duration(seconds: 8);
-        if (transitionConfirmed && !intermediateOtherPage) {
+        if (_tipoAccionLegajo == TipoAccionLegajoSage.abrirHistorial) {
+          if (!timedOut) return;
+          final tipoFallido = _tipoAccionLegajo;
+          setState(() {
+            _navigationAwaitingTransition = false;
+            _navigationActionInFlight = null;
+            _legajoActionInFlight = null;
+            _nativeLoadingVisible = false;
+            _tipoAccionLegajo = TipoAccionLegajoSage.ninguna;
+            _navigationOriginSignature = null;
+            _navigationOriginState = null;
+            _navigationOriginPath = null;
+            _navigationActionStartedAt = null;
+            _legajoOriginSignature = null;
+          });
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(_timeoutMessage(tipoFallido))));
+          return;
+        }
+        if (transitionConfirmed &&
+            (!intermediateOtherPage ||
+                legajoTransitionConfirmed ||
+                escolaresConfirmed)) {
           _navigationAwaitingTransition = false;
           _navigationActionInFlight = null;
+          _legajoActionInFlight = null;
           _navigationOriginSignature = null;
           _navigationOriginState = null;
           _navigationOriginPath = null;
           _navigationActionStartedAt = null;
+          _legajoOriginSignature = null;
+          _tipoAccionLegajo = TipoAccionLegajoSage.ninguna;
         } else if (timedOut) {
+          final tipoFallido = _tipoAccionLegajo;
           setState(() {
             _navigationAwaitingTransition = false;
             _navigationActionInFlight = null;
+            _legajoActionInFlight = null;
             _nativeLoadingVisible = false;
             _navigationOriginSignature = null;
             _navigationOriginState = null;
             _navigationOriginPath = null;
             _navigationActionStartedAt = null;
+            _legajoOriginSignature = null;
+            _tipoAccionLegajo = TipoAccionLegajoSage.ninguna;
           });
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('SAGE no confirmó el cambio de pantalla.'),
-            ),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(_timeoutMessage(tipoFallido))));
           return;
         } else {
           return;
@@ -587,23 +642,42 @@ class _PantallaSageState extends State<PantallaSage> {
             _nativeHistoryVisible = false;
             _nativeModulesVisible = true;
             _nativeSubmodulesVisible = false;
+            _nativeLegajoVisible = false;
+            _nativeSeccionesLegajoVisible = false;
+            _nativeEscolaresVisible = false;
             _nativeLoadingVisible = false;
             _navigationActionInFlight = null;
           case EstadoNavegacionSage.submodulosLegajoUnico:
             _nativeHistoryVisible = false;
             _nativeModulesVisible = false;
             _nativeSubmodulesVisible = true;
+            _nativeLegajoVisible = false;
+            _nativeSeccionesLegajoVisible = false;
+            _nativeEscolaresVisible = false;
             _nativeLoadingVisible = false;
             _navigationActionInFlight = null;
+          case EstadoNavegacionSage.listadoLegajos:
+          case EstadoNavegacionSage.seccionesLegajo:
+          case EstadoNavegacionSage.escolares:
+            _nativeHistoryVisible = false;
+            _nativeModulesVisible = false;
+            _nativeSubmodulesVisible = false;
+            _nativeLoadingVisible = true;
           case EstadoNavegacionSage.login:
           case EstadoNavegacionSage.sesionVencida:
             _nativeHistoryVisible = false;
             _nativeModulesVisible = false;
             _nativeSubmodulesVisible = false;
+            _nativeLegajoVisible = false;
+            _nativeSeccionesLegajoVisible = false;
+            _nativeEscolaresVisible = false;
             _nativeLoadingVisible = false;
           case EstadoNavegacionSage.otraPagina:
             _nativeModulesVisible = false;
             _nativeSubmodulesVisible = false;
+            _nativeLegajoVisible = false;
+            _nativeSeccionesLegajoVisible = false;
+            _nativeEscolaresVisible = false;
             _nativeLoadingVisible = false;
           case EstadoNavegacionSage.desconocido:
             if (result.shellPrivado) {
@@ -611,11 +685,93 @@ class _PantallaSageState extends State<PantallaSage> {
               _nativeLoadingMessage = 'Preparando tus servicios académicos…';
             }
           case EstadoNavegacionSage.error:
+            _nativeLegajoVisible = false;
+            _nativeSeccionesLegajoVisible = false;
+            _nativeEscolaresVisible = false;
             _nativeLoadingVisible = false;
         }
+        _applyLegajoResult(legajoResult);
       });
     } finally {
       _navigationProbeRunning = false;
+    }
+  }
+
+  Future<ResultadoExtraccionLegajoSage?> _probeLegajoIfRelevant(
+    ResultadoDeteccionNavegacionSage result,
+  ) async {
+    final path = result.documentoActivo?.pathname.toLowerCase() ?? '';
+    final relevant =
+        path == '/dic/listar2.php' ||
+        path == '/dic/tabs.php' ||
+        result.documentoActivo?.frameId.toLowerCase() ==
+            'frm_alumnos_escolares' ||
+        result.estado == EstadoNavegacionSage.listadoLegajos ||
+        result.estado == EstadoNavegacionSage.seccionesLegajo ||
+        result.estado == EstadoNavegacionSage.escolares ||
+        _nativeLegajoVisible ||
+        _nativeSeccionesLegajoVisible ||
+        _nativeEscolaresVisible ||
+        _tipoAccionLegajo != TipoAccionLegajoSage.ninguna ||
+        _navigationAwaitingTransition;
+    if (!relevant) return null;
+    final extraction = await ExtractorLegajoSage(_evaluateJavascript).extraer();
+    _legajoExtraction = extraction;
+    if (kDebugMode && extraction.etapa != EtapaLegajoSage.ninguna) {
+      debugPrint(
+        '[SAGE legajo] stage=${extraction.etapa.name}; '
+        'state=${extraction.estado.name}; frame=${extraction.frameId}; '
+        'path=${extraction.pathname}; profiles=${extraction.perfiles.length}; '
+        'sections=${extraction.secciones.length}; '
+        'school_options=${extraction.opcionesEscolares.length}',
+      );
+      if (extraction.etapa == EtapaLegajoSage.escolares) {
+        debugPrint(
+          '[SAGE escolares detect] parent_found=${extraction.parentFrameFound}; '
+          'parent_path=${extraction.pathname}; '
+          'child_found=${extraction.childFrameFound}; '
+          'child_ready=${extraction.childReady}; '
+          'child_path=${extraction.childPathname}; '
+          'tabs_count=${extraction.opcionesEscolares.length}; '
+          'historial_alumnado_found=${extraction.opcionesEscolares.any((option) => normalizarLegajoSage(option.titulo) == 'historial del alumnado')}; '
+          'nivel_superior_historial_found=${extraction.opcionesEscolares.any((option) => normalizarLegajoSage(option.titulo) == 'nivel superior - historial')}; '
+          'state=escolaresDisponible',
+        );
+      }
+    }
+    return extraction;
+  }
+
+  void _applyLegajoResult(ResultadoExtraccionLegajoSage? extraction) {
+    if (extraction == null) return;
+    if (extraction.estado == EstadoExtraccionLegajoSage.cargando) {
+      if (!_nativeHistoryVisible) {
+        _nativeLoadingVisible = true;
+        _nativeLoadingMessage = 'Preparando la información de tu legajo…';
+      }
+      return;
+    }
+    if (!extraction.disponible) return;
+    _navigationActionInFlight = null;
+    _legajoActionInFlight = null;
+    _nativeLoadingVisible = false;
+    _nativeModulesVisible = false;
+    _nativeSubmodulesVisible = false;
+    switch (extraction.etapa) {
+      case EtapaLegajoSage.miLegajo:
+        _nativeLegajoVisible = true;
+        _nativeSeccionesLegajoVisible = false;
+        _nativeEscolaresVisible = false;
+      case EtapaLegajoSage.secciones:
+        _nativeLegajoVisible = false;
+        _nativeSeccionesLegajoVisible = true;
+        _nativeEscolaresVisible = false;
+      case EtapaLegajoSage.escolares:
+        _nativeLegajoVisible = false;
+        _nativeSeccionesLegajoVisible = false;
+        _nativeEscolaresVisible = true;
+      case EtapaLegajoSage.ninguna:
+        break;
     }
   }
 
@@ -638,8 +794,16 @@ class _PantallaSageState extends State<PantallaSage> {
       if (!mounted) return;
       if (result.pantallaDetectada) {
         setState(() {
+          _navigationAwaitingTransition = false;
+          _navigationActionInFlight = null;
+          _legajoActionInFlight = null;
+          _tipoAccionLegajo = TipoAccionLegajoSage.ninguna;
+          _legajoOriginSignature = null;
           _nativeModulesVisible = false;
           _nativeSubmodulesVisible = false;
+          _nativeLegajoVisible = false;
+          _nativeSeccionesLegajoVisible = false;
+          _nativeEscolaresVisible = false;
           _nativeLoadingVisible = false;
           if (result.historial != null) {
             _history = _historyNeedsFreshDom
@@ -680,7 +844,7 @@ class _PantallaSageState extends State<PantallaSage> {
     try {
       final raw = await _evaluateJavascript(r'''(() => {
         const root = window;
-        const known = /(modulo|submodulo|legajo|certificado|inscrip|consulta|tutor|alumno|ingresar|sesion)/i;
+        const known = /(modulo|submodulo|legajo|certificado|inscrip|consulta|tutor|alumno|ingresar|sesion|escolares|personal|servicio|nivel|historial)/i;
         const output = {host:'', pathname:'', hasMain:false, headings:[], links:[], documents:[]};
         const seen = new Set();
         const visit = (win, depth = 0, frameId = 'root', frameName = '', isRoot = false) => {
@@ -692,6 +856,17 @@ class _PantallaSageState extends State<PantallaSage> {
           try {
             const host = String(win.location.hostname || '');
             const pathname = String(win.location.pathname || '');
+            const normalize = value => String(value || '')
+              .toLowerCase()
+              .normalize('NFD')
+              .replace(/[\u0300-\u036f]/g, '')
+              .replace(/\s+/g, ' ')
+              .trim();
+            const hasList2 = Boolean(doc.querySelector('#list2'));
+            const hasTabs = pathname.toLowerCase() === '/dic/tabs.php';
+            const hasSchoolFrame = String(frameId).toLowerCase() === 'frm_alumnos_escolares';
+            const hasHistoryOption = [...doc.querySelectorAll('a.tab_a,a[href],button,[role="button"],[onclick],td,li')]
+              .some(node => normalize(node.textContent || node.value).includes('nivel superior - historial'));
             let visible = true;
             if (!isRoot) {
               const frame = win.frameElement;
@@ -706,12 +881,6 @@ class _PantallaSageState extends State<PantallaSage> {
             }
             const headings = [];
             const links = [];
-            const normalize = value => String(value || '')
-              .toLowerCase()
-              .normalize('NFD')
-              .replace(/[\u0300-\u036f]/g, '')
-              .replace(/\s+/g, ' ')
-              .trim();
             if (isRoot) {
               output.host = host;
               output.pathname = pathname;
@@ -744,6 +913,7 @@ class _PantallaSageState extends State<PantallaSage> {
             });
             output.documents.push({
               host, pathname, frameId, frameName, depth, visible,
+              hasList2, hasTabs, hasSchoolFrame, hasHistoryOption,
               headings:[...new Set(headings)], links:links.slice(0,80),
             });
             doc.querySelectorAll('iframe').forEach((frame, index) => {
@@ -1066,13 +1236,178 @@ class _PantallaSageState extends State<PantallaSage> {
     setState(() {
       _nativeModulesVisible = false;
       _nativeSubmodulesVisible = false;
+      _nativeLegajoVisible = false;
+      _nativeSeccionesLegajoVisible = false;
+      _nativeEscolaresVisible = false;
       _nativeLoadingVisible = false;
+      _legajoActionInFlight = null;
       _navigationActionInFlight = null;
       _navigationAwaitingTransition = false;
       _navigationOriginSignature = null;
       _navigationOriginState = null;
       _navigationOriginPath = null;
+      _legajoOriginSignature = null;
+      _tipoAccionLegajo = TipoAccionLegajoSage.ninguna;
     });
+  }
+
+  Future<void> _activateLegajoProfile(PerfilLegajoSage profile) async {
+    if (_legajoActionInFlight != null) return;
+    _beginLegajoAction('Abriendo tu legajo…', TipoAccionLegajoSage.abrirPerfil);
+    final result = await EjecutorLegajoSage(
+      _evaluateJavascript,
+    ).abrirPerfil(profile);
+    _logLegajoAction(result);
+    if (!mounted) return;
+    if (!result.success) {
+      _endLegajoAction();
+      await _showLegajoActionFailure(
+        'No se pudo abrir este legajo.',
+        () => _activateLegajoProfile(profile),
+      );
+      return;
+    }
+    _navigationAwaitingTransition = true;
+    _scheduleNavigationProbe();
+    unawaited(_installNavigationObservers());
+  }
+
+  Future<void> _activateLegajoSection(SeccionLegajoSage section) async {
+    if (_legajoActionInFlight != null) return;
+    final isSchool =
+        section.clave == 'escolares' ||
+        normalizarLegajoSage(section.titulo) == 'escolares';
+    _beginLegajoAction(
+      isSchool ? 'Abriendo Escolares…' : 'Abriendo sección…',
+      isSchool
+          ? TipoAccionLegajoSage.abrirEscolares
+          : TipoAccionLegajoSage.abrirSeccion,
+    );
+    final executor = EjecutorLegajoSage(_evaluateJavascript);
+    final result = await (isSchool
+        ? executor.activarPestanaEscolares()
+        : executor.activarSeccion(section));
+    _logLegajoAction(result);
+    if (!mounted) return;
+    if (!result.success) {
+      _endLegajoAction();
+      await _showLegajoActionFailure(
+        isSchool
+            ? 'No se pudo abrir la sección Escolares.'
+            : 'No se pudo abrir esta sección.',
+        () => _activateLegajoSection(section),
+      );
+      return;
+    }
+    _navigationAwaitingTransition = true;
+    _scheduleNavigationProbe();
+    unawaited(_installNavigationObservers());
+  }
+
+  Future<void> _activateEscolarOption(OpcionEscolarSage option) async {
+    if (_legajoActionInFlight != null) return;
+    final isHistory =
+        option.clave == 'nivel_superior_historial' ||
+        normalizarLegajoSage(option.titulo) == 'nivel superior - historial';
+    _beginLegajoAction(
+      isHistory ? 'Cargando tu historial académico…' : 'Abriendo opción…',
+      isHistory
+          ? TipoAccionLegajoSage.abrirHistorial
+          : TipoAccionLegajoSage.abrirSeccion,
+    );
+    final executor = EjecutorLegajoSage(_evaluateJavascript);
+    final result = await (isHistory
+        ? executor.activarNivelSuperiorHistorial()
+        : executor.activarEscolares(option));
+    _logLegajoAction(result);
+    if (!mounted) return;
+    if (!result.success) {
+      _endLegajoAction();
+      await _showLegajoActionFailure(
+        isHistory
+            ? 'No se pudo abrir el Historial académico.'
+            : 'No se pudo abrir esta opción.',
+        () => _activateEscolarOption(option),
+      );
+      return;
+    }
+    _navigationAwaitingTransition = true;
+    _scheduleNavigationProbe();
+    unawaited(_installNavigationObservers());
+  }
+
+  void _beginLegajoAction(String message, TipoAccionLegajoSage tipo) {
+    _legajoOriginSignature = _legajoExtraction?.firma;
+    _legajoActionInFlight = message;
+    _tipoAccionLegajo = tipo;
+    _navigationOriginSignature = _lastNavigationResult?.firma;
+    _navigationOriginState = _lastNavigationResult?.estado;
+    _navigationOriginPath = _lastNavigationResult?.documentoActivo?.pathname;
+    _navigationActionStartedAt = DateTime.now();
+    if (mounted) {
+      setState(() {
+        _navigationActionInFlight = message;
+        _nativeLoadingVisible = true;
+        _nativeLoadingMessage = message;
+      });
+    }
+  }
+
+  void _endLegajoAction() {
+    _legajoActionInFlight = null;
+    _tipoAccionLegajo = TipoAccionLegajoSage.ninguna;
+    if (!mounted) return;
+    setState(() {
+      _navigationActionInFlight = null;
+      _nativeLoadingVisible = false;
+    });
+  }
+
+  String _timeoutMessage(TipoAccionLegajoSage tipo) => switch (tipo) {
+    TipoAccionLegajoSage.abrirHistorial =>
+      'SAGE no pudo abrir el Historial académico.',
+    TipoAccionLegajoSage.abrirEscolares =>
+      'No se pudo abrir la sección Escolares.',
+    TipoAccionLegajoSage.abrirPerfil => 'No se pudo abrir este legajo.',
+    _ => 'SAGE no confirmó el cambio de pantalla.',
+  };
+
+  Future<void> _showLegajoActionFailure(
+    String message,
+    Future<void> Function() retry,
+  ) async {
+    if (!mounted) return;
+    final shouldRetry = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('No se pudo continuar'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(false);
+              _showOriginalNavigation();
+            },
+            child: const Text('Ver página original'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Reintentar'),
+          ),
+        ],
+      ),
+    );
+    if (shouldRetry == true) await retry();
+  }
+
+  void _logLegajoAction(ResultadoAccionLegajoSage result) {
+    if (!kDebugMode) return;
+    debugPrint(
+      '[SAGE legajo action] type=${_tipoAccionLegajo.name}; '
+      'key=${result.matchedBy}; frame=${result.frameId}; '
+      'path=${result.pathnameBefore}; mechanism=${result.mechanism}; '
+      'found=${result.found}; activated=${result.activated}',
+    );
   }
 
   HistorialNivelSuperiorSage _mergeMasterHistory(
@@ -1835,6 +2170,9 @@ class _PantallaSageState extends State<PantallaSage> {
             _nativeHistoryVisible ||
                 _nativeModulesVisible ||
                 _nativeSubmodulesVisible ||
+                _nativeLegajoVisible ||
+                _nativeSeccionesLegajoVisible ||
+                _nativeEscolaresVisible ||
                 _nativeLoadingVisible
             ? null
             : AppBar(
@@ -1864,6 +2202,9 @@ class _PantallaSageState extends State<PantallaSage> {
                 modulos: _nativeModulesVisible,
                 submodulos: _nativeSubmodulesVisible,
                 carga: _nativeLoadingVisible,
+                legajo: _nativeLegajoVisible,
+                secciones: _nativeSeccionesLegajoVisible,
+                escolares: _nativeEscolaresVisible,
               ),
               maintainState: true,
               child: WebViewWidget(
@@ -1897,6 +2238,36 @@ class _PantallaSageState extends State<PantallaSage> {
               Positioned.fill(
                 child: PantallaSubmodulosSage(
                   onSelect: (option) => unawaited(_activateSageLink(option)),
+                  onBack: widget.onClose ?? _showOriginalNavigation,
+                  loadingTitle: _navigationActionInFlight,
+                ),
+              ),
+            if (_nativeLegajoVisible)
+              Positioned.fill(
+                child: PantallaMiLegajoSage(
+                  perfiles: _legajoExtraction?.perfiles ?? const [],
+                  onSelect: (profile) =>
+                      unawaited(_activateLegajoProfile(profile)),
+                  onBack: widget.onClose ?? _showOriginalNavigation,
+                  loadingTitle: _navigationActionInFlight,
+                ),
+              ),
+            if (_nativeSeccionesLegajoVisible)
+              Positioned.fill(
+                child: PantallaSeccionesLegajoSage(
+                  secciones: _legajoExtraction?.secciones ?? const [],
+                  onSelect: (section) =>
+                      unawaited(_activateLegajoSection(section)),
+                  onBack: widget.onClose ?? _showOriginalNavigation,
+                  loadingTitle: _navigationActionInFlight,
+                ),
+              ),
+            if (_nativeEscolaresVisible)
+              Positioned.fill(
+                child: PantallaEscolaresSage(
+                  opciones: _legajoExtraction?.opcionesEscolares ?? const [],
+                  onSelect: (option) =>
+                      unawaited(_activateEscolarOption(option)),
                   onBack: widget.onClose ?? _showOriginalNavigation,
                   loadingTitle: _navigationActionInFlight,
                 ),

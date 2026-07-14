@@ -42,6 +42,54 @@ class DetectorNavegacionSage {
       );
     }
 
+    DocumentoNavegacionSage? documentoTabs;
+    DocumentoNavegacionSage? documentoEscolares;
+    for (final documento in documentos) {
+      final frame = documento.frameId.toLowerCase();
+      final name = documento.frameName.toLowerCase();
+      if (documento.pathname.toLowerCase() == '/dic/tabs.php' &&
+          (frame == 'frm_alumnos' || name == 'frm_alumnos')) {
+        documentoTabs ??= documento;
+      }
+      if (frame == 'frm_alumnos_escolares' || name == 'frm_alumnos_escolares') {
+        documentoEscolares ??= documento;
+      }
+    }
+    if (documentoTabs != null && documentoEscolares != null) {
+      return _resultado(
+        EstadoNavegacionSage.escolares,
+        documentoTabs,
+        shellPrivado: true,
+        opciones: const ['nivel_superior_historial'],
+      );
+    }
+
+    final activo = _seleccionarDocumento(documentos);
+    if (activo != null) {
+      final rutaActiva = activo.pathname.toLowerCase();
+      if (activo.hasList2 && rutaActiva == '/dic/listar2.php') {
+        return _resultado(
+          EstadoNavegacionSage.listadoLegajos,
+          activo,
+          shellPrivado: true,
+          opciones: const ['listado_legajos'],
+        );
+      }
+      if (activo.hasTabs && rutaActiva == '/dic/tabs.php') {
+        final tieneEscolares = activo.enlaces.any(
+          (link) => normalizar(link.texto) == 'escolares',
+        );
+        if (tieneEscolares) {
+          return _resultado(
+            EstadoNavegacionSage.seccionesLegajo,
+            activo,
+            shellPrivado: true,
+            opciones: const ['escolares'],
+          );
+        }
+      }
+    }
+
     final posteriores =
         documentos
             .where(
@@ -58,7 +106,6 @@ class DetectorNavegacionSage {
       );
     }
 
-    final activo = _seleccionarDocumento(documentos);
     if (activo == null) {
       return ResultadoDeteccionNavegacionSage(
         estado: EstadoNavegacionSage.desconocido,
@@ -144,6 +191,9 @@ class DetectorNavegacionSage {
     final etiqueta = switch (estado) {
       EstadoNavegacionSage.modulos => 'modulos',
       EstadoNavegacionSage.submodulosLegajoUnico => 'submodulos',
+      EstadoNavegacionSage.listadoLegajos => 'listado_legajos',
+      EstadoNavegacionSage.seccionesLegajo => 'secciones_legajo',
+      EstadoNavegacionSage.escolares => 'escolares',
       EstadoNavegacionSage.login => 'login',
       EstadoNavegacionSage.sesionVencida => 'sesion_vencida',
       EstadoNavegacionSage.otraPagina => 'otra_pagina',
