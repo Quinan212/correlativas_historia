@@ -292,7 +292,7 @@ class _TarjetaIngreso extends StatelessWidget {
                       color: cs.error,
                       size: 20,
                     ),
-                    const SizedBox(width: 8),
+              const SizedBox(width: 2),
                     Expanded(
                       child: Text(
                         error!,
@@ -539,29 +539,21 @@ class _ExamShortcutBanner extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(30),
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
           decoration: BoxDecoration(
             color: scheme.secondaryContainer.withValues(alpha: 0.46),
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(30),
             border: Border.all(color: scheme.secondary.withValues(alpha: 0.14)),
           ),
           child: Row(
             children: [
-              Container(
-                width: 34,
-                height: 34,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: scheme.secondary.withValues(alpha: 0.16),
-                ),
-                child: Icon(
-                  Icons.event_available_rounded,
-                  color: scheme.secondary,
-                  size: 20,
-                ),
+              Icon(
+                Icons.event_available_rounded,
+                color: scheme.secondary,
+                size: 20,
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -574,7 +566,8 @@ class _ExamShortcutBanner extends StatelessWidget {
                   ),
                 ),
               ),
-              const Icon(Icons.chevron_right_rounded),
+              const SizedBox(width: 2),
+              const Icon(Icons.north_east_rounded, size: 18),
             ],
           ),
         ),
@@ -591,48 +584,58 @@ class _SageAccessBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
 
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(30),
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            color: scheme.primaryContainer.withValues(alpha: 0.52),
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: scheme.primary.withValues(alpha: 0.16)),
+            gradient: const LinearGradient(
+              colors: [Color(0xFF0A3D5C), Color(0xFF0E5E86)],
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+            ),
+            borderRadius: BorderRadius.circular(30),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF0E5E86).withValues(alpha: 0.25),
+                blurRadius: 10,
+                offset: const Offset(3, 0),
+              ),
+            ],
           ),
           child: Row(
             children: [
-              Icon(Icons.account_balance_outlined, color: scheme.primary),
+              ClipRRect(
+                borderRadius: BorderRadius.zero,
+                child: Image.asset(
+                  'assets/sage_banner.png',
+                  height: 19,
+                  fit: BoxFit.contain,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Container(
+                width: 1,
+                height: 24,
+                color: Colors.white,
+              ),
               const SizedBox(width: 12),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Acceder a SAGE',
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'Gestión académica de Entre Ríos',
-                      softWrap: true,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: scheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
+                child: Text(
+                  'Accede a tu estado',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
                 ),
               ),
               const SizedBox(width: 8),
-              Icon(Icons.chevron_right_rounded, color: scheme.onSurfaceVariant),
+              const Icon(Icons.chevron_right_rounded, color: Colors.white),
             ],
           ),
         ),

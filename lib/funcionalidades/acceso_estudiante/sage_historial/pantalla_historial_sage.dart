@@ -51,6 +51,8 @@ class _PantallaHistorialSageState extends State<PantallaHistorialSage> {
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
+        backgroundColor: const Color(0xFF0E5E86),
+        foregroundColor: Colors.white,
         title: const Text('Historial académico'),
         leading: IconButton(
           tooltip: 'Volver',
@@ -103,8 +105,10 @@ class _PantallaHistorialSageState extends State<PantallaHistorialSage> {
             selectedId: selected.gridRowId,
             onChanged: (id) => setState(() => _selectedId = id),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
           _CareerHeader(career: selected),
+          const SizedBox(height: 10),
+          _CareerDetail(career: selected),
           const SizedBox(height: 14),
           _Summary(career: selected),
           const SizedBox(height: 18),
@@ -124,7 +128,7 @@ class _PantallaHistorialSageState extends State<PantallaHistorialSage> {
             FilledButton.icon(
               onPressed: isLoading ? null : () => _expand(selected),
               icon: const Icon(Icons.table_rows_rounded),
-              label: Text(
+              label:                 Text(
                 isLoading
                     ? 'Cargando materias…'
                     : loadState == null ||
@@ -243,27 +247,31 @@ class _CareerPicker extends StatelessWidget {
   final ValueChanged<String?> onChanged;
 
   @override
-  Widget build(BuildContext context) => DropdownButtonFormField<String>(
-    isExpanded: true,
-    initialValue: selectedId,
-    decoration: const InputDecoration(
-      labelText: 'Carrera',
-      border: OutlineInputBorder(),
-    ),
-    items: careers
-        .map(
-          (career) => DropdownMenuItem(
-            value: career.gridRowId,
-            child: Text(
-              career.nombre.isEmpty ? 'Carrera' : career.nombre,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+  Widget build(BuildContext context) {
+    return DropdownButtonFormField<String>(
+      isExpanded: true,
+      value: selectedId,
+      decoration: InputDecoration(
+        labelText: 'Carrera',
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      ),
+      items: careers
+          .map(
+            (career) => DropdownMenuItem(
+              value: career.gridRowId,
+              child: Text(
+                career.nombre.isEmpty ? 'Carrera' : _titulo(career.nombre),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
-          ),
-        )
-        .toList(growable: false),
-    onChanged: onChanged,
-  );
+          )
+          .toList(growable: false),
+      onChanged: onChanged,
+    );
+  }
 }
 
 class _CareerHeader extends StatelessWidget {
@@ -272,25 +280,142 @@ class _CareerHeader extends StatelessWidget {
   final CarreraHistorialSage career;
 
   @override
-  Widget build(BuildContext context) => Card(
-    child: Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF0E5E86), Color(0xFF0A3D5C)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+      child: Row(
         children: [
-          Text('Nivel Superior', style: Theme.of(context).textTheme.labelLarge),
-          const SizedBox(height: 4),
-          Text(career.nombre, style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: 10),
-          Text(career.institucion),
-          const SizedBox(height: 6),
-          Text(
-            'Inicio: ${career.anioInicio ?? 'Sin informar'} · ${career.estado ?? 'Estado no informado'}',
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(
+              Icons.description_outlined,
+              color: Colors.white,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Resolución',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1,
+                    color: Colors.white.withValues(alpha: 0.7),
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  _titulo(career.nombre),
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
-    ),
-  );
+    );
+  }
+}
+
+class _CareerDetail extends StatelessWidget {
+  const _CareerDetail({required this.career});
+
+  final CarreraHistorialSage career;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFFE53935), Color(0xFFB71C1C)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.school_rounded,
+                  color: Colors.white,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  _titulo(career.institucion),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Text(
+                'Inicio: ${career.anioInicio ?? 'Sin informar'} · ${career.estado != null ? _titulo(career.estado!) : 'Estado no informado'}',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: Colors.white.withValues(alpha: 0.8),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  'Nivel superior',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _Summary extends StatelessWidget {
@@ -310,9 +435,23 @@ class _Summary extends StatelessWidget {
       children: [
         Row(
           children: [
-            _Metric(label: 'Aprobadas', value: career.aprobadas),
-            _Metric(label: 'Regulares', value: career.regulares),
-            _Metric(label: 'Cursando', value: career.cursando),
+            _Metric(
+              label: 'Aprobadas',
+              value: career.aprobadas,
+              color: const Color(0xFF2E7D32),
+            ),
+            const SizedBox(width: 8),
+            _Metric(
+              label: 'Regulares',
+              value: career.regulares,
+              color: const Color(0xFFE65100),
+            ),
+            const SizedBox(width: 8),
+            _Metric(
+              label: 'Cursando',
+              value: career.cursando,
+              color: const Color(0xFF1565C0),
+            ),
           ],
         ),
         if (differs)
@@ -354,25 +493,50 @@ class _LocalCounts {
 }
 
 class _Metric extends StatelessWidget {
-  const _Metric({required this.label, required this.value});
+  const _Metric({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
   final String label;
   final int value;
+  final Color color;
 
   @override
-  Widget build(BuildContext context) => Expanded(
-    child: Card(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 6),
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Expanded(
+      child: Container(
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: theme.colorScheme.outlineVariant,
+          ),
+        ),
+        padding: const EdgeInsets.symmetric(vertical: 10),
         child: Column(
           children: [
-            Text('$value', style: Theme.of(context).textTheme.headlineSmall),
-            const SizedBox(height: 4),
-            Text(label, textAlign: TextAlign.center),
+            Text(
+              '$value',
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w900,
+                color: color,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: theme.textTheme.labelSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.55),
+              ),
+            ),
           ],
         ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 class _ReportActions extends StatelessWidget {
@@ -381,34 +545,39 @@ class _ReportActions extends StatelessWidget {
   final bool enabled;
 
   @override
-  Widget build(BuildContext context) => Wrap(
-    spacing: 8,
-    runSpacing: 8,
-    children: [
-      _ReportButton(
-        label: 'Situación académica',
-        title: 'Imprimir la Situación Académica del alumno en la carrera',
-        onReport: onReport,
-        enabled: enabled,
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          _PdfChip(
+            label: 'Situación académica',
+            title: 'Imprimir la Situación Académica del alumno en la carrera',
+            onReport: onReport,
+            enabled: enabled,
+          ),
+          const SizedBox(width: 8),
+          _PdfChip(
+            label: 'Analítico',
+            title: 'Imprimir listado de materias aprobadas',
+            onReport: onReport,
+            enabled: enabled,
+          ),
+          const SizedBox(width: 8),
+          _PdfChip(
+            label: 'Libreta',
+            title: 'Imprimir libreta de calificaciones',
+            onReport: onReport,
+            enabled: enabled,
+          ),
+        ],
       ),
-      _ReportButton(
-        label: 'Analítico',
-        title: 'Imprimir listado de materias aprobadas',
-        onReport: onReport,
-        enabled: enabled,
-      ),
-      _ReportButton(
-        label: 'Libreta',
-        title: 'Imprimir libreta de calificaciones',
-        onReport: onReport,
-        enabled: enabled,
-      ),
-    ],
-  );
+    );
+  }
 }
 
-class _ReportButton extends StatelessWidget {
-  const _ReportButton({
+class _PdfChip extends StatelessWidget {
+  const _PdfChip({
     required this.label,
     required this.title,
     required this.onReport,
@@ -420,11 +589,48 @@ class _ReportButton extends StatelessWidget {
   final bool enabled;
 
   @override
-  Widget build(BuildContext context) => OutlinedButton.icon(
-    onPressed: enabled ? () => onReport(title) : null,
-    icon: const Icon(Icons.picture_as_pdf_outlined),
-    label: Text(label),
-  );
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: enabled ? () => onReport(title) : null,
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: enabled
+                  ? theme.colorScheme.outlineVariant
+                  : Colors.grey.shade200,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.picture_as_pdf_outlined,
+                size: 16,
+                color: enabled ? const Color(0xFFE53935) : Colors.grey,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: theme.textTheme.labelMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: enabled
+                      ? theme.colorScheme.onSurface
+                      : Colors.grey,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _Filters extends StatelessWidget {
@@ -451,20 +657,69 @@ class _Filters extends StatelessWidget {
           border: OutlineInputBorder(),
         ),
       ),
-      const SizedBox(height: 8),
+      const SizedBox(height: 10),
       SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
           children: ['Todas', 'Aprobadas', 'Regulares', 'Cursando']
               .map(
-                (value) => Padding(
-                  padding: const EdgeInsets.only(right: 6),
-                  child: FilterChip(
-                    label: Text(value),
-                    selected: filter == value,
-                    onSelected: (_) => onFilter(value),
-                  ),
-                ),
+                (value) {
+                  final active = filter == value;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () => onFilter(value),
+                        borderRadius: BorderRadius.circular(14),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: active
+                                ? const Color(0xFF0E5E86).withValues(alpha: 0.08)
+                                : Theme.of(context).colorScheme.surface,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: active
+                                  ? const Color(0xFF0E5E86).withValues(alpha: 0.3)
+                                  : Theme.of(context)
+                                      .colorScheme
+                                      .outlineVariant,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (active) ...[
+                                Icon(
+                                  Icons.check_rounded,
+                                  size: 14,
+                                  color: const Color(0xFF0E5E86),
+                                ),
+                                const SizedBox(width: 4),
+                              ],
+                              Text(
+                                value,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .labelMedium
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.w700,
+                                      color: active
+                                          ? const Color(0xFF0E5E86)
+                                          : null,
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
               )
               .toList(growable: false),
         ),
@@ -479,6 +734,7 @@ class _SubjectsList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final groups = agruparMateriasPorAnioSage(materias);
     final keys = groups.keys.toList()
       ..sort((a, b) => (a ?? 999).compareTo(b ?? 999));
@@ -487,26 +743,82 @@ class _SubjectsList extends StatelessWidget {
       children: [
         for (final year in keys) ...[
           Padding(
-            padding: const EdgeInsets.only(top: 12, bottom: 6),
+            padding: const EdgeInsets.only(top: 14, bottom: 8),
             child: Text(
               year == null ? 'Sin año informado' : '$year.º año',
-              style: Theme.of(context).textTheme.titleMedium,
+              style: theme.textTheme.labelLarge?.copyWith(
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.5,
+              ),
             ),
           ),
           ...groups[year]!.map(
-            (subject) => Card(
-              child: ListTile(
-                title: Text(
-                  subject.nombre.isEmpty ? 'Materia' : subject.nombre,
+            (subject) {
+              final statusLower = subject.estado.toLowerCase();
+              final statusColor = statusLower.contains('aprob')
+                  ? const Color(0xFF2E7D32)
+                  : statusLower.contains('curs')
+                      ? const Color(0xFF1565C0)
+                      : statusLower.contains('regular')
+                          ? const Color(0xFFE65100)
+                          : null;
+
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surface,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: theme.colorScheme.outlineVariant,
+                    ),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              subject.nombre.isEmpty
+                                  ? 'Materia'
+                                  : _titulo(subject.nombre),
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              subject.estado.isEmpty
+                                  ? 'Estado no informado'
+                                  : _titulo(subject.estado),
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                color: statusColor ??
+                                    theme.colorScheme.onSurface
+                                        .withValues(alpha: 0.5),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Text(
+                        subject.anio?.toString() ?? '—',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color: theme.colorScheme.onSurface
+                              .withValues(alpha: 0.3),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                subtitle: Text(
-                  subject.estado.isEmpty
-                      ? 'Estado no informado'
-                      : subject.estado,
-                ),
-                trailing: Text(subject.anio?.toString() ?? '—'),
-              ),
-            ),
+              );
+            },
           ),
         ],
       ],
@@ -519,9 +831,20 @@ class _InfoCard extends StatelessWidget {
   final String text;
 
   @override
-  Widget build(BuildContext context) => Card(
-    child: Padding(padding: const EdgeInsets.all(16), child: Text(text)),
-  );
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: theme.colorScheme.outlineVariant,
+        ),
+      ),
+      padding: const EdgeInsets.all(14),
+      child: Text(text),
+    );
+  }
 }
 
 class _LoadingBanner extends StatelessWidget {
@@ -530,18 +853,85 @@ class _LoadingBanner extends StatelessWidget {
   final String text;
 
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(bottom: 12),
-    child: Card(
-      child: ListTile(
-        leading: const SizedBox(
-          width: 22,
-          height: 22,
-          child: CircularProgressIndicator(strokeWidth: 2),
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Container(
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: theme.colorScheme.outlineVariant,
+          ),
         ),
-        title: Text(text),
-        subtitle: const Text('La sesión original de SAGE sigue activa.'),
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          children: [
+            const SizedBox(
+              width: 22,
+              height: 22,
+              child: CircularProgressIndicator(strokeWidth: 2.5),
+            ),
+              const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    text,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'La sesión original de SAGE sigue activa.',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurface
+                          .withValues(alpha: 0.5),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
-    ),
-  );
+    );
+  }
+}
+
+String _titulo(String texto) {
+  if (texto.isEmpty) return texto;
+  const conectores = {'de', 'en', 'y', 'e', 'o', 'u', 'a', 'el', 'la', 'los',
+      'las', 'del', 'al', 'por', 'para', 'con', 'sin', 'su', 'sus', 'un', 'una',
+      'unos', 'unas', 'lo'};
+  return _normalizarTexto(texto)
+      .split(' ')
+      .map((p) {
+        if (p.isEmpty) return p;
+        final lower = p.toLowerCase();
+        if (conectores.contains(lower)) return lower;
+        if (_esSiglaConPuntos(p)) return p;
+        if (p.length <= 4 && p == p.toUpperCase() && !p.contains('.')) return p;
+        return '${p[0].toUpperCase()}${p.substring(1).toLowerCase()}';
+      })
+      .join(' ');
+}
+
+bool _esSiglaConPuntos(String palabra) {
+  return RegExp(r'^([A-Z]\.)+$').hasMatch(palabra);
+}
+
+String _normalizarTexto(String texto) {
+  var t = texto
+      .replaceAll(RegExp(r'\s+'), ' ')
+      .replaceAllMapped(RegExp(r'(\w),(\w)'), (m) => '${m.group(1)}, ${m.group(2)}')
+      .replaceAllMapped(RegExp(r'\.(\S)'), (m) => '. ${m.group(1)}')
+      .trim();
+  while (t.contains('.  ')) {
+    t = t.replaceAll('.  ', '. ');
+  }
+  return t;
 }

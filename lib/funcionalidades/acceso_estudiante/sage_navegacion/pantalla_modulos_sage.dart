@@ -20,12 +20,14 @@ class PantallaModulosSage extends StatelessWidget {
     final busy = loadingTitle != null;
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: const Color(0xFF0E5E86),
+        foregroundColor: Colors.white,
         leading: IconButton(
           tooltip: 'Volver al acceso estudiantil',
           onPressed: onBack,
           icon: const Icon(Icons.arrow_back_rounded),
         ),
-        title: const Text('SAGE'),
+        title: const Text('Servicios académicos'),
         actions: [
           IconButton(
             tooltip: 'Actualizar',
@@ -38,13 +40,6 @@ class PantallaModulosSage extends StatelessWidget {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
           children: [
-            Text(
-              'Servicios académicos',
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: 8),
             Text(
               'Elegí un módulo para continuar con tu gestión en SAGE.',
               style: theme.textTheme.bodyLarge,

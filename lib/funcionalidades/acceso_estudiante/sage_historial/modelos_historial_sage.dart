@@ -257,10 +257,10 @@ List<MateriaHistorialSage> filtrarMateriasSage(
         final matchesQuery =
             normalizedQuery.isEmpty ||
             subject.nombre.toLowerCase().contains(normalizedQuery);
-        final matchesFilter = switch (filtro) {
-          'Aprobadas' => status.contains('aprob'),
-          'Regulares' => status.contains('regular'),
-          'Cursando' => status.contains('curs'),
+        final matchesFilter = switch (filtro.toLowerCase()) {
+          'aprobadas' => status.contains('aprob'),
+          'regulares' => status.contains('regular'),
+          'cursando' => status.contains('curs'),
           _ => true,
         };
         return matchesQuery && matchesFilter;

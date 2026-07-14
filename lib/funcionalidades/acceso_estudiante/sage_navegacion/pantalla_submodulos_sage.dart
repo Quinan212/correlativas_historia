@@ -18,9 +18,12 @@ class PantallaSubmodulosSage extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final busy = loadingTitle != null;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('SAGE'),
+        backgroundColor: const Color(0xFF0E5E86),
+        foregroundColor: Colors.white,
+        title: const Text('Legajo Único Alumno'),
         leading: IconButton(
           tooltip: 'Volver al acceso estudiantil',
           onPressed: busy ? null : onBack,
@@ -29,51 +32,74 @@ class PantallaSubmodulosSage extends StatelessWidget {
       ),
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 20, 16, 28),
+          padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
           children: [
-            Text(
-              'Legajo Único Alumno',
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: 6),
             Text(
               'Seleccioná una opción para continuar en SAGE.',
               style: theme.textTheme.bodyLarge,
             ),
-            const SizedBox(height: 18),
-            for (final option in opcionesSubmodulosSage)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: Card(
-                  clipBehavior: Clip.antiAlias,
-                  child: ListTile(
-                    enabled: !busy,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 18,
-                      vertical: 8,
-                    ),
-                    leading: Icon(_iconoPara(option)),
-                    title: Text(option.titulo),
-                    subtitle: const Text('Se abrirá en SAGE'),
-                    trailing: const Icon(Icons.chevron_right_rounded),
+            const SizedBox(height: 24),
+            ...List.generate(opcionesSubmodulosSage.length, (i) {
+              final option = opcionesSubmodulosSage[i];
+              final isLast = i == opcionesSubmodulosSage.length - 1;
+
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  InkWell(
                     onTap: busy ? null : () => onSelect(option),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 4,
+                        vertical: 12,
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            _iconoPara(option),
+                            size: 22,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              option.titulo,
+                              style: theme.textTheme.bodyLarge?.copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          Icon(
+                            Icons.arrow_forward_ios_rounded,
+                            size: 14,
+                            color: theme.colorScheme.onSurface
+                                .withValues(alpha: 0.3),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                ),
-              ),
+                  if (!isLast)
+                    Divider(
+                      height: 1,
+                      thickness: 1,
+                      color: theme.dividerColor.withValues(alpha: 0.5),
+                    ),
+                ],
+              );
+            }),
             if (loadingTitle != null)
               Padding(
-                padding: const EdgeInsets.only(top: 8),
+                padding: const EdgeInsets.only(top: 12),
                 child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2.5),
                     ),
-                    const SizedBox(width: 10),
-                    Expanded(child: Text('Abriendo $loadingTitle…')),
+                    const SizedBox(width: 12),
+                    Flexible(child: Text('Abriendo $loadingTitle…')),
                   ],
                 ),
               ),
