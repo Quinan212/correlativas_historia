@@ -52,6 +52,9 @@ bool webViewSageVisible({
   bool legajo = false,
   bool secciones = false,
   bool escolares = false,
+  bool agente = false,
+  bool agentePersonal = false,
+  bool perfil = false,
 }) =>
     !historial &&
     !modulos &&
@@ -59,7 +62,10 @@ bool webViewSageVisible({
     !carga &&
     !legajo &&
     !secciones &&
-    !escolares;
+    !escolares &&
+    !agente &&
+    !agentePersonal &&
+    !perfil;
 
 class EnlaceNavegacionSage {
   const EnlaceNavegacionSage({

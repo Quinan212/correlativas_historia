@@ -255,7 +255,7 @@ void main() {
     expect(detector.detectar(value), EstadoNavegacionSage.otraPagina);
   });
 
-  test('una página posterior no se clasifica por un título aislado', () {
+  test('tabs se clasifica como Secciones aunque el contenido sea parcial', () {
     const value = CapturaNavegacionSage(
       host: 'sage.entrerios.gov.ar',
       pathname: '/dic/tabs.php',
@@ -263,7 +263,7 @@ void main() {
       encabezados: ['Legajo Alumnos'],
       enlaces: [],
     );
-    expect(detector.detectar(value), EstadoNavegacionSage.otraPagina);
+    expect(detector.detectar(value), EstadoNavegacionSage.seccionesLegajo);
   });
 
   test('módulos y submódulos con igual pathname tienen firmas distintas', () {
@@ -409,7 +409,7 @@ void main() {
     expect(detector.detectar(value), EstadoNavegacionSage.seccionesLegajo);
   });
 
-  test('frame Escolares con historial se clasifica como etapa escolar', () {
+  test('tabs con hijo escolar conserva prioridad de Secciones', () {
     final value = CapturaNavegacionSage(
       host: 'sage.entrerios.gov.ar',
       pathname: '/dic/tabs.php',
@@ -436,7 +436,7 @@ void main() {
         ),
       ],
     );
-    expect(detector.detectar(value), EstadoNavegacionSage.escolares);
+    expect(detector.detectar(value), EstadoNavegacionSage.seccionesLegajo);
   });
 
   test('el hijo solo no activa Escolares sin el padre correcto', () {
@@ -458,4 +458,32 @@ void main() {
     );
     expect(detector.detectar(value), isNot(EstadoNavegacionSage.escolares));
   });
+
+  test(
+    'tabs en Main se clasifica como Secciones aunque el hijo sea profundo',
+    () {
+      final value = CapturaNavegacionSage(
+        host: 'sage.entrerios.gov.ar',
+        pathname: '/pregase/index.php',
+        tieneMain: true,
+        encabezados: const [],
+        enlaces: const [],
+        documentos: [
+          documento(
+            pathname: '/dic/tabs.php',
+            headings: const [],
+            frameId: 'Main',
+            depth: 1,
+          ),
+          documento(
+            pathname: '/alumnos_v2/NS_historial_alumnado.php',
+            headings: const ['Historial'],
+            frameId: 'frm_alumnos_escolares',
+            depth: 3,
+          ),
+        ],
+      );
+      expect(detector.detectar(value), EstadoNavegacionSage.seccionesLegajo);
+    },
+  );
 }

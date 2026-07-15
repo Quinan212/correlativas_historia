@@ -152,7 +152,10 @@ class _MainScreenState extends ConsumerState<MainScreen> {
       const PantallaPreguntasFrecuentes(key: ValueKey('faq')),
     ];
 
-    Widget content = IndexedStack(index: routerIndex, children: tabs);
+    Widget content = AnimatedSwitcher(
+      duration: const Duration(milliseconds: 250),
+      child: tabs[routerIndex],
+    );
 
     if (isDesktop) {
       content = Row(

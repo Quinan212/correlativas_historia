@@ -21,6 +21,14 @@ import '../sage_legajo/modelos_legajo_sage.dart';
 import '../sage_legajo/pantalla_escolares_sage.dart';
 import '../sage_legajo/pantalla_mi_legajo_sage.dart';
 import '../sage_legajo/pantalla_secciones_legajo_sage.dart';
+import '../sage_agente/modelos_agente_sage.dart';
+import '../sage_agente/extractor_agente_sage.dart';
+import '../sage_agente/pantalla_portada_agente_sage.dart';
+import '../sage_agente/pantalla_legajo_personal_sage.dart';
+import '../sage_perfiles/detector_perfiles_sage.dart';
+import '../sage_perfiles/ejecutor_perfiles_sage.dart';
+import '../sage_perfiles/modelos_perfiles_sage.dart';
+import '../sage_perfiles/pantalla_selector_perfil_sage.dart';
 import '../sage_navegacion/detector_navegacion_sage.dart';
 import '../sage_navegacion/modelos_navegacion_sage.dart';
 import '../sage_navegacion/pantalla_carga_sage.dart';
@@ -66,6 +74,15 @@ class _PantallaSageState extends State<PantallaSage> {
   bool _nativeSeccionesLegajoVisible = false;
   bool _nativeEscolaresVisible = false;
   bool _nativeLoadingVisible = false;
+  bool _nativeAgentHomeVisible = false;
+  bool _nativeAgentPersonalVisible = false;
+  List<OpcionAgenteSage> _agentPersonalOptions = const [];
+  bool _nativeProfileSelectorVisible = false;
+  bool _profileChoiceMade = false;
+  bool _profileSwitchBusy = false;
+  String? _profileError;
+  CapturaPerfilesSage? _profileCapture;
+  PortadaAgenteSage _portadaAgente = const PortadaAgenteSage();
   String _nativeLoadingMessage = 'Preparando tus servicios académicos…';
   String? _navigationActionInFlight;
   ResultadoDeteccionNavegacionSage? _lastNavigationResult;
@@ -87,6 +104,7 @@ class _PantallaSageState extends State<PantallaSage> {
   String? _legajoActionInFlight;
   String? _legajoOriginSignature;
   TipoAccionLegajoSage _tipoAccionLegajo = TipoAccionLegajoSage.ninguna;
+  bool _usuarioSolicitoEscolares = false;
   int _loadRequestCount = 0;
 
   @override
@@ -546,6 +564,10 @@ class _PantallaSageState extends State<PantallaSage> {
     try {
       final result = await _probeSageNavigation();
       final legajoResult = await _probeLegajoIfRelevant(result);
+      final agentHome = await _probeAgentHome();
+      final agentPersonal = await _probeAgentPersonal();
+      final profiles = await _probeProfiles();
+      _profileCapture = profiles;
       unawaited(_installNavigationObservers());
       if (!mounted) return;
 
@@ -553,9 +575,11 @@ class _PantallaSageState extends State<PantallaSage> {
         final escolaresConfirmed =
             _tipoAccionLegajo == TipoAccionLegajoSage.abrirEscolares &&
             legajoResult?.etapa == EtapaLegajoSage.escolares &&
-            legajoResult!.parentFrameFound &&
-            legajoResult.childFrameFound &&
-            legajoResult.childReady;
+            legajoResult!.opcionesEscolares.any(
+              (option) =>
+                  option.clave == 'historial_del_alumnado' ||
+                  option.clave == 'nivel_superior_historial',
+            );
         final legajoTransitionConfirmed =
             _tipoAccionLegajo != TipoAccionLegajoSage.abrirHistorial &&
             legajoResult?.disponible == true &&
@@ -589,6 +613,7 @@ class _PantallaSageState extends State<PantallaSage> {
             _navigationOriginPath = null;
             _navigationActionStartedAt = null;
             _legajoOriginSignature = null;
+            _usuarioSolicitoEscolares = false;
           });
           ScaffoldMessenger.of(
             context,
@@ -621,6 +646,7 @@ class _PantallaSageState extends State<PantallaSage> {
             _navigationActionStartedAt = null;
             _legajoOriginSignature = null;
             _tipoAccionLegajo = TipoAccionLegajoSage.ninguna;
+            _usuarioSolicitoEscolares = false;
           });
           ScaffoldMessenger.of(
             context,
@@ -634,6 +660,48 @@ class _PantallaSageState extends State<PantallaSage> {
       if (_nativeHistoryVisible &&
           result.estado != EstadoNavegacionSage.login &&
           result.estado != EstadoNavegacionSage.sesionVencida) {
+        return;
+      }
+      if (!_profileChoiceMade &&
+          !_profileSwitchBusy &&
+          profiles.perfiles.length >= 2 &&
+          result.estado != EstadoNavegacionSage.login &&
+          result.estado != EstadoNavegacionSage.sesionVencida) {
+        setState(() {
+          _nativeProfileSelectorVisible = true;
+          _nativeModulesVisible = false;
+          _nativeSubmodulesVisible = false;
+          _nativeAgentHomeVisible = false;
+          _nativeLoadingVisible = false;
+        });
+        return;
+      }
+      if (agentHome &&
+          !_nativeHistoryVisible &&
+          !_nativeLegajoVisible &&
+          !_nativeSeccionesLegajoVisible &&
+          !_nativeEscolaresVisible) {
+        setState(() {
+          _nativeAgentHomeVisible = true;
+          _nativeModulesVisible = false;
+          _nativeSubmodulesVisible = false;
+          _nativeLoadingVisible = false;
+        });
+        return;
+      }
+      if (agentPersonal.isNotEmpty &&
+          !_nativeHistoryVisible &&
+          !_nativeLegajoVisible &&
+          !_nativeSeccionesLegajoVisible &&
+          !_nativeEscolaresVisible) {
+        setState(() {
+          _agentPersonalOptions = agentPersonal;
+          _nativeAgentPersonalVisible = true;
+          _nativeAgentHomeVisible = false;
+          _nativeModulesVisible = false;
+          _nativeSubmodulesVisible = false;
+          _nativeLoadingVisible = false;
+        });
         return;
       }
       setState(() {
@@ -665,6 +733,7 @@ class _PantallaSageState extends State<PantallaSage> {
             _nativeLoadingVisible = true;
           case EstadoNavegacionSage.login:
           case EstadoNavegacionSage.sesionVencida:
+            _usuarioSolicitoEscolares = false;
             _nativeHistoryVisible = false;
             _nativeModulesVisible = false;
             _nativeSubmodulesVisible = false;
@@ -673,6 +742,9 @@ class _PantallaSageState extends State<PantallaSage> {
             _nativeEscolaresVisible = false;
             _nativeLoadingVisible = false;
           case EstadoNavegacionSage.otraPagina:
+            if (!_navigationAwaitingTransition) {
+              _usuarioSolicitoEscolares = false;
+            }
             _nativeModulesVisible = false;
             _nativeSubmodulesVisible = false;
             _nativeLegajoVisible = false;
@@ -685,6 +757,7 @@ class _PantallaSageState extends State<PantallaSage> {
               _nativeLoadingMessage = 'Preparando tus servicios académicos…';
             }
           case EstadoNavegacionSage.error:
+            _usuarioSolicitoEscolares = false;
             _nativeLegajoVisible = false;
             _nativeSeccionesLegajoVisible = false;
             _nativeEscolaresVisible = false;
@@ -695,6 +768,94 @@ class _PantallaSageState extends State<PantallaSage> {
     } finally {
       _navigationProbeRunning = false;
     }
+  }
+
+  Future<bool> _probeAgentHome() async {
+    final portada = await ExtractorAgenteSage(_evaluateJavascript).extraer();
+    if (portada == null) return false;
+    _portadaAgente = portada;
+    return portada.disponible;
+  }
+
+  Future<List<OpcionAgenteSage>> _probeAgentPersonal() async {
+    try {
+      final raw = await _evaluateJavascript(
+        r'''(() => { const n=v=>String(v||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim(); const keys=['legajo agentes','alumnos por docente nivel superior','mi credencial','sueldo personal','alumnos por docente']; const out=[]; const seen=new Set(); const docs=[]; const visit=w=>{if(!w||docs.includes(w))return;docs.push(w);let d;try{d=w.document}catch(_){return}d.querySelectorAll('a[href],button').forEach(e=>{const t=n(e.textContent);const key=keys.find(k=>t===k);if(!key||seen.has(key))return;seen.add(key);let p=null;try{p=new URL(e.getAttribute('href')||'',w.location.href).pathname}catch(_){}out.push({label:String(e.textContent||'').replace(/\s+/g,' ').trim(),path:p})});d.querySelectorAll('iframe').forEach(f=>{try{visit(f.contentWindow)}catch(_){}})};visit(window);return JSON.stringify(out)})()''',
+      );
+      dynamic value = jsonDecode(raw);
+      if (value is String) value = jsonDecode(value);
+      if (value is! List) return const [];
+      return [
+        for (final item in value)
+          if (item is Map)
+            OpcionAgenteSage(
+              claveCanonica: (item['label'] as String? ?? '')
+                  .toLowerCase()
+                  .replaceAll(' ', '_'),
+              etiqueta: item['label'] as String? ?? '',
+              ruta: item['path'] as String?,
+            ),
+      ];
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  Future<CapturaPerfilesSage> _probeProfiles() async {
+    try {
+      final raw = await _evaluateJavascript(r'''(() => {
+        const normalize = value => String(value || '').replace(/\s+/g, ' ').trim();
+        const profiles = []; const seen = new Set(); const docs = [];
+        const visit = win => { if (!win || docs.includes(win)) return; docs.push(win); let doc; try { doc = win.document; } catch (_) { return; } doc.querySelectorAll('input[type="radio"],label,[role="radio"]').forEach(node => { const input = node.matches('input') ? node : node.querySelector('input'); const label = normalize(node.matches('label') ? node.textContent : (node.getAttribute('aria-label') || input?.value || input?.id || node.textContent)); if (!/^(Agente|Alumnos)$/i.test(label)) return; const key = label.toLowerCase(); if (seen.has(key)) return; seen.add(key); profiles.push({label,active:input?.checked === true,available:true,found:true}); }); doc.querySelectorAll('iframe').forEach(frame => { try { visit(frame.contentWindow); } catch (_) {} }); };
+        visit(window); return JSON.stringify({avatarFound:Boolean(document.querySelector('[aria-label="Mi perfil"],.btn-user')),profiles,panelOpen:Boolean(document.querySelector('[role="dialog"]'))});
+      })()''');
+      dynamic value = jsonDecode(raw);
+      if (value is String) value = jsonDecode(value);
+      return const DetectorPerfilesSage().detectar(
+        value is Map ? Map<String, dynamic>.from(value) : const {},
+      );
+    } catch (_) {
+      return const CapturaPerfilesSage(perfiles: []);
+    }
+  }
+
+  Future<void> _selectProfile(PerfilSage profile) async {
+    if (_profileSwitchBusy) return;
+    final current = _profileCapture?.activo;
+    if (current == profile) {
+      setState(() {
+        _profileChoiceMade = true;
+        _nativeProfileSelectorVisible = false;
+      });
+      return;
+    }
+    setState(() {
+      _profileSwitchBusy = true;
+      _profileError = null;
+    });
+    final result = await EjecutorPerfilesSage(
+      _evaluateJavascript,
+    ).cambiar(profile);
+    if (!mounted) return;
+    if (!result.success) {
+      setState(() {
+        _profileSwitchBusy = false;
+        _profileError = 'No se pudo cambiar el perfil en SAGE.';
+      });
+      return;
+    }
+    setState(() {
+      _profileChoiceMade = true;
+      _profileSwitchBusy = false;
+      _nativeProfileSelectorVisible = false;
+      _nativeLoadingVisible = true;
+      _nativeLoadingMessage = 'Cargando ${profile.etiqueta}…';
+    });
+    _requestSageProbe();
+  }
+
+  void _activateAgentOption(OpcionAgenteSage option) {
+    unawaited(_activateSageLink(option.asWebOption()));
   }
 
   Future<ResultadoExtraccionLegajoSage?> _probeLegajoIfRelevant(
@@ -738,6 +899,19 @@ class _PantallaSageState extends State<PantallaSage> {
           'state=escolaresDisponible',
         );
       }
+      if (extraction.etapa == EtapaLegajoSage.secciones ||
+          extraction.etapa == EtapaLegajoSage.escolares) {
+        debugPrint(
+          '[SAGE secciones detect] tabs_found=true; '
+          'tabs_frame=${extraction.frameId}; tabs_path=${extraction.pathname}; '
+          'extracted_sections=${extraction.secciones.length}; '
+          'school_control_found=${extraction.historyControlFound}; '
+          'school_child_exists=${extraction.childFrameFound}; '
+          'user_requested_school=$_usuarioSolicitoEscolares; '
+          'native_sections_visible=$_nativeSeccionesLegajoVisible; '
+          'web_visible=${webViewSageVisible(historial: _nativeHistoryVisible, modulos: _nativeModulesVisible, submodulos: _nativeSubmodulesVisible, carga: _nativeLoadingVisible, legajo: _nativeLegajoVisible, secciones: _nativeSeccionesLegajoVisible, escolares: _nativeEscolaresVisible)}',
+        );
+      }
     }
     return extraction;
   }
@@ -768,8 +942,13 @@ class _PantallaSageState extends State<PantallaSage> {
         _nativeEscolaresVisible = false;
       case EtapaLegajoSage.escolares:
         _nativeLegajoVisible = false;
-        _nativeSeccionesLegajoVisible = false;
-        _nativeEscolaresVisible = true;
+        if (_usuarioSolicitoEscolares) {
+          _nativeSeccionesLegajoVisible = false;
+          _nativeEscolaresVisible = true;
+        } else {
+          _nativeSeccionesLegajoVisible = true;
+          _nativeEscolaresVisible = false;
+        }
       case EtapaLegajoSage.ninguna:
         break;
     }
@@ -798,6 +977,7 @@ class _PantallaSageState extends State<PantallaSage> {
           _navigationActionInFlight = null;
           _legajoActionInFlight = null;
           _tipoAccionLegajo = TipoAccionLegajoSage.ninguna;
+          _usuarioSolicitoEscolares = false;
           _legajoOriginSignature = null;
           _nativeModulesVisible = false;
           _nativeSubmodulesVisible = false;
@@ -974,6 +1154,12 @@ class _PantallaSageState extends State<PantallaSage> {
     _navigationAwaitingTransition = false;
     setState(() {
       _navigationActionInFlight = option.titulo;
+      _nativeAgentHomeVisible = false;
+      _nativeAgentPersonalVisible = false;
+      _nativeProfileSelectorVisible = false;
+      _profileChoiceMade = false;
+      _profileSwitchBusy = false;
+      _profileError = null;
       _nativeLoadingVisible = true;
       _nativeLoadingMessage = 'Abriendo ${option.titulo}…';
     });
@@ -1239,6 +1425,7 @@ class _PantallaSageState extends State<PantallaSage> {
       _nativeLegajoVisible = false;
       _nativeSeccionesLegajoVisible = false;
       _nativeEscolaresVisible = false;
+      _nativeAgentHomeVisible = false;
       _nativeLoadingVisible = false;
       _legajoActionInFlight = null;
       _navigationActionInFlight = null;
@@ -1248,11 +1435,35 @@ class _PantallaSageState extends State<PantallaSage> {
       _navigationOriginPath = null;
       _legajoOriginSignature = null;
       _tipoAccionLegajo = TipoAccionLegajoSage.ninguna;
+      _usuarioSolicitoEscolares = false;
     });
+  }
+
+  List<SeccionLegajoSage> _seccionesDisponibles() {
+    final result = <SeccionLegajoSage>[...?_legajoExtraction?.secciones];
+    final hasSchool = result.any(
+      (section) =>
+          section.clave == 'escolares' ||
+          normalizarLegajoSage(section.titulo) == 'escolares',
+    );
+    if (!hasSchool) {
+      result.add(
+        SeccionLegajoSage(
+          clave: 'escolares',
+          titulo: 'Escolares',
+          firmaTecnica: 'contract:escolares',
+          frameId: _legajoExtraction?.frameId ?? '',
+          pathname: _legajoExtraction?.pathname ?? '/dic/tabs.php',
+          controlEncontrado: false,
+        ),
+      );
+    }
+    return result;
   }
 
   Future<void> _activateLegajoProfile(PerfilLegajoSage profile) async {
     if (_legajoActionInFlight != null) return;
+    _usuarioSolicitoEscolares = false;
     _beginLegajoAction('Abriendo tu legajo…', TipoAccionLegajoSage.abrirPerfil);
     final result = await EjecutorLegajoSage(
       _evaluateJavascript,
@@ -1260,6 +1471,7 @@ class _PantallaSageState extends State<PantallaSage> {
     _logLegajoAction(result);
     if (!mounted) return;
     if (!result.success) {
+      _usuarioSolicitoEscolares = false;
       _endLegajoAction();
       await _showLegajoActionFailure(
         'No se pudo abrir este legajo.',
@@ -1277,6 +1489,7 @@ class _PantallaSageState extends State<PantallaSage> {
     final isSchool =
         section.clave == 'escolares' ||
         normalizarLegajoSage(section.titulo) == 'escolares';
+    if (isSchool) _usuarioSolicitoEscolares = true;
     _beginLegajoAction(
       isSchool ? 'Abriendo Escolares…' : 'Abriendo sección…',
       isSchool
@@ -1290,6 +1503,7 @@ class _PantallaSageState extends State<PantallaSage> {
     _logLegajoAction(result);
     if (!mounted) return;
     if (!result.success) {
+      if (isSchool) _usuarioSolicitoEscolares = false;
       _endLegajoAction();
       await _showLegajoActionFailure(
         isSchool
@@ -1322,6 +1536,7 @@ class _PantallaSageState extends State<PantallaSage> {
     _logLegajoAction(result);
     if (!mounted) return;
     if (!result.success) {
+      if (isHistory) _usuarioSolicitoEscolares = false;
       _endLegajoAction();
       await _showLegajoActionFailure(
         isHistory
@@ -1406,7 +1621,11 @@ class _PantallaSageState extends State<PantallaSage> {
       '[SAGE legajo action] type=${_tipoAccionLegajo.name}; '
       'key=${result.matchedBy}; frame=${result.frameId}; '
       'path=${result.pathnameBefore}; mechanism=${result.mechanism}; '
-      'found=${result.found}; activated=${result.activated}',
+      'found=${result.found}; dispatched=${result.dispatched}; '
+      'activated=${result.activated}; candidates=${result.candidateCount}; '
+      'tag=${result.tag}; class_tab=${result.classTab}; '
+      'has_onclick=${result.hasOnclick}; has_href=${result.hasHref}; '
+      'matched_by=${result.matchedBy}',
     );
   }
 
@@ -2173,6 +2392,9 @@ class _PantallaSageState extends State<PantallaSage> {
                 _nativeLegajoVisible ||
                 _nativeSeccionesLegajoVisible ||
                 _nativeEscolaresVisible ||
+                _nativeAgentHomeVisible ||
+                _nativeAgentPersonalVisible ||
+                _nativeProfileSelectorVisible ||
                 _nativeLoadingVisible
             ? null
             : AppBar(
@@ -2205,6 +2427,9 @@ class _PantallaSageState extends State<PantallaSage> {
                 legajo: _nativeLegajoVisible,
                 secciones: _nativeSeccionesLegajoVisible,
                 escolares: _nativeEscolaresVisible,
+                agente: _nativeAgentHomeVisible,
+                agentePersonal: _nativeAgentPersonalVisible,
+                perfil: _nativeProfileSelectorVisible,
               ),
               maintainState: true,
               child: WebViewWidget(
@@ -2234,6 +2459,34 @@ class _PantallaSageState extends State<PantallaSage> {
                   loadingTitle: _navigationActionInFlight,
                 ),
               ),
+            if (_nativeAgentHomeVisible)
+              Positioned.fill(
+                child: PantallaPortadaAgenteSage(
+                  onSelect: _activateAgentOption,
+                  onBack: widget.onClose ?? _showOriginalNavigation,
+                  portada: _portadaAgente,
+                  busy: _navigationActionInFlight != null,
+                ),
+              ),
+            if (_nativeAgentPersonalVisible)
+              Positioned.fill(
+                child: PantallaLegajoPersonalSage(
+                  opciones: _agentPersonalOptions,
+                  onSelect: _activateAgentOption,
+                  onBack: widget.onClose ?? _showOriginalNavigation,
+                  busy: _navigationActionInFlight != null,
+                ),
+              ),
+            if (_nativeProfileSelectorVisible)
+              Positioned.fill(
+                child: PantallaSelectorPerfilSage(
+                  perfiles: _profileCapture?.perfiles ?? const [],
+                  onSelect: _selectProfile,
+                  busy: _profileSwitchBusy,
+                  error: _profileError,
+                  onRetry: _requestSageProbe,
+                ),
+              ),
             if (_nativeSubmodulesVisible)
               Positioned.fill(
                 child: PantallaSubmodulosSage(
@@ -2255,7 +2508,7 @@ class _PantallaSageState extends State<PantallaSage> {
             if (_nativeSeccionesLegajoVisible)
               Positioned.fill(
                 child: PantallaSeccionesLegajoSage(
-                  secciones: _legajoExtraction?.secciones ?? const [],
+                  secciones: _seccionesDisponibles(),
                   onSelect: (section) =>
                       unawaited(_activateLegajoSection(section)),
                   onBack: widget.onClose ?? _showOriginalNavigation,

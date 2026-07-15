@@ -131,15 +131,15 @@ class EjecutorLegajoSage {
       const handler = params.ondblClickRow || params.onDblClickRow;
       if (typeof handler === 'function') {
         handler.call(target.doc.querySelector('#list2'), wantedRowId, rowIndex, 0, new MouseEvent('dblclick', {bubbles:true,cancelable:true,view:target.win}));
-        return JSON.stringify({found:true,activated:true,mechanism:'jqgrid_ondblclickrow',frameId:target.frameId,pathnameBefore:target.pathname});
+        return JSON.stringify({found:true,dispatched:true,activated:true,mechanism:'jqgrid_ondblclickrow',frameId:target.frameId,pathnameBefore:target.pathname});
       }
       const jqEvents = target.win.jQuery?._data?.(row,'events');
       if (jqEvents?.dblclick?.length) {
         target.win.jQuery(row).trigger('dblclick');
-        return JSON.stringify({found:true,activated:true,mechanism:'jquery_dblclick',frameId:target.frameId,pathnameBefore:target.pathname});
+        return JSON.stringify({found:true,dispatched:true,activated:true,mechanism:'jquery_dblclick',frameId:target.frameId,pathnameBefore:target.pathname});
       }
       row.dispatchEvent(new MouseEvent('dblclick',{bubbles:true,cancelable:true,view:target.win}));
-      return JSON.stringify({found:true,activated:true,mechanism:'dom_dblclick',frameId:target.frameId,pathnameBefore:target.pathname});
+      return JSON.stringify({found:true,dispatched:true,activated:true,mechanism:'dom_dblclick',frameId:target.frameId,pathnameBefore:target.pathname});
     }
     const candidates = [];
     docs.forEach(item => {
@@ -162,11 +162,11 @@ class EjecutorLegajoSage {
     const events = jq?._data?.(actionable,'events');
     if (actionable.matches?.(actionableSelector)) {
       actionable.click();
-      return JSON.stringify({found:true,activated:true,mechanism:'native_click',label:wanted,frameId:item.frameId,pathnameBefore:item.pathname,matchedBy:item.exact?'exact_text':'text'});
+      return JSON.stringify({found:true,dispatched:true,activated:true,mechanism:'native_click',label:wanted,frameId:item.frameId,pathnameBefore:item.pathname,matchedBy:item.exact?'exact_text':'text'});
     }
     if (events?.click?.length) {
       jq(actionable).trigger('click');
-      return JSON.stringify({found:true,activated:true,mechanism:'jquery_click',label:wanted,frameId:item.frameId,pathnameBefore:item.pathname,matchedBy:item.exact?'exact_text':'text'});
+      return JSON.stringify({found:true,dispatched:true,activated:true,mechanism:'jquery_click',label:wanted,frameId:item.frameId,pathnameBefore:item.pathname,matchedBy:item.exact?'exact_text':'text'});
     }
     return JSON.stringify({found:true,activated:false,mechanism:'',label:wanted,frameId:item.frameId,pathnameBefore:item.pathname,matchedBy:item.exact?'exact_text':'text'});
       })()''';
@@ -174,16 +174,17 @@ class EjecutorLegajoSage {
   String _tabScript(String key) =>
       '''(() => {
     const wantedKey = String($key);
-    const normalize = value => String(value || '').toLowerCase().normalize('NFD')
+    const clean = value => String(value || '').replace(/\\s+/g, ' ').trim();
+    const normalize = value => clean(value).toLowerCase().normalize('NFD')
       .replace(/[\\u0300-\\u036f]/g,'').replace(/[–—]/g,'-').replace(/:/g,' - ')
       .replace(/\\s*-\\s*/g,' - ').replace(/\\s+/g,' ').trim();
     const canonicalTabKey = value => {
       const text = normalize(value);
-      if (text === 'escolares') return 'escolares';
-      if (text === 'nivel superior - historial' || text === 'nivel superior historial') return 'nivel_superior_historial';
-      if (text === 'historial del alumnado') return 'historial_del_alumnado';
       if (text === 'personales') return 'personales';
+      if (text === 'escolares') return 'escolares';
       if (text === 'servicios') return 'servicios';
+      if (text === 'historial del alumnado') return 'historial_del_alumnado';
+      if (text === 'nivel superior - historial' || text === 'nivel superior historial') return 'nivel_superior_historial';
       if (text === 'transporte') return 'transporte';
       return null;
     };
@@ -192,39 +193,87 @@ class EjecutorLegajoSage {
       const rect = element?.getClientRects?.();
       return Boolean(rect?.length && style?.display !== 'none' && style?.visibility !== 'hidden' && style?.opacity !== '0');
     };
+    const directText = node => {
+      try {
+        const direct = [...node.childNodes].filter(child => child.nodeType === 3).map(child => child.nodeValue || '').join(' ');
+        return normalize(direct || node.getAttribute?.('title') || node.getAttribute?.('aria-label') || node.textContent || node.innerText || node.value);
+      } catch (_) { return ''; }
+    };
+    const knownKeysInText = value => ['personales','escolares','servicios','historial_del_alumnado','nivel_superior_historial','transporte']
+      .filter(item => canonicalTabKey(value) === item);
     const seen = new Set();
     const docs = [];
-    const visit = (win, depth = 0) => {
+    const visit = (win, depth = 0, parentFrameId = '') => {
       if (!win || seen.has(win)) return;
       seen.add(win);
       try {
-        docs.push({win, doc:win.document, frameId:String(win.frameElement?.id || ''), frameName:String(win.frameElement?.name || ''), pathname:String(win.location.pathname || '')});
-        win.document.querySelectorAll('iframe').forEach(frame => { try { visit(frame.contentWindow, depth + 1); } catch (_) {} });
+        const frameElement = win.frameElement;
+        const frameId = String(frameElement?.id || '');
+        const frameName = String(frameElement?.name || '');
+        docs.push({win, doc:win.document, frameId, frameName, pathname:String(win.location.pathname || ''), depth, parentFrameId});
+        win.document.querySelectorAll('iframe').forEach(frame => { try { visit(frame.contentWindow, depth + 1, frameId || frameName); } catch (_) {} });
       } catch (_) {}
     };
     visit(window);
-    const target = docs.find(item =>
-      (item.frameId.toLowerCase() === 'frm_alumnos' || item.frameName.toLowerCase() === 'frm_alumnos') &&
-      item.pathname.toLowerCase() === '/dic/tabs.php'
-    ) || docs.find(item => item.pathname.toLowerCase() === '/dic/tabs.php');
-    if (!target) return JSON.stringify({found:false,activated:false});
-    const candidates = [...target.doc.querySelectorAll('a.tab_a,a[onclick],[role="tab"],button[onclick]')]
-      .map(node => ({node,key:canonicalTabKey(node.textContent || node.innerText || node.value),rendered:visible(node),isTab:node.matches?.('a.tab_a,[role="tab"]') === true}))
-      .filter(item => item.key === wantedKey)
-      .sort((a,b) => Number(b.isTab)-Number(a.isTab) || Number(b.rendered)-Number(a.rendered));
+    const tabSelector = 'a.tab_a,.tab_a,a[onclick],[role="tab"],button[onclick]';
+    const actionableSelector = 'a.tab_a,a[href],button,[role="tab"],[onclick]';
+    const resolveActionable = node => {
+      if (node.matches?.(actionableSelector)) return node;
+      const descendant = node.querySelector?.(actionableSelector);
+      if (descendant) return descendant;
+      const ancestor = node.closest?.(actionableSelector);
+      if (ancestor) return ancestor;
+      let current = node;
+      let levels = 0;
+      while (current && levels < 4) {
+        const jq = current.ownerDocument?.defaultView?.jQuery;
+        if (jq?._data?.(current,'events')?.click?.length) return current;
+        current = current.parentElement;
+        levels++;
+      }
+      return null;
+    };
+    const jqueryClickCount = (win, element) => {
+      try { return Number(win.jQuery?._data?.(element,'events')?.click?.length || 0); } catch (_) { return 0; }
+    };
+    const candidates = [];
+    docs.forEach(context => {
+      let nodes = [];
+      try { nodes = [...context.doc.querySelectorAll(tabSelector)]; } catch (_) { return; }
+      nodes.forEach(node => {
+        const sources = [node, ...(node.querySelectorAll?.('a,span,label') || [])];
+        let matchedKey = null;
+        let matchedNode = null;
+        for (const source of sources) {
+          const label = directText(source);
+          const keys = knownKeysInText(label);
+          if (keys.length > 1) continue;
+          const key = canonicalTabKey(label);
+          if (key === wantedKey) { matchedKey = key; matchedNode = source; break; }
+        }
+        if (!matchedKey || !matchedNode) return;
+        const actionable = resolveActionable(matchedNode);
+        if (!actionable) return;
+        const tag = String(actionable.tagName || '').toUpperCase();
+        candidates.push({win:context.win, actionable, frameId:context.frameId, frameName:context.frameName, pathname:context.pathname, depth:context.depth, key:matchedKey,
+          tag, classTab:actionable.matches?.('a.tab_a,.tab_a') === true,
+          hasOnclick:typeof actionable.onclick === 'function' || actionable.hasAttribute?.('onclick') === true,
+          hasHref:actionable.hasAttribute?.('href') === true, rendered:visible(actionable), jqueryClickCount:jqueryClickCount(context.win,actionable)});
+      });
+    });
+    const score = item => 1000 + (item.classTab ? 300 : 0) + (item.tag === 'A' ? 200 : 0) + (item.hasOnclick ? 150 : 0) + (item.jqueryClickCount > 0 ? 120 : 0) + (item.hasHref ? 100 : 0) + (item.pathname.toLowerCase() === '/dic/tabs.php' ? 80 : 0) + (item.rendered ? 40 : 0) + item.depth;
+    candidates.sort((a,b) => score(b) - score(a));
     const candidate = candidates[0];
-    if (!candidate) return JSON.stringify({found:false,activated:false,frameId:target.frameId,pathnameBefore:target.pathname,matchedBy:wantedKey});
-    const actionable = candidate.node.closest?.('a.tab_a,a[href],[onclick],[role="tab"],button') || candidate.node;
-    if (typeof actionable.click === 'function') {
-      actionable.click();
-      return JSON.stringify({found:true,activated:true,mechanism:'native_click',frameId:target.frameId || target.frameName,pathnameBefore:target.pathname,matchedBy:wantedKey});
+    if (!candidate) return JSON.stringify({found:false,dispatched:false,activated:false,mechanism:'',candidateCount:0,frameId:'',pathnameBefore:'',matchedBy:wantedKey});
+    const common = {found:true,candidateCount:candidates.length,frameId:candidate.frameId || candidate.frameName,pathnameBefore:candidate.pathname,matchedBy:wantedKey,tag:candidate.tag,classTab:candidate.classTab,hasOnclick:candidate.hasOnclick,hasHref:candidate.hasHref};
+    if (typeof candidate.actionable.click === 'function') {
+      candidate.actionable.click();
+      return JSON.stringify({...common,dispatched:true,activated:true,mechanism:'native_click'});
     }
-    const jq = target.win.jQuery;
-    const events = jq?._data?.(actionable,'events');
-    if (events?.click?.length) {
-      jq(actionable).trigger('click');
-      return JSON.stringify({found:true,activated:true,mechanism:'jquery_click',frameId:target.frameId || target.frameName,pathnameBefore:target.pathname,matchedBy:wantedKey});
+    if (candidate.jqueryClickCount > 0) {
+      candidate.win.jQuery(candidate.actionable).trigger('click');
+      return JSON.stringify({...common,dispatched:true,activated:true,mechanism:'jquery_click'});
     }
-    return JSON.stringify({found:true,activated:false,mechanism:'',frameId:target.frameId || target.frameName,pathnameBefore:target.pathname,matchedBy:wantedKey});
+    return JSON.stringify({...common,dispatched:false,activated:false,mechanism:''});
   })()''';
 }

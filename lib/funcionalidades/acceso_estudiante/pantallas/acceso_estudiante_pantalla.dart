@@ -780,6 +780,65 @@ class _AccesoEstudiantePantallaState
         });
   }
 
+  void _abrirExamenesRemoviendo() {
+    final sessionId = _navSession;
+    final careerId = _payload?.student.careerId;
+    prewarmExamenesData(ref, careerId: careerId);
+    Navigator.of(context).pushAndRemoveUntil(
+      buildExamenesRoute(),
+      (r) => r.isFirst,
+    ).then((_) {
+      if (mounted && _navSession == sessionId) {
+        ref.read(proveedorSeccionNav.notifier).state = 0;
+      }
+    });
+  }
+
+  void _abrirMateriasRemoviendo() {
+    final payload = _payload;
+    if (payload == null) {
+      ref.read(proveedorSeccionNav.notifier).state = 0;
+      return;
+    }
+    final sessionId = _navSession;
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute<void>(
+        builder: (context) => _MateriasEstudiantePantalla(
+          payload: payload,
+          planFuture:
+              _planFuture ?? _loadPlanForCareer(payload.student.careerId),
+        ),
+      ),
+      (r) => r.isFirst,
+    ).then((_) {
+      if (mounted && _navSession == sessionId) {
+        ref.read(proveedorSeccionNav.notifier).state = 0;
+      }
+    });
+  }
+
+  void _abrirDatosRemoviendo() {
+    final student = _payload?.student;
+    if (student == null) {
+      ref.read(proveedorSeccionNav.notifier).state = 0;
+      return;
+    }
+    final sessionId = _navSession;
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute<void>(
+        builder: (context) => _DatosEstudiantePantalla(
+          student: student,
+          onSaveContact: _saveStudentContact,
+        ),
+      ),
+      (r) => r.isFirst,
+    ).then((_) {
+      if (mounted && _navSession == sessionId) {
+        ref.read(proveedorSeccionNav.notifier).state = 0;
+      }
+    });
+  }
+
   Future<void> _saveStudentContact({
     required String phone,
     required String email,
@@ -826,14 +885,11 @@ class _AccesoEstudiantePantallaState
         if (next == 0) {
           Navigator.of(context).popUntil((r) => r.isFirst);
         } else if (next == 1) {
-          Navigator.of(context).popUntil((r) => r.isFirst);
-          _openExamenesNavBar();
+          _abrirExamenesRemoviendo();
         } else if (next == 2) {
-          Navigator.of(context).popUntil((r) => r.isFirst);
-          _abrirMateriasNavBar();
+          _abrirMateriasRemoviendo();
         } else if (next == 3) {
-          Navigator.of(context).popUntil((r) => r.isFirst);
-          _abrirDatosNavBar();
+          _abrirDatosRemoviendo();
         }
       });
     });

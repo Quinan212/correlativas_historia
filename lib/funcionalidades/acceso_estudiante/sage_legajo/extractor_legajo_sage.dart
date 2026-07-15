@@ -146,10 +146,14 @@ class ExtractorLegajoSage {
       if (text === 'transporte') return 'transporte';
       return null;
     };
-    const tabControls = win => {
+    const tabControls = contexts => {
       const result = [];
-      win.document.querySelectorAll('a.tab_a,a[onclick],[role="tab"],button[onclick]')
-        .forEach(element => {
+      contexts.forEach(context => {
+        let elements = [];
+        try {
+          elements = [...context.doc.querySelectorAll('a.tab_a,a[onclick],[role="tab"],button[onclick]')];
+        } catch (_) { return; }
+        elements.forEach(element => {
           const label = clean(element.textContent || element.innerText || element.value);
           const key = canonicalTabKey(label);
           if (!key) return;
@@ -158,15 +162,15 @@ class ExtractorLegajoSage {
           try {
             const href = element.getAttribute('href') || '';
             if (href && !href.toLowerCase().startsWith('javascript:')) {
-              targetPath = new URL(href, win.location.href).pathname || null;
+              targetPath = new URL(href, context.win.location.href).pathname || null;
             }
           } catch (_) {}
           result.push({key, label:key === 'nivel_superior_historial' ? 'Nivel Superior - Historial' : label.slice(0,180), targetPath,
-            signature:hash(key), frameId:win.frameElement?.id || win.frameElement?.name || 'root',
-            pathname:String(win.location.pathname || ''), rendered, isTab:element.matches?.('a.tab_a,[role="tab"]') === true});
+            signature:hash(key+'|'+context.frameId+'|'+context.pathname), frameId:context.frameId || 'root',
+            pathname:context.pathname, rendered, isTab:element.matches?.('a.tab_a,[role="tab"]') === true});
         });
-      return result.sort((a,b) => Number(b.isTab)-Number(a.isTab) || Number(b.rendered)-Number(a.rendered))
-        .filter((item,index,list) => list.findIndex(other => other.key === item.key) === index);
+      });
+      return result.sort((a,b) => Number(b.isTab)-Number(a.isTab) || Number(b.rendered)-Number(a.rendered) || a.frameId.localeCompare(b.frameId));
     };
     const controls = (win, labels) => {
       const result = [];
@@ -232,21 +236,25 @@ class ExtractorLegajoSage {
     const tabs = docs.find(item => item.pathname.toLowerCase() === '/dic/tabs.php' && item.frameId.toLowerCase() === 'frm_alumnos') ||
       docs.find(item => item.pathname.toLowerCase() === '/dic/tabs.php');
     const child = docs.find(item => item.isSchoolFrame && (!tabs || !item.parentFrameId || item.parentFrameId === tabs.frameId));
-    if (tabs && child) {
-      const options = tabControls(tabs.win);
-      const schoolOptions = options.filter(item => item.key === 'historial_del_alumnado' || item.key === 'nivel_superior_historial');
+    const allTabs = tabControls(docs);
+    const primaryTabs = allTabs.filter(item => ['personales','escolares','servicios','transporte'].includes(item.key));
+    const secondaryTabs = allTabs.filter(item => item.key === 'historial_del_alumnado' || item.key === 'nivel_superior_historial');
+    if (tabs && secondaryTabs.length > 0) {
+      const sections = primaryTabs.slice();
+      if (!sections.some(item => item.key === 'escolares')) sections.push({key:'escolares',label:'Escolares',targetPath:null,signature:hash('escolares'),frameId:tabs.frameId,pathname:tabs.pathname,rendered:false,isTab:true,controlFound:false});
+      const schoolOptions = secondaryTabs.slice();
       const hasHistory = schoolOptions.some(item => item.key === 'nivel_superior_historial');
-      if (!hasHistory) schoolOptions.push({key:'nivel_superior_historial',label:'Nivel Superior - Historial',targetPath:null,signature:hash('nivel_superior_historial'),frameId:tabs.frameId,pathname:tabs.pathname,rendered:false,isTab:true,controlFound:false});
-      const ready = child.childReady;
-      return JSON.stringify({stage:'escolares',state:ready ? 'ready':'loading',frameId:tabs.frameId,pathname:tabs.pathname,schoolOptions:schoolOptions,
-        parentFrameFound:true,childFrameFound:true,childReady:ready,historyGridFound:child.historyGridFound,
-        childPathname:child.pathname,
+      const ready = child?.childReady === true;
+      return JSON.stringify({stage:'escolares',state:ready ? 'ready':'loading',frameId:tabs.frameId,pathname:tabs.pathname,sections,schoolOptions:schoolOptions,
+        parentFrameFound:true,childFrameFound:Boolean(child),childReady:ready,historyGridFound:Boolean(child?.historyGridFound),
+        childPathname:child?.pathname || '',
         historyControlFound:hasHistory,
         signature:tabs.frameId+'|'+tabs.pathname+'|escolares_disponible|'+child.pathname+'|child_ready='+ready+'|history_control='+hasHistory});
     }
     if (tabs) {
-      const sections = tabControls(tabs.win);
-      return JSON.stringify({stage:'seccionesLegajo',state:sections.length ? 'ready':'empty',frameId:tabs.frameId,pathname:tabs.pathname,sections,signature:tabs.frameId+'|'+tabs.pathname+'|secciones_legajo|'+sections.map(item=>normalize(item.label)).sort().join(',')});
+      const sections = primaryTabs.slice();
+      if (!sections.some(item => item.key === 'escolares')) sections.push({key:'escolares',label:'Escolares',targetPath:null,signature:hash('escolares'),frameId:tabs.frameId,pathname:tabs.pathname,rendered:false,isTab:true,controlFound:false});
+      return JSON.stringify({stage:'seccionesLegajo',state:'ready',frameId:tabs.frameId,pathname:tabs.pathname,sections,signature:tabs.frameId+'|'+tabs.pathname+'|secciones_legajo|'+sections.map(item=>item.key).sort().join(',')});
     }
     const target = docs.find(item => item.pathname.toLowerCase() === '/dic/listar2.php' || item.isTabs || item.isSchoolFrame);
     if (target) return JSON.stringify({stage:'loading',state:'loading',frameId:target.frameId,pathname:target.pathname,signature:target.frameId+'|'+target.pathname+'|loading'});

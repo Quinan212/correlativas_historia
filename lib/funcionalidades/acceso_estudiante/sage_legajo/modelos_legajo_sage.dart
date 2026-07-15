@@ -117,6 +117,12 @@ class ResultadoAccionLegajoSage {
     required this.mechanism,
     required this.frameId,
     required this.pathnameBefore,
+    this.dispatched = false,
+    this.candidateCount = 0,
+    this.tag = '',
+    this.classTab = false,
+    this.hasOnclick = false,
+    this.hasHref = false,
     this.matchedBy = '',
   });
 
@@ -125,9 +131,15 @@ class ResultadoAccionLegajoSage {
   final String mechanism;
   final String frameId;
   final String pathnameBefore;
+  final bool dispatched;
+  final int candidateCount;
+  final String tag;
+  final bool classTab;
+  final bool hasOnclick;
+  final bool hasHref;
   final String matchedBy;
 
-  bool get success => found && activated;
+  bool get success => found && dispatched && activated;
 
   factory ResultadoAccionLegajoSage.fromJson(Map<String, dynamic> json) {
     return ResultadoAccionLegajoSage(
@@ -136,6 +148,12 @@ class ResultadoAccionLegajoSage {
       mechanism: json['mechanism'] as String? ?? '',
       frameId: json['frameId'] as String? ?? '',
       pathnameBefore: json['pathnameBefore'] as String? ?? '',
+      dispatched: json['dispatched'] == true,
+      candidateCount: (json['candidateCount'] as num?)?.toInt() ?? 0,
+      tag: json['tag'] as String? ?? '',
+      classTab: json['classTab'] == true,
+      hasOnclick: json['hasOnclick'] == true,
+      hasHref: json['hasHref'] == true,
       matchedBy: json['matchedBy'] as String? ?? '',
     );
   }

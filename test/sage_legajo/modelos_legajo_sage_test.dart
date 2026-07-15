@@ -78,6 +78,7 @@ void main() {
     );
     const success = ResultadoAccionLegajoSage(
       found: true,
+      dispatched: true,
       activated: true,
       mechanism: 'jqgrid_ondblclickrow',
       frameId: 'frm_alumnos',

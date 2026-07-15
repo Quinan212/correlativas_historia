@@ -42,25 +42,13 @@ class DetectorNavegacionSage {
       );
     }
 
-    DocumentoNavegacionSage? documentoTabs;
-    DocumentoNavegacionSage? documentoEscolares;
-    for (final documento in documentos) {
-      final frame = documento.frameId.toLowerCase();
-      final name = documento.frameName.toLowerCase();
-      if (documento.pathname.toLowerCase() == '/dic/tabs.php' &&
-          (frame == 'frm_alumnos' || name == 'frm_alumnos')) {
-        documentoTabs ??= documento;
-      }
-      if (frame == 'frm_alumnos_escolares' || name == 'frm_alumnos_escolares') {
-        documentoEscolares ??= documento;
-      }
-    }
-    if (documentoTabs != null && documentoEscolares != null) {
+    final documentoTabs = _buscarDocumentoTabs(documentos);
+    if (documentoTabs != null) {
       return _resultado(
-        EstadoNavegacionSage.escolares,
+        EstadoNavegacionSage.seccionesLegajo,
         documentoTabs,
         shellPrivado: true,
-        opciones: const ['nivel_superior_historial'],
+        opciones: const ['escolares'],
       );
     }
 
@@ -74,19 +62,6 @@ class DetectorNavegacionSage {
           shellPrivado: true,
           opciones: const ['listado_legajos'],
         );
-      }
-      if (activo.hasTabs && rutaActiva == '/dic/tabs.php') {
-        final tieneEscolares = activo.enlaces.any(
-          (link) => normalizar(link.texto) == 'escolares',
-        );
-        if (tieneEscolares) {
-          return _resultado(
-            EstadoNavegacionSage.seccionesLegajo,
-            activo,
-            shellPrivado: true,
-            opciones: const ['escolares'],
-          );
-        }
       }
     }
 
@@ -225,6 +200,35 @@ class DetectorNavegacionSage {
       ..sort((a, b) => b.profundidad.compareTo(a.profundidad));
     if (visibles.isNotEmpty) return visibles.first;
     return documentos.isEmpty ? null : documentos.first;
+  }
+
+  DocumentoNavegacionSage? _buscarDocumentoTabs(
+    List<DocumentoNavegacionSage> documentos,
+  ) {
+    final candidatos = documentos
+        .where(
+          (documento) => documento.pathname.toLowerCase() == '/dic/tabs.php',
+        )
+        .toList();
+    if (candidatos.isEmpty) return null;
+    candidatos.sort((a, b) {
+      final aMain =
+          a.frameId.toLowerCase() == 'main' ||
+          a.frameName.toLowerCase() == 'main';
+      final bMain =
+          b.frameId.toLowerCase() == 'main' ||
+          b.frameName.toLowerCase() == 'main';
+      if (aMain != bMain) return bMain ? 1 : -1;
+      final aAlumnos =
+          a.frameId.toLowerCase() == 'frm_alumnos' ||
+          a.frameName.toLowerCase() == 'frm_alumnos';
+      final bAlumnos =
+          b.frameId.toLowerCase() == 'frm_alumnos' ||
+          b.frameName.toLowerCase() == 'frm_alumnos';
+      if (aAlumnos != bAlumnos) return bAlumnos ? 1 : -1;
+      return a.profundidad.compareTo(b.profundidad);
+    });
+    return candidatos.first;
   }
 
   static bool _esRutaPosterior(String pathname) {
