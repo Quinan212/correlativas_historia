@@ -3,19 +3,46 @@ import 'package:correlativas_historia/funcionalidades/acceso_estudiante/sage_per
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('usa el control oficial del perfil y no fabrica un POST', () async {
-    String? source;
-    final executor = EjecutorPerfilesSage((value) async {
-      source = value;
-      return '{"found":true,"dispatched":true,"activated":true,"confirmed":true}';
+  test('abre Mi perfil y agenda el clic oficial sin fabricar un POST', () async {
+    final sources = <String>[];
+    var call = 0;
+    final executor = EjecutorPerfilesSage((source) async {
+      sources.add(source);
+      call++;
+      if (call == 1) {
+        return '{"avatarFound":true,"avatarDispatched":true,'
+            '"panelOpen":false,"profiles":[]}';
+      }
+      if (call == 2) {
+        return '{"avatarFound":true,"avatarDispatched":false,'
+            '"panelOpen":true,"profiles":['
+            '{"label":"Agente","active":true},'
+            '{"label":"Alumnos","active":false}]}';
+      }
+      return '{"found":true,"dispatched":true,"activated":true,'
+          '"alreadyActive":false,"stage":"click_scheduled"}';
     });
 
     final result = await executor.cambiar(PerfilSage.alumnos);
 
+    expect(result.dispatchSucceeded, isTrue);
+    expect(result.confirmed, isFalse);
+    expect(sources.first, contains('button.btn-user'));
+    expect(sources.last, contains('setTimeout'));
+    expect(sources.join('\n'), isNot(contains('fetch(')));
+    expect(sources.join('\n'), isNot(contains('XMLHttpRequest')));
+  });
+
+  test('no cambia cuando el perfil solicitado ya está activo', () async {
+    final executor = EjecutorPerfilesSage((_) async {
+      return '{"avatarFound":true,"panelOpen":true,"profiles":['
+          '{"label":"Agente","active":true},'
+          '{"label":"Alumnos","active":false}]}';
+    });
+
+    final result = await executor.cambiar(PerfilSage.agente);
+
     expect(result.success, isTrue);
-    expect(source, contains('input[type="radio"]'));
-    expect(source, contains('candidate.click'));
-    expect(source, isNot(contains('fetch(')));
-    expect(source, isNot(contains('XMLHttpRequest')));
+    expect(result.alreadyActive, isTrue);
   });
 }

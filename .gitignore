@@ -52,3 +52,34 @@ flutter_run_*.log
 
 # Archivos de backup de código fuente
 all_code_to_read.txt
+
+# IDE / Editor cache
+.codex/
+.codex-remote-attachments/
+.agents/
+
+# Build artifacts
+android/build/
+
+# Auditoría SAGE
+auditoria_sage_agente_*/
+auditoria_sage_agente_monitor.mjs
+
+# Capturas / temp
+codex_*.png
+stacking_sandbox.html
+steps.jsonl
+
+# Zips
+*.zip
+
+# Reportes generados
+DIAGNOSTICO_SAGE_REPORTES_V2.md
+INFORME_*.md
+LOGS_SANITIZADOS_SAGE_V3.md
+
+# Logs
+logs/
+
+# Tool
+tool/app.zip

@@ -44,23 +44,10 @@ class CapturaPerfilesSage {
     required this.perfiles,
     this.panelAbierto = false,
     this.avatarEncontrado = false,
-    this.avatarActivado = false,
-    this.documento = '',
   });
 
   final List<PerfilDisponibleSage> perfiles;
   final bool panelAbierto;
   final bool avatarEncontrado;
-  final bool avatarActivado;
-  final String documento;
-
-  PerfilSage? get activo {
-    for (final perfil in perfiles) {
-      if (perfil.activo) return perfil.perfil;
-    }
-    return null;
-  }
-
-  bool contiene(PerfilSage perfil) =>
-      perfiles.any((item) => item.perfil == perfil && item.disponible);
+  PerfilSage? get activo => perfiles.where((p) => p.activo).firstOrNull?.perfil;
 }

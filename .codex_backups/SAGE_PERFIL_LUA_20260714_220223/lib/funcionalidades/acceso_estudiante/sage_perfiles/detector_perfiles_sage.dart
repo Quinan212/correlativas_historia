@@ -27,8 +27,6 @@ class DetectorPerfilesSage {
       perfiles: profiles,
       panelAbierto: json['panelOpen'] == true,
       avatarEncontrado: json['avatarFound'] == true,
-      avatarActivado: json['avatarDispatched'] == true,
-      documento: json['documentPath']?.toString() ?? '',
     );
   }
 }

@@ -34,7 +34,6 @@ import '../sage_navegacion/detector_navegacion_sage.dart';
 import '../sage_navegacion/modelos_navegacion_sage.dart';
 import '../sage_navegacion/pantalla_carga_sage.dart';
 import '../sage_navegacion/pantalla_modulos_sage.dart';
-import '../sage_navegacion/barra_navegacion_sage.dart';
 import '../sage_navegacion/pantalla_submodulos_sage.dart';
 import 'pantalla_visor_pdf_sage.dart';
 
@@ -76,8 +75,6 @@ class _PantallaSageState extends State<PantallaSage> {
   bool _nativeSeccionesLegajoVisible = false;
   bool _nativeEscolaresVisible = false;
   bool _nativeLoadingVisible = false;
-  bool _privateSageShellActive = false;
-  bool _showOriginalWebView = false;
   bool _nativeAgentHomeVisible = false;
   bool _nativeAgentPersonalVisible = false;
   bool _nativeAgentStudentMenuVisible = false;
@@ -86,10 +83,6 @@ class _PantallaSageState extends State<PantallaSage> {
   bool _nativeProfileSelectorVisible = false;
   bool _profileChoiceMade = false;
   bool _profileSwitchBusy = false;
-  bool _profileHomeResetBusy = false;
-  int _profileTransitionId = 0;
-  PerfilSage? _selectedProfile;
-  bool _manualNavigationActive = false;
   String? _profileError;
   CapturaPerfilesSage? _profileCapture;
   PortadaAgenteSage _portadaAgente = const PortadaAgenteSage();
@@ -110,8 +103,6 @@ class _PantallaSageState extends State<PantallaSage> {
   final Set<String> _historyAutoAttemptedCareerIds = <String>{};
   Timer? _historyPollTimer;
   Timer? _navigationDebounceTimer;
-  Timer? _profileSwitchWatchdog;
-  PerfilSage? _profileSwitchTarget;
   ResultadoExtraccionLegajoSage? _legajoExtraction;
   String? _legajoActionInFlight;
   String? _legajoOriginSignature;
@@ -139,31 +130,10 @@ class _PantallaSageState extends State<PantallaSage> {
             uri.host.toLowerCase() == 'sage.entrerios.gov.ar' &&
             uri.path.toLowerCase().startsWith('/pregase/') &&
             !uri.path.toLowerCase().startsWith('/login/');
-        final isSageLogin =
-            uri != null &&
-            uri.host.toLowerCase() == 'sage.entrerios.gov.ar' &&
-            uri.path.toLowerCase().startsWith('/login/');
-        if (mounted && isPrivatePregase) {
+        if (isPrivatePregase && mounted) {
           setState(() {
-            _privateSageShellActive = true;
-            _showOriginalWebView = false;
-            final keepProfileSelectorVisible =
-                _nativeProfileSelectorVisible && !_profileSwitchBusy;
-            if (!keepProfileSelectorVisible) {
-              _nativeLoadingVisible = true;
-              final target = _profileSwitchTarget;
-              _nativeLoadingMessage = _profileHomeResetBusy
-                  ? 'Volviendo al inicio de SAGE…'
-                  : _profileSwitchBusy && target != null
-                  ? 'Cambiando a ${target.etiqueta}…'
-                  : 'Preparando tus servicios académicos…';
-            }
-          });
-        } else if (mounted && isSageLogin) {
-          setState(() {
-            _privateSageShellActive = false;
-            _showOriginalWebView = true;
-            _nativeLoadingVisible = false;
+            _nativeLoadingVisible = true;
+            _nativeLoadingMessage = 'Preparando tus servicios académicos…';
           });
         }
       },
@@ -172,13 +142,7 @@ class _PantallaSageState extends State<PantallaSage> {
         _mainFrameError.value = null;
         _logFirstPageTiming();
         unawaited(_installNavigationObservers());
-        _ensureProbeTimer();
         _requestSageProbe();
-        if (_profileChoiceMade &&
-            !_profileSwitchBusy &&
-            !_profileHomeResetBusy) {
-          _scheduleProfileLandingProbes(_profileTransitionId);
-        }
       },
       onWebResourceError: (error) {
         if (error.isForMainFrame != true) return;
@@ -229,61 +193,10 @@ class _PantallaSageState extends State<PantallaSage> {
         await _loadInitialPage();
       }),
     );
-    _ensureProbeTimer();
-  }
-
-  void _ensureProbeTimer() {
-    if (_historyPollTimer?.isActive == true) return;
     _historyPollTimer = Timer.periodic(
       const Duration(seconds: 2),
       (_) => _requestSageProbe(),
     );
-  }
-
-  void _startProfileSwitchWatchdog(
-    PerfilSage profile,
-    int transitionId,
-  ) {
-    _profileSwitchWatchdog?.cancel();
-    _profileSwitchWatchdog = Timer(const Duration(seconds: 22), () {
-      if (!mounted ||
-          _isClosing ||
-          transitionId != _profileTransitionId ||
-          !_profileSwitchBusy) {
-        return;
-      }
-      _failProfileSelection(
-        'SAGE no terminó de cambiar a ${profile.etiqueta}. Intentá nuevamente.',
-        transitionId,
-      );
-    });
-  }
-
-  void _stopProfileSwitchWatchdog() {
-    _profileSwitchWatchdog?.cancel();
-    _profileSwitchWatchdog = null;
-  }
-
-  void _scheduleProfileLandingProbes(int transitionId) {
-    const delays = <Duration>[
-      Duration(milliseconds: 250),
-      Duration(milliseconds: 800),
-      Duration(milliseconds: 1600),
-      Duration(milliseconds: 3000),
-    ];
-    for (final delay in delays) {
-      unawaited(
-        Future<void>.delayed(delay, () {
-          if (!mounted ||
-              _isClosing ||
-              transitionId != _profileTransitionId ||
-              _profileSwitchBusy) {
-            return;
-          }
-          _requestSageProbe();
-        }),
-      );
-    }
   }
 
   void _requestSageProbe() {
@@ -666,20 +579,7 @@ class _PantallaSageState extends State<PantallaSage> {
       unawaited(_installNavigationObservers());
       if (!mounted) return;
 
-      if (result.shellPrivado &&
-          result.estado != EstadoNavegacionSage.login &&
-          result.estado != EstadoNavegacionSage.sesionVencida) {
-        _privateSageShellActive = true;
-      }
-
-      if (_profileSwitchBusy || _profileHomeResetBusy) return;
-      if (_manualNavigationActive &&
-          !_navigationAwaitingTransition &&
-          !_nativeLoadingVisible &&
-          result.estado != EstadoNavegacionSage.login &&
-          result.estado != EstadoNavegacionSage.sesionVencida) {
-        return;
-      }
+      if (_profileSwitchBusy) return;
 
       if (_navigationAwaitingTransition) {
         final escolaresConfirmed =
@@ -850,8 +750,6 @@ class _PantallaSageState extends State<PantallaSage> {
             _nativeLoadingVisible = true;
           case EstadoNavegacionSage.login:
           case EstadoNavegacionSage.sesionVencida:
-            _privateSageShellActive = false;
-            _showOriginalWebView = true;
             _usuarioSolicitoEscolares = false;
             _nativeHistoryVisible = false;
             _nativeModulesVisible = false;
@@ -991,86 +889,35 @@ class _PantallaSageState extends State<PantallaSage> {
   }
 
   Future<void> _selectProfile(PerfilSage profile) async {
-    if (_profileSwitchBusy || _profileHomeResetBusy) return;
-
-    final transitionId = ++_profileTransitionId;
-    final current = _profileCapture?.activo ?? _selectedProfile;
-
-    _ensureProbeTimer();
-    _profileSwitchTarget = profile;
-    _startProfileSwitchWatchdog(profile, transitionId);
-    _manualNavigationActive = true;
-    if (mounted) {
-      setState(() {
-        _privateSageShellActive = true;
-        _showOriginalWebView = false;
-        _profileSwitchBusy = true;
-        _profileHomeResetBusy = false;
-        _profileError = null;
-        _nativeProfileSelectorVisible = false;
-        _nativeLoadingVisible = true;
-        _nativeLoadingMessage = current == profile
-            ? 'Abriendo ${profile.etiqueta}…'
-            : 'Cambiando a ${profile.etiqueta}…';
-        _nativeHistoryVisible = false;
-        _nativeModulesVisible = false;
-        _nativeSubmodulesVisible = false;
-        _nativeLegajoVisible = false;
-        _nativeSeccionesLegajoVisible = false;
-        _nativeEscolaresVisible = false;
-        _nativeAgentHomeVisible = false;
-        _nativeAgentPersonalVisible = false;
-        _nativeAgentStudentMenuVisible = false;
-        _navigationActionInFlight = null;
-        _legajoActionInFlight = null;
-        _navigationAwaitingTransition = false;
-        _navigationOriginSignature = null;
-        _navigationOriginState = null;
-        _navigationOriginPath = null;
-        _navigationActionStartedAt = null;
-        _legajoOriginSignature = null;
-        _tipoAccionLegajo = TipoAccionLegajoSage.ninguna;
-        _usuarioSolicitoEscolares = false;
-      });
-    }
-
+    if (_profileSwitchBusy) return;
+    final current = _profileCapture?.activo;
     if (current == profile) {
-      if (profile == PerfilSage.agente) {
-        try {
-          await _probeAgentHome().timeout(const Duration(seconds: 4));
-        } catch (_) {
-          // La portada ya extraída sigue siendo válida como respaldo.
-        }
-      }
-      if (!mounted || transitionId != _profileTransitionId) return;
-      _completeProfileSelection(profile, transitionId);
+      setState(() {
+        _profileChoiceMade = true;
+        _nativeProfileSelectorVisible = false;
+        _profileError = null;
+        _nativeLoadingVisible = true;
+        _nativeLoadingMessage = 'Cargando ${profile.etiqueta}…';
+      });
+      _requestSageProbe();
       return;
     }
 
-    ResultadoCambioPerfilSage dispatch;
-    try {
-      dispatch = await EjecutorPerfilesSage(
-        _evaluateJavascript,
-      ).cambiar(profile).timeout(const Duration(seconds: 8));
-    } on TimeoutException {
-      if (!mounted || transitionId != _profileTransitionId) return;
-      _failProfileSelection(
-        'SAGE tardó demasiado en abrir el selector de perfiles. Intentá nuevamente.',
-        transitionId,
-      );
-      return;
-    } catch (_) {
-      if (!mounted || transitionId != _profileTransitionId) return;
-      _failProfileSelection(
-        'No se pudo iniciar el cambio de perfil en SAGE.',
-        transitionId,
-      );
-      return;
-    }
+    setState(() {
+      _profileSwitchBusy = true;
+      _profileError = null;
+    });
 
-    if (!mounted || transitionId != _profileTransitionId) return;
+    final dispatch = await EjecutorPerfilesSage(
+      _evaluateJavascript,
+    ).cambiar(profile);
+    if (!mounted) return;
 
     if (!dispatch.dispatchSucceeded) {
+      setState(() {
+        _profileSwitchBusy = false;
+        _profileError = dispatch.errorMessage;
+      });
       if (kDebugMode) {
         debugPrint(
           '[SAGE perfil] target=${profile.clave}; stage=${dispatch.stage}; '
@@ -1079,128 +926,41 @@ class _PantallaSageState extends State<PantallaSage> {
           'activated=${dispatch.activated}',
         );
       }
-      _failProfileSelection(dispatch.errorMessage, transitionId);
       return;
     }
 
-    final confirmed = dispatch.alreadyActive ||
-        await _confirmProfileChange(
-          profile,
-          transitionId: transitionId,
-        ).timeout(
-          const Duration(seconds: 16),
-          onTimeout: () => false,
-        );
-
-    if (!mounted || transitionId != _profileTransitionId) return;
-
-    if (!confirmed) {
-      _failProfileSelection(
-        'SAGE no confirmó el cambio a ${profile.etiqueta}. '
-        'El perfil anterior sigue activo.',
-        transitionId,
-      );
-      return;
-    }
-
-    _completeProfileSelection(profile, transitionId);
-  }
-
-  void _completeProfileSelection(
-    PerfilSage profile,
-    int transitionId,
-  ) {
-    if (!mounted || transitionId != _profileTransitionId) return;
-
-    _stopProfileSwitchWatchdog();
-    _profileSwitchTarget = null;
-    _ensureProbeTimer();
-    final previousCapture = _profileCapture;
-    if (previousCapture != null) {
-      _profileCapture = CapturaPerfilesSage(
-        perfiles: [
-          for (final item in previousCapture.perfiles)
-            PerfilDisponibleSage(
-              perfil: item.perfil,
-              activo: item.perfil == profile,
-              disponible: item.disponible,
-              controlEncontrado: item.controlEncontrado,
-            ),
-        ],
-        panelAbierto: false,
-        avatarEncontrado: previousCapture.avatarEncontrado,
-        avatarActivado: previousCapture.avatarActivado,
-        documento: previousCapture.documento,
-      );
-    }
-
-    _manualNavigationActive = false;
     setState(() {
-      _privateSageShellActive = true;
-      _showOriginalWebView = false;
-      _selectedProfile = profile;
-      _profileChoiceMade = true;
-      _profileSwitchBusy = false;
-      _profileHomeResetBusy = false;
-      _profileError = null;
       _nativeProfileSelectorVisible = false;
-      _nativeLoadingVisible = false;
-      _nativeHistoryVisible = false;
-      _nativeModulesVisible = profile == PerfilSage.alumnos;
-      _nativeSubmodulesVisible = false;
-      _nativeLegajoVisible = false;
-      _nativeSeccionesLegajoVisible = false;
-      _nativeEscolaresVisible = false;
-      _nativeAgentHomeVisible = profile == PerfilSage.agente;
-      _nativeAgentPersonalVisible = false;
-      _nativeAgentStudentMenuVisible = false;
-      _navigationActionInFlight = null;
-      _legajoActionInFlight = null;
-      _navigationAwaitingTransition = false;
-      _navigationOriginSignature = null;
-      _navigationOriginState = null;
-      _navigationOriginPath = null;
-      _navigationActionStartedAt = null;
-      _legajoOriginSignature = null;
-      _tipoAccionLegajo = TipoAccionLegajoSage.ninguna;
-      _usuarioSolicitoEscolares = false;
+      _nativeLoadingVisible = true;
+      _nativeLoadingMessage = 'Cambiando a ${profile.etiqueta}…';
     });
 
-    if (kDebugMode) {
-      debugPrint(
-        '[SAGE perfil] target=${profile.clave}; confirmed=true; '
-        'destination=home',
-      );
-    }
-    _scheduleProfileLandingProbes(transitionId);
-  }
+    final confirmed = dispatch.alreadyActive ||
+        await _confirmProfileChange(profile);
+    if (!mounted) return;
 
-  void _failProfileSelection(
-    String message,
-    int transitionId,
-  ) {
-    if (!mounted || transitionId != _profileTransitionId) return;
-    _stopProfileSwitchWatchdog();
-    _profileSwitchTarget = null;
-    _ensureProbeTimer();
-    _manualNavigationActive = true;
+    if (!confirmed) {
+      setState(() {
+        _profileSwitchBusy = false;
+        _nativeLoadingVisible = false;
+        _nativeProfileSelectorVisible = true;
+        _profileError = dispatch.errorMessage;
+      });
+      return;
+    }
+
     setState(() {
+      _profileChoiceMade = true;
       _profileSwitchBusy = false;
-      _profileHomeResetBusy = false;
-      _nativeLoadingVisible = false;
-      _nativeProfileSelectorVisible = true;
-      _nativeHistoryVisible = false;
-      _nativeModulesVisible = false;
-      _nativeSubmodulesVisible = false;
-      _nativeLegajoVisible = false;
-      _nativeSeccionesLegajoVisible = false;
-      _nativeEscolaresVisible = false;
+      _profileError = null;
+      _nativeProfileSelectorVisible = false;
       _nativeAgentHomeVisible = false;
       _nativeAgentPersonalVisible = false;
       _nativeAgentStudentMenuVisible = false;
-      _profileError = message;
+      _nativeLoadingVisible = true;
+      _nativeLoadingMessage = 'Cargando ${profile.etiqueta}…';
     });
-    unawaited(_refreshProfileSelector(preserveError: true));
+    _requestSageProbe();
   }
 
   Future<bool> _hasStudentHomeSignature() async {
@@ -1237,20 +997,13 @@ class _PantallaSageState extends State<PantallaSage> {
     }
   }
 
-  Future<bool> _confirmProfileChange(
-    PerfilSage profile, {
-    required int transitionId,
-  }) async {
+  Future<bool> _confirmProfileChange(PerfilSage profile) async {
     final deadline = DateTime.now().add(const Duration(seconds: 12));
     var attempts = 0;
     while (DateTime.now().isBefore(deadline)) {
       attempts++;
       await Future<void>.delayed(const Duration(milliseconds: 450));
-      if (_isClosing ||
-          !mounted ||
-          transitionId != _profileTransitionId) {
-        return false;
-      }
+      if (_isClosing) return false;
 
       try {
         if (profile == PerfilSage.agente) {
@@ -1341,7 +1094,6 @@ class _PantallaSageState extends State<PantallaSage> {
       );
       return;
     }
-    _manualNavigationActive = true;
     setState(() {
       _agentStudentOptions = menu.opciones;
       _navigationActionInFlight = null;
@@ -1352,7 +1104,6 @@ class _PantallaSageState extends State<PantallaSage> {
 
   Future<void> _activateAgentStudentOption(OpcionAgenteSage option) async {
     if (_navigationActionInFlight != null) return;
-    _manualNavigationActive = false;
     _navigationOriginSignature = _lastNavigationResult?.firma;
     _navigationOriginState = _lastNavigationResult?.estado;
     _navigationOriginPath = _lastNavigationResult?.documentoActivo?.pathname;
@@ -1392,322 +1143,35 @@ class _PantallaSageState extends State<PantallaSage> {
     unawaited(_installNavigationObservers());
   }
 
-  bool get _requiresRealSageHomeBeforeProfileSelector =>
-      _nativeHistoryVisible ||
-      _nativeEscolaresVisible ||
-      _nativeSeccionesLegajoVisible ||
-      _nativeLegajoVisible ||
-      _nativeSubmodulesVisible ||
-      _nativeAgentPersonalVisible ||
-      _nativeAgentStudentMenuVisible ||
-      (!_nativeModulesVisible && !_nativeAgentHomeVisible);
-
-  Future<bool> _hasRealSageHomeDocument() async {
-    try {
-      final raw = await _evaluateJavascript(r'''(() => {
-        const normalize = value => String(value || '')
-          .toLowerCase()
-          .normalize('NFD')
-          .replace(/[\u0300-\u036f]/g, '')
-          .replace(/\s+/g, ' ')
-          .trim();
-        const seen = new Set();
-        const visit = win => {
-          if (!win || seen.has(win)) return false;
-          seen.add(win);
-          let doc;
-          try { doc = win.document; } catch (_) { return false; }
-          const path = String(win.location.pathname || '').toLowerCase();
-          if (path === '/pregase/menuprincipal_nuevo.php') {
-            const body = normalize(doc.body?.innerText || '');
-            if (body.includes('modulos') ||
-                doc.querySelector(
-                  'a.dropdown-item.menuPadre,a.menu-mobile-item',
-                )) {
-              return true;
-            }
-          }
-          return [...doc.querySelectorAll('iframe')].some(frame => {
-            try { return visit(frame.contentWindow); } catch (_) { return false; }
-          });
-        };
-        return visit(window);
-      })()''');
-      dynamic value = jsonDecode(raw);
-      if (value is String) value = jsonDecode(value);
-      return value == true;
-    } catch (_) {
-      return false;
-    }
-  }
-
-  Future<bool> _returnRealSageToHome(int transitionId) async {
-    if (await _hasRealSageHomeDocument()) return true;
-
-    var dispatched = false;
-    try {
-      final raw = await _evaluateJavascript(r'''(() => {
-        const normalize = value => String(value || '')
-          .toLowerCase()
-          .normalize('NFD')
-          .replace(/[\u0300-\u036f]/g, '')
-          .replace(/\s+/g, ' ')
-          .trim();
-        const seen = new Set();
-        const contexts = [];
-        const visit = (win, depth = 0) => {
-          if (!win || seen.has(win)) return;
-          seen.add(win);
-          let doc;
-          try { doc = win.document; } catch (_) { return; }
-          contexts.push({win, doc, depth});
-          doc.querySelectorAll('iframe').forEach(frame => {
-            try { visit(frame.contentWindow, depth + 1); } catch (_) {}
-          });
-        };
-        visit(window);
-        contexts.sort((a, b) => b.depth - a.depth);
-        for (const context of contexts) {
-          const links = [...context.doc.querySelectorAll(
-            'a.camino-link[href],a[href]'
-          )];
-          const link = links.find(node => {
-            if (normalize(node.textContent) !== 'inicio') return false;
-            try {
-              return new URL(
-                node.getAttribute('href') || '',
-                context.win.location.href,
-              ).pathname.toLowerCase() ===
-                  '/pregase/menuprincipal_nuevo.php';
-            } catch (_) {
-              return false;
-            }
-          });
-          if (!link) continue;
-          context.win.setTimeout(() => {
-            try { link.click(); } catch (_) {}
-          }, 0);
-          return JSON.stringify({
-            found:true,
-            dispatched:true,
-            stage:'home_breadcrumb_click_scheduled',
-          });
-        }
-        return JSON.stringify({
-          found:false,
-          dispatched:false,
-          stage:'home_breadcrumb_not_found',
-        });
-      })()''');
-      dynamic value = jsonDecode(raw);
-      if (value is String) value = jsonDecode(value);
-      if (value is Map) {
-        dispatched = value['dispatched'] == true;
-        if (kDebugMode) {
-          debugPrint(
-            '[SAGE perfil] reset_home_stage=${value['stage']}; '
-            'found=${value['found']}; dispatched=$dispatched',
-          );
-        }
-      }
-    } catch (_) {
-      dispatched = false;
-    }
-
-    if (!dispatched) return false;
-
-    final deadline = DateTime.now().add(const Duration(seconds: 12));
-    while (DateTime.now().isBefore(deadline)) {
-      await Future<void>.delayed(const Duration(milliseconds: 350));
-      if (!mounted ||
-          _isClosing ||
-          transitionId != _profileTransitionId ||
-          !_profileHomeResetBusy) {
-        return false;
-      }
-      if (await _hasRealSageHomeDocument()) {
-        if (kDebugMode) {
-          debugPrint('[SAGE perfil] reset_home_confirmed=true');
-        }
-        return true;
-      }
-    }
-    if (kDebugMode) {
-      debugPrint('[SAGE perfil] reset_home_confirmed=false; timeout=true');
-    }
-    return false;
-  }
-
-  Future<void> _requestProfileSelector() async {
-    if (!mounted || _profileSwitchBusy || _profileHomeResetBusy) return;
-
-    if (!_requiresRealSageHomeBeforeProfileSelector ||
-        await _hasRealSageHomeDocument()) {
-      _showProfileSelector();
-      return;
-    }
-
-    final transitionId = ++_profileTransitionId;
-    _stopProfileSwitchWatchdog();
-    _profileSwitchTarget = null;
-    _ensureProbeTimer();
-    _manualNavigationActive = true;
-    setState(() {
-      _privateSageShellActive = true;
-      _showOriginalWebView = false;
-      _profileHomeResetBusy = true;
-      _profileError = null;
-      _nativeProfileSelectorVisible = false;
-      _nativeHistoryVisible = false;
-      _nativeModulesVisible = false;
-      _nativeSubmodulesVisible = false;
-      _nativeLegajoVisible = false;
-      _nativeSeccionesLegajoVisible = false;
-      _nativeEscolaresVisible = false;
-      _nativeAgentHomeVisible = false;
-      _nativeAgentPersonalVisible = false;
-      _nativeAgentStudentMenuVisible = false;
-      _nativeLoadingVisible = true;
-      _nativeLoadingMessage = 'Volviendo al inicio de SAGE…';
-      _navigationActionInFlight = null;
-      _legajoActionInFlight = null;
-      _navigationAwaitingTransition = false;
-      _navigationOriginSignature = null;
-      _navigationOriginState = null;
-      _navigationOriginPath = null;
-      _navigationActionStartedAt = null;
-      _legajoOriginSignature = null;
-      _tipoAccionLegajo = TipoAccionLegajoSage.ninguna;
-      _usuarioSolicitoEscolares = false;
-      _historyAutoLoadRunning = false;
-      _historyNeedsFreshDom = true;
-      _history = null;
-      _historyState = EstadoHistorialSage.esperandoPagina;
-      _historyAutoAttemptedCareerIds.clear();
-    });
-
-    final returnedHome = await _returnRealSageToHome(
-      transitionId,
-    ).timeout(
-      const Duration(seconds: 14),
-      onTimeout: () => false,
-    );
-
-    if (!mounted ||
-        transitionId != _profileTransitionId ||
-        !_profileHomeResetBusy) {
-      return;
-    }
-
-    if (returnedHome) {
-      _showProfileSelector();
-      return;
-    }
-
-    _showProfileSelector(
-      error:
-          'SAGE no pudo volver a su pantalla inicial. '
-          'Podés reintentar el cambio de perfil.',
-    );
-  }
-
-  void _showProfileSelector({String? error}) {
+  void _showProfileSelector() {
     if (!mounted) return;
-
-    _profileTransitionId++;
-    _stopProfileSwitchWatchdog();
-    _profileSwitchTarget = null;
-    _ensureProbeTimer();
-    _manualNavigationActive = true;
     setState(() {
-      _privateSageShellActive = true;
-      _showOriginalWebView = false;
       _profileChoiceMade = false;
-      _profileSwitchBusy = false;
-      _profileHomeResetBusy = false;
-      _profileError = error;
+      _profileError = null;
       _nativeProfileSelectorVisible = true;
-      _nativeHistoryVisible = false;
-      _nativeModulesVisible = false;
-      _nativeSubmodulesVisible = false;
-      _nativeLegajoVisible = false;
-      _nativeSeccionesLegajoVisible = false;
-      _nativeEscolaresVisible = false;
       _nativeAgentHomeVisible = false;
       _nativeAgentPersonalVisible = false;
       _nativeAgentStudentMenuVisible = false;
+      _nativeModulesVisible = false;
+      _nativeSubmodulesVisible = false;
       _nativeLoadingVisible = false;
-      _navigationActionInFlight = null;
-      _legajoActionInFlight = null;
-      _navigationAwaitingTransition = false;
-      _navigationOriginSignature = null;
-      _navigationOriginState = null;
-      _navigationOriginPath = null;
-      _navigationActionStartedAt = null;
-      _legajoOriginSignature = null;
-      _tipoAccionLegajo = TipoAccionLegajoSage.ninguna;
-      _usuarioSolicitoEscolares = false;
     });
-    unawaited(_refreshProfileSelector(preserveError: error != null));
+    unawaited(_refreshProfileSelector());
   }
 
-  Future<void> _refreshProfileSelector({
-    bool preserveError = false,
-  }) async {
-    CapturaPerfilesSage capture;
-    try {
-      capture = await _probeProfiles(
-        openPanelIfNeeded: true,
-      ).timeout(const Duration(seconds: 8));
-    } on TimeoutException {
-      if (!mounted) return;
-      setState(() {
-        if (!preserveError) {
-          _profileError =
-              'SAGE tardó demasiado en mostrar los perfiles disponibles.';
-        }
-      });
-      return;
-    } catch (_) {
-      if (!mounted) return;
-      setState(() {
-        if (!preserveError) {
-          _profileError = 'No se pudieron leer los perfiles de SAGE.';
-        }
-      });
-      return;
-    }
-
-    if (!mounted || _profileSwitchBusy || _profileHomeResetBusy) return;
+  Future<void> _refreshProfileSelector() async {
+    final capture = await _probeProfiles(openPanelIfNeeded: true);
+    if (!mounted) return;
     setState(() {
       _profileCapture = capture;
-      _selectedProfile = capture.activo ?? _selectedProfile;
-      if (!preserveError) {
-        _profileError = capture.perfiles.length < 2
-            ? 'SAGE no expuso los dos perfiles disponibles.'
-            : null;
+      if (capture.perfiles.length < 2) {
+        _profileError = 'SAGE no expuso los dos perfiles disponibles.';
       }
     });
-  }
-
-  void _exitSageToAppHome() {
-    if (_isClosing || !mounted) return;
-    _isClosing = true;
-    try {
-      final onClose = widget.onClose;
-      if (onClose != null) {
-        onClose();
-      } else {
-        Navigator.of(context).pop();
-      }
-    } finally {
-      _isClosing = false;
-    }
   }
 
   void _showAgentHome() {
     if (!mounted) return;
-    _manualNavigationActive = true;
     setState(() {
       _nativeAgentHomeVisible = true;
       _nativeAgentPersonalVisible = false;
@@ -1835,16 +1299,6 @@ class _PantallaSageState extends State<PantallaSage> {
         );
       }
       if (!mounted) return;
-      if (_profileSwitchBusy ||
-          _profileHomeResetBusy ||
-          _nativeProfileSelectorVisible) {
-        return;
-      }
-      if (_manualNavigationActive &&
-          !_navigationAwaitingTransition &&
-          !_nativeLoadingVisible) {
-        return;
-      }
       if (result.pantallaDetectada) {
         setState(() {
           _navigationAwaitingTransition = false;
@@ -2020,7 +1474,6 @@ class _PantallaSageState extends State<PantallaSage> {
 
   Future<bool> _activateSageLink(OpcionSubmoduloSage option) async {
     if (_navigationActionInFlight != null) return false;
-    _manualNavigationActive = false;
     final activeDocument = _lastNavigationResult?.documentoActivo;
     _navigationOriginSignature = _lastNavigationResult?.firma;
     _navigationOriginState = _lastNavigationResult?.estado;
@@ -2294,9 +1747,7 @@ class _PantallaSageState extends State<PantallaSage> {
 
   void _showOriginalNavigation() {
     if (!mounted) return;
-    _manualNavigationActive = false;
     setState(() {
-      _showOriginalWebView = true;
       _nativeModulesVisible = false;
       _nativeSubmodulesVisible = false;
       _nativeLegajoVisible = false;
@@ -2343,7 +1794,6 @@ class _PantallaSageState extends State<PantallaSage> {
 
   Future<void> _activateLegajoProfile(PerfilLegajoSage profile) async {
     if (_legajoActionInFlight != null) return;
-    _manualNavigationActive = false;
     _usuarioSolicitoEscolares = false;
     _beginLegajoAction('Abriendo tu legajo…', TipoAccionLegajoSage.abrirPerfil);
     final result = await EjecutorLegajoSage(
@@ -2367,7 +1817,6 @@ class _PantallaSageState extends State<PantallaSage> {
 
   Future<void> _activateLegajoSection(SeccionLegajoSage section) async {
     if (_legajoActionInFlight != null) return;
-    _manualNavigationActive = false;
     final isSchool =
         section.clave == 'escolares' ||
         normalizarLegajoSage(section.titulo) == 'escolares';
@@ -2402,7 +1851,6 @@ class _PantallaSageState extends State<PantallaSage> {
 
   Future<void> _activateEscolarOption(OpcionEscolarSage option) async {
     if (_legajoActionInFlight != null) return;
-    _manualNavigationActive = false;
     final isHistory =
         option.clave == 'nivel_superior_historial' ||
         normalizarLegajoSage(option.titulo) == 'nivel superior - historial';
@@ -2783,12 +2231,7 @@ class _PantallaSageState extends State<PantallaSage> {
     await _installReportBridge();
     await _historialController.instalarReportesV3(_evaluateJavascript);
     await Future<void>.delayed(const Duration(milliseconds: 300));
-    if (mounted) {
-      setState(() {
-        _showOriginalWebView = true;
-        _nativeHistoryVisible = false;
-      });
-    }
+    if (mounted) setState(() => _nativeHistoryVisible = false);
   }
 
   Future<void> _loadInitialPage() async {
@@ -2915,273 +2358,8 @@ class _PantallaSageState extends State<PantallaSage> {
     await _controller.reload();
   }
 
-
-bool get _hasNativeSageScreen =>
-    _nativeHistoryVisible ||
-    _nativeModulesVisible ||
-    _nativeSubmodulesVisible ||
-    _nativeLegajoVisible ||
-    _nativeSeccionesLegajoVisible ||
-    _nativeEscolaresVisible ||
-    _nativeAgentHomeVisible ||
-    _nativeAgentPersonalVisible ||
-    _nativeAgentStudentMenuVisible ||
-    _nativeProfileSelectorVisible ||
-    _nativeLoadingVisible;
-
-bool get _shouldCoverWebView =>
-    _privateSageShellActive && !_showOriginalWebView;
-
-bool get _nativeFallbackLoading =>
-    _shouldCoverWebView && !_hasNativeSageScreen;
-
-bool get _showNativeSageSurface =>
-    _hasNativeSageScreen || _nativeFallbackLoading;
-
-bool get _sageHomeVisible =>
-    _nativeModulesVisible || _nativeAgentHomeVisible;
-
-bool get _canUseSageBack =>
-    !_nativeProfileSelectorVisible &&
-    !_nativeLoadingVisible &&
-    !_nativeFallbackLoading &&
-    !_sageHomeVisible;
-
-PerfilSage? get _effectiveProfile =>
-    _selectedProfile ?? _profileCapture?.activo;
-
-void _showSageHome() {
-  if (!mounted) return;
-  final profile = _effectiveProfile;
-  if (profile == null) {
-    _showProfileSelector();
-    return;
-  }
-  _manualNavigationActive = true;
-  setState(() {
-    _privateSageShellActive = true;
-    _showOriginalWebView = false;
-    _profileChoiceMade = true;
-    _profileHomeResetBusy = false;
-    _nativeHistoryVisible = false;
-    _nativeModulesVisible = profile == PerfilSage.alumnos;
-    _nativeSubmodulesVisible = false;
-    _nativeLegajoVisible = false;
-    _nativeSeccionesLegajoVisible = false;
-    _nativeEscolaresVisible = false;
-    _nativeAgentHomeVisible = profile == PerfilSage.agente;
-    _nativeAgentPersonalVisible = false;
-    _nativeAgentStudentMenuVisible = false;
-    _nativeProfileSelectorVisible = false;
-    _nativeLoadingVisible = false;
-    _navigationActionInFlight = null;
-    _legajoActionInFlight = null;
-    _navigationAwaitingTransition = false;
-    _tipoAccionLegajo = TipoAccionLegajoSage.ninguna;
-  });
-}
-
-bool _handleSageBackStep() {
-  if (!mounted ||
-      !_showNativeSageSurface ||
-      _nativeLoadingVisible ||
-      _nativeFallbackLoading) {
-    return false;
-  }
-  _manualNavigationActive = true;
-  if (_nativeHistoryVisible) {
-    setState(() {
-      _nativeHistoryVisible = false;
-      _nativeEscolaresVisible = true;
-    });
-    return true;
-  }
-  if (_nativeEscolaresVisible) {
-    setState(() {
-      _nativeEscolaresVisible = false;
-      _nativeSeccionesLegajoVisible = true;
-    });
-    return true;
-  }
-  if (_nativeSeccionesLegajoVisible) {
-    setState(() {
-      _nativeSeccionesLegajoVisible = false;
-      _nativeLegajoVisible = true;
-    });
-    return true;
-  }
-  if (_nativeLegajoVisible) {
-    setState(() {
-      _nativeLegajoVisible = false;
-      if (_effectiveProfile == PerfilSage.agente) {
-        _nativeAgentStudentMenuVisible = true;
-      } else {
-        _nativeSubmodulesVisible = true;
-      }
-    });
-    return true;
-  }
-  if (_nativeAgentPersonalVisible || _nativeAgentStudentMenuVisible) {
-    _showAgentHome();
-    return true;
-  }
-  if (_nativeSubmodulesVisible) {
-    setState(() {
-      _nativeSubmodulesVisible = false;
-      _nativeModulesVisible = true;
-    });
-    return true;
-  }
-  if (_nativeModulesVisible || _nativeAgentHomeVisible) {
-    _showProfileSelector();
-    return true;
-  }
-  return false;
-}
-
-Widget _buildCurrentNativeSageScreen() {
-  if (_nativeLoadingVisible) {
-    return KeyedSubtree(
-      key: const ValueKey('sage-loading'),
-      child: PantallaCargaSage(mensaje: _nativeLoadingMessage),
-    );
-  }
-  if (_nativeProfileSelectorVisible) {
-    return KeyedSubtree(
-      key: const ValueKey('sage-profile-selector'),
-      child: PantallaSelectorPerfilSage(
-        perfiles: _profileCapture?.perfiles ?? const [],
-        onSelect: _selectProfile,
-        busy: _profileSwitchBusy,
-        error: _profileError,
-        onRetry: () {
-          unawaited(_requestProfileSelector());
-        },
-        onBack: _exitSageToAppHome,
-      ),
-    );
-  }
-  if (_nativeHistoryVisible) {
-    return KeyedSubtree(
-      key: const ValueKey('sage-history'),
-      child: PantallaHistorialSage(
-        historial: _history,
-        estado: _historyState,
-        onExpandCareer: _expandHistoryCareer,
-        onReport: _openHistoryReport,
-        onRefresh: _refreshHistory,
-        onShowOriginal: _showOriginalHistory,
-        onBack: _handleBack,
-        reportsEnabled: !_reportInFlight,
-      ),
-    );
-  }
-  if (_nativeEscolaresVisible) {
-    return KeyedSubtree(
-      key: const ValueKey('sage-school-options'),
-      child: PantallaEscolaresSage(
-        opciones: _legajoExtraction?.opcionesEscolares ?? const [],
-        onSelect: (option) => unawaited(_activateEscolarOption(option)),
-        onBack: widget.onClose ?? _showOriginalNavigation,
-        loadingTitle: _navigationActionInFlight,
-      ),
-    );
-  }
-  if (_nativeSeccionesLegajoVisible) {
-    return KeyedSubtree(
-      key: const ValueKey('sage-student-sections'),
-      child: PantallaSeccionesLegajoSage(
-        secciones: _seccionesDisponibles(),
-        onSelect: (section) => unawaited(_activateLegajoSection(section)),
-        onBack: widget.onClose ?? _showOriginalNavigation,
-        loadingTitle: _navigationActionInFlight,
-      ),
-    );
-  }
-  if (_nativeLegajoVisible) {
-    return KeyedSubtree(
-      key: const ValueKey('sage-student-records'),
-      child: PantallaMiLegajoSage(
-        perfiles: _legajoExtraction?.perfiles ?? const [],
-        onSelect: (profile) => unawaited(_activateLegajoProfile(profile)),
-        onBack: widget.onClose ?? _showOriginalNavigation,
-        loadingTitle: _navigationActionInFlight,
-      ),
-    );
-  }
-  if (_nativeAgentStudentMenuVisible) {
-    return KeyedSubtree(
-      key: const ValueKey('sage-agent-student-menu'),
-      child: PantallaLegajoAlumnoAgenteSage(
-        opciones: _agentStudentOptions,
-        onSelect: (option) => unawaited(_activateAgentStudentOption(option)),
-        onBack: _showAgentHome,
-        busy: _navigationActionInFlight != null,
-      ),
-    );
-  }
-  if (_nativeAgentPersonalVisible) {
-    return KeyedSubtree(
-      key: const ValueKey('sage-agent-personal-menu'),
-      child: PantallaLegajoPersonalSage(
-        opciones: _agentPersonalOptions,
-        onSelect: _activateAgentOption,
-        onBack: _showAgentHome,
-        busy: _navigationActionInFlight != null,
-      ),
-    );
-  }
-  if (_nativeSubmodulesVisible) {
-    return KeyedSubtree(
-      key: const ValueKey('sage-student-modules'),
-      child: PantallaSubmodulosSage(
-        onSelect: (option) => unawaited(_activateSageLink(option)),
-        onBack: widget.onClose ?? _showOriginalNavigation,
-        loadingTitle: _navigationActionInFlight,
-      ),
-    );
-  }
-  if (_nativeAgentHomeVisible) {
-    return KeyedSubtree(
-      key: const ValueKey('sage-agent-home'),
-      child: PantallaPortadaAgenteSage(
-        onSelect: _handleAgentOption,
-        onBack: _showProfileSelector,
-        portada: _portadaAgente,
-        busy: _navigationActionInFlight != null,
-      ),
-    );
-  }
-  if (_nativeModulesVisible) {
-    return KeyedSubtree(
-      key: const ValueKey('sage-student-home'),
-      child: PantallaModulosSage(
-        onOpenLegajo: _openLegajoModule,
-        onRefresh: _retry,
-        onBack: _showProfileSelector,
-        loadingTitle: _navigationActionInFlight,
-      ),
-    );
-  }
-
-  return KeyedSubtree(
-    key: const ValueKey('sage-loading'),
-    child: PantallaCargaSage(
-      mensaje: _navigationActionInFlight == null &&
-              _legajoActionInFlight == null
-          ? 'Cargando la siguiente pantalla…'
-          : _nativeLoadingMessage,
-    ),
-  );
-}
-
   Future<void> _handleBack() async {
     if (_isClosing) return;
-    if (_nativeProfileSelectorVisible) {
-      _exitSageToAppHome();
-      return;
-    }
-    if (_handleSageBackStep()) return;
     _isClosing = true;
     try {
       if (_nativeHistoryVisible) {
@@ -3520,7 +2698,6 @@ Widget _buildCurrentNativeSageScreen() {
   void dispose() {
     _historyPollTimer?.cancel();
     _navigationDebounceTimer?.cancel();
-    _profileSwitchWatchdog?.cancel();
     _httpClient.close();
     _navigationProgress.dispose();
     _mainFrameError.dispose();
@@ -3532,22 +2709,6 @@ Widget _buildCurrentNativeSageScreen() {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final nativeSurfaceVisible = _showNativeSageSurface;
-    final webViewVisible =
-        !_shouldCoverWebView &&
-        webViewSageVisible(
-          historial: _nativeHistoryVisible,
-          modulos: _nativeModulesVisible,
-          submodulos: _nativeSubmodulesVisible,
-          carga: _nativeLoadingVisible,
-          legajo: _nativeLegajoVisible,
-          secciones: _nativeSeccionesLegajoVisible,
-          escolares: _nativeEscolaresVisible,
-          agente: _nativeAgentHomeVisible,
-          agentePersonal: _nativeAgentPersonalVisible,
-          agenteAlumno: _nativeAgentStudentMenuVisible,
-          perfil: _nativeProfileSelectorVisible,
-        );
 
     return PopScope<void>(
       canPop: false,
@@ -3555,7 +2716,18 @@ Widget _buildCurrentNativeSageScreen() {
         if (!didPop) unawaited(_handleBack());
       },
       child: Scaffold(
-        appBar: nativeSurfaceVisible
+        appBar:
+            _nativeHistoryVisible ||
+                _nativeModulesVisible ||
+                _nativeSubmodulesVisible ||
+                _nativeLegajoVisible ||
+                _nativeSeccionesLegajoVisible ||
+                _nativeEscolaresVisible ||
+                _nativeAgentHomeVisible ||
+                _nativeAgentPersonalVisible ||
+                _nativeAgentStudentMenuVisible ||
+                _nativeProfileSelectorVisible ||
+                _nativeLoadingVisible
             ? null
             : AppBar(
                 backgroundColor: const Color(0xFF0E5E86),
@@ -3579,68 +2751,126 @@ Widget _buildCurrentNativeSageScreen() {
           children: [
             const SizedBox.expand(),
             Visibility(
-              visible: webViewVisible,
+              visible: webViewSageVisible(
+                historial: _nativeHistoryVisible,
+                modulos: _nativeModulesVisible,
+                submodulos: _nativeSubmodulesVisible,
+                carga: _nativeLoadingVisible,
+                legajo: _nativeLegajoVisible,
+                secciones: _nativeSeccionesLegajoVisible,
+                escolares: _nativeEscolaresVisible,
+                agente: _nativeAgentHomeVisible,
+                agentePersonal: _nativeAgentPersonalVisible,
+                agenteAlumno: _nativeAgentStudentMenuVisible,
+                perfil: _nativeProfileSelectorVisible,
+              ),
               maintainState: true,
               child: WebViewWidget(
                 key: const ValueKey('sage-webview-persistent'),
                 controller: _controller,
               ),
             ),
-            if (nativeSurfaceVisible)
+            if (_nativeHistoryVisible)
               Positioned.fill(
-                bottom:
-                    BarraNavegacionSage.height +
-                    MediaQuery.paddingOf(context).bottom,
-                child: ColoredBox(
-                  color: theme.scaffoldBackgroundColor,
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 260),
-                    reverseDuration: const Duration(milliseconds: 180),
-                    switchInCurve: Curves.easeOutCubic,
-                    switchOutCurve: Curves.easeInCubic,
-                    layoutBuilder: (currentChild, previousChildren) {
-                      return Stack(
-                        fit: StackFit.expand,
-                        clipBehavior: Clip.hardEdge,
-                        children: [
-                          ...previousChildren,
-                          if (currentChild != null) currentChild,
-                        ],
-                      );
-                    },
-                    transitionBuilder: (child, animation) {
-                      return FadeTransition(
-                        opacity: animation,
-                        child: child,
-                      );
-                    },
-                    child: _buildCurrentNativeSageScreen(),
-                  ),
+                child: PantallaHistorialSage(
+                  historial: _history,
+                  estado: _historyState,
+                  onExpandCareer: _expandHistoryCareer,
+                  onReport: _openHistoryReport,
+                  onRefresh: _refreshHistory,
+                  onShowOriginal: _showOriginalHistory,
+                  onBack: _handleBack,
+                  reportsEnabled: !_reportInFlight,
                 ),
               ),
-            if (nativeSurfaceVisible)
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 0,
-                child: BarraNavegacionSage(
-                  canGoBack: _canUseSageBack,
-                  homeSelected: _sageHomeVisible,
-                  profileSelected: _nativeProfileSelectorVisible,
-                  busy:
-                      _profileSwitchBusy ||
-                      _profileHomeResetBusy ||
-                      _nativeLoadingVisible ||
-                      _nativeFallbackLoading ||
-                      _navigationAwaitingTransition ||
-                      _navigationActionInFlight != null ||
-                      _legajoActionInFlight != null,
-                  onBack: () => _handleSageBackStep(),
-                  onHome: _showSageHome,
-                  onChangeProfile: () {
-                    unawaited(_requestProfileSelector());
-                  },
+            if (_nativeModulesVisible)
+              Positioned.fill(
+                child: PantallaModulosSage(
+                  onOpenLegajo: _openLegajoModule,
+                  onRefresh: _retry,
+                  onBack: _showProfileSelector,
+                  loadingTitle: _navigationActionInFlight,
                 ),
+              ),
+            if (_nativeAgentHomeVisible)
+              Positioned.fill(
+                child: PantallaPortadaAgenteSage(
+                  onSelect: _handleAgentOption,
+                  onBack: _showProfileSelector,
+                  portada: _portadaAgente,
+                  busy: _navigationActionInFlight != null,
+                ),
+              ),
+            if (_nativeAgentPersonalVisible)
+              Positioned.fill(
+                child: PantallaLegajoPersonalSage(
+                  opciones: _agentPersonalOptions,
+                  onSelect: _activateAgentOption,
+                  onBack: _showAgentHome,
+                  busy: _navigationActionInFlight != null,
+                ),
+              ),
+            if (_nativeAgentStudentMenuVisible)
+              Positioned.fill(
+                child: PantallaLegajoAlumnoAgenteSage(
+                  opciones: _agentStudentOptions,
+                  onSelect: (option) =>
+                      unawaited(_activateAgentStudentOption(option)),
+                  onBack: _showAgentHome,
+                  busy: _navigationActionInFlight != null,
+                ),
+              ),
+            if (_nativeProfileSelectorVisible)
+              Positioned.fill(
+                child: PantallaSelectorPerfilSage(
+                  perfiles: _profileCapture?.perfiles ?? const [],
+                  onSelect: _selectProfile,
+                  busy: _profileSwitchBusy,
+                  error: _profileError,
+                  onRetry: () => unawaited(_refreshProfileSelector()),
+                ),
+              ),
+            if (_nativeSubmodulesVisible)
+              Positioned.fill(
+                child: PantallaSubmodulosSage(
+                  onSelect: (option) => unawaited(_activateSageLink(option)),
+                  onBack: widget.onClose ?? _showOriginalNavigation,
+                  loadingTitle: _navigationActionInFlight,
+                ),
+              ),
+            if (_nativeLegajoVisible)
+              Positioned.fill(
+                child: PantallaMiLegajoSage(
+                  perfiles: _legajoExtraction?.perfiles ?? const [],
+                  onSelect: (profile) =>
+                      unawaited(_activateLegajoProfile(profile)),
+                  onBack: widget.onClose ?? _showOriginalNavigation,
+                  loadingTitle: _navigationActionInFlight,
+                ),
+              ),
+            if (_nativeSeccionesLegajoVisible)
+              Positioned.fill(
+                child: PantallaSeccionesLegajoSage(
+                  secciones: _seccionesDisponibles(),
+                  onSelect: (section) =>
+                      unawaited(_activateLegajoSection(section)),
+                  onBack: widget.onClose ?? _showOriginalNavigation,
+                  loadingTitle: _navigationActionInFlight,
+                ),
+              ),
+            if (_nativeEscolaresVisible)
+              Positioned.fill(
+                child: PantallaEscolaresSage(
+                  opciones: _legajoExtraction?.opcionesEscolares ?? const [],
+                  onSelect: (option) =>
+                      unawaited(_activateEscolarOption(option)),
+                  onBack: widget.onClose ?? _showOriginalNavigation,
+                  loadingTitle: _navigationActionInFlight,
+                ),
+              ),
+            if (_nativeLoadingVisible)
+              Positioned.fill(
+                child: PantallaCargaSage(mensaje: _nativeLoadingMessage),
               ),
             ValueListenableBuilder<int>(
               valueListenable: _navigationProgress,

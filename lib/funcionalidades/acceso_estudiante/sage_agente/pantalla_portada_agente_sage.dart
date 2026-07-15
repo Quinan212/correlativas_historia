@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../sage_navegacion/lista_opciones_sage.dart';
 import 'modelos_agente_sage.dart';
 
 class PantallaPortadaAgenteSage extends StatelessWidget {
@@ -10,6 +11,7 @@ class PantallaPortadaAgenteSage extends StatelessWidget {
     required this.portada,
     this.busy = false,
   });
+
   final ValueChanged<OpcionAgenteSage> onSelect;
   final VoidCallback onBack;
   final bool busy;
@@ -17,56 +19,84 @@ class PantallaPortadaAgenteSage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final groups = <String, List<OpcionAgenteSage>>{
-      'Módulos': portada.modulos,
-      'Submódulos': portada.submodulos,
-      'Informes': portada.informes,
-    }..removeWhere((_, values) => values.isEmpty);
+    final groups = <_GrupoAgente>[
+      _GrupoAgente('Accesos principales', portada.accesosSuperiores),
+      _GrupoAgente('Módulos', portada.modulos),
+      _GrupoAgente('Submódulos', portada.submodulos),
+      _GrupoAgente('Informes', portada.informes),
+    ].where((group) => group.options.isNotEmpty).toList();
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color(0xFF0E5E86),
         foregroundColor: Colors.white,
         title: const Text('Docente'),
         leading: IconButton(
+          tooltip: 'Cambiar perfil',
           onPressed: busy ? null : onBack,
-          icon: const Icon(Icons.arrow_back_rounded),
+          icon: const Icon(Icons.manage_accounts_outlined),
         ),
       ),
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
+          padding: const EdgeInsets.fromLTRB(24, 22, 24, 28),
           children: [
             Text(
-              'Servicios del perfil Agente',
-              style: theme.textTheme.headlineSmall,
+              'Servicios docentes',
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.w800,
+              ),
             ),
             const SizedBox(height: 8),
-            const Text('Elegí una opción para continuar en SAGE.'),
-            for (final group in groups.entries) ...[
-              const SizedBox(height: 24),
+            const Text(
+              'Seleccioná una opción para continuar en SAGE.',
+              style: TextStyle(height: 1.45),
+            ),
+            if (groups.isEmpty)
+              const Padding(
+                padding: EdgeInsets.only(top: 28),
+                child: Text('No se encontraron servicios disponibles.'),
+              ),
+            for (final group in groups) ...[
+              const SizedBox(height: 26),
               Text(
-                group.key,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
+                group.title,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
                 ),
               ),
-              for (final option in group.value)
-                Card(
-                  child: ListTile(
-                    enabled: !busy,
-                    leading: Icon(
-                      IconData(option.icono, fontFamily: 'MaterialIcons'),
+              const SizedBox(height: 6),
+              ListaOpcionesSage(
+                titulo: '',
+                descripcion: '',
+                padding: EdgeInsets.zero,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                opciones: [
+                  for (final option in group.options)
+                    ItemListaOpcionSage(
+                      titulo: option.etiqueta,
+                      subtitulo: option.sigla,
+                      icono: IconData(
+                        option.icono,
+                        fontFamily: 'MaterialIcons',
+                      ),
+                      enabled: !busy,
+                      onTap: () => onSelect(option),
                     ),
-                    title: Text(option.etiqueta),
-                    trailing: const Icon(Icons.chevron_right_rounded),
-                    onTap: () => onSelect(option),
-                  ),
-                ),
+                ],
+              ),
             ],
           ],
         ),
       ),
     );
   }
+}
+
+class _GrupoAgente {
+  const _GrupoAgente(this.title, this.options);
+
+  final String title;
+  final List<OpcionAgenteSage> options;
 }

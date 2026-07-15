@@ -10,7 +10,6 @@ class PantallaSelectorPerfilSage extends StatelessWidget {
     this.busy = false,
     this.error,
     this.onRetry,
-    this.onBack,
   });
 
   final List<PerfilDisponibleSage> perfiles;
@@ -18,7 +17,6 @@ class PantallaSelectorPerfilSage extends StatelessWidget {
   final bool busy;
   final String? error;
   final VoidCallback? onRetry;
-  final VoidCallback? onBack;
 
   @override
   Widget build(BuildContext context) {
@@ -27,11 +25,6 @@ class PantallaSelectorPerfilSage extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: const Color(0xFF0E5E86),
         foregroundColor: Colors.white,
-        leading: IconButton(
-          tooltip: 'Volver al inicio',
-          onPressed: busy ? null : onBack,
-          icon: const Icon(Icons.arrow_back_rounded),
-        ),
         title: const Text('Elegí tu acceso'),
       ),
       body: SafeArea(

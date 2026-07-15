@@ -54,7 +54,6 @@ bool webViewSageVisible({
   bool escolares = false,
   bool agente = false,
   bool agentePersonal = false,
-  bool agenteAlumno = false,
   bool perfil = false,
 }) =>
     !historial &&
@@ -66,7 +65,6 @@ bool webViewSageVisible({
     !escolares &&
     !agente &&
     !agentePersonal &&
-    !agenteAlumno &&
     !perfil;
 
 class EnlaceNavegacionSage {
