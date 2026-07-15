@@ -6,6 +6,7 @@ class BarraNavegacionSage extends StatelessWidget {
     required this.onBack,
     required this.onHome,
     required this.onChangeProfile,
+    required this.onLogout,
     this.canGoBack = true,
     this.homeSelected = false,
     this.profileSelected = false,
@@ -17,6 +18,7 @@ class BarraNavegacionSage extends StatelessWidget {
   final VoidCallback onBack;
   final VoidCallback onHome;
   final VoidCallback onChangeProfile;
+  final VoidCallback onLogout;
   final bool canGoBack;
   final bool homeSelected;
   final bool profileSelected;
@@ -61,6 +63,15 @@ class BarraNavegacionSage extends StatelessWidget {
                   onTap: onChangeProfile,
                 ),
               ),
+              Expanded(
+                child: _NavigationAction(
+                  icon: Icons.logout_rounded,
+                  label: 'Salir',
+                  enabled: !busy,
+                  destructive: true,
+                  onTap: onLogout,
+                ),
+              ),
             ],
           ),
         ),
@@ -76,6 +87,7 @@ class _NavigationAction extends StatelessWidget {
     required this.onTap,
     required this.enabled,
     this.selected = false,
+    this.destructive = false,
   });
 
   final IconData icon;
@@ -83,12 +95,15 @@ class _NavigationAction extends StatelessWidget {
   final VoidCallback onTap;
   final bool enabled;
   final bool selected;
+  final bool destructive;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final foreground = !enabled
         ? scheme.onSurface.withOpacity(0.34)
+        : destructive
+        ? scheme.error
         : selected
         ? scheme.primary
         : scheme.onSurfaceVariant;

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../sage_navegacion/lista_opciones_sage.dart';
 import 'modelos_legajo_sage.dart';
 
 class PantallaEscolaresSage extends StatelessWidget {
@@ -15,6 +16,10 @@ class PantallaEscolaresSage extends StatelessWidget {
   final ValueChanged<OpcionEscolarSage> onSelect;
   final VoidCallback onBack;
   final String? loadingTitle;
+
+  bool _isImplemented(OpcionEscolarSage option) =>
+      option.clave == 'nivel_superior_historial' ||
+      normalizarLegajoSage(option.titulo) == 'nivel superior - historial';
 
   @override
   Widget build(BuildContext context) {
@@ -38,56 +43,38 @@ class PantallaEscolaresSage extends StatelessWidget {
       unique.remove('nivel_superior_historial')!,
       ...unique.values,
     ];
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color(0xFF0E5E86),
         foregroundColor: Colors.white,
         title: const Text('Escolares'),
         leading: IconButton(
-          tooltip: 'Volver al acceso estudiantil',
+          tooltip: 'Volver',
           onPressed: busy ? null : onBack,
           icon: const Icon(Icons.arrow_back_rounded),
         ),
       ),
       body: SafeArea(
-        child: ListView.separated(
-          padding: const EdgeInsets.fromLTRB(16, 24, 16, 32),
-          itemCount: orderedOptions.length + 1,
-          separatorBuilder: (_, _) => const Divider(height: 1),
-          itemBuilder: (context, index) {
-            if (index == 0) {
-              return const ListTile(
-                contentPadding: EdgeInsets.only(bottom: 12),
-                title: Text(
-                  'Información académica',
-                  style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800),
-                ),
-                subtitle: Padding(
-                  padding: EdgeInsets.only(top: 6),
-                  child: Text('Seleccioná una opción para continuar.'),
-                ),
-              );
-            }
-            final option = orderedOptions[index - 1];
-            final isHistory = normalizarLegajoSage(
-              option.titulo,
-            ).contains('nivel superior - historial');
-            return ListTile(
-              enabled: !busy,
-              contentPadding: const EdgeInsets.symmetric(vertical: 8),
-              leading: Icon(
-                isHistory ? Icons.history_edu_outlined : Icons.school_outlined,
+        child: ListaOpcionesSage(
+          titulo: 'Información académica',
+          descripcion: 'Seleccioná una opción para continuar.',
+          opciones: [
+            for (final option in orderedOptions)
+              ItemListaOpcionSage(
+                titulo: option.titulo,
+                icono: _isImplemented(option)
+                    ? Icons.history_edu_outlined
+                    : Icons.school_outlined,
+                enabled: !busy,
+                available: _isImplemented(option),
+                highlighted: _isImplemented(option),
+                subtitulo: _isImplemented(option)
+                    ? 'Carreras, materias, estados y documentos académicos'
+                    : null,
+                onTap: () => onSelect(option),
               ),
-              title: Text(option.titulo),
-              subtitle: isHistory
-                  ? const Text(
-                      'Consultá carreras, materias, estados y documentos académicos.',
-                    )
-                  : null,
-              trailing: const Icon(Icons.chevron_right_rounded),
-              onTap: busy ? null : () => onSelect(option),
-            );
-          },
+          ],
         ),
       ),
     );

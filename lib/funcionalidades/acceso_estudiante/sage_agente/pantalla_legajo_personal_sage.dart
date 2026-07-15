@@ -32,7 +32,8 @@ class PantallaLegajoPersonalSage extends StatelessWidget {
     body: SafeArea(
       child: ListaOpcionesSage(
         titulo: 'Legajo Único Personal',
-        descripcion: 'Seleccioná una opción para continuar en SAGE.',
+        descripcion: 'Seleccioná una opción para continuar.',
+        emptyMessage: 'No se encontraron opciones disponibles.',
         opciones: [
           for (final option in opciones)
             ItemListaOpcionSage(
@@ -40,6 +41,7 @@ class PantallaLegajoPersonalSage extends StatelessWidget {
               subtitulo: option.sigla,
               icono: IconData(option.icono, fontFamily: 'MaterialIcons'),
               enabled: !busy,
+              available: false,
               onTap: () => onSelect(option),
             ),
         ],

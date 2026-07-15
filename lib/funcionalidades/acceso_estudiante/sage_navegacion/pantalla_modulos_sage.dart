@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'lista_opciones_sage.dart';
+
 class PantallaModulosSage extends StatelessWidget {
   const PantallaModulosSage({
     super.key,
@@ -16,91 +18,39 @@ class PantallaModulosSage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final busy = loadingTitle != null;
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color(0xFF0E5E86),
         foregroundColor: Colors.white,
+        title: const Text('Estudiante'),
         leading: IconButton(
-          tooltip: 'Volver al acceso estudiantil',
-          onPressed: onBack,
-          icon: const Icon(Icons.arrow_back_rounded),
+          tooltip: 'Cambiar perfil',
+          onPressed: busy ? null : onBack,
+          icon: const Icon(Icons.manage_accounts_outlined),
         ),
-        title: const Text('Servicios académicos'),
         actions: [
           IconButton(
             tooltip: 'Actualizar',
-            onPressed: onRefresh,
+            onPressed: busy ? null : onRefresh,
             icon: const Icon(Icons.refresh_rounded),
           ),
         ],
       ),
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
-          children: [
-            Text(
-              'Elegí un módulo para continuar con tu gestión en SAGE.',
-              style: theme.textTheme.bodyLarge,
+        child: ListaOpcionesSage(
+          titulo: 'Servicios académicos',
+          descripcion: 'Accedé a tus servicios académicos.',
+          opciones: [
+            ItemListaOpcionSage(
+              titulo: 'Legajo Único Alumno',
+              subtitulo: 'Acceso al historial académico',
+              icono: Icons.school_outlined,
+              enabled: !busy,
+              available: true,
+              highlighted: true,
+              onTap: onOpenLegajo,
             ),
-            const SizedBox(height: 24),
-            Card(
-              clipBehavior: Clip.antiAlias,
-              child: InkWell(
-                onTap: busy ? null : onOpenLegajo,
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 28,
-                        backgroundColor: theme.colorScheme.primaryContainer,
-                        child: Icon(
-                          Icons.badge_outlined,
-                          color: theme.colorScheme.onPrimaryContainer,
-                          size: 30,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Legajo Único Alumno',
-                              style: theme.textTheme.titleLarge?.copyWith(
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            const Text(
-                              'Consultá tu legajo, certificados, inscripciones y servicios académicos.',
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      const Icon(Icons.chevron_right_rounded),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            if (loadingTitle != null) ...[
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(child: Text('Abriendo $loadingTitle…')),
-                ],
-              ),
-            ],
           ],
         ),
       ),

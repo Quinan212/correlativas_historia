@@ -17,6 +17,9 @@ class PantallaPortadaAgenteSage extends StatelessWidget {
   final bool busy;
   final PortadaAgenteSage portada;
 
+  bool _isImplemented(OpcionAgenteSage option) =>
+      option.claveCanonica == 'legajo_unico_alumno_superior';
+
   @override
   Widget build(BuildContext context) {
     final groups = <_GrupoAgente>[
@@ -82,6 +85,8 @@ class PantallaPortadaAgenteSage extends StatelessWidget {
                         fontFamily: 'MaterialIcons',
                       ),
                       enabled: !busy,
+                      available: _isImplemented(option),
+                      highlighted: _isImplemented(option),
                       onTap: () => onSelect(option),
                     ),
                 ],

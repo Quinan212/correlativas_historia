@@ -21,6 +21,7 @@ class PantallaMiLegajoSage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     final busy = loadingTitle != null;
     return Scaffold(
       appBar: AppBar(
@@ -28,7 +29,7 @@ class PantallaMiLegajoSage extends StatelessWidget {
         foregroundColor: Colors.white,
         title: const Text('Mi legajo'),
         leading: IconButton(
-          tooltip: 'Volver al acceso estudiantil',
+          tooltip: 'Volver',
           onPressed: busy ? null : onBack,
           icon: const Icon(Icons.arrow_back_rounded),
         ),
@@ -38,7 +39,7 @@ class PantallaMiLegajoSage extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(16, 24, 16, 32),
           children: [
             Text(
-              'Seleccioná tu perfil para abrir el legajo académico.',
+              'Seleccioná el perfil académico para continuar.',
               style: theme.textTheme.titleMedium,
             ),
             const SizedBox(height: 18),
@@ -52,6 +53,7 @@ class PantallaMiLegajoSage extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(bottom: 12),
                 child: Card(
+                  color: scheme.primaryContainer.withOpacity(0.42),
                   clipBehavior: Clip.antiAlias,
                   child: ListTile(
                     enabled: !busy,
@@ -60,16 +62,20 @@ class PantallaMiLegajoSage extends StatelessWidget {
                       vertical: 12,
                     ),
                     leading: CircleAvatar(
-                      backgroundColor: theme.colorScheme.primaryContainer,
+                      backgroundColor: scheme.primary,
                       child: Icon(
                         Icons.badge_outlined,
-                        color: theme.colorScheme.onPrimaryContainer,
+                        color: scheme.onPrimary,
                       ),
                     ),
                     title: Text(
                       perfil.nombreVisible.isEmpty
                           ? 'Perfil académico'
                           : perfil.nombreVisible,
+                      style: TextStyle(
+                        color: scheme.primary,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                     subtitle: _secondary(perfil),
                     trailing: const Icon(Icons.chevron_right_rounded),
@@ -103,7 +109,7 @@ class PantallaMiLegajoSage extends StatelessWidget {
         .where((value) => value != perfil.nombreVisible)
         .take(3)
         .join(' · ');
-    return values.isEmpty ? null : Text(values);
+    return values.isEmpty ? const Text('Disponible') : Text(values);
   }
 }
 

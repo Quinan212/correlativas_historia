@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../sage_navegacion/lista_opciones_sage.dart';
 import 'modelos_legajo_sage.dart';
 
 class PantallaSeccionesLegajoSage extends StatelessWidget {
@@ -16,6 +17,10 @@ class PantallaSeccionesLegajoSage extends StatelessWidget {
   final VoidCallback onBack;
   final String? loadingTitle;
 
+  bool _isImplemented(SeccionLegajoSage section) =>
+      section.clave == 'escolares' ||
+      normalizarLegajoSage(section.titulo) == 'escolares';
+
   @override
   Widget build(BuildContext context) {
     final busy = loadingTitle != null;
@@ -25,44 +30,28 @@ class PantallaSeccionesLegajoSage extends StatelessWidget {
         foregroundColor: Colors.white,
         title: const Text('Mi legajo'),
         leading: IconButton(
-          tooltip: 'Volver al acceso estudiantil',
+          tooltip: 'Volver',
           onPressed: busy ? null : onBack,
           icon: const Icon(Icons.arrow_back_rounded),
         ),
       ),
       body: SafeArea(
-        child: ListView.separated(
-          padding: const EdgeInsets.fromLTRB(16, 24, 16, 32),
-          itemCount: secciones.length + 1,
-          separatorBuilder: (_, _) => const Divider(height: 1),
-          itemBuilder: (context, index) {
-            if (index == 0) {
-              return const ListTile(
-                contentPadding: EdgeInsets.only(bottom: 12),
-                title: Text(
-                  'Secciones',
-                  style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800),
-                ),
-                subtitle: Padding(
-                  padding: EdgeInsets.only(top: 6),
-                  child: Text('Elegí la información que querés consultar.'),
-                ),
-              );
-            }
-            final section = secciones[index - 1];
-            final isSchool =
-                normalizarLegajoSage(section.titulo) == 'escolares';
-            return ListTile(
-              enabled: !busy,
-              contentPadding: const EdgeInsets.symmetric(vertical: 8),
-              leading: Icon(
-                isSchool ? Icons.school_outlined : Icons.folder_outlined,
+        child: ListaOpcionesSage(
+          titulo: 'Secciones',
+          descripcion: 'Seleccioná una sección para continuar.',
+          opciones: [
+            for (final section in secciones)
+              ItemListaOpcionSage(
+                titulo: section.titulo,
+                icono: _isImplemented(section)
+                    ? Icons.school_outlined
+                    : Icons.folder_outlined,
+                enabled: !busy,
+                available: _isImplemented(section),
+                highlighted: _isImplemented(section),
+                onTap: () => onSelect(section),
               ),
-              title: Text(section.titulo),
-              trailing: const Icon(Icons.chevron_right_rounded),
-              onTap: busy ? null : () => onSelect(section),
-            );
-          },
+          ],
         ),
       ),
     );

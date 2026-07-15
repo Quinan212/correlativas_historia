@@ -17,6 +17,9 @@ class PantallaLegajoAlumnoAgenteSage extends StatelessWidget {
   final VoidCallback onBack;
   final bool busy;
 
+  bool _isImplemented(OpcionAgenteSage option) =>
+      option.claveCanonica == 'legajo_alumnos';
+
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(
@@ -31,8 +34,8 @@ class PantallaLegajoAlumnoAgenteSage extends StatelessWidget {
     ),
     body: SafeArea(
       child: ListaOpcionesSage(
-        titulo: 'Legajo Único Alumno',
-        descripcion: 'Seleccioná una opción para continuar en SAGE.',
+        titulo: '',
+        descripcion: 'Seleccioná una opción para continuar.',
         emptyMessage:
             'No se encontraron opciones de Legajo Único Alumno en SAGE.',
         opciones: [
@@ -42,6 +45,8 @@ class PantallaLegajoAlumnoAgenteSage extends StatelessWidget {
               subtitulo: option.sigla,
               icono: IconData(option.icono, fontFamily: 'MaterialIcons'),
               enabled: !busy,
+              available: _isImplemented(option),
+              highlighted: _isImplemented(option),
               onTap: () => onSelect(option),
             ),
         ],
