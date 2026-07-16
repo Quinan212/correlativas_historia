@@ -395,7 +395,9 @@ class _PantallaInicioTrayectoriaSageLaboratorioState
                   ? Icons.radio_button_checked_rounded
                   : Icons.radio_button_off_rounded,
             ),
-            title: Text(career.nombre),
+            title: Text(
+              _nombreCarreraPresentableLaboratorio(career.nombre),
+            ),
             subtitle: career.institucion.trim().isEmpty
                 ? null
                 : Text(career.institucion),
@@ -746,7 +748,9 @@ class _PantallaPlanSageLaboratorioState
                           DropdownMenuItem<int>(
                             value: index,
                             child: Text(
-                              trajectory.carreras[index].nombre,
+                              _nombreCarreraPresentableLaboratorio(
+                                trajectory.carreras[index].nombre,
+                              ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -765,7 +769,7 @@ class _PantallaPlanSageLaboratorioState
                     children: [
                       Expanded(
                         child: Text(
-                          career.nombre,
+                          _nombreCarreraPresentableLaboratorio(career.nombre),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: theme.textTheme.titleLarge?.copyWith(
@@ -1110,6 +1114,9 @@ class PantallaDatosSageLaboratorio extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Datos de SAGE'),
+        backgroundColor: const Color(0xFF0E5E86),
+        foregroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
         actions: const [
           Padding(
             padding: EdgeInsets.only(right: 14),
@@ -1152,7 +1159,9 @@ class PantallaDatosSageLaboratorio extends StatelessWidget {
                         ),
                         const SizedBox(height: 14),
                         Text(
-                          trajectory.perfil.nombre,
+                          _nombrePerfilPresentableLaboratorio(
+                            trajectory.perfil,
+                          ),
                           textAlign: TextAlign.center,
                           style: theme.textTheme.titleLarge?.copyWith(
                             fontWeight: FontWeight.w900,
@@ -1194,12 +1203,17 @@ class PantallaDatosSageLaboratorio extends StatelessWidget {
                       ),
                     ],
                   ),
-                  if (trajectory.perfil.campos.isNotEmpty) ...[
+                  if (_camposPerfilPresentablesLaboratorio(
+                    trajectory.perfil,
+                  ).isNotEmpty) ...[
                     const SizedBox(height: 16),
                     _SeccionDatosLaboratorio(
                       title: 'Datos encontrados en SAGE',
                       rows: [
-                        for (final entry in trajectory.perfil.campos.entries)
+                        for (final entry
+                            in _camposPerfilPresentablesLaboratorio(
+                              trajectory.perfil,
+                            ))
                           _DatoLaboratorio(
                             label: entry.key,
                             value: entry.value,
@@ -1210,7 +1224,9 @@ class PantallaDatosSageLaboratorio extends StatelessWidget {
                   const SizedBox(height: 16),
                   for (final career in trajectory.carreras) ...[
                     _SeccionDatosLaboratorio(
-                      title: career.nombre,
+                      title: _nombreCarreraPresentableLaboratorio(
+                        career.nombre,
+                      ),
                       rows: [
                         _DatoLaboratorio(
                           label: 'Institución',
@@ -1261,14 +1277,18 @@ class _IconoAplicacionLaboratorio extends StatelessWidget {
         borderRadius: BorderRadius.circular(size * 0.22),
         border: Border.all(color: Colors.white.withValues(alpha: 0.30)),
       ),
-      child: Image.asset(
-        'assets/icon_fore.png',
-        fit: BoxFit.cover,
-        cacheWidth: 96,
-        cacheHeight: 96,
-        errorBuilder: (_, _, _) => const Icon(
-          Icons.school_rounded,
-          color: Color(0xFF0E5E86),
+      child: Transform.scale(
+        scale: 1.15,
+        alignment: Alignment.center,
+        child: Image.asset(
+          'assets/icon_fore.png',
+          fit: BoxFit.cover,
+          cacheWidth: 112,
+          cacheHeight: 112,
+          errorBuilder: (_, _, _) => const Icon(
+            Icons.school_rounded,
+            color: Color(0xFF0E5E86),
+          ),
         ),
       ),
     );
@@ -1341,7 +1361,9 @@ class _EncabezadoInicioLaboratorioState
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final firstName = _primerNombreLaboratorio(widget.trajectory?.perfil.nombre);
+    final firstName = _primerNombreLaboratorio(
+      _nombrePerfilPresentableLaboratorio(widget.trajectory?.perfil),
+    );
     final title = firstName == null ? 'Hola' : 'Hola, $firstName';
     final compact = _compact;
     final titleWidth = compact ? 64.0 : 104.0;
@@ -1747,7 +1769,9 @@ class _BannerPerfilInicioLaboratorio extends StatelessWidget {
                     )
                   else ...[
                     Text(
-                      trajectory!.perfil.nombre,
+                      _nombrePerfilPresentableLaboratorio(
+                        trajectory!.perfil,
+                      ),
                       style: theme.textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.w900,
                         height: 1.04,
@@ -1901,12 +1925,8 @@ class _FranjaResumenInicioLaboratorio extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final totalVisible = career?.materias.length;
     final approved = career?.aprobadas;
     final inProgress = career?.cursando;
-    final progress = totalVisible == null || totalVisible == 0 || approved == null
-        ? null
-        : approved / totalVisible;
     return LayoutBuilder(
       builder: (context, constraints) {
         const spacing = 12.0;
@@ -1924,9 +1944,6 @@ class _FranjaResumenInicioLaboratorio extends StatelessWidget {
                     onTap: onOpenSubjects,
                     child: _TarjetaProgresoInicioLaboratorio(
                       loaded: loaded,
-                      progress: progress,
-                      approved: approved,
-                      total: totalVisible,
                     ),
                   ),
                 ),
@@ -1989,50 +2006,33 @@ class _FranjaResumenInicioLaboratorio extends StatelessWidget {
 }
 
 class _TarjetaProgresoInicioLaboratorio extends StatelessWidget {
-  const _TarjetaProgresoInicioLaboratorio({
-    required this.loaded,
-    required this.progress,
-    required this.approved,
-    required this.total,
-  });
+  const _TarjetaProgresoInicioLaboratorio({required this.loaded});
 
   final bool loaded;
-  final double? progress;
-  final int? approved;
-  final int? total;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final muted = scheme.onSurfaceVariant.withValues(alpha: 0.58);
     return TarjetaMetricaVidrio(
       padding: const EdgeInsets.all(10),
       child: Row(
         children: [
-          SizedBox(
+          Container(
             width: 52,
             height: 52,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                CircularProgressIndicator(
-                  value: progress,
-                  strokeWidth: 6,
-                  backgroundColor:
-                      theme.colorScheme.primary.withValues(alpha: 0.10),
-                ),
-                Center(
-                  child: Text(
-                    !loaded
-                        ? '…'
-                        : progress == null
-                            ? '—%'
-                            : '${(progress! * 100).toStringAsFixed(0)}%',
-                    style: theme.textTheme.labelLarge?.copyWith(
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                ),
-              ],
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: muted, width: 6),
+            ),
+            child: Text(
+              loaded ? '—' : '…',
+              style: theme.textTheme.labelLarge?.copyWith(
+                color: muted,
+                fontWeight: FontWeight.w900,
+              ),
             ),
           ),
           const SizedBox(width: 8),
@@ -2052,13 +2052,11 @@ class _TarjetaProgresoInicioLaboratorio extends StatelessWidget {
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  loaded && approved != null && total != null
-                      ? '$approved de $total'
-                      : '—',
+                  loaded ? '—' : '…',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
+                    color: muted,
                     fontSize: 11,
                   ),
                 ),
@@ -2080,21 +2078,22 @@ class _TarjetaProximamenteLaboratorio extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final muted = scheme.onSurfaceVariant.withValues(alpha: 0.58);
     return TarjetaMetricaVidrio(
       padding: const EdgeInsets.all(10),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.broken_image_rounded, color: scheme.primary, size: 24),
+          Icon(Icons.broken_image_rounded, color: muted, size: 24),
           const SizedBox(height: 8),
           Text(
-            'Próximamente',
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.labelLarge?.copyWith(
+            '—',
+            maxLines: 1,
+            style: theme.textTheme.titleLarge?.copyWith(
+              color: muted,
               fontWeight: FontWeight.w900,
-              height: 1.0,
+              height: 1,
             ),
           ),
           const SizedBox(height: 3),
@@ -2103,9 +2102,9 @@ class _TarjetaProximamenteLaboratorio extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: theme.textTheme.bodySmall?.copyWith(
-              color: scheme.onSurfaceVariant,
-              fontWeight: FontWeight.w600,
-              height: 1.0,
+              color: muted,
+              fontWeight: FontWeight.w700,
+              height: 1,
             ),
           ),
         ],
@@ -2732,6 +2731,243 @@ class _CardPromocionalInicioLaboratorio {
   final _AccionPromocionalInicioLaboratorio action;
 }
 
+String _nombrePerfilPresentableLaboratorio(
+  PerfilTrayectoriaSageLaboratorio? perfil,
+) {
+  if (perfil == null) return 'Estudiante SAGE';
+
+  final entries = perfil.campos.entries.toList(growable: false);
+  String? findField(
+    Iterable<String> tokens, {
+    bool allowSingleWord = false,
+  }) {
+    for (final entry in entries) {
+      final key = _normalizarTextoLaboratorio(entry.key);
+      if (!tokens.any(key.contains)) continue;
+      final value = allowSingleWord
+          ? _candidatoTextoNombreLaboratorio(entry.value)
+          : _candidatoNombreLaboratorio(entry.value);
+      if (value != null) return value;
+    }
+    return null;
+  }
+
+  final givenNames = findField(const ['nombres', 'nombre']);
+  final surname = findField(
+    const ['apellidos', 'apellido'],
+    allowSingleWord: true,
+  );
+  if (givenNames != null && surname != null && givenNames != surname) {
+    return _capitalizarNombreLaboratorio('$givenNames $surname');
+  }
+
+  final direct = _candidatoNombreLaboratorio(perfil.nombre);
+  if (direct != null) return _ordenarNombreSageLaboratorio(direct);
+
+  final priority = <MapEntry<String, String>>[
+    ...entries.where((entry) {
+      final key = _normalizarTextoLaboratorio(entry.key);
+      return key.contains('alumno') ||
+          key.contains('estudiante') ||
+          key.contains('persona') ||
+          key.contains('titular');
+    }),
+    ...entries,
+  ];
+  for (final entry in priority) {
+    for (final segment in entry.value.split(RegExp(r'[·|;]'))) {
+      final candidate = _candidatoNombreLaboratorio(segment);
+      if (candidate != null) return _ordenarNombreSageLaboratorio(candidate);
+    }
+  }
+  return 'Estudiante SAGE';
+}
+
+String? _candidatoNombreLaboratorio(String value) {
+  final clean = _candidatoTextoNombreLaboratorio(value);
+  if (clean == null) return null;
+  final words = clean
+      .split(RegExp(r'\s+'))
+      .where((word) => RegExp(r'[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]').hasMatch(word))
+      .toList(growable: false);
+  return words.length < 2 ? null : clean;
+}
+
+String? _candidatoTextoNombreLaboratorio(String value) {
+  final clean = value
+      .replaceAll(RegExp(r'<[^>]+>'), ' ')
+      .replaceAll(RegExp(r'\s+'), ' ')
+      .trim();
+  if (clean.isEmpty || clean.length > 90) return null;
+  final normalized = _normalizarTextoLaboratorio(clean);
+  const rejected = <String>{
+    'dni',
+    'perfil',
+    'estudiante',
+    'estudiante sage',
+    'alumno',
+    'alumna',
+    'legajo',
+  };
+  if (rejected.contains(normalized)) return null;
+  if (RegExp(r'\d').hasMatch(clean)) return null;
+  final generic = RegExp(
+    r'\b(carrera|resolucion|profesorado|institucion|telefono|celular|correo|domicilio)\b',
+  );
+  if (generic.hasMatch(normalized)) return null;
+  return RegExp(r'[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]').hasMatch(clean) ? clean : null;
+}
+
+String _ordenarNombreSageLaboratorio(String value) {
+  final clean = value.replaceAll(RegExp(r'\s+'), ' ').trim();
+  if (clean.contains(',')) {
+    final parts = clean.split(',');
+    if (parts.length >= 2) {
+      final surname = parts.first.trim();
+      final names = parts.sublist(1).join(' ').trim();
+      return _capitalizarNombreLaboratorio('$names $surname');
+    }
+  }
+  final words = clean.split(' ');
+  final uppercase = clean == clean.toUpperCase() && clean != clean.toLowerCase();
+  if (uppercase && words.length >= 2) {
+    return _capitalizarNombreLaboratorio(
+      '${words.sublist(1).join(' ')} ${words.first}',
+    );
+  }
+  return _capitalizarNombreLaboratorio(clean);
+}
+
+String _capitalizarNombreLaboratorio(String value) {
+  return value
+      .split(RegExp(r'\s+'))
+      .where((word) => word.isNotEmpty)
+      .map((word) {
+        final lower = word.toLowerCase();
+        return '${lower[0].toUpperCase()}${lower.substring(1)}';
+      })
+      .join(' ');
+}
+
+String _nombreCarreraPresentableLaboratorio(String raw) {
+  var value = raw.replaceAll(RegExp(r'\s+'), ' ').trim();
+  if (value.isEmpty) return value;
+  final sourceWasUppercase =
+      value == value.toUpperCase() && value != value.toLowerCase();
+  value = value.replaceFirst(
+    RegExp(
+      r'^res(?:oluci[oó]n)?\.?\s*(?:n[°º]?\s*)?\d+(?:[./-]\d+)*(?:\s*c\.?\s*g\.?\s*e\.?)?\s*[-–—.:]*\s*',
+      caseSensitive: false,
+    ),
+    '',
+  );
+  value = value.replaceFirst(
+    RegExp(r'^prof\.?\s+de\s+', caseSensitive: false),
+    'Profesorado de ',
+  );
+  if (sourceWasUppercase) {
+    const lowercaseWords = <String>{'de', 'del', 'la', 'las', 'los', 'en', 'y'};
+    final words = value.toLowerCase().split(' ');
+    value = [
+      for (var index = 0; index < words.length; index++)
+        if (index > 0 && lowercaseWords.contains(words[index]))
+          words[index]
+        else
+          '${words[index][0].toUpperCase()}${words[index].substring(1)}',
+    ].join(' ');
+  }
+  return value.trim().isEmpty ? raw.trim() : value.trim();
+}
+
+String _etiquetaAnioLaboratorio(int year) => switch (year) {
+  1 => 'Primer año',
+  2 => 'Segundo año',
+  3 => 'Tercer año',
+  4 => 'Cuarto año',
+  5 => 'Quinto año',
+  6 => 'Sexto año',
+  _ => '$year.º año',
+};
+
+List<MapEntry<String, String>> _camposPerfilPresentablesLaboratorio(
+  PerfilTrayectoriaSageLaboratorio perfil,
+) {
+  final result = <MapEntry<String, String>>[];
+  final seen = <String>{};
+  for (final entry in perfil.campos.entries) {
+    final value = entry.value.replaceAll(RegExp(r'\s+'), ' ').trim();
+    if (value.isEmpty) continue;
+    final label = _etiquetaCampoSageLaboratorio(entry.key);
+    final normalizedValue = _normalizarTextoLaboratorio(value);
+    if (label == 'Estudiante' &&
+        const {'dni', 'alumno', 'estudiante', 'perfil'}.contains(normalizedValue)) {
+      continue;
+    }
+    final signature = '${label.toLowerCase()}|${value.toLowerCase()}';
+    if (!seen.add(signature)) continue;
+    result.add(MapEntry<String, String>(label, value));
+  }
+  return result;
+}
+
+String _etiquetaCampoSageLaboratorio(String raw) {
+  var key = _normalizarTextoLaboratorio(raw)
+      .replaceAll(RegExp(r'^(tv|txt|lbl|label|col|campo|dato|ctl|td|th)_+'), '')
+      .replaceAll(RegExp(r'[_-]+'), ' ')
+      .replaceAll(RegExp(r'\s+'), ' ')
+      .trim();
+  const labels = <String, String>{
+    'alumno': 'Estudiante',
+    'alumnos': 'Estudiante',
+    'estudiante': 'Estudiante',
+    'nombre': 'Nombre',
+    'nombres': 'Nombre',
+    'apellido': 'Apellido',
+    'apellidos': 'Apellido',
+    'dni': 'DNI',
+    'nro doc': 'DNI',
+    'numero documento': 'DNI',
+    'documento': 'Documento',
+    'cuil': 'CUIL',
+    'telefono': 'Teléfono',
+    'telefono celular': 'Celular',
+    'celular': 'Celular',
+    'mail': 'Correo electrónico',
+    'email': 'Correo electrónico',
+    'correo': 'Correo electrónico',
+    'correo electronico': 'Correo electrónico',
+    'fecha nacimiento': 'Fecha de nacimiento',
+    'nacimiento': 'Fecha de nacimiento',
+    'domicilio': 'Domicilio',
+    'direccion': 'Dirección',
+    'localidad': 'Localidad',
+    'provincia': 'Provincia',
+    'legajo': 'Legajo',
+    'sexo': 'Sexo',
+  };
+  final mapped = labels[key];
+  if (mapped != null) return mapped;
+  if (key.isEmpty) return 'Dato';
+  return key
+      .split(' ')
+      .where((word) => word.isNotEmpty)
+      .map((word) => '${word[0].toUpperCase()}${word.substring(1)}')
+      .join(' ');
+}
+
+String _normalizarTextoLaboratorio(String value) {
+  return value
+      .toLowerCase()
+      .replaceAll('á', 'a')
+      .replaceAll('é', 'e')
+      .replaceAll('í', 'i')
+      .replaceAll('ó', 'o')
+      .replaceAll('ú', 'u')
+      .replaceAll('ü', 'u')
+      .replaceAll(RegExp(r'\s+'), ' ')
+      .trim();
+}
+
 String? _primerNombreLaboratorio(String? fullName) {
   final value = fullName?.trim() ?? '';
   if (value.isEmpty || value.toLowerCase() == 'estudiante sage') return null;
@@ -2746,9 +2982,10 @@ String _lineaPerfilLaboratorio(
   if (trajectory.perfil.dni != null) {
     parts.add('DNI ${trajectory.perfil.dni}');
   }
-  if (career.nombre.trim().isNotEmpty) parts.add(career.nombre.trim());
+  final careerName = _nombreCarreraPresentableLaboratorio(career.nombre);
+  if (careerName.isNotEmpty) parts.add(careerName);
   final year = _anioActualLaboratorio(career);
-  if (year != null) parts.add('Año $year');
+  if (year != null) parts.add(_etiquetaAnioLaboratorio(year));
   if (career.anioInicio != null) parts.add('Cohorte ${career.anioInicio}');
   return parts.join(' · ');
 }
@@ -2905,7 +3142,7 @@ class _TituloCarreraLaboratorio extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          career.nombre,
+          _nombreCarreraPresentableLaboratorio(career.nombre),
           style: theme.textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.w900,
           ),
