@@ -1,9 +1,6 @@
-﻿name: correlativas_historia
+name: correlativas_historia
 description: "correlativas"
-publish_to: "none"
-
-version: 1.3.150726+759
-
+publish_to: "none"version: 1.3.150726+760
 environment:
   sdk: ">=3.12.0 <4.0.0"
 

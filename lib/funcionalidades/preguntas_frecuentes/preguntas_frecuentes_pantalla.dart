@@ -412,8 +412,6 @@ class PantallaPreguntasFrecuentes extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _PortadaPreguntasFrecuentes(),
-                    SizedBox(height: 12),
                     _SearchBar(),
                     SizedBox(height: 12),
                     _FaqList(),
@@ -425,51 +423,6 @@ class PantallaPreguntasFrecuentes extends ConsumerWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _PortadaPreguntasFrecuentes extends StatelessWidget {
-  const _PortadaPreguntasFrecuentes();
-
-  @override
-  Widget build(BuildContext context) {
-    final tt = Theme.of(context).textTheme;
-    final cs = Theme.of(context).colorScheme;
-    final isDark = _isDark(context);
-
-    return Container(
-      decoration: BoxDecoration(
-        color: isDark ? _darken(cs.surface) : Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isDark ? cs.outlineVariant : const Color(0xFFE5E7EB),
-        ),
-        boxShadow: const [BoxShadow(blurRadius: 6, color: Color(0x12000000))],
-      ),
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Preguntas frecuentes',
-            style: tt.headlineSmall?.copyWith(
-              fontWeight: FontWeight.w800,
-              color: isDark ? cs.onSurface : const Color(0xFF111827),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Este espacio reune respuestas frecuentes sobre ingreso, correlatividades, cursado, evaluacion y egreso. '
-            'No reemplaza la normativa, pero ayuda a leerla en contexto para tomar decisiones concretas de cursada.',
-            style: TextStyle(
-              fontSize: 15,
-              height: 1.6,
-              color: isDark ? cs.onSurfaceVariant : const Color(0xFF4B5563),
-            ),
-          ),
-        ],
       ),
     );
   }

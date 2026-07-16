@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -209,7 +211,7 @@ class _DashboardGrid extends StatelessWidget {
       builder: (context, constraints) {
         const spacing = 12.0;
         final thirdWidth = (constraints.maxWidth - (spacing * 2)) / 3;
-        final tileHeight = thirdWidth;
+        final tileHeight = math.max(thirdWidth, 120.0);
         final largeWidth = (thirdWidth * 2) + spacing;
 
         return Column(
@@ -404,9 +406,12 @@ class _LargeInstitutionCard extends StatelessWidget {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
 
-    return TarjetaMetricaVidrio(
-      padding: const EdgeInsets.all(16),
-      child: Row(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxWidth < 240;
+        return TarjetaMetricaVidrio(
+          padding: EdgeInsets.all(compact ? 12 : 16),
+          child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
@@ -458,7 +463,9 @@ class _LargeInstitutionCard extends StatelessWidget {
             ),
           ),
         ],
-      ),
+          ),
+        );
+      },
     );
   }
 }

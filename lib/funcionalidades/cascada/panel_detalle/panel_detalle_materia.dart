@@ -129,8 +129,6 @@ class PanelDetalleMateria extends ConsumerWidget {
         children: [
           _HeaderBox(
             title: nombreDetalleMateria(m),
-            subtitle:
-                'Esta ficha reúne relaciones formales del plan y referencias de cursada. Conviene leerla junto con la propuesta de cátedra y las condiciones concretas de este tramo.',
             showCloseButton: showHeaderCloseButton,
             chips: Wrap(
               spacing: 8,
@@ -347,14 +345,12 @@ class _DeferredSectionPlaceholder extends StatelessWidget {
 class _HeaderBox extends StatelessWidget {
   const _HeaderBox({
     required this.title,
-    required this.subtitle,
     required this.showCloseButton,
     required this.chips,
     required this.onClose,
   });
 
   final String title;
-  final String subtitle;
   final bool showCloseButton;
   final Widget chips;
   final VoidCallback onClose;
@@ -407,16 +403,6 @@ class _HeaderBox extends StatelessWidget {
                   BotonCerrarDetalle(onTap: onClose),
                 ],
               ],
-            ),
-            const SizedBox(height: 10),
-            Text(
-              subtitle,
-              style: TextStyle(
-                fontSize: 13.5,
-                height: 1.35,
-                fontWeight: FontWeight.w400,
-                color: isDark ? cs.onSurfaceVariant : const Color(0xFF4B5563),
-              ),
             ),
             const SizedBox(height: 10),
             chips,

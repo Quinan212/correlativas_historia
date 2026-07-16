@@ -353,7 +353,7 @@ class _FranjaResumen extends StatelessWidget {
       builder: (context, constraints) {
         const spacing = 12.0;
         final thirdWidth = (constraints.maxWidth - (spacing * 2)) / 3;
-        final tileHeight = thirdWidth * 0.84;
+        final tileHeight = math.max(thirdWidth * 0.72, 104.0);
         final largeWidth = (thirdWidth * 2) + spacing;
 
         return Column(
@@ -363,22 +363,20 @@ class _FranjaResumen extends StatelessWidget {
               children: [
                 SizedBox(
                   width: largeWidth,
+                  height: tileHeight,
                   child: GestureDetector(
                     onTap: onTapAprobadas,
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(minHeight: tileHeight),
-                      child: _TarjetaProgresoGrande(
+                    child: _TarjetaProgresoGrande(
                         progress: progress,
                         approved: approved,
                         totalPlan: totalPlan,
                       ),
-                    ),
                   ),
                 ),
                 const SizedBox(width: spacing),
                 Expanded(
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(minHeight: tileHeight),
+                  child: SizedBox(
+                    height: tileHeight,
                     child: GestureDetector(
                       onTap: onTapAprobadas,
                       child: TarjetaMetrica(
@@ -396,8 +394,8 @@ class _FranjaResumen extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                ConstrainedBox(
-                  constraints: BoxConstraints(minHeight: tileHeight),
+                SizedBox(
+                  height: tileHeight,
                   child: GestureDetector(
                     onTap: onTapHabilitadas,
                     child: SizedBox(
@@ -412,8 +410,8 @@ class _FranjaResumen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: spacing),
-                ConstrainedBox(
-                  constraints: BoxConstraints(minHeight: tileHeight),
+                SizedBox(
+                  height: tileHeight,
                   child: GestureDetector(
                     onTap: onTapCursando,
                     child: SizedBox(
@@ -428,8 +426,8 @@ class _FranjaResumen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: spacing),
-                ConstrainedBox(
-                  constraints: BoxConstraints(minHeight: tileHeight),
+                SizedBox(
+                  height: tileHeight,
                   child: GestureDetector(
                     onTap: onTapPlanTotal,
                     child: SizedBox(
@@ -467,12 +465,12 @@ class _TarjetaProgresoGrande extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return _TarjetaVidrio(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(10),
       child: Row(
         children: [
           SizedBox(
-            width: 56,
-            height: 56,
+            width: 52,
+            height: 52,
             child: Stack(
               fit: StackFit.expand,
               children: [
@@ -494,7 +492,7 @@ class _TarjetaProgresoGrande extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 8),
           Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -502,6 +500,8 @@ class _TarjetaProgresoGrande extends StatelessWidget {
               children: [
                 Text(
                   'Progreso general',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w900,
                     fontSize: 15,
@@ -510,9 +510,11 @@ class _TarjetaProgresoGrande extends StatelessWidget {
                 const SizedBox(height: 3),
                 Text(
                   '$approved de $totalPlan materias ya están acreditadas en tu recorrido.',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
-                    fontSize: 11.5,
+                    fontSize: 11.0,
                     height: 1.2,
                   ),
                 ),

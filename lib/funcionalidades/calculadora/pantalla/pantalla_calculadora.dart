@@ -9,7 +9,6 @@ import 'componentes/bloque_selectores_calculadora.dart';
 import 'componentes/resumen_materia_calculadora.dart';
 import 'componentes/tarjeta_espera_calculadora.dart';
 import 'componentes/tarjeta_paso_calculadora.dart';
-import 'componentes/tarjeta_portada_calculadora.dart';
 import 'utilidades/iterables.dart';
 
 class PantallaCalculadora extends ConsumerWidget {
@@ -82,8 +81,6 @@ class PantallaCalculadora extends ConsumerWidget {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const TarjetaPortadaCalculadora(),
-                          const SizedBox(height: 12),
                           const TarjetaPasoCalculadora(
                             numero: 1,
                             titulo: 'Elegí la carrera de referencia',
@@ -112,7 +109,7 @@ class PantallaCalculadora extends ConsumerWidget {
                             TarjetaEsperaCalculadora(
                               texto: hasSelectedCareer
                                   ? 'Seleccioná un año y una materia para leer las condiciones de cursada de ese tramo.'
-                                  : 'Seleccioná una carrera para habilitar esta lectura situada del plan.',
+                                  : 'Seleccioná una carrera para continuar.',
                             )
                           else ...[
                             ResumenMateriaCalculadora(materia: course),
@@ -137,8 +134,6 @@ class PantallaCalculadora extends ConsumerWidget {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
-                                  TarjetaPortadaCalculadora(),
-                                  const SizedBox(height: 16),
                                   TarjetaPasoCalculadora(
                                     numero: 1,
                                     titulo: 'Elegí la carrera de referencia',
@@ -174,7 +169,7 @@ class PantallaCalculadora extends ConsumerWidget {
                                     TarjetaEsperaCalculadora(
                                       texto: hasSelectedCareer
                                           ? 'Seleccioná un año y una materia para leer las condiciones de cursada de ese tramo.'
-                                          : 'Seleccioná una carrera para habilitar esta lectura situada del plan.',
+                                          : 'Seleccioná una carrera para continuar.',
                                     )
                                   else ...[
                                     ResumenMateriaCalculadora(materia: course),

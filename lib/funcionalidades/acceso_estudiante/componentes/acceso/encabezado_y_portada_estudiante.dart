@@ -142,6 +142,8 @@ class _BannerPortada extends StatelessWidget {
                         const SizedBox(height: 6),
                         Text(
                           currentStudent.fullName,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                           style: theme.textTheme.headlineSmall?.copyWith(
                             fontWeight: FontWeight.w900,
                             height: 1.04,
@@ -152,6 +154,8 @@ class _BannerPortada extends StatelessWidget {
                           'DNI ${currentStudent.dni} · ${_etiquetaCarrera(currentStudent.careerId)} · ${currentStudent.yearLabel}'
                           '${currentStudent.cohortYear == null ? '' : ' · Cohorte ${currentStudent.cohortYear}'}'
                           '${currentStudent.division == null ? '' : ' · División ${currentStudent.division}'}',
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                           style: theme.textTheme.bodyMedium?.copyWith(
                             color: scheme.onSurfaceVariant,
                           ),
@@ -252,7 +256,7 @@ class _EncabezadoEstudianteFijoState extends State<_EncabezadoEstudianteFijo> {
         ? 'Hola, $greetingName'
         : 'Acceso estudiantil';
     final compact = _compact;
-    final titleWidth = compact ? 80.0 : 150.0;
+    final titleWidth = compact ? 64.0 : 104.0;
     final searchProgress = _searchProgress;
     final hasSearch = widget.loggedIn && widget.onOpenSearch != null;
     final titleOpacity = widget.loggedIn
@@ -274,7 +278,7 @@ class _EncabezadoEstudianteFijoState extends State<_EncabezadoEstudianteFijo> {
       child: Container(
         width: double.infinity,
         clipBehavior: Clip.antiAlias,
-        padding: EdgeInsets.fromLTRB(14, topInset + 6, 14, 14),
+        padding: EdgeInsets.fromLTRB(10, topInset + 6, 10, 14),
         decoration: BoxDecoration(
           color: headerBlue,
           borderRadius: BorderRadius.vertical(
@@ -288,10 +292,11 @@ class _EncabezadoEstudianteFijoState extends State<_EncabezadoEstudianteFijo> {
             children: [
               Row(
                 children: [
-                  InkWell(
-                    onTap: widget.onOpenAccountSheet,
-                    borderRadius: BorderRadius.circular(14),
-                    child: Padding(
+                  Expanded(
+                    child: InkWell(
+                      onTap: widget.onOpenAccountSheet,
+                      borderRadius: BorderRadius.circular(14),
+                      child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 2),
                       child: Transform.translate(
                         offset: Offset(titleOffset, 0),
@@ -306,7 +311,7 @@ class _EncabezadoEstudianteFijoState extends State<_EncabezadoEstudianteFijo> {
                                     : _institutionLogoAssetFor(
                                         currentStudent.careerId,
                                       ),
-                                size: 38,
+                                size: 36,
                               ),
                               const SizedBox(width: 10),
                               if (!widget.loggedIn)
@@ -381,7 +386,7 @@ class _EncabezadoEstudianteFijoState extends State<_EncabezadoEstudianteFijo> {
                       ),
                     ),
                   ),
-                  const Spacer(),
+                  ),
                   if (hasSearch)
                     Opacity(
                       opacity: 1 - searchProgress,
@@ -392,7 +397,7 @@ class _EncabezadoEstudianteFijoState extends State<_EncabezadoEstudianteFijo> {
                         compact: true,
                       ),
                     ),
-                  if (hasSearch) const SizedBox(width: 6),
+                  if (hasSearch) const SizedBox(width: 2),
                   if (widget.loggedIn || widget.onRefresh != null)
                     Opacity(
                       opacity: actionsOpacity,
@@ -409,7 +414,7 @@ class _EncabezadoEstudianteFijoState extends State<_EncabezadoEstudianteFijo> {
                                 onTap: widget.onOpenHistory,
                                 compact: true,
                               ),
-                            if (widget.loggedIn) const SizedBox(width: 6),
+                            if (widget.loggedIn) const SizedBox(width: 2),
                             if (widget.onRefresh != null)
                               _BotonIconoPortada(
                                 icon: Icons.refresh_rounded,
@@ -426,7 +431,7 @@ class _EncabezadoEstudianteFijoState extends State<_EncabezadoEstudianteFijo> {
               if (hasSearch)
                 Positioned(
                   left: 0,
-                  right: 88 * (1 - searchProgress),
+                  right: 78 * (1 - searchProgress),
                   top: 0,
                   bottom: 0,
                   child: _BarraBusquedaPortada(
@@ -461,8 +466,8 @@ class _BotonIconoPortada extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final size = compact ? 38.0 : 42.0;
-    final radius = compact ? 11.0 : 12.0;
+    final size = compact ? 34.0 : 42.0;
+    final radius = compact ? 10.0 : 12.0;
 
     return Tooltip(
       message: tooltip,
@@ -475,7 +480,7 @@ class _BotonIconoPortada extends StatelessWidget {
             SizedBox(
               width: size,
               height: size,
-              child: Icon(icon, color: Colors.white, size: compact ? 20 : 24),
+              child: Icon(icon, color: Colors.white, size: compact ? 19 : 24),
             ),
             if (badge > 0)
               Positioned(
