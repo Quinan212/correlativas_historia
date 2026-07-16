@@ -20,7 +20,6 @@ import 'package:correlativas_historia/compartido/rendimiento/rendimiento_app.dar
 import 'package:correlativas_historia/compartido/supabase/supabase.dart';
 import 'package:correlativas_historia/compartido/media/precarga_media_remota.dart';
 import 'package:correlativas_historia/compartido/componentes/navegacion_inferior.dart';
-import 'package:correlativas_historia/compartido/responsive/normalizador_viewport_android.dart';
 import 'package:correlativas_historia/tema/tema_app.dart';
 import 'package:video_player_win/video_player_win_plugin.dart';
 
@@ -66,7 +65,7 @@ class App extends ConsumerWidget {
           return MediaQuery.withClampedTextScaling(
             minScaleFactor: 0.95,
             maxScaleFactor: 1.10,
-            child: NormalizadorViewportAndroid(child: child),
+            child: child,
           );
         },
         locale: const Locale('es', 'AR'),

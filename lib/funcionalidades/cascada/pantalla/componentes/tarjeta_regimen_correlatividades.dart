@@ -205,13 +205,60 @@ class _DashboardGrid extends StatelessWidget {
 
   final _RegimenData data;
 
+  Widget _planCard() {
+    return Consumer(
+      builder: (context, ref, child) {
+        final downloadUrl = ref.watch(proveedorUrlDescargaCarrera);
+        final isClickable = downloadUrl.isNotEmpty;
+
+        return Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(18),
+            onTap: isClickable
+                ? () async {
+                    final uri = Uri.parse(downloadUrl);
+                    if (!await launchUrl(
+                      uri,
+                      mode: LaunchMode.externalApplication,
+                    )) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('No se pudo abrir el enlace.'),
+                          ),
+                        );
+                      }
+                    }
+                  }
+                : null,
+            child: const TarjetaMetrica(
+              icon: Icons.fact_check_rounded,
+              label: 'Vigente',
+              value: 'Plan',
+              highlight: false,
+              padding: EdgeInsets.all(10),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
         const spacing = 12.0;
-        final thirdWidth = (constraints.maxWidth - (spacing * 2)) / 3;
-        final tileHeight = math.max(thirdWidth, 120.0);
+        final width = constraints.maxWidth;
+
+        final thirdWidth = (width - (spacing * 2)) / 3;
+        final previousHeight = width < 360
+            ? math.max(thirdWidth, 148.0)
+            : width < 430
+            ? math.max(thirdWidth, 140.0)
+            : math.max(thirdWidth, 120.0);
+        final tileHeight = (previousHeight * 0.75).clamp(105.0, 116.0);
         final largeWidth = (thirdWidth * 2) + spacing;
 
         return Column(
@@ -223,9 +270,7 @@ class _DashboardGrid extends StatelessWidget {
                 SizedBox(
                   width: largeWidth,
                   height: tileHeight,
-                  child: _LargeNormaCard(
-                    resolucion: data.resolucion,
-                  ),
+                  child: _LargeNormaCard(resolucion: data.resolucion),
                 ),
                 const SizedBox(width: spacing),
                 SizedBox(
@@ -236,6 +281,7 @@ class _DashboardGrid extends StatelessWidget {
                     label: 'Carrera',
                     value: data.carreraCorta.replaceAll(' ', '\n'),
                     maxLines: 2,
+                    padding: const EdgeInsets.all(10),
                   ),
                 ),
               ],
@@ -247,43 +293,7 @@ class _DashboardGrid extends StatelessWidget {
                 SizedBox(
                   width: thirdWidth,
                   height: tileHeight,
-                  child: Consumer(
-                    builder: (context, ref, child) {
-                      final downloadUrl =
-                          ref.watch(proveedorUrlDescargaCarrera);
-                      final isClickable = downloadUrl.isNotEmpty;
-
-                      return Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(18),
-                          onTap: isClickable
-                              ? () async {
-                                  final uri = Uri.parse(downloadUrl);
-                                  if (!await launchUrl(uri,
-                                      mode: LaunchMode.externalApplication)) {
-                                    if (context.mounted) {
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        const SnackBar(
-                                          content: Text(
-                                              'No se pudo abrir el enlace.'),
-                                        ),
-                                      );
-                                    }
-                                  }
-                                }
-                              : null,
-                          child: const TarjetaMetrica(
-                            icon: Icons.fact_check_rounded,
-                            label: 'Vigente',
-                            value: 'Plan',
-                            highlight: false,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
+                  child: _planCard(),
                 ),
                 const SizedBox(width: spacing),
                 SizedBox(
@@ -310,14 +320,17 @@ class _LargeNormaCard extends StatelessWidget {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
 
-    return TarjetaMetricaVidrio(
-      padding: const EdgeInsets.all(12),
-      child: Row(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxHeight <= 112;
+        return TarjetaMetricaVidrio(
+          padding: EdgeInsets.all(compact ? 10 : 12),
+          child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
-            width: 56,
-            height: 56,
+            width: compact ? 46 : 56,
+            height: compact ? 46 : 56,
             decoration: BoxDecoration(
               color: cs.primary.withValues(alpha: 0.1),
               shape: BoxShape.circle,
@@ -325,10 +338,10 @@ class _LargeNormaCard extends StatelessWidget {
             child: Icon(
               Icons.gavel_rounded,
               color: cs.primary,
-              size: 28,
+              size: compact ? 24 : 28,
             ),
           ),
-          const SizedBox(width: 14),
+          SizedBox(width: compact ? 10 : 14),
           Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -357,7 +370,9 @@ class _LargeNormaCard extends StatelessWidget {
             ),
           ),
         ],
-      ),
+          ),
+        );
+      },
     );
   }
 }
@@ -408,15 +423,17 @@ class _LargeInstitutionCard extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final compact = constraints.maxWidth < 240;
+        final compactWidth = constraints.maxWidth < 240;
+        final compactHeight = constraints.maxHeight <= 112;
+        final compact = compactWidth || compactHeight;
         return TarjetaMetricaVidrio(
-          padding: EdgeInsets.all(compact ? 12 : 16),
+          padding: EdgeInsets.all(compact ? 10 : 16),
           child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
-            width: 48,
-            height: 48,
+            width: compact ? 42 : 48,
+            height: compact ? 42 : 48,
             decoration: BoxDecoration(
               color: cs.surface,
               shape: BoxShape.circle,
@@ -434,7 +451,7 @@ class _LargeInstitutionCard extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: compact ? 10 : 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

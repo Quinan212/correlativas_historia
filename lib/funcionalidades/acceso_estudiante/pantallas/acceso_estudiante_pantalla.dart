@@ -19,6 +19,8 @@ import '../../../funcionalidades/examenes/componentes/etiqueta_carrera_examenes.
 import '../../../funcionalidades/examenes/examenes_pantalla.dart';
 import '../../../funcionalidades/preguntas_frecuentes/preguntas_frecuentes_pantalla.dart';
 import '../../../modelos/materia.dart';
+import '../../trayectoria_sage_laboratorio/componentes/tarjeta_acceso_laboratorio_sage.dart';
+import '../../trayectoria_sage_laboratorio/pantallas/pantalla_laboratorio_sage.dart';
 import '../datos/repositorio_acceso_estudiante.dart';
 import '../modelos/modelos_acceso_estudiante.dart';
 import 'materias_autodeclaradas_pantalla.dart';
@@ -317,6 +319,14 @@ class _AccesoEstudiantePantallaState
     if (!mounted) return;
     ref.read(proveedorSageActivo.notifier).state = false;
     setState(() => _showSage = false);
+  }
+
+  void _openSageLaboratory() {
+    Navigator.of(context, rootNavigator: true).push<void>(
+      MaterialPageRoute<void>(
+        builder: (_) => const PantallaLaboratorioSage(),
+      ),
+    );
   }
 
   void _openPlanCompleto() {
@@ -974,13 +984,21 @@ class _AccesoEstudiantePantallaState
                         if (!loggedIn)
                           Padding(
                             padding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
-                            child: _TarjetaIngreso(
-                              loading: _loading,
-                              error: _error,
-                              emailCtrl: _emailCtrl,
-                              passwordCtrl: _passwordCtrl,
-                              onLogin: _login,
-                              onGuestLogin: _showGuestRegistration,
+                            child: Column(
+                              children: [
+                                _TarjetaIngreso(
+                                  loading: _loading,
+                                  error: _error,
+                                  emailCtrl: _emailCtrl,
+                                  passwordCtrl: _passwordCtrl,
+                                  onLogin: _login,
+                                  onGuestLogin: _showGuestRegistration,
+                                ),
+                                const SizedBox(height: 14),
+                                TarjetaAccesoLaboratorioSage(
+                                  onTap: _openSageLaboratory,
+                                ),
+                              ],
                             ),
                           ),
                         if (loggedIn && _payload != null)
@@ -1033,6 +1051,10 @@ class _AccesoEstudiantePantallaState
                                     _ExamShortcutBanner(onTap: _openExamenes),
                                     const SizedBox(height: 14),
                                     _SageAccessBanner(onTap: _openSage),
+                                    const SizedBox(height: 12),
+                                    TarjetaAccesoLaboratorioSage(
+                                      onTap: _openSageLaboratory,
+                                    ),
                                     const SizedBox(height: 14),
                                     _GrillaAccionesEstudiante(
                                       onOpenSelfSubjects: _openSelfSubjects,

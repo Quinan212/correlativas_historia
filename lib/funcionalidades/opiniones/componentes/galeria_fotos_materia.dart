@@ -77,11 +77,6 @@ class _GaleriaFotosMateriaState extends ConsumerState<GaleriaFotosMateria> {
             fontWeight: FontWeight.w800,
           ),
         ),
-        const SizedBox(height: 8),
-        Text(
-          'Una imagen también puede sumar contexto: una selfie con tu grupo, un material, una producción o una escena simple de la cursada.',
-          style: theme.textTheme.bodyMedium,
-        ),
         const SizedBox(height: 12),
         SizedBox(
           height: GaleriaFotosMateria._tileHeight,
