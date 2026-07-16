@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+
+    <meta name="color-scheme" content="light">
+
+    <style>
+        html, body { -webkit-text-size-adjust: 100% !important; }
+    </style>
+
+    <title>Mapa de Correlatividades - Música</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        @keyframes bounce-in-y {
+          0% { transform: translateY(-50px); opacity: 0; }
+          60% { transform: translateY(10px); opacity: 1; }
+          80% { transform: translateY(-5px); }
+          100% { transform: translateY(0); }
+        }
+        @keyframes bounce-out-y {
+          0% { transform: translateY(0); opacity: 1; }
+          20% { transform: translateY(10px); }
+          100% { transform: translateY(-50px); opacity: 0; }
+        }
+        .animate-bounce-in-y {
+          animation: bounce-in-y 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+        }
+        .animate-bounce-out-y {
+          animation: bounce-out-y 0.3s ease-in both;
+        }
+        body {
+          font-family: 'Inter', sans-serif;
+          background-color: #F5F7FA;
+        }
+        .badge {
+          display: inline-flex;
+          align-items: center;
+          padding: 0.25rem 0.5rem;
+          border-radius: 9999px;
+          font-size: 0.75rem;
+          line-height: 1rem;
+          font-weight: 600;
+          border: 1px solid transparent;
+        }
+        .badge-outline {
+          background-color: #f9fafb;
+          border-color: #e5e7eb;
+          color: #6b7280;
+        }
+        .scroll-fix {
+            max-height: 80vh;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+        @media (max-width: 640px) {
+            .scroll-fix { max-height: 70vh; }
+        }
+
+        .radio-group-item { display: none; }
+        .radio-group-label { cursor: pointer; }
+        input[type="radio"]:checked + .radio-group-label {
+          background-color: #dbeafe;
+          border-color: #3b82f6;
+          color: #1e40af;
+        }
+        .radio-group-label:hover { background-color: #f3f4f6; }
+    </style>
+</head>
+
+<body class="p-6 lg:p-10">
+
+<div id="cascadaApp" class="w-full space-y-6">
+
+    <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+        <h2 class="text-2xl font-extrabold text-gray-900">Mapa de Correlatividades: ¿Qué Me Falta?</h2>
+        <p class="mt-2 text-sm text-gray-600 max-w-3xl font-medium">
+            Visualiza al instante tu camino académico. Selecciona una materia para ver sus requisitos previos y qué asignaturas te habilita en el futuro.
+        </p>
+    </div>
+
+    <div class="bg-white p-4 rounded-2xl border-2 border-[#005B7F] shadow-lg">
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p class="text-sm text-gray-800 font-semibold max-w-2xl text-center sm:text-left">
+                ¿Querés saber si podés cursar con tu estado actual? Usa la calculadora contextual.
+            </p>
+            <button id="calculatorBtn" class="flex-shrink-0 w-full sm:w-auto px-5 py-2.5 rounded-xl bg-[#005B7F] text-white hover:bg-[#004966] transition-colors duration-200 text-sm font-bold flex items-center justify-center gap-2 shadow-md">
+                <span>Ir a ¿Puedo Cursar?</span>
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect width="16" height="20" x="4" y="2" rx="2"/><path d="M8 6h8"/><path d="M8 10h8"/><path d="M8 14h.01"/><path d="M8 18h.01"/><path d="M12 14h.01"/><path d="M12 18h.01"/><path d="M16 14h.01"/><path d="M16 18h.01"/></svg>
+            </button>
+        </div>
+    </div>
+
+    <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+        <div class="flex items-start gap-4">
+            <svg class="h-6 w-6 flex-shrink-0 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+            <div>
+                <h3 class="text-lg font-bold text-gray-900">Régimen de Correlatividades Vigente</h3>
+                <p class="mt-2 text-sm text-gray-600">
+                    Basado en el régimen actual para el <strong>Profesorado de Educación Secundaria en Música</strong>.
+                </p>
+                <p class="mt-2 text-xs text-gray-500 font-semibold">
+                    Resolución N° 0440/23 C.G.E. | Provincia de Entre Ríos
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm">
+        <div class="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
+
+            <div class="flex-1 flex items-center gap-4 w-full">
+                <div class="relative flex-1 max-w-md w-full">
+                    <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    <input type="text" id="searchInput" placeholder="Buscar materia..." class="pl-10 w-full rounded-xl border-gray-300 shadow-sm focus:border-[#005B7F] focus:ring-[#005B7F] p-2.5 text-sm font-medium bg-gray-50">
+                </div>
+            </div>
+
+            <div class="flex flex-wrap gap-3 items-center w-full lg:w-auto">
+                <select id="filterTipo" class="rounded-xl border border-gray-300 px-3 py-2 text-sm font-medium bg-white text-gray-700 focus:ring-[#005B7F]">
+                    <option value="todos">Todos los tipos</option>
+                    <option value="Formación General">Formación General</option>
+                    <option value="Formación Específica">Formación Específica</option>
+                    <option value="Práctica Profesional">Práctica Profesional</option>
+                </select>
+
+                <select id="filterYear" class="rounded-xl border border-gray-300 px-3 py-2 text-sm font-medium bg-white text-gray-700 focus:ring-[#005B7F]">
+                    <option value="">Todos los años</option>
+                    <option value="1">1° Año</option>
+                    <option value="2">2° Año</option>
+                    <option value="3">3° Año</option>
+                    <option value="4">4° Año</option>
+                </select>
+
+                <div class="flex items-center space-x-2 bg-gray-50 px-3 py-2 rounded-xl border border-gray-200">
+                    <input type="checkbox" id="compactModeSwitch" class="h-4 w-4 rounded border-gray-300 text-[#005B7F] focus:ring-[#005B7F]">
+                    <label for="compactModeSwitch" class="text-sm text-gray-700 font-medium">Compacto</label>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-2">
+                <button id="zoomOutBtn" class="p-2.5 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-600"><svg class="h-4 w-4" stroke="currentColor" fill="none" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="8" y1="11" x2="14" y2="11"></line></svg></button>
+                <span id="zoomLevel" class="text-sm font-bold text-gray-700 min-w-[50px] text-center">100%</span>
+                <button id="zoomInBtn" class="p-2.5 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-600"><svg class="h-4 w-4" stroke="currentColor" fill="none" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg></button>
+                <button id="resetBtn" class="p-2.5 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 ml-2" title="Restablecer"><svg class="h-4 w-4" stroke="currentColor" fill="none" viewBox="0 0 24 24"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg></button>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+        <div id="visualizationContainer" class="overflow-auto" style="height: 70vh;">
+            <div id="visualizationContent" class="p-6 transition-transform duration-200 origin-top-left">
+                <div id="mainGrid" class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="detailPanel" class="bg-white rounded-2xl border border-gray-200 shadow-xl overflow-hidden hidden fixed bottom-0 left-0 right-0 sm:relative sm:bottom-auto sm:left-auto sm:right-auto z-50 sm:z-0 m-4 sm:m-0 border-t-4 border-t-[#005B7F]">
+        <div class="p-6">
+            <div class="flex items-start justify-between mb-6">
+                <div>
+                    <h3 id="detailPanelTitle" class="text-2xl font-extrabold text-[#005B7F] leading-tight"></h3>
+                    <div id="detailPanelBadges" class="flex flex-wrap items-center gap-2 mt-3"></div>
+                </div>
+                <button id="closeDetailPanelBtn" class="p-2 rounded-full hover:bg-gray-100 transition-colors">
+                    <svg class="h-6 w-6 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                    <h4 class="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-yellow-400"></span> Correlativas Requeridas
+                    </h4>
+                    <div id="correlativesList" class="space-y-2"></div>
+                </div>
+                <div>
+                    <h4 class="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Materias que Habilita
+                    </h4>
+                    <div id="dependentsList" class="space-y-2"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div id="calculatorApp" class="w-full space-y-6 hidden p-6 lg:p-10">
+    <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div>
+            <h2 class="text-2xl font-extrabold text-gray-900">¿Puedo Cursar?</h2>
+            <p class="mt-1 text-sm text-gray-600">Verifica instantáneamente tu habilitación para cursar.</p>
+        </div>
+        <button id="backToCascadaBtn" class="px-4 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-sm font-bold text-gray-700">
+            Volver al Mapa
+        </button>
+    </div>
+
+    <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+        <div class="grid gap-6 sm:grid-cols-2">
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-2">Año</label>
+                <select id="evalYearSelector" class="w-full rounded-xl border-gray-300 p-3 text-sm focus:ring-[#005B7F] bg-gray-50">
+                    <option value="2" selected>2° Año</option>
+                    <option value="3">3° Año</option>
+                    <option value="4">4° Año</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-2">Materia</label>
+                <select id="materiaSelector" class="w-full rounded-xl border-gray-300 p-3 text-sm focus:ring-[#005B7F] bg-gray-50">
+                    <option value="">-- Selecciona --</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="evaluationContainer" class="hidden mt-8 border-t border-gray-100 pt-6">
+            <div id="correlativesSection" class="grid gap-4"></div>
+            <div id="evaluationPanel" class="hidden mt-6"></div>
+        </div>
+
+        <div id="initialMessage" class="mt-8 p-8 text-center text-gray-400 bg-gray-50 rounded-xl border border-dashed border-gray-300">
+            Selecciona una materia para comenzar la evaluación.
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const materias = [
+        { id: "pedagogia", codigo: "PED", nombre: "Pedagogía", anio: 1, tipo: "Formación General", formato: "Asignatura", horas: "4 hs", correlativas: [], correlativasDetalladas: [] },
+        { id: "oralidad", codigo: "OLT", nombre: "Oralidad, Lectura, Escritura y TIC", anio: 1, tipo: "Formación General", formato: "Taller", horas: "3 hs", correlativas: [], correlativasDetalladas: [] },
+        { id: "psicologia", codigo: "PE", nombre: "Psicología Educacional", anio: 1, tipo: "Formación General", formato: "Asignatura", horas: "4 hs", correlativas: [], correlativasDetalladas: [] },
+        { id: "corporeidad", codigo: "CJA", nombre: "Corporeidad, Juegos y Lenguajes Artísticos", anio: 1, tipo: "Formación General", formato: "Taller", horas: "3 hs", correlativas: [], correlativasDetalladas: [] },
+
+        { id: "lenguaje-musical-1", codigo: "LM1", nombre: "Lenguaje Musical I", anio: 1, tipo: "Formación Específica", formato: "Asignatura", horas: "4 hs", correlativas: [], correlativasDetalladas: [] },
+        { id: "instrumento-principal-1", codigo: "IP1", nombre: "Instrumento Principal I", anio: 1, tipo: "Formación Específica", formato: "Taller", horas: "4 hs", correlativas: [], correlativasDetalladas: [] },
+        { id: "practica-coral-1", codigo: "PC1", nombre: "Práctica Coral I", anio: 1, tipo: "Formación Específica", formato: "Taller", horas: "3 hs", correlativas: [], correlativasDetalladas: [] },
+        { id: "audioperceptiva-1", codigo: "AP1", nombre: "Audioperceptiva I", anio: 1, tipo: "Formación Específica", formato: "Taller", horas: "4 hs", correlativas: [], correlativasDetalladas: [] },
+        { id: "historia-musica-1", codigo: "HM1", nombre: "Historia de la Música I", anio: 1, tipo: "Formación Específica", formato: "Asignatura", horas: "3 hs", correlativas: [], correlativasDetalladas: [] },
+
+        { id: "practica-1", codigo: "PD1", nombre: "Práctica Docente I", anio: 1, tipo: "Práctica Profesional", formato: "Seminario-Taller", horas: "4 hs", correlativas: [], correlativasDetalladas: [] },
+
+        { id: "didactica", codigo: "DG", nombre: "Didáctica General", anio: 2, tipo: "Formación General", formato: "Asignatura", horas: "4 hs",
+          correlativas: ["pedagogia"],
+          correlativasDetalladas: [{ id: "pedagogia", type: "R" }]
+        },
+        { id: "filosofia", codigo: "FIL", nombre: "Filosofía", anio: 2, tipo: "Formación General", formato: "Asignatura", horas: "3 hs",
+          correlativas: [], correlativasDetalladas: []
+        },
+        { id: "hist-soc", codigo: "HSP", nombre: "Hist. Soc. y Pol. Argentina y Latinoamericana", anio: 2, tipo: "Formación General", formato: "Asignatura", horas: "3 hs",
+          correlativas: [],
+          correlativasDetalladas: []
+        },
+
+        { id: "lenguaje-musical-2", codigo: "LM2", nombre: "Lenguaje Musical II", anio: 2, tipo: "Formación Específica", formato: "Asignatura", horas: "4 hs",
+          correlativas: ["lenguaje-musical-1"],
+          correlativasDetalladas: [{ id: "lenguaje-musical-1", type: "A" }]
+        },
+        { id: "instrumento-principal-2", codigo: "IP2", nombre: "Instrumento Principal II", anio: 2, tipo: "Formación Específica", formato: "Taller", horas: "4 hs",
+          correlativas: ["instrumento-principal-1"],
+          correlativasDetalladas: [{ id: "instrumento-principal-1", type: "A" }]
+        },
+        { id: "practica-coral-2", codigo: "PC2", nombre: "Práctica Coral II", anio: 2, tipo: "Formación Específica", formato: "Taller", horas: "3 hs",
+          correlativas: ["practica-coral-1"],
+          correlativasDetalladas: [{ id: "practica-coral-1", type: "A" }]
+        },
+        { id: "audioperceptiva-2", codigo: "AP2", nombre: "Audioperceptiva II", anio: 2, tipo: "Formación Específica", formato: "Taller", horas: "4 hs",
+          correlativas: ["audioperceptiva-1"],
+          correlativasDetalladas: [{ id: "audioperceptiva-1", type: "A" }]
+        },
+        { id: "historia-musica-2", codigo: "HM2", nombre: "Historia de la Música II", anio: 2, tipo: "Formación Específica", formato: "Asignatura", horas: "3 hs",
+          correlativas: ["historia-musica-1"],
+          correlativasDetalladas: [{ id: "historia-musica-1", type: "A" }]
+        },
+        { id: "organologia", codigo: "ORG", nombre: "Organología", anio: 2, tipo: "Formación Específica", formato: "Asignatura", horas: "3 hs",
+          correlativas: [],
+          correlativasDetalladas: []
+        },
+
+        { id: "sujetos", codigo: "SE", nombre: "Sujetos de la Educación", anio: 2, tipo: "Formación General", formato: "Seminario", horas: "3 hs",
+          correlativas: ["pedagogia", "psicologia"],
+          correlativasDetalladas: [{ id: "pedagogia", type: "R" }, { id: "psicologia", type: "R" }]
+        },
+
+        { id: "practica-2", codigo: "PD2", nombre: "Práctica Docente II", anio: 2, tipo: "Práctica Profesional", formato: "Seminario-Taller", horas: "4 hs",
+          correlativas: ["practica-1", "pedagogia", "oralidad", "psicologia"],
+          correlativasDetalladas: [
+            { id: "practica-1", type: "A" },
+            { id: "pedagogia", type: "A" },
+            { id: "oralidad", type: "R" },
+            { id: "psicologia", type: "A" }
+          ]
+        },
+
+        { id: "esi", codigo: "ESI", nombre: "Educación Sexual Integral", anio: 2, tipo: "Formación General", formato: "Taller", horas: "2 hs",
+          correlativas: ["corporeidad", "sujetos", "didactica"],
+          correlativasDetalladas: [
+            { id: "corporeidad", type: "A" },
+            { id: "sujetos", type: "R" },
+            { id: "didactica", type: "R" }
+          ]
+        },
+
+        { id: "hist-pol-ed", codigo: "HPE", nombre: "Hist. y Pol. de la Educación Argentina", anio: 3, tipo: "Formación General", formato: "Asignatura", horas: "3 hs",
+          correlativas: ["hist-soc", "pedagogia"],
+          correlativasDetalladas: [{ id: "hist-soc", type: "A" }, { id: "pedagogia", type: "A" }]
+        },
+        { id: "sociologia", codigo: "SOE", nombre: "Sociología de la Educación", anio: 3, tipo: "Formación General", formato: "Asignatura", horas: "3 hs",
+          correlativas: ["pedagogia", "filosofia"],
+          correlativasDetalladas: [{ id: "pedagogia", type: "A" }, { id: "filosofia", type: "R" }]
+        },
+
+        { id: "lenguaje-musical-3", codigo: "LM3", nombre: "Lenguaje Musical III", anio: 3, tipo: "Formación Específica", formato: "Asignatura", horas: "4 hs",
+          correlativas: ["lenguaje-musical-2"],
+          correlativasDetalladas: [{ id: "lenguaje-musical-2", type: "A" }]
+        },
+        { id: "instrumento-principal-3", codigo: "IP3", nombre: "Instrumento Principal III", anio: 3, tipo: "Formación Específica", formato: "Taller", horas: "4 hs",
+          correlativas: ["instrumento-principal-2"],
+          correlativasDetalladas: [{ id: "instrumento-principal-2", type: "A" }]
+        },
+        { id: "practica-coral-3", codigo: "PC3", nombre: "Práctica Coral III", anio: 3, tipo: "Formación Específica", formato: "Taller", horas: "3 hs",
+          correlativas: ["practica-coral-2"],
+          correlativasDetalladas: [{ id: "practica-coral-2", type: "A" }]
+        },
+        { id: "audioperceptiva-3", codigo: "AP3", nombre: "Audioperceptiva III", anio: 3, tipo: "Formación Específica", formato: "Taller", horas: "4 hs",
+          correlativas: ["audioperceptiva-2"],
+          correlativasDetalladas: [{ id: "audioperceptiva-2", type: "A" }]
+        },
+        { id: "historia-musica-3", codigo: "HM3", nombre: "Historia de la Música III", anio: 3, tipo: "Formación Específica", formato: "Asignatura", horas: "3 hs",
+          correlativas: ["historia-musica-2"],
+          correlativasDetalladas: [{ id: "historia-musica-2", type: "A" }]
+        },
+        { id: "contrapunto", codigo: "CON", nombre: "Contrapunto", anio: 3, tipo: "Formación Específica", formato: "Asignatura", horas: "3 hs",
+          correlativas: ["lenguaje-musical-2"],
+          correlativasDetalladas: [{ id: "lenguaje-musical-2", type: "A" }]
+        },
+
+        { id: "udi-1", codigo: "UDI1", nombre: "Unidad de Definición Institucional I", anio: 3, tipo: "Formación Específica", formato: "Variable", horas: "3 hs", correlativas: [], correlativasDetalladas: [] },
+
+        { id: "didactica-musica-1", codigo: "DM1", nombre: "Didáctica de la Música I", anio: 3, tipo: "Formación Específica", formato: "Asignatura", horas: "4 hs",
+          correlativas: ["lenguaje-musical-2", "pedagogia", "didactica"],
+          correlativasDetalladas: [
+            { id: "lenguaje-musical-2", type: "R" },
+            { id: "pedagogia", type: "A" },
+            { id: "didactica", type: "A" }
+          ]
+        },
+
+        { id: "practica-3", codigo: "PD3", nombre: "Práctica Docente III", anio: 3, tipo: "Práctica Profesional", formato: "Seminario-Taller", horas: "6 hs",
+          correlativas: ["practica-2", "didactica", "sujetos"],
+          correlativasDetalladas: [
+            { isSpecial: true, nombre: "Todas las UC de 1° Año", type: "A" },
+            { id: "practica-2", type: "A" },
+            { id: "didactica", type: "A" },
+            { id: "sujetos", type: "A" }
+          ]
+        },
+
+        { id: "ddhh", codigo: "DHU", nombre: "Derechos Humanos: Ética y Ciudadanía", anio: 4, tipo: "Formación General", formato: "Asignatura", horas: "3 hs",
+          correlativas: ["filosofia", "hist-soc", "sociologia"],
+          correlativasDetalladas: [
+            { id: "filosofia", type: "A" },
+            { id: "hist-soc", type: "A" },
+            { id: "sociologia", type: "R" }
+          ]
+        },
+
+        { id: "instituciones", codigo: "IE", nombre: "Análisis y Org. de las Inst. Educativas", anio: 4, tipo: "Formación General", formato: "Seminario", horas: "3 hs",
+          correlativas: ["sociologia", "practica-3"],
+          correlativasDetalladas: [
+            { id: "sociologia", type: "A" },
+            { id: "practica-3", type: "A" }
+          ]
+        },
+
+        { id: "lenguaje-musical-4", codigo: "LM4", nombre: "Lenguaje Musical IV", anio: 4, tipo: "Formación Específica", formato: "Asignatura", horas: "4 hs",
+          correlativas: ["lenguaje-musical-3"],
+          correlativasDetalladas: [{ id: "lenguaje-musical-3", type: "A" }]
+        },
+        { id: "instrumento-principal-4", codigo: "IP4", nombre: "Instrumento Principal IV", anio: 4, tipo: "Formación Específica", formato: "Taller", horas: "4 hs",
+          correlativas: ["instrumento-principal-3"],
+          correlativasDetalladas: [{ id: "instrumento-principal-3", type: "A" }]
+        },
+        { id: "practica-coral-4", codigo: "PC4", nombre: "Práctica Coral IV", anio: 4, tipo: "Formación Específica", formato: "Taller", horas: "3 hs",
+          correlativas: ["practica-coral-3"],
+          correlativasDetalladas: [{ id: "practica-coral-3", type: "A" }]
+        },
+        { id: "audioperceptiva-4", codigo: "AP4", nombre: "Audioperceptiva IV", anio: 4, tipo: "Formación Específica", formato: "Taller", horas: "4 hs",
+          correlativas: ["audioperceptiva-3"],
+          correlativasDetalladas: [{ id: "audioperceptiva-3", type: "A" }]
+        },
+        { id: "historia-musica-4", codigo: "HM4", nombre: "Historia de la Música IV", anio: 4, tipo: "Formación Específica", formato: "Asignatura", horas: "3 hs",
+          correlativas: ["historia-musica-3"],
+          correlativasDetalladas: [{ id: "historia-musica-3", type: "A" }]
+        },
+        { id: "analisis-musical", codigo: "ANM", nombre: "Análisis Musical", anio: 4, tipo: "Formación Específica", formato: "Asignatura", horas: "3 hs",
+          correlativas: ["contrapunto"],
+          correlativasDetalladas: [{ id: "contrapunto", type: "A" }]
+        },
+
+        { id: "udi-2", codigo: "UDI2", nombre: "Unidad de Definición Institucional II", anio: 4, tipo: "Formación Específica", formato: "Variable", horas: "3 hs", correlativas: [], correlativasDetalladas: [] },
+
+        { id: "didactica-musica-2", codigo: "DM2", nombre: "Didáctica de la Música II", anio: 4, tipo: "Formación Específica", formato: "Asignatura", horas: "4 hs",
+          correlativas: ["didactica-musica-1", "practica-3"],
+          correlativasDetalladas: [
+            { id: "didactica-musica-1", type: "A" },
+            { id: "practica-3", type: "A" }
+          ]
+        },
+
+        { id: "residencia", codigo: "RES", nombre: "Práctica Docente IV (Residencia)", anio: 4, tipo: "Práctica Profesional", formato: "Seminario-Taller", horas: "8 hs",
+          correlativas: ["practica-3", "esi", "sociologia"],
+          correlativasDetalladas: [
+            { isSpecial: true, nombre: "Todas las UC de 1° y 2° Año", type: "A" },
+            { id: "practica-3", type: "A" },
+            { id: "esi", type: "A" },
+            { id: "sociologia", type: "A" }
+          ]
+        },
+      ];
+
+      const tipoColores = {
+        "Formación General": "bg-[#DBEAFE] text-[#1D4ED8] border-[#BFDBFE]",
+        "Formación Específica": "bg-[#D1FAE5] text-[#065F46] border-[#A7F3D0]",
+        "Práctica Profesional": "bg-[#EDE9FE] text-[#5B21B6] border-[#C4B5FD]",
+        "default": "bg-gray-100 text-gray-700 border-gray-200"
+      };
+
+      const formatoColores = {
+        "Asignatura": "bg-[#DBEAFE] text-[#1D4ED8] border-[#BFDBFE]",
+        "Seminario": "bg-[#D1FAE5] text-[#065F46] border-[#A7F3D0]",
+        "Taller": "bg-[#FFEDD5] text-[#9A3412] border-[#FED7AA]",
+        "Seminario-Taller": "bg-[#EDE9FE] text-[#5B21B6] border-[#C4B5FD]",
+        "Variable": "bg-[#F3F4F6] text-[#374151] border-[#E5E7EB]",
+        "default": "bg-gray-50 text-gray-700 border-gray-200"
+      };
+
+      const getTitleColorClass = (tipo) => {
+          if (tipo.includes("General")) return "text-[#2563EB]";
+          if (tipo.includes("Específica")) return "text-[#059669]";
+          if (tipo.includes("Práctica")) return "text-[#7C3AED]";
+          return "text-[#111827]";
+      };
+
+      const getMateriaById = (id) => materias.find(m => m.id === id);
+      const getDependents = (id) => materias.filter(m => m.correlativas.includes(id));
+
+      let searchTerm = '';
+      let filterTipo = 'todos';
+      let filterAño = '';
+      let isCompact = false;
+      let zoom = 1.0;
+      let selectedMateria = null;
+
+      const grid = document.getElementById('mainGrid');
+      const detailPanel = document.getElementById('detailPanel');
+      const vizContent = document.getElementById('visualizationContent');
+
+      const renderGrid = () => {
+        grid.innerHTML = '';
+
+        const filtered = materias.filter(m => {
+            const matchSearch = m.nombre.toLowerCase().includes(searchTerm.toLowerCase()) || m.codigo.toLowerCase().includes(searchTerm.toLowerCase());
+            const matchTipo = filterTipo === 'todos' || m.tipo === filterTipo;
+            const matchAño = filterAño === '' || m.anio.toString() === filterAño;
+            return matchSearch && matchTipo && matchAño;
+        });
+
+        [1, 2, 3, 4].forEach(year => {
+            const yearMaterias = filtered.filter(m => m.anio === year);
+
+            const col = document.createElement('div');
+            col.className = 'space-y-4';
+
+            col.innerHTML = `
+                <div class="flex items-center gap-3 mb-4 pl-1">
+                  <span class="text-[#005B7F] font-extrabold text-xl tracking-tight">${year}° Año</span>
+                  <div class="h-px bg-gray-200 flex-grow"></div>
+                  <span class="text-xs font-bold text-gray-400 bg-gray-100 px-2 py-1 rounded-md border border-gray-200">${yearMaterias.length}</span>
+                </div>
+                <div class="grid gap-3" id="list-${year}"></div>
+            `;
+
+            grid.appendChild(col);
+            const list = col.querySelector(`#list-${year}`);
+
+            yearMaterias.forEach(m => {
+                const card = document.createElement('button');
+                card.className = `w-full text-left bg-white p-3 rounded-2xl border border-gray-200 shadow-sm hover:border-blue-300 hover:shadow-md transition-all group flex items-center justify-between ${selectedMateria?.id === m.id ? 'ring-2 ring-[#005B7F]' : ''}`;
+
+                card.innerHTML = `
+                    <div class="flex items-center gap-3 overflow-hidden w-full">
+                        <div class="h-8 px-2.5 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 min-w-[2.5rem] border bg-[#FEF3C7] text-[#92400E] border-[#FDE68A]">
+                            ${m.codigo}
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <h3 class="font-bold text-sm leading-tight mb-1.5 truncate ${getTitleColorClass(m.tipo)}">${m.nombre}</h3>
+                            <div class="flex flex-wrap gap-1.5 items-center">
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold border ${formatoColores[m.formato] || formatoColores.default}">
+                                    ${m.formato}
+                                </span>
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold border ${tipoColores[m.tipo] || tipoColores.default} hidden sm:inline-flex">
+                                    ${m.tipo}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <svg class="h-4 w-4 text-gray-300 group-hover:text-blue-500 shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                `;
+
+                card.onclick = () => openDetail(m);
+                list.appendChild(card);
+            });
+        });
+      };
+
+      const openDetail = (materia) => {
+          selectedMateria = materia;
+          renderGrid();
+
+          detailPanel.classList.remove('hidden');
+          document.getElementById('detailPanelTitle').textContent = materia.nombre;
+          document.getElementById('detailPanelTitle').className = `text-2xl font-extrabold leading-tight pr-8 mb-4 ${getTitleColorClass(materia.tipo)}`;
+
+          const badges = document.getElementById('detailPanelBadges');
+          badges.innerHTML = `
+            <span class="px-2.5 py-1 rounded-full text-[10px] font-semibold border ${tipoColores[materia.tipo]}">${materia.tipo}</span>
+            <span class="px-2.5 py-1 rounded-full text-[10px] font-semibold border ${formatoColores[materia.formato]}">${materia.formato}</span>
+            <span class="px-2.5 py-1 rounded-full text-[10px] font-semibold border bg-gray-100 text-gray-700 border-gray-200">${materia.anio}° Año</span>
+            <span class="px-2.5 py-1 rounded-full text-[10px] font-semibold border bg-white text-gray-500 border-gray-200">${materia.horas}</span>
+          `;
+
+          const corrList = document.getElementById('correlativesList');
+          corrList.innerHTML = '';
+
+          if (materia.correlativasDetalladas.length === 0 && materia.correlativas.length === 0) {
+              corrList.innerHTML = '<p class="text-gray-400 text-sm italic">No tiene correlativas previas.</p>';
+          } else {
+              materia.correlativasDetalladas.forEach(item => {
+                  const el = document.createElement('div');
+
+                  if (item.isSpecial) {
+                      el.className = "flex items-center p-3 rounded-xl bg-[#F0F7FF] border border-[#BFDBFE] gap-3";
+                      el.innerHTML = `
+                        <div class="h-8 px-2.5 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 min-w-[2.5rem] border bg-[#F0F7FF] text-[#1D4ED8] border-[#BFDBFE]">Esp</div>
+                        <div>
+                            <p class="text-sm font-bold text-gray-800 leading-tight">${item.nombre}</p>
+                            <span class="text-xs text-[#1D4ED8] font-bold">(Aprobadas)</span>
+                        </div>
+                      `;
+                  } else {
+                      const prevMat = getMateriaById(item.id);
+                      if(prevMat) {
+                          el.className = "w-full flex items-center p-3 rounded-xl bg-[#FFFBEB] border border-[#FDE68A] gap-3 text-left hover:bg-[#FEF3C7] transition-colors cursor-pointer group";
+                          el.innerHTML = `
+                            <div class="h-8 px-2.5 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 min-w-[2.5rem] border bg-[#FEF3C7] text-[#92400E] border-[#FDE68A]">${prevMat.codigo}</div>
+                            <div class="flex-grow min-w-0">
+                                <p class="text-sm font-semibold text-gray-800 leading-tight line-clamp-2 group-hover:text-[#92400E] transition-colors">${prevMat.nombre}</p>
+                                <div class="flex items-center gap-2 mt-1">
+                                    <span class="text-[10px] font-bold text-[#92400E] opacity-80 uppercase">${item.type === 'A' ? '(Aprobada)' : '(Regularizada)'}</span>
+                                </div>
+                            </div>
+                            <svg class="h-4 w-4 text-[#92400E] opacity-40 shrink-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                          `;
+                          el.onclick = () => openDetail(prevMat);
+                      }
+                  }
+                  corrList.appendChild(el);
+              });
+          }
+
+          const depList = document.getElementById('dependentsList');
+          depList.innerHTML = '';
+          const deps = getDependents(materia.id);
+
+          if (deps.length === 0) {
+              depList.innerHTML = '<p class="text-gray-400 text-sm italic">No habilita correlativas directas.</p>';
+          } else {
+              deps.forEach(next => {
+                  const btn = document.createElement('button');
+                  btn.className = "w-full flex items-center justify-between p-3 rounded-xl bg-[#ECFDF5] border border-[#A7F3D0] shadow-sm text-left hover:bg-[#D1FAE5] transition-colors group";
+                  btn.innerHTML = `
+                     <div class="flex items-center gap-3 overflow-hidden w-full">
+                         <div class="h-8 px-2.5 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 min-w-[2.5rem] bg-[#D1FAE5] text-[#065F46] border border-[#A7F3D0]">${next.codigo}</div>
+                         <div class="min-w-0 flex-1">
+                            <p class="text-sm font-semibold text-gray-800 leading-tight truncate group-hover:text-[#065F46] transition-colors">${next.nombre}</p>
+                            <span class="text-[10px] text-gray-500">${next.formato}</span>
+                         </div>
+                         <div class="shrink-0 h-8 w-8 rounded-full bg-white border border-[#A7F3D0] flex flex-col items-center justify-center ml-2 shadow-sm">
+                            <span class="text-[9px] font-bold text-[#065F46] -mb-1">${next.anio}°</span>
+                            <span class="text-[8px] font-bold text-[#065F46]/70">Año</span>
+                         </div>
+                     </div>
+                  `;
+                  btn.onclick = () => openDetail(next);
+                  depList.appendChild(btn);
+              });
+          }
+      };
+
+      document.getElementById('closeDetailPanelBtn').onclick = () => detailPanel.classList.add('hidden');
+      document.getElementById('searchInput').addEventListener('input', (e) => { searchTerm = e.target.value; renderGrid(); });
+      document.getElementById('filterTipo').addEventListener('change', (e) => { filterTipo = e.target.value; renderGrid(); });
+      document.getElementById('filterYear').addEventListener('change', (e) => { filterAño = e.target.value; renderGrid(); });
+
+      document.getElementById('calculatorBtn').onclick = () => {
+          document.getElementById('cascadaApp').classList.add('hidden');
+          document.getElementById('calculatorApp').classList.remove('hidden');
+      };
+      document.getElementById('backToCascadaBtn').onclick = () => {
+          document.getElementById('calculatorApp').classList.add('hidden');
+          document.getElementById('cascadaApp').classList.remove('hidden');
+      };
+
+      renderGrid();
+    });
+</script>
+</body>
+</html>

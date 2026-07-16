@@ -1,0 +1,95 @@
+# Dart y Flutter
+.dart_tool/
+.packages
+.pub/
+build/
+**/build/
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# Gradle
+.gradle/
+**/.gradle/
+android/.gradle/
+android/local.properties
+
+# Dependencias descargables
+node_modules/
+**/node_modules/
+hf-run/
+
+# Temporales y cachés
+.tmp.driveupload/
+.cache/
+temp/
+tmp/
+*.tmp
+*.temp
+*.bak
+*.old
+*.log
+logs/
+
+# Entregas y artefactos generados
+dist/
+release/
+releases/
+exports/
+entregas/
+backups/
+*.apk
+*.aab
+*.msix
+*.zip
+*.7z
+*.rar
+
+# Secretos y entornos
+.env
+.env.*
+!.env.example
+
+# IDE / Editor
+.idea/
+.vscode/
+.codex/
+.codex-backups/
+.codex-remote-attachments/
+.agents/
+
+# Documentación generada
+*.aux
+*.out
+/tmp_docx_pages/
+
+# Scripts descartables
+*.py
+
+# Archivos de audio/imagen temporales
+*.mp3
+*.m4a
+*.docx
+*.xlsx
+
+# Capturas / temp
+codex_*.png
+stacking_sandbox.html
+steps.jsonl
+
+# Reportes generados
+DIAGNOSTICO_SAGE_REPORTES_V2.md
+INFORME_*.md
+LOGS_SANITIZADOS_SAGE_V3.md
+
+# Datos exportados
+/auth_users.json
+/nicolas_update.json
+/profiles.json
+/schema.json
+/students.json
+
+# Proyectos externos
+/binance_bot/
+/better-antigravity-main/
+/mod-packages/
+/tessdata/

@@ -1,0 +1,55 @@
+{
+  "disciplinas": [
+    {
+      "id": "pedagogia",
+      "nombre": "Pedagogía",
+      "anio": 1,
+      "formato": "Asignatura",
+      "cargaHoraria": "3 horas cátedra semanales - 2 horas reloj semanales",
+      "regimenCursado": "Anual",
+      "tipo": "Formación General",
+      "marcoOrientador": "La reflexión teórico-pedagógica y la problematización de la educación constituyen aspectos centrales de la formación docente ya que incorporan una lectura social, política y crítica de la situación educativa.\n\nEn este espacio se brindan los marcos teóricos que permiten comprender la educación como una práctica situada, recuperando su sentido ético y político y, por ende, su potencial transformador.\n\nConstituye una instancia de reflexión teórica sobre los problemas del campo de la educación, porque desde los marcos referenciales se analizarán los supuestos subyacentes a las teorías y prácticas pedagógicas.\n\nEl estudio de las huellas del discurso pedagógico moderno, sus debates y desarrollos en diferentes contextos, y la comprensión de que la Pedagogía, tal como se la concibe en la actualidad, es producto de ese discurso que atraviesa fuertemente las prácticas escolares, resulta fundamental para la formación docente inicial.\n\nLa recuperación de los procesos de producción, distribución y apropiación de saberes en los distintos contextos históricos-políticos y las críticas que surgen en el siglo XX facilitará la construcción de marcos referenciales para la acción docente. En paralelo, el análisis de las corrientes de reflexión pedagógica, de sus tradiciones, de sus problemas históricos hará posible la comprensión de las problemáticas contemporáneas y las prácticas cotidianas en la escuela.",
+      "ejes": [
+        {
+          "titulo": "Educación y pedagogía: significados, sentidos y rupturas",
+          "descripcion": "Configuración histórica y política del campo pedagógico. Los fundamentos antropológicos, filosóficos, políticos, sociológicos que subyacen a las teorías y a las prácticas pedagógicas. Educación y transmisión. Problemáticas epistemológicas de la pedagogía. Las transformaciones del vínculo Estado y Educación. Problemáticas y perspectivas pedagógicas de América Latina y Argentina."
+        },
+        {
+          "titulo": "Los sujetos y discursos pedagógicos: herencias y nuevas subjetividades",
+          "descripcion": "Discursos pedagógicos. Pedagogización de la infancia y la escolarización del saber: del niño al alumno. Tensión entre homogenización e individualización. Reproductivismo. Pedagogías liberadoras.\n\nLa construcción de la identidad del trabajo docente; los desafíos de una práctica autónoma y crítica. Culturas juveniles: identidades y mandatos.\n\nLa educación secundaria: inclusión y obligatoriedad."
+        },
+        {
+          "titulo": "La escuela como espacio pedagógico",
+          "descripcion": "El surgimiento de la escuela, su función social. Desafíos actuales: continuidades y rupturas. Contexto institucional y áulico. El lugar de los sujetos."
+        },
+        {
+          "titulo": "Conocimiento y saber escolar",
+          "descripcion": "Legitimación del conocimiento en el campo educativo. Transmisión, nuevas tecnológicas y prácticas pedagógicas. Transformación del escenario pedagógico en la sociedad actual."
+        }
+      ],
+      "bibliografia": [
+        "ANTELO, E. y ALLIAUD, A. (2009). Los gajes del oficio. Buenos Aires: Aique.",
+        "CAMILLONI, A., CELMAN, S. y otros (1998). La Evaluación de los aprendizajes en el debate didáctico contemporáneo. Buenos Aires: Paidós.",
+        "CARLI, S. (Comp.) (1999). De la familia a la escuela. Infancia, socialización y subjetividad. Buenos Aires: Santillana.",
+        "CARR, W. y KEMMIS, S. (1986). Teoría crítica de la enseñanza. Barcelona: Martínez Roca.",
+        "CARUSO, M.; DUSSEL, I. (1996). De Sarmiento a Los Simpson. Buenos Aires: Kapelusz.",
+        "CASTILLÓN, H. (2011). Epistemología de la Pedagogía. Colombia. Ediciones Educación y Pedagogía.",
+        "COMENIO, J. (1922). Didáctica Magna. Madrid. Editorial Reus.",
+        "CONTRERAS, D. y otros (2010). Investigar la experiencia educativa. Madrid: Morata.",
+        "COREA, C. y LEWKOWICZ, I. (2004). Pedagogía del Aburrido. Buenos Aires: Paidós.",
+        "DAVINI, M. C. (1995). La formación docente en cuestión: política y pedagogía. Cuestiones de Educación. Buenos Aires: Paidós.",
+        "DEWEY, J. (1967). Experiencia y educación. Buenos Aires: Editorial Losada.",
+        "DUSSEL, I. y CARUSO, M. (1999). La invención del aula. Buenos Aires: Exordio, Santillana.",
+        "FERRY, G. (1990). Pedagogía de la formación. Buenos Aires: Paidós.",
+        "FREIRE, P. (1999). Pedagogía de la Autonomía. Saberes necesarios para la práctica educativa. México: Siglo XXI.",
+        "FREIRE, P. (2002). Cartas a quien pretende enseñar. Argentina: Siglo XXI.",
+        "FRIGERIO, G. y DIKER, G. (Comp.) (2008). Educar: posiciones acerca de lo común. Buenos Aires: Del Estante Editorial.",
+        "MARTINEZ BOOM, A. y otro (2009). Instancias y estancias de la Pedagogía, la Pedagogía en movimiento. Universidad de San Buenaventura. Bogotá: Colombia.",
+        "MORÍN, E. (1998). Introducción al pensamiento complejo. Barcelona: Gedisa.",
+        "MORÍN, E. (1999). La cabeza bien puesta. Buenos Aires: Nueva Visión.",
+        "PUIGGROS, A. (Comp.) (2007). Cartas a los educadores del siglo XXI. Buenos Aires: Editorial Galerna.",
+        "ZULUAGA, O. (2003). Educación y Pedagogía una diferencia necesaria. En Pedagogía y Epistemología. Buenos Aires: Cooperativa Editorial Magisterio."
+      ]
+    }
+  ]
+}

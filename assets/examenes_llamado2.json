@@ -1,0 +1,624 @@
+{
+  "year": 2026,
+  "instancia": "llamado_2",
+  "careers": {
+    "historia": {
+      "1": [
+        {
+          "careerId": "historia",
+          "anio": 1,
+          "fecha": "2026-02-27",
+          "hora": "19:00",
+          "materia": "Problemática del Conocimiento Histórico",
+          "instancia": "llamado_2",
+          "docentes": ["Borche, Javier", "Carmarán, Rosana", "Medina, Jorge"],
+          "actaDigital": "https://docs.google.com/document/d/1Qy7IR5sAbyQFObSb5Cmk_-O368dqB3G05yXAfdMv6Sg/edit?usp=sharing"
+        },
+        {
+          "careerId": "historia",
+          "anio": 1,
+          "fecha": "2026-03-02",
+          "hora": "19:00",
+          "materia": "Pedagogía",
+          "instancia": "llamado_2",
+          "docentes": ["Salud, Diana", "Barrios, Eugenia", "Leiva, Carina"]
+        },
+        {
+          "careerId": "historia",
+          "anio": 1,
+          "fecha": "2026-03-03",
+          "hora": "19:00",
+          "materia": "Didáctica General",
+          "instancia": "llamado_2",
+          "docentes": ["Ruiz Diaz Selva", "Fiant, Patricia (o suplente)", "Fernandez, María", "Pizzio, Marcos"]
+        },
+        {
+          "careerId": "historia",
+          "anio": 1,
+          "fecha": "2026-02-27",
+          "hora": "19:00",
+          "materia": "Proc. Hist. Pol. Econ y Cult de la Antigüedad",
+          "instancia": "llamado_2",
+          "docentes": ["Borche, Javier", "Carmarán Rosana", "Medina, Jorge"],
+          "actaDigital": "https://docs.google.com/document/d/14z2qsmsQQ68A6KCjF_rP16V-aGnLsybqZno1mQH2dqM/edit?usp=sharing"
+        },
+        {
+          "careerId": "historia",
+          "anio": 1,
+          "fecha": "2026-02-25",
+          "hora": "19:00",
+          "materia": "Proc. Soc. Pol. Econ y Cult de los Pueblos Originarios de América",
+          "instancia": "llamado_2",
+          "docentes": ["Frigo, Flavia", "Galarza, Guillermo", "Maydana, Carolina"],
+          "actaDigital": "https://docs.google.com/document/d/1JEoZ2bRennoC_5rYiyGgEr3G8nSZ0quNVS5yb7Pe4u0/edit?usp=sharing"
+        }
+      ],
+      "2": [
+        {
+          "careerId": "historia",
+          "anio": 2,
+          "fecha": "2026-02-25",
+          "hora": "19:00",
+          "materia": "Filosofía",
+          "instancia": "llamado_2",
+          "docentes": ["Leiva, Carina", "Diaz Romina", "Romero, Adrian"]
+        },
+        {
+          "careerId": "historia",
+          "anio": 2,
+          "fecha": "2026-03-02",
+          "hora": "19:00",
+          "materia": "Procesos. Pol. Soc. Econom y Cult del Feudalismo y la Modernidad",
+          "instancia": "llamado_2",
+          "docentes": ["Frigo, Flavia", "Medina, Jorge", "Ozuna Ana"],
+          "actaDigital": "https://docs.google.com/document/d/1eM2Q09GOkzx1MhqTFxTtOrFzY0KyvHlD_Rg-s4TCZo4/edit?usp=sharing"
+        },
+        {
+          "careerId": "historia",
+          "anio": 2,
+          "fecha": "2026-03-03",
+          "hora": "19:00",
+          "materia": "El mundo y las nuevas territorialidades",
+          "instancia": "llamado_2",
+          "docentes": ["Robinson, Soledad", "Ozuna Ana", "Segovia Paola"]
+        },
+        {
+          "careerId": "historia",
+          "anio": 2,
+          "fecha": "2026-03-03",
+          "hora": "19:00",
+          "materia": "Psicología Educacional",
+          "instancia": "llamado_2",
+          "docentes": ["Cañete Marcela", "Gay, Giuliana", "Igual, Inés"],
+          "actaDigital": "https://docs.google.com/document/d/1CNwHWCMWfI9B8OYo_j5kNkUMflRgH-bbM0HGwtgRb7E/edit?usp=sharing"
+        },
+        {
+          "careerId": "historia",
+          "anio": 2,
+          "fecha": "2026-03-03",
+          "hora": "19:00",
+          "materia": "Proc. Soc.Pol.Econ y Culturales Americanos I",
+          "instancia": "llamado_2",
+          "docentes": ["Frigo, Flavia", "Igual, Inés", "Galarza, Guillermo"],
+          "actaDigital": "https://docs.google.com/document/d/1fDUoCyj_-A9LeEXb3wswp6hgV4gMiC1rKRVH6sUgets/edit?usp=sharing"
+        }
+      ],
+      "3": [
+        {
+          "careerId": "historia",
+          "anio": 3,
+          "fecha": "2026-03-05",
+          "hora": "19:00",
+          "materia": "Historia de la Educación Argentina",
+          "instancia": "llamado_2",
+          "docentes": ["Borche, Javier", "Coduri, Emilia", "Leiva, Carina"],
+          "actaDigital": "https://docs.google.com/document/d/1B8mS0CdJ4vSAxvO7SGLMOEs3aFsHmJF9aySkIu5DQqA/edit?usp=sharing"
+        },
+        {
+          "careerId": "historia",
+          "anio": 3,
+          "fecha": "2026-03-06",
+          "hora": "20:00",
+          "materia": "Didáctica de la Historia",
+          "instancia": "llamado_2",
+          "docentes": ["Velazque Pens, M", "Palavicini, Patricia", "Robinson, Soledad"],
+          "actaDigital": "https://docs.google.com/document/d/1HKSCUqFrZ7fEDm9F2pyZLUJ3XT2I1QC2EGLoNB4q9FM/edit?usp=sharing"
+        },
+        {
+          "careerId": "historia",
+          "anio": 3,
+          "fecha": "2026-03-04",
+          "hora": "19:00",
+          "materia": "Proc. Soc.Pol.Econ y Culturales Americanos II",
+          "instancia": "llamado_2",
+          "docentes": ["Carmarán, Roxana", "Pozzi, Gerardo", "Torales Kling Lidia"],
+          "actaDigital": "https://docs.google.com/document/d/1G4JxvKbPDmR8nTCe4b18WzizYNeh8dPwRBDm9-Bc6DQ/edit?usp=sharing"
+        },
+        {
+          "careerId": "historia",
+          "anio": 3,
+          "fecha": "2026-03-03",
+          "hora": "19:00",
+          "materia": "Proc. Soc. Pol. Econ. Y Culturales Contemporáneos I",
+          "instancia": "llamado_2",
+          "docentes": ["Frigo, Flavia", "Borche Javier", "Alanis, Araceli"],
+          "actaDigital": "https://docs.google.com/document/d/1jb7Qjxr7ttqI-kfPwSh5R6Zs9k8ag1mNFKU2sFJ3hq0/edit?usp=sharing"
+        },
+        {
+          "careerId": "historia",
+          "anio": 3,
+          "fecha": "2026-03-05",
+          "hora": "19:00",
+          "materia": "Sociología de la Educación",
+          "instancia": "llamado_2",
+          "docentes": ["Ruiz Diaz Carlos", "Villa Claudio", "Fernandez, Maria"],
+          "actaDigital": "https://docs.google.com/document/d/1tGFTKjsLPU3UZk6QmISOme2MCJO6oU9CIL0Edw6C67s/edit?usp=sharing"
+        },
+        {
+          "careerId": "historia",
+          "anio": 3,
+          "fecha": "2026-03-04",
+          "hora": "18:30",
+          "materia": "Proc. Soc.Pol.Econ y Culturales Arg. I",
+          "instancia": "llamado_2",
+          "docentes": ["Dri, Gabriela", "Medina, Jorge", "Almiron, Diego"]
+        }
+      ],
+      "4": [
+        {
+          "careerId": "historia",
+          "anio": 4,
+          "fecha": "2026-03-06",
+          "hora": "19:00",
+          "materia": "Proc. Soc.Pol.Econ y Culturales Contemporáneos II",
+          "instancia": "llamado_2",
+          "docentes": ["Garcia, Diego", "Gómez Jeremías", "Dri, Gabriela"],
+          "actaDigital": "https://docs.google.com/document/d/1TzS48svKY80tc6OByvhn40rJAvMm90MJVenf1SzPOnc/edit?usp=sharing"
+        },
+        {
+          "careerId": "historia",
+          "anio": 4,
+          "fecha": "2026-03-05",
+          "hora": "19:00",
+          "materia": "Proc. Soc. Polit. Econ y Cult.Americanos III",
+          "instancia": "llamado_2",
+          "docentes": ["Frigo, Flavia", "Dri, Gabriela", "Gomez Jeremias"],
+          "actaDigital": "https://docs.google.com/document/d/1IUpARGokZoUawn4zm-wUJKYJjKHBGOd1NrAm1rqZb24/edit?usp=sharing"
+        },
+        {
+          "careerId": "historia",
+          "anio": 4,
+          "fecha": "2026-03-04",
+          "hora": "19:00",
+          "materia": "Derechos Humanos, Etica y Ciudadania",
+          "instancia": "llamado_2",
+          "docentes": ["Torales Kling, Lidia", "Carmarán, Rosana", "Moser, Sebastián"],
+          "actaDigital": "https://docs.google.com/document/d/1c5EkGm49IViSZOvyE57pwUkcIx9TjiEZWfMjQCYIH7c/edit?usp=sharing"
+        }
+      ]
+    },
+
+    "geografia": {
+      "1": [
+        {
+          "careerId": "geografia",
+          "anio": 1,
+          "fecha": "2026-02-25",
+          "hora": "19:00",
+          "materia": "Naturaleza y Sociedad I",
+          "instancia": "llamado_2",
+          "docentes": ["Lugrin, Patricia", "Lindt Elizabeth", "Moser, Sebastián"],
+          "actaDigital": "https://docs.google.com/document/d/19FBIJlZWNtX4ehjCKQBAOt0SUCJJD33ACtWldGOPJ1k/edit?usp=sharing"
+        },
+        {
+          "careerId": "geografia",
+          "anio": 1,
+          "fecha": "2026-02-25",
+          "hora": "19:00",
+          "materia": "Geografía de Entre Ríos",
+          "instancia": "llamado_2",
+          "docentes": ["Moser, Sebastián", "Lugrin, Patricia", "Lindt Elizabeth"],
+          "actaDigital": "https://docs.google.com/document/d/1Yue3qC8iMyqvUt_XpPidkaMyomcSOZURKN7TWQSoJPU/edit?usp=sharing"
+        },
+        {
+          "careerId": "geografia",
+          "anio": 1,
+          "fecha": "2026-03-02",
+          "hora": "20:00",
+          "materia": "Paisajes Geográficos Mundiales",
+          "instancia": "llamado_2",
+          "docentes": ["Coduri, Emilia", "Palavicini, Patricia", "Roda, María Laura"],
+          "actaDigital": "https://docs.google.com/document/d/1oXXJbhKmOWwVmNHNoTZjsw_q394x0d7X3TChuwZND6o/edit?usp=sharing"
+        },
+        {
+          "careerId": "geografia",
+          "anio": 1,
+          "fecha": "2026-03-03",
+          "hora": "19:00",
+          "materia": "Espacios Urbanos y Rurales en el Mundo Contemporáneo",
+          "instancia": "llamado_2",
+          "docentes": ["Coduri, Emilia", "Maidana, Carolina", "Igual, Inés"],
+          "actaDigital": "https://docs.google.com/document/d/10vBiDI6iRFsymFzvlsr2_BgtkthC_B9syn1DKBmCIN4/edit?usp=sharing"
+        },
+        {
+          "careerId": "geografia",
+          "anio": 1,
+          "fecha": "2026-03-02",
+          "hora": "19:00",
+          "materia": "Pedagogía",
+          "instancia": "llamado_2",
+          "docentes": ["Salud, Diana", "Barrios, Eugenia", "Leiva, Carina"]
+        },
+        {
+          "careerId": "geografia",
+          "anio": 1,
+          "fecha": "2026-03-03",
+          "hora": "19:00",
+          "materia": "Didáctica General",
+          "instancia": "llamado_2",
+          "docentes": ["Ruiz Diaz Selva", "Fiant, Patricia", "Fernandez, María", "Pizzio, Marcos"],
+          "actaDigital": "https://docs.google.com/document/d/1sJLj-cUdzlEnVjR6trTHa4VWLMxKJLfPWfkDyJUd9Eg/edit?usp=sharing"
+        }
+      ],
+      "2": [
+        {
+          "careerId": "geografia",
+          "anio": 2,
+          "fecha": "2026-02-25",
+          "hora": "19:00",
+          "materia": "Filosofía",
+          "instancia": "llamado_2",
+          "docentes": ["Leiva, Carina", "Diaz, Romina", "Romero, Adrián"]
+        },
+        {
+          "careerId": "geografia",
+          "anio": 2,
+          "fecha": "2026-02-27",
+          "hora": "19:00",
+          "materia": "Didáctica de las Cs Sociales",
+          "instancia": "llamado_2",
+          "docentes": ["Ozuna, Ana", "Libidisky José L", "Leguiza, Julieta"]
+        },
+        {
+          "careerId": "geografia",
+          "anio": 2,
+          "fecha": "2026-03-03",
+          "hora": "19:00",
+          "materia": "Psicología Educacional",
+          "instancia": "llamado_2",
+          "docentes": ["Gay Giuliana", "Cañete, Marcela", "Igual, INÉS"],
+          "actaDigital": "https://docs.google.com/document/d/1jBK7oWaM7NmiI7JuDO6DCIGB_M6UbUPvoRJUEZ1XEUI/edit?usp=sharing"
+        },
+        {
+          "careerId": "geografia",
+          "anio": 2,
+          "fecha": "2026-03-04",
+          "hora": "19:00",
+          "materia": "Organización del Espacio Geográfico Americano",
+          "instancia": "llamado_2",
+          "docentes": ["Moser, Sebastián", "Melgares Vanesa", "Roda, M Laura"],
+          "actaDigital": "https://docs.google.com/document/d/1d-6iTefxF0Z6F_LjtgKtoWtDgEhH6SLpf9DA7xfD60U/edit?usp=sharing"
+        },
+        {
+          "careerId": "geografia",
+          "anio": 2,
+          "fecha": "2026-03-03",
+          "hora": "19:00",
+          "materia": "Historia Social y Política Argentina y Latinoamericana",
+          "instancia": "llamado_2",
+          "docentes": ["Moser, Sebastián", "Leiva, Carina", "Trinidad Nancy"],
+          "actaDigital": "https://docs.google.com/document/d/1tdBPpqri5ucx3UKQyCJHlTm53SDAnuHX-I2wAgjuyrM/edit?usp=sharing"
+        }
+      ],
+      "3": [
+        {
+          "careerId": "geografia",
+          "anio": 3,
+          "fecha": "2026-03-04",
+          "hora": "19:00",
+          "materia": "Organización del Espacio Geográfico Argentino",
+          "instancia": "llamado_2",
+          "docentes": ["Coduri, Emilia", "Libedisky, José Luis", "Lower Griselda"],
+          "actaDigital": "https://docs.google.com/document/d/16LTXMV7za_T1YMyoFNxDFR8vy9sldEV8c_dLCJNbRL8/edit?usp=sharing"
+        },
+        {
+          "careerId": "geografia",
+          "anio": 3,
+          "fecha": "2026-03-05",
+          "hora": "19:00",
+          "materia": "Sociología de la Educación",
+          "instancia": "llamado_2",
+          "docentes": ["Ruiz Diaz, Carlos", "Villa Claudio", "Fernandez, Maria"],
+          "actaDigital": "https://docs.google.com/document/d/1mgyqHGRfFP5IQ4hSQISdrxJ8c_MVnj_0Q1TtXorlhu0/edit?usp=sharing"
+        },
+        {
+          "careerId": "geografia",
+          "anio": 3,
+          "fecha": "2026-03-04",
+          "hora": "19:00",
+          "materia": "Epistemología de la Geografía",
+          "instancia": "llamado_2",
+          "docentes": ["Moser, Sebastián", "Lindt, Elizabeth", "Melgares Vanesa"],
+          "actaDigital": "https://docs.google.com/document/d/19mKp9McDKjwfnxRDj4MR48wjBUgTOqswCMHtXQ7iiW4/edit?usp=sharing"
+        },
+        {
+          "careerId": "geografia",
+          "anio": 3,
+          "fecha": "2026-03-03",
+          "hora": "19:00",
+          "materia": "Naturaleza y Sociedad II",
+          "instancia": "llamado_2",
+          "docentes": ["Ugartamendia, Jorge", "Pontnau, Germán", "Lindt ELizabeth"]
+        },
+        {
+          "careerId": "geografia",
+          "anio": 3,
+          "fecha": "2026-03-05",
+          "hora": "19:00",
+          "materia": "Historia de la Educación Argentina",
+          "instancia": "llamado_2",
+          "docentes": ["Robinson, Soledad", "Borche, Javier", "Coduri, Emilia"],
+          "actaDigital": "https://docs.google.com/document/d/1RZAVkyjvhzlcb7kFhRRQ7tHRu1DrsJX6ZCQx_l5yTCE/edit?usp=sharing"
+        }
+      ],
+      "4": [
+        {
+          "careerId": "geografia",
+          "anio": 4,
+          "fecha": "2026-03-05",
+          "hora": "19:00",
+          "materia": "Cultura y Probl. Ambientales",
+          "instancia": "llamado_2",
+          "docentes": ["Moser, Sebastián", "Lindt Elizabeth", "Libendisky J. L."],
+          "actaDigital": "https://docs.google.com/document/d/14139Zo40zZprwjxgFowKkX_NJkuANCVQ9y05ZNrsq-M/edit?usp=sharing"
+        },
+        {
+          "careerId": "geografia",
+          "anio": 4,
+          "fecha": "2026-03-04",
+          "hora": "19:00",
+          "materia": "Geografía Económica",
+          "instancia": "llamado_2",
+          "docentes": ["Pens Marcelo", "Angel Pamela", "Espíndola Estefano"]
+        },
+        {
+          "careerId": "geografia",
+          "anio": 4,
+          "fecha": "2026-03-06",
+          "hora": "19:00",
+          "materia": "Geografía Política y Cultural",
+          "instancia": "llamado_2",
+          "docentes": ["Coduri, Emilia", "Lower Griselda", "Libidinsky, José Luis"]
+        },
+        {
+          "careerId": "geografia",
+          "anio": 4,
+          "fecha": "2026-03-04",
+          "hora": "19:00",
+          "materia": "Derechos Humanos, Etica y Ciudadania",
+          "instancia": "llamado_2",
+          "docentes": ["Torales Kling, Lidia", "Carmarán, Rosana", "Moser, Sebastián"]
+        }
+      ]
+    },
+
+    "politica": {
+      "1": [
+        {
+          "careerId": "politica",
+          "anio": 1,
+          "fecha": "2026-02-26",
+          "hora": "19:00",
+          "materia": "Problemática de la Ciencia Política I",
+          "instancia": "llamado_2",
+          "docentes": ["Velasque Pens, M", "Martinez, Yanina", "Leonardi Julio"]
+        },
+        {
+          "careerId": "politica",
+          "anio": 1,
+          "fecha": "2026-02-26",
+          "hora": "19:00",
+          "materia": "Procesos Históricos Modernos",
+          "instancia": "llamado_2",
+          "docentes": ["Velasque Pens, M", "Martinez, Yanina", "Leonardi Julio"]
+        },
+        {
+          "careerId": "politica",
+          "anio": 1,
+          "fecha": "2026-03-03",
+          "hora": "19:00",
+          "materia": "Didáctica General",
+          "instancia": "llamado_2",
+          "docentes": ["Pizzio, Marcos", "Fiant, Patricia", "Fernandez, María"]
+        },
+        {
+          "careerId": "politica",
+          "anio": 1,
+          "fecha": "2026-02-24",
+          "hora": "19:00",
+          "materia": "Antropología Social",
+          "instancia": "llamado_2",
+          "docentes": ["Martinez Gustavo", "Altamirano, Ignacio", "Igual Inés"],
+          "actaDigital": "https://docs.google.com/document/d/1MFRMNDUXNUnVHi1e07M6WtN949J9xzMR3Kh6O33oizY/edit?usp=sharing"
+        },
+        {
+          "careerId": "politica",
+          "anio": 1,
+          "fecha": "2026-03-02",
+          "hora": "19:00",
+          "materia": "Pedagogia",
+          "instancia": "llamado_2",
+          "docentes": ["Salud, Diana", "Barrios, Eugenia", "Leiva, Carina"],
+          "actaDigital": "https://docs.google.com/document/d/1GUwsJW_aMXsOZIoLTrpbymrLlHIKocoFh9SQgLg6UY0/edit?usp=sharing"
+        },
+        {
+          "careerId": "politica",
+          "anio": 1,
+          "fecha": "2026-03-03",
+          "hora": "19:00",
+          "materia": "Derecho Constitucional",
+          "instancia": "llamado_2",
+          "docentes": ["Morel, José L", "Velasque Pens M", "Luna, Alina"],
+          "actaDigital": "https://docs.google.com/document/d/1AEBQKzjubVmK1WSyjgq7CzHBNp_f6570jveG5bL9rmE/edit?usp=sharing"
+        },
+        {
+          "careerId": "politica",
+          "anio": 1,
+          "fecha": "2026-02-27",
+          "hora": "19:00",
+          "materia": "Economía",
+          "instancia": "llamado_2",
+          "docentes": ["Belottini, F", "Piedrabuena, Aldo", "Cotto, R"],
+          "actaDigital": "https://docs.google.com/document/d/1H4aPhJtjVOmvFDEpD6mZlva3e1L1riFoxPGXgFOhE4E/edit?usp=sharing"
+        }
+      ],
+      "2": [
+        {
+          "careerId": "politica",
+          "anio": 2,
+          "fecha": "2026-02-25",
+          "hora": "19:00",
+          "materia": "Filosofía",
+          "instancia": "llamado_2",
+          "docentes": ["Leiva, Carina", "Diaz, Romina", "Romero, Adrián"]
+        },
+        {
+          "careerId": "politica",
+          "anio": 2,
+          "fecha": "2026-03-03",
+          "hora": "19:00",
+          "materia": "Psicología Educacional",
+          "instancia": "llamado_2",
+          "docentes": ["Ruiz Diaz, Selva", "Montenegro Luján", "Cañete, Marcela", "Leiva, Carina"]
+        },
+        {
+          "careerId": "politica",
+          "anio": 2,
+          "fecha": "2026-02-27",
+          "hora": "19:00",
+          "materia": "Economía Política",
+          "instancia": "llamado_2",
+          "docentes": ["Belottini, F", "Piedrabuena, Aldo", "Cotto R"]
+        },
+        {
+          "careerId": "politica",
+          "anio": 2,
+          "fecha": "2026-03-02",
+          "hora": "19:30",
+          "materia": "Teoría Política I",
+          "instancia": "llamado_2",
+          "docentes": ["Ovelar, Silvina", "Menoni, Evelyn", "Luna, Alina"],
+          "actaDigital": "https://docs.google.com/document/d/1GaEBp7SnuLZ6dDg0R-3VRVv7oFSLnqo_41_Y8nFCObY/edit?usp=sharing"
+        },
+        {
+          "careerId": "politica",
+          "anio": 2,
+          "fecha": "2026-03-03",
+          "hora": "19:00",
+          "materia": "Derecho Privado",
+          "instancia": "llamado_2",
+          "docentes": ["Morel, José L", "Velasque Pens M", "Cotto, Rodolfo"],
+          "actaDigital": "https://docs.google.com/document/d/1fub_fJuO0vq--8JYbSjLoj_SYiBT2iXCG0SNGKtGJSo/edit?usp=sharing"
+        },
+        {
+          "careerId": "politica",
+          "anio": 2,
+          "fecha": "2026-03-02",
+          "hora": "19:00",
+          "materia": "Problemática de la Ciencia Política II",
+          "instancia": "llamado_2",
+          "docentes": ["Ovelar, Silvina", "Menoni, Evelyn", "Luna, Alina"],
+          "actaDigital": "https://docs.google.com/document/d/1s4CSMWtuphb6rI9X5Ghm4AjvMPyL5T1DvtLUabcJrZc/edit?usp=sharing"
+        },
+        {
+          "careerId": "politica",
+          "anio": 2,
+          "fecha": "2026-03-03",
+          "hora": "19:00",
+          "materia": "Historia Social y Política Argentina y Latinoamericana",
+          "instancia": "llamado_2",
+          "docentes": ["Moser, Sebastian", "Leiva Carina", "Romero, Adrián"]
+        }
+      ],
+      "3": [
+        {
+          "careerId": "politica",
+          "anio": 3,
+          "fecha": "2026-03-03",
+          "hora": "19:00",
+          "materia": "Derecho Administrativo",
+          "instancia": "llamado_2",
+          "docentes": ["Velasque Pens Horacio", "Morel, José L", "Cotto, Rodolfo"]
+        },
+        {
+          "careerId": "politica",
+          "anio": 3,
+          "fecha": "2026-03-04",
+          "hora": "19:00",
+          "materia": "Teoría Política II",
+          "instancia": "llamado_2",
+          "docentes": ["Ovelar, Silvina", "Alanis Araceli", "Fernandez, María"],
+          "actaDigital": "https://docs.google.com/document/d/18i-9MsEWmRC96XCmTGwIaN-sMiaWLcC_WtwqbxN-_UY/edit?usp=sharing"
+        },
+        {
+          "careerId": "politica",
+          "anio": 3,
+          "fecha": "2026-02-27",
+          "hora": "19:00",
+          "materia": "Administracion y Finanzas Publicas",
+          "instancia": "llamado_2",
+          "docentes": ["Belottini, F", "Piedrabuena, Aldo", "Cotto, R"]
+        },
+        {
+          "careerId": "politica",
+          "anio": 3,
+          "fecha": "2026-03-05",
+          "hora": "19:00",
+          "materia": "Procesos Históricos Contemporáneos",
+          "instancia": "llamado_2",
+          "docentes": ["Robinson Soledad", "Pozzi, Gerardo", "Piedrabuena, Aldo"],
+          "actaDigital": "https://docs.google.com/document/d/16ItNLHVkSYl2Sifxp7VyMk10L29hEIqMi5bWdjJKbP8/edit?usp=sharing"
+        },
+        {
+          "careerId": "politica",
+          "anio": 3,
+          "fecha": "2026-03-04",
+          "hora": "19:00",
+          "materia": "Derechos Humanos, Etica y Ciudadania",
+          "instancia": "llamado_2",
+          "docentes": ["Torales Kling, Lidia", "Carmarán, Rosana", "Moser, Sebastian"]
+        }
+      ],
+      "4": [
+        {
+          "careerId": "politica",
+          "anio": 4,
+          "fecha": "2026-03-05",
+          "hora": "19:00",
+          "materia": "Relaciones Internacionales",
+          "instancia": "llamado_2",
+          "docentes": ["Díaz, Ignacio", "Ruiz Diaz, Selva", "Ovelar Silvina"]
+        },
+        {
+          "careerId": "politica",
+          "anio": 4,
+          "fecha": "2026-03-05",
+          "hora": "19:00",
+          "materia": "Sistemas Políticos Comparados",
+          "instancia": "llamado_2",
+          "docentes": ["Ovelar, Silvina", "Díaz Ignacio", "Ruiz Díaz Selva"],
+          "actaDigital": "https://docs.google.com/document/d/14a3HpJfiyuALCacBvB0M02reUITyCzu6bNJyO4xRbfU/edit?usp=sharing"
+        },
+        {
+          "careerId": "politica",
+          "anio": 4,
+          "fecha": "2026-03-04",
+          "hora": "19:00",
+          "materia": "Pensamiento Politico Latinoamericano y Argentino",
+          "instancia": "llamado_2",
+          "docentes": ["Díaz, Ignacio", "Martinez, Gustavo", "Igual, Inés"]
+        }
+      ]
+    }
+  }
+}

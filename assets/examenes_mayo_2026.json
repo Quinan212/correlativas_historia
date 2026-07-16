@@ -1,0 +1,301 @@
+[
+  {
+    "careerId": "historia",
+    "anio": 1,
+    "fecha": "2026-05-11",
+    "hora": "18:30",
+    "materia": "Problemática del Conocimiento Histórico",
+    "instancia": "llamado_1",
+    "docentes": [
+      "Borche, Javier",
+      "Carmarán, Rosana",
+      "Medina, Jorge"
+    ]
+  },
+  {
+    "careerId": "historia",
+    "anio": 1,
+    "fecha": "2026-05-11",
+    "hora": "18:30",
+    "materia": "Procesos Sociales, Políticos, Económicos y Culturales de la Antigüedad",
+    "instancia": "llamado_1",
+    "docentes": [
+      "Borche, Javier",
+      "Carmarán, Rosana",
+      "Medina, Jorge"
+    ]
+  },
+  {
+    "careerId": "historia",
+    "anio": 1,
+    "fecha": "2026-05-11",
+    "hora": "18:30",
+    "materia": "Procesos Sociales, Políticos, Económicos y Culturales de los Pueblos Originarios de América",
+    "instancia": "llamado_1",
+    "docentes": [
+      "Frigo, Flavia",
+      "Galarza, Guillermo",
+      "DRI, Gabriela"
+    ]
+  },
+  {
+    "careerId": "historia",
+    "anio": 2,
+    "fecha": "2026-05-12",
+    "hora": "18:30",
+    "materia": "Procesos Sociales, Políticos, Económicos y Culturales Americanos I",
+    "instancia": "llamado_1",
+    "docentes": [
+      "Frigo, Flavia",
+      "PONCE, Guadalupe",
+      "Medina, Jorge"
+    ]
+  },
+  {
+    "careerId": "historia",
+    "anio": 2,
+    "fecha": "2026-05-12",
+    "hora": "18:30",
+    "materia": "Procesos Sociales, Políticos, Económicos y Culturales del Feudalismo y la Modernidad",
+    "instancia": "llamado_1",
+    "docentes": [
+      "Frigo, Flavia",
+      "PONCE, Guadalupe",
+      "Medina, Jorge"
+    ]
+  },
+  {
+    "careerId": "historia",
+    "anio": 2,
+    "fecha": "2026-05-13",
+    "hora": "18:30",
+    "materia": "Psicología Educacional",
+    "instancia": "llamado_1",
+    "docentes": [
+      "IGUAL, Inés",
+      "GAY, Giuliana",
+      "MEDINA, Jorge"
+    ]
+  },
+  {
+    "careerId": "historia",
+    "anio": 3,
+    "fecha": "2026-05-14",
+    "hora": "18:30",
+    "materia": "Historia y Política de la Educación Argentina",
+    "instancia": "llamado_1",
+    "docentes": [
+      "BORCHE, Javier",
+      "CODURI, Emilia",
+      "LEIVA, Carina"
+    ]
+  },
+  {
+    "careerId": "historia",
+    "anio": 3,
+    "fecha": "2026-05-14",
+    "hora": "18:30",
+    "materia": "Procesos Sociales, Políticos, Económicos y Culturales Americanos II",
+    "instancia": "llamado_1",
+    "docentes": [
+      "POZZI, Gerardo",
+      "CARMARÁN, Rosana",
+      "ROBINSON, Soledad"
+    ]
+  },
+  {
+    "careerId": "historia",
+    "anio": 3,
+    "fecha": "2026-05-11",
+    "hora": "18:30",
+    "materia": "Procesos Sociales, Políticos, Económicos y Culturales Contemporáneos I",
+    "instancia": "llamado_1",
+    "docentes": [
+      "FRIGO, Flavia",
+      "Galarza, Guillermo",
+      "DRI, Gabriela"
+    ]
+  },
+  {
+    "careerId": "historia",
+    "anio": 3,
+    "fecha": "2026-05-15",
+    "hora": "18:30",
+    "materia": "Sociología de la Educación",
+    "instancia": "llamado_1",
+    "docentes": [
+      "FERNÁNDEZ, María del Carmen",
+      "RUIZ DÍAZ, Carlos",
+      "VILLA, Claudio"
+    ]
+  },
+  {
+    "careerId": "historia",
+    "anio": 4,
+    "fecha": "2026-05-15",
+    "hora": "18:30",
+    "materia": "Didáctica de la Historia",
+    "instancia": "llamado_1",
+    "docentes": [
+      "VELAZQUE PENS, Marcelo",
+      "ROBINSON, Soledad",
+      "IGUAL, Inés"
+    ]
+  },
+  {
+    "careerId": "geografia",
+    "anio": 1,
+    "fecha": "2026-05-11",
+    "hora": "18:30",
+    "materia": "Naturaleza y Sociedad I",
+    "instancia": "llamado_1",
+    "docentes": [
+      "LUGRIN, Patricia",
+      "URGATAMENDIA, Jorge",
+      "LINDT, Elizabet"
+    ]
+  },
+  {
+    "careerId": "geografia",
+    "anio": 1,
+    "fecha": "2026-05-11",
+    "hora": "18:30",
+    "materia": "Paisajes Geográficos Mundiales",
+    "instancia": "llamado_1",
+    "docentes": [
+      "CODURI, Emilia",
+      "PALAVECINI, Patricia",
+      "LINDT, Elizabet"
+    ]
+  },
+  {
+    "careerId": "geografia",
+    "anio": 1,
+    "fecha": "2026-05-11",
+    "hora": "18:30",
+    "materia": "Espacios Urbanos y Rurales en el Mundo Contemporáneo",
+    "instancia": "llamado_1",
+    "docentes": [
+      "CODURI, Emilia",
+      "PALAVECINI, Patricia",
+      "LINDT, Elizabet"
+    ]
+  },
+  {
+    "careerId": "geografia",
+    "anio": 2,
+    "fecha": "2026-05-12",
+    "hora": "18:30",
+    "materia": "Organización del Espacio Geográfico Americano",
+    "instancia": "llamado_1",
+    "docentes": [
+      "MOSER, Sebastian",
+      "PALAVECINI, Patricia",
+      "LINDT, Elizabet"
+    ]
+  },
+  {
+    "careerId": "geografia",
+    "anio": 3,
+    "fecha": "2026-05-14",
+    "hora": "18:30",
+    "materia": "Historia y Política de la Educación Argentina",
+    "instancia": "llamado_1",
+    "docentes": [
+      "CODURI, Emilia",
+      "BORCHE, Javier",
+      "LEIVA, Carina"
+    ]
+  },
+  {
+    "careerId": "geografia",
+    "anio": 3,
+    "fecha": "2026-05-11",
+    "hora": "18:30",
+    "materia": "Naturaleza y Sociedad II",
+    "instancia": "llamado_1",
+    "docentes": [
+      "LUGRIN, Patricia",
+      "URGATAMENDIA, Jorge",
+      "LINDT, Elizabet"
+    ]
+  },
+  {
+    "careerId": "politica",
+    "anio": 1,
+    "fecha": "2026-05-14",
+    "hora": "18:30",
+    "materia": "Antropología Social",
+    "instancia": "llamado_1",
+    "docentes": [
+      "MARTINEZ, Gustavo",
+      "ROBINSON, Soledad",
+      "IGUAL, Inés"
+    ]
+  },
+  {
+    "careerId": "politica",
+    "anio": 1,
+    "fecha": "2026-05-14",
+    "hora": "18:30",
+    "materia": "Derecho Constitucional",
+    "instancia": "llamado_1",
+    "docentes": [
+      "VELAZQUE PENS, Marcelo",
+      "MOREL, José Luis",
+      "PIEDRABUENA, Aldo"
+    ]
+  },
+  {
+    "careerId": "politica",
+    "anio": 2,
+    "fecha": "2026-05-14",
+    "hora": "18:30",
+    "materia": "Derecho Privado",
+    "instancia": "llamado_1",
+    "docentes": [
+      "MOREL, José Luis",
+      "VELAZQUE PENS, Marcelo",
+      "PIEDRABUENA, Aldo"
+    ]
+  },
+  {
+    "careerId": "politica",
+    "anio": 2,
+    "fecha": "2026-05-15",
+    "hora": "18:30",
+    "materia": "Procesos Históricos Contemporáneos",
+    "instancia": "llamado_1",
+    "docentes": [
+      "ROBINSON, Soledad",
+      "VELAZQUE PENS, Marcelo",
+      "OVELAR, Silvina"
+    ]
+  },
+  {
+    "careerId": "politica",
+    "anio": 2,
+    "fecha": "2026-05-15",
+    "hora": "18:30",
+    "materia": "Teoría Política I",
+    "instancia": "llamado_1",
+    "docentes": [
+      "OVELAR, Silvina",
+      "VELAZQUE PENS, Marcelo",
+      "ROBINSON, Soledad"
+    ]
+  },
+  {
+    "careerId": "politica",
+    "anio": 2,
+    "fecha": "2026-05-15",
+    "hora": "18:30",
+    "materia": "Problemática de la Ciencia Política II",
+    "instancia": "llamado_1",
+    "docentes": [
+      "VELAZQUE PENS, Marcelo",
+      "OVELAR, Silvina",
+      "ROBINSON, Soledad"
+    ]
+  }
+]
