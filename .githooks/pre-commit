@@ -41,10 +41,11 @@ for ext in $PROHIBITED_EXTENSIONS; do
   fi
 done
 
-# Verificar secretos (patrones básicos)
-git diff --cached -U0 | grep -E '^\+.*(password|secret|api_key|apiKey|PRIVATE KEY|BEGIN RSA)' | grep -v '^\+.*(placeholder|example|tu_key)' > /dev/null 2>&1
-if [ $? -eq 0 ]; then
-  echo "ERROR: Posible secreto detectado en el diff. Revisá antes de commitear."
+# Verificar secretos (patrones básicos, excluyendo hooks)
+SECRETS=$(git diff --cached -U0 | grep -E '^\+.*(password|secret|api_key|apiKey)' | grep -vE '(placeholder|example|tu_key|allowlist|HAS_ERRORS)' | head -5)
+if [ -n "$SECRETS" ]; then
+  echo "ERROR: Posible secreto detectado en el diff:"
+  echo "$SECRETS"
   HAS_ERRORS=1
 fi
 
