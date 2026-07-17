@@ -41,6 +41,8 @@ import '../componentes/tema_mensajes_laboratorio_sage.dart';
 import '../dominio/constructor_trayectoria_sage_laboratorio.dart';
 import '../modelos/modelos_trayectoria_sage_laboratorio.dart';
 import 'estilo_visual_sage.dart';
+import 'modelos_sincronizacion_sage_automatica.dart';
+import 'pantalla_sincronizacion_sage_automatica.dart';
 
 class PantallaSageLaboratorio extends StatefulWidget {
   const PantallaSageLaboratorio({
@@ -53,6 +55,9 @@ class PantallaSageLaboratorio extends StatefulWidget {
     this.appBarForeground,
     this.title = 'SAGE · Pruebas',
     this.logoutOnOpen = false,
+    this.modo = ModoPantallaSageLaboratorio.manual,
+    this.onGuardarTrayectoriaAutomatica,
+    this.cerrarAlCompletar = true,
   });
 
   final VoidCallback? onClose;
@@ -63,6 +68,9 @@ class PantallaSageLaboratorio extends StatefulWidget {
   final Color? appBarForeground;
   final String title;
   final bool logoutOnOpen;
+  final ModoPantallaSageLaboratorio modo;
+  final GuardarTrayectoriaSageAutomatica? onGuardarTrayectoriaAutomatica;
+  final bool cerrarAlCompletar;
 
   @override
   State<PantallaSageLaboratorio> createState() =>
@@ -155,6 +163,18 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
   int _loadRequestCount = 0;
   PerfilLegajoSage? _selectedStudentRecord;
   String? _lastTrajectorySignature;
+  EstadoSincronizacionSageAutomatica _automaticState =
+      const EstadoSincronizacionSageAutomatica.preparando();
+  bool _automaticCredentialsBusy = false;
+  bool _automaticFlowActive = false;
+  bool _automaticActionBusy = false;
+  bool _automaticCompleting = false;
+  int _automaticRunId = 0;
+  int _automaticProfileMisses = 0;
+  Timer? _automaticWatchdog;
+
+  bool get _automaticMode =>
+      widget.modo == ModoPantallaSageLaboratorio.sincronizacionAutomatica;
 
   @override
   void initState() {
@@ -180,7 +200,8 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
         final isSageLogin = _isLoginUri(uri);
         if (mounted && isPrivatePregase) {
           setState(() {
-            _authTransitionCoverVisible = true;
+            _authTransitionCoverVisible =
+                !_automaticMode || !_automaticFlowActive;
             _authTransitionCoverMessage =
                 'Preparando tus servicios académicos…';
             _privateSageShellActive = true;
@@ -261,7 +282,12 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
           return;
         }
         _navigationProgress.value = 100;
-        _mainFrameError.value = _errorMessage(error);
+        final message = _errorMessage(error);
+        if (_automaticMode) {
+          _failAutomaticSync(message);
+        } else {
+          _mainFrameError.value = message;
+        }
       },
       onUrlChange: (change) {
         final uri = Uri.tryParse(change.url ?? '');
@@ -380,6 +406,689 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
         .then((value) => value is String ? value : jsonEncode(value));
   }
 
+  void _setAutomaticState(
+    EtapaSincronizacionSageAutomatica etapa,
+    String titulo, {
+    String? detalle,
+    double? progreso,
+    bool permiteReintentar = false,
+    bool notifyPreparation = true,
+  }) {
+    if (!_automaticMode) return;
+    final state = EstadoSincronizacionSageAutomatica(
+      etapa: etapa,
+      titulo: titulo,
+      detalle: detalle,
+      progreso: progreso,
+      permiteReintentar: permiteReintentar,
+    );
+    final changed =
+        _automaticState.etapa != state.etapa ||
+        _automaticState.titulo != state.titulo ||
+        _automaticState.detalle != state.detalle ||
+        _automaticState.progreso != state.progreso ||
+        _automaticState.permiteReintentar != state.permiteReintentar;
+    if (changed) {
+      if (mounted) {
+        setState(() => _automaticState = state);
+      } else {
+        _automaticState = state;
+      }
+      if (notifyPreparation) {
+        widget.onEstadoPreparacion?.call(
+          EstadoPreparacionSageLaboratorio(
+            mensaje: detalle?.trim().isNotEmpty == true ? detalle! : titulo,
+            progreso: progreso,
+            bloqueado: etapa == EtapaSincronizacionSageAutomatica.error,
+          ),
+        );
+      }
+      _restartAutomaticWatchdog();
+    }
+  }
+
+  void _reportPreparation(EstadoPreparacionSageLaboratorio status) {
+    widget.onEstadoPreparacion?.call(status);
+    if (!_automaticMode || !_automaticFlowActive || _automaticCompleting) {
+      return;
+    }
+    if (status.bloqueado) {
+      _failAutomaticSync(status.mensaje);
+      return;
+    }
+    final progress = status.progreso == null
+        ? _automaticState.progreso
+        : 0.78 + status.progreso!.clamp(0, 1).toDouble() * 0.17;
+    final state = EstadoSincronizacionSageAutomatica(
+      etapa: EtapaSincronizacionSageAutomatica.leyendoTrayectoria,
+      titulo: 'Leyendo trayectoria',
+      detalle: status.mensaje,
+      progreso: progress,
+      permiteReintentar: false,
+    );
+    final changed =
+        _automaticState.etapa != state.etapa ||
+        _automaticState.detalle != state.detalle ||
+        _automaticState.progreso != state.progreso;
+    if (changed) {
+      if (mounted) {
+        setState(() => _automaticState = state);
+      } else {
+        _automaticState = state;
+      }
+      _restartAutomaticWatchdog();
+    }
+  }
+
+  void _restartAutomaticWatchdog() {
+    _automaticWatchdog?.cancel();
+    if (!_automaticMode ||
+        !_automaticFlowActive ||
+        _automaticCompleting ||
+        _automaticState.solicitaCredenciales ||
+        _automaticState.esError ||
+        _automaticState.completada) {
+      return;
+    }
+    final runId = _automaticRunId;
+    _automaticWatchdog = Timer(const Duration(seconds: 120), () {
+      if (!mounted ||
+          runId != _automaticRunId ||
+          !_automaticFlowActive ||
+          _automaticCompleting) {
+        return;
+      }
+      _failAutomaticSync(
+        'SAGE tardó demasiado en completar la sincronización.',
+      );
+    });
+  }
+
+  void _beginAutomaticFlow() {
+    if (!_automaticMode || _automaticCompleting) return;
+    _automaticRunId++;
+    _automaticFlowActive = true;
+    _automaticActionBusy = false;
+    _automaticCredentialsBusy = false;
+    _automaticProfileMisses = 0;
+    _lastTrajectorySignature = null;
+    _manualNavigationActive = false;
+    _setAutomaticState(
+      EtapaSincronizacionSageAutomatica.detectandoPerfil,
+      'Detectando perfil',
+      detalle: 'Buscando el perfil Estudiante…',
+      progreso: 0.22,
+    );
+    _ensureProbeTimer();
+    _requestSageProbe();
+    _scheduleNavigationProbe();
+  }
+
+  void _failAutomaticSync(String message, {bool loginAvailable = false}) {
+    if (!_automaticMode) return;
+    _automaticRunId++;
+    _automaticWatchdog?.cancel();
+    _automaticFlowActive = false;
+    _automaticActionBusy = false;
+    _automaticCredentialsBusy = false;
+    _automaticProfileMisses = 0;
+    _automaticCompleting = false;
+    _navigationAwaitingTransition = false;
+    _navigationActionInFlight = null;
+    _legajoActionInFlight = null;
+    _tipoAccionLegajo = TipoAccionLegajoSage.ninguna;
+    final state = EstadoSincronizacionSageAutomatica(
+      etapa: loginAvailable
+          ? EtapaSincronizacionSageAutomatica.credenciales
+          : EtapaSincronizacionSageAutomatica.error,
+      titulo: loginAvailable ? 'Conectar con SAGE' : 'No se pudo sincronizar',
+      detalle: message,
+      progreso: null,
+      permiteReintentar: !loginAvailable,
+    );
+    if (mounted) {
+      setState(() => _automaticState = state);
+    } else {
+      _automaticState = state;
+    }
+    widget.onEstadoPreparacion?.call(
+      EstadoPreparacionSageLaboratorio(mensaje: message, bloqueado: true),
+    );
+  }
+
+  void _retryAutomaticSync() {
+    if (!_automaticMode || _automaticCredentialsBusy) return;
+    if (_loginDocumentReady) {
+      setState(() {
+        _automaticState = const EstadoSincronizacionSageAutomatica(
+          etapa: EtapaSincronizacionSageAutomatica.credenciales,
+          titulo: 'Conectar con SAGE',
+        );
+      });
+      return;
+    }
+    _automaticFlowActive = false;
+    _setAutomaticState(
+      EtapaSincronizacionSageAutomatica.preparando,
+      'Reintentando conexión',
+      detalle: 'Volviendo a cargar SAGE…',
+      progreso: 0.04,
+    );
+    unawaited(
+      _retry().then((_) {
+        if (!mounted || _loginDocumentReady || _automaticFlowActive) return;
+        _beginAutomaticFlow();
+      }),
+    );
+  }
+
+  Future<void> _submitAutomaticCredentials(
+    String usuario,
+    String password,
+  ) async {
+    if (!_automaticMode || _automaticCredentialsBusy || !_loginDocumentReady) {
+      return;
+    }
+    final userJson = jsonEncode(usuario.trim());
+    final passwordJson = jsonEncode(password);
+    setState(() => _automaticCredentialsBusy = true);
+    _setAutomaticState(
+      EtapaSincronizacionSageAutomatica.autenticando,
+      'Iniciando sesión',
+      detalle: 'Validando tus credenciales…',
+      progreso: 0.12,
+    );
+
+    try {
+      final raw = await _evaluateJavascript('''(() => {
+        const userValue = $userJson;
+        const passwordValue = $passwordJson;
+        const normalize = value => String(value || '')
+          .toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g, '')
+          .replace(/\\s+/g, ' ').trim();
+        const visible = node => {
+          if (!node || !node.isConnected) return false;
+          const style = node.ownerDocument?.defaultView?.getComputedStyle(node);
+          if (style && (style.display === 'none' || style.visibility === 'hidden')) return false;
+          const rect = node.getBoundingClientRect?.();
+          return !rect || (rect.width > 0 && rect.height > 0);
+        };
+        const contexts = [];
+        const seen = new Set();
+        const visit = win => {
+          if (!win || seen.has(win)) return;
+          seen.add(win);
+          let doc;
+          try { doc = win.document; } catch (_) { return; }
+          contexts.push({win, doc});
+          doc.querySelectorAll('iframe').forEach(frame => {
+            try { visit(frame.contentWindow); } catch (_) {}
+          });
+        };
+        visit(window);
+        let passwordInput = null;
+        let form = null;
+        let context = null;
+        for (const item of contexts) {
+          const candidates = [...item.doc.querySelectorAll('input[type="password"]')];
+          passwordInput = candidates.find(visible) || candidates[0] || null;
+          if (passwordInput) {
+            form = passwordInput.form || passwordInput.closest?.('form');
+            context = item;
+            break;
+          }
+        }
+        if (!passwordInput || !context) {
+          return JSON.stringify({found:false,submitted:false,stage:'password_missing'});
+        }
+        const scope = form || context.doc;
+        const inputs = [...scope.querySelectorAll('input')].filter(input => {
+          const type = String(input.type || 'text').toLowerCase();
+          return input !== passwordInput &&
+            !['password','hidden','submit','button','checkbox','radio','file'].includes(type) &&
+            input.disabled !== true;
+        });
+        const score = input => {
+          const signature = normalize([
+            input.name, input.id, input.placeholder,
+            input.getAttribute('aria-label'), input.autocomplete,
+          ].join(' '));
+          let value = visible(input) ? 20 : 0;
+          if (/(usuario|user|login|dni|documento|correo|email)/.test(signature)) value += 100;
+          if (String(input.type || '').toLowerCase() === 'email') value += 25;
+          return value;
+        };
+        inputs.sort((a, b) => score(b) - score(a));
+        const userInput = inputs[0] || null;
+        if (!userInput) {
+          return JSON.stringify({found:false,submitted:false,stage:'user_missing'});
+        }
+        const assign = (input, value) => {
+          const descriptor = Object.getOwnPropertyDescriptor(
+            input.ownerDocument.defaultView.HTMLInputElement.prototype,
+            'value',
+          );
+          if (descriptor?.set) descriptor.set.call(input, value);
+          else input.value = value;
+          input.dispatchEvent(new Event('input', {bubbles:true}));
+          input.dispatchEvent(new Event('change', {bubbles:true}));
+        };
+        assign(userInput, userValue);
+        assign(passwordInput, passwordValue);
+        let submitted = false;
+        let mechanism = '';
+        const submitControl = form?.querySelector(
+          'button[type="submit"],input[type="submit"],button:not([type])'
+        );
+        if (submitControl && typeof submitControl.click === 'function') {
+          submitControl.click();
+          submitted = true;
+          mechanism = 'submit_click';
+        } else if (form && typeof form.requestSubmit === 'function') {
+          form.requestSubmit();
+          submitted = true;
+          mechanism = 'request_submit';
+        } else if (form && typeof form.submit === 'function') {
+          form.submit();
+          submitted = true;
+          mechanism = 'form_submit';
+        }
+        return JSON.stringify({
+          found:true,
+          submitted,
+          mechanism,
+          userName:String(userInput.name || userInput.id || ''),
+          passwordName:String(passwordInput.name || passwordInput.id || ''),
+        });
+      })()''');
+      dynamic decoded = jsonDecode(raw);
+      if (decoded is String) decoded = jsonDecode(decoded);
+      final result = decoded is Map
+          ? Map<String, dynamic>.from(decoded)
+          : const <String, dynamic>{};
+      if (result['found'] != true || result['submitted'] != true) {
+        _failAutomaticSync(
+          'No se encontraron los controles de acceso de SAGE.',
+          loginAvailable: true,
+        );
+        return;
+      }
+      setState(() {
+        _authTransitionCoverVisible = true;
+        _authTransitionCoverMessage = 'Iniciando sesión…';
+        _loginDocumentReady = false;
+      });
+      _startLoginTransitionWatchdog();
+    } catch (_) {
+      _failAutomaticSync(
+        'No se pudo enviar el inicio de sesión a SAGE.',
+        loginAvailable: true,
+      );
+    } finally {
+      if (mounted) setState(() => _automaticCredentialsBusy = false);
+    }
+  }
+
+  PerfilLegajoSage? _preferredAutomaticStudentRecord(
+    List<PerfilLegajoSage> records,
+  ) {
+    if (records.isEmpty) return null;
+    for (final record in records) {
+      if (record.nombreVisible.trim().isNotEmpty) return record;
+    }
+    return records.first;
+  }
+
+  SeccionLegajoSage? _automaticSchoolSection(
+    ResultadoExtraccionLegajoSage extraction,
+  ) {
+    for (final section in extraction.secciones) {
+      if (section.clave == 'escolares' ||
+          normalizarLegajoSage(section.titulo) == 'escolares') {
+        return section;
+      }
+    }
+    if (extraction.etapa == EtapaLegajoSage.secciones ||
+        extraction.etapa == EtapaLegajoSage.escolares) {
+      return SeccionLegajoSage(
+        clave: 'escolares',
+        titulo: 'Escolares',
+        firmaTecnica: 'automatic:escolares',
+        frameId: extraction.frameId,
+        pathname: extraction.pathname,
+        controlEncontrado: extraction.historyControlFound,
+      );
+    }
+    return null;
+  }
+
+  OpcionEscolarSage? _automaticHistoryOption(
+    ResultadoExtraccionLegajoSage extraction,
+  ) {
+    for (final option in extraction.opcionesEscolares) {
+      final normalized = normalizarLegajoSage(option.titulo);
+      if (option.clave == 'nivel_superior_historial' ||
+          option.clave == 'historial_del_alumnado' ||
+          normalized == 'nivel superior - historial' ||
+          (normalized.contains('nivel superior') &&
+              normalized.contains('historial'))) {
+        return option;
+      }
+    }
+    return null;
+  }
+
+  Future<bool> _advanceAutomaticSync(
+    ResultadoDeteccionNavegacionSage navigation,
+    ResultadoExtraccionLegajoSage? extraction,
+    CapturaPerfilesSage profiles,
+  ) async {
+    if (!_automaticMode || !_automaticFlowActive || _automaticCompleting) {
+      return false;
+    }
+
+    if (navigation.estado == EstadoNavegacionSage.login ||
+        navigation.estado == EstadoNavegacionSage.sesionVencida) {
+      _failAutomaticSync(
+        navigation.estado == EstadoNavegacionSage.sesionVencida
+            ? 'La sesión de SAGE venció. Iniciá sesión nuevamente.'
+            : 'Ingresá tus credenciales para continuar.',
+        loginAvailable: true,
+      );
+      return true;
+    }
+
+    if (_automaticActionBusy ||
+        _profileSwitchBusy ||
+        _profileHomeResetBusy ||
+        _logoutBusy ||
+        _navigationAwaitingTransition ||
+        _navigationActionInFlight != null ||
+        _legajoActionInFlight != null ||
+        _historyAutoLoadRunning) {
+      return true;
+    }
+
+    if (!_profileChoiceMade || _effectiveProfile != PerfilSage.alumnos) {
+      final studentContext =
+          extraction?.disponible == true ||
+          navigation.estado == EstadoNavegacionSage.submodulosLegajoUnico ||
+          navigation.estado == EstadoNavegacionSage.listadoLegajos ||
+          navigation.estado == EstadoNavegacionSage.seccionesLegajo ||
+          navigation.estado == EstadoNavegacionSage.escolares;
+      if (profiles.perfiles.isEmpty && studentContext) {
+        _selectedProfile = PerfilSage.alumnos;
+        _profileChoiceMade = true;
+        _setAutomaticState(
+          EtapaSincronizacionSageAutomatica.abriendoLegajo,
+          'Perfil Estudiante detectado',
+          detalle: 'Preparando el acceso al historial…',
+          progreso: 0.30,
+        );
+        _scheduleNavigationProbe();
+        return true;
+      }
+      _setAutomaticState(
+        EtapaSincronizacionSageAutomatica.detectandoPerfil,
+        'Detectando perfil',
+        detalle: 'Buscando el perfil Estudiante…',
+        progreso: 0.22,
+      );
+      if (profiles.contiene(PerfilSage.alumnos)) {
+        _automaticProfileMisses = 0;
+        _automaticActionBusy = true;
+        _setAutomaticState(
+          profiles.activo == PerfilSage.alumnos
+              ? EtapaSincronizacionSageAutomatica.abriendoLegajo
+              : EtapaSincronizacionSageAutomatica.cambiandoAEstudiante,
+          profiles.activo == PerfilSage.alumnos
+              ? 'Perfil Estudiante detectado'
+              : 'Activando perfil Estudiante',
+          detalle: profiles.activo == PerfilSage.alumnos
+              ? 'Preparando el acceso al historial…'
+              : 'Cambiando el perfil activo de SAGE…',
+          progreso: profiles.activo == PerfilSage.alumnos ? 0.30 : 0.27,
+        );
+        try {
+          await _selectProfile(PerfilSage.alumnos);
+        } finally {
+          _automaticActionBusy = false;
+        }
+        return true;
+      }
+      if (profiles.perfiles.isNotEmpty) {
+        _automaticProfileMisses++;
+        if (_automaticProfileMisses >= 3) {
+          _failAutomaticSync(
+            'La cuenta de SAGE no expuso un perfil Estudiante.',
+          );
+        } else {
+          _scheduleNavigationProbe();
+        }
+      }
+      return true;
+    }
+
+    if (_historyState == EstadoHistorialSage.vacio) {
+      _failAutomaticSync('SAGE no encontró carreras en el Historial.');
+      return true;
+    }
+    if (_historyState == EstadoHistorialSage.error) {
+      _failAutomaticSync('No se pudo leer el Historial de SAGE.');
+      return true;
+    }
+
+    if (_nativeHistoryVisible ||
+        _historyState == EstadoHistorialSage.disponible ||
+        _historyState == EstadoHistorialSage.cargandoCarreras ||
+        _historyState == EstadoHistorialSage.cargandoMaterias) {
+      _setAutomaticState(
+        EtapaSincronizacionSageAutomatica.leyendoTrayectoria,
+        'Leyendo trayectoria',
+        detalle: 'Preparando las carreras y materias…',
+        progreso: 0.80,
+      );
+      final history = _history;
+      if (history != null &&
+          history.carreras.isNotEmpty &&
+          history.carreras.every((career) => career.materiasCargadas)) {
+        _emitTrajectoryIfReady();
+      }
+      return true;
+    }
+
+    if (extraction != null && extraction.disponible) {
+      switch (extraction.etapa) {
+        case EtapaLegajoSage.miLegajo:
+          final record = _preferredAutomaticStudentRecord(extraction.perfiles);
+          if (record == null) {
+            _failAutomaticSync('SAGE no mostró un legajo estudiantil.');
+            return true;
+          }
+          _automaticActionBusy = true;
+          _setAutomaticState(
+            EtapaSincronizacionSageAutomatica.seleccionandoLegajo,
+            'Seleccionando legajo',
+            detalle: record.nombreVisible.trim().isEmpty
+                ? 'Abriendo tu información académica…'
+                : 'Abriendo ${record.nombreVisible}…',
+            progreso: 0.48,
+          );
+          try {
+            await _activateLegajoProfile(record);
+          } finally {
+            _automaticActionBusy = false;
+          }
+          return true;
+        case EtapaLegajoSage.secciones:
+          final school = _automaticSchoolSection(extraction);
+          if (school == null) {
+            _failAutomaticSync('SAGE no mostró la sección Escolares.');
+            return true;
+          }
+          _automaticActionBusy = true;
+          _setAutomaticState(
+            EtapaSincronizacionSageAutomatica.abriendoEscolares,
+            'Abriendo Escolares',
+            detalle: 'Preparando las opciones académicas…',
+            progreso: 0.60,
+          );
+          try {
+            await _activateLegajoSection(school);
+          } finally {
+            _automaticActionBusy = false;
+          }
+          return true;
+        case EtapaLegajoSage.escolares:
+          final history = _automaticHistoryOption(extraction);
+          if (history == null) {
+            _setAutomaticState(
+              EtapaSincronizacionSageAutomatica.abriendoHistorial,
+              'Buscando Historial',
+              detalle: 'Esperando Nivel Superior - Historial…',
+              progreso: 0.70,
+            );
+            return true;
+          }
+          _automaticActionBusy = true;
+          _setAutomaticState(
+            EtapaSincronizacionSageAutomatica.abriendoHistorial,
+            'Abriendo Historial',
+            detalle: 'Cargando tu trayectoria académica…',
+            progreso: 0.74,
+          );
+          try {
+            await _activateEscolarOption(history);
+          } finally {
+            _automaticActionBusy = false;
+          }
+          return true;
+        case EtapaLegajoSage.ninguna:
+          break;
+      }
+    }
+
+    switch (navigation.estado) {
+      case EstadoNavegacionSage.modulos:
+        _automaticActionBusy = true;
+        _setAutomaticState(
+          EtapaSincronizacionSageAutomatica.abriendoLegajo,
+          'Abriendo Legajo Único Alumno',
+          detalle: 'Ingresando al módulo académico…',
+          progreso: 0.36,
+        );
+        try {
+          final opened = await _activateSageLink(
+            const OpcionSubmoduloSage(
+              titulo: 'Legajo Único Alumno',
+              icono: 0xe151,
+              pathname: '/pregase/menuprincipal_nuevo.php',
+              etiquetasAlternativas: ['legajo unico alumno'],
+            ),
+          );
+          if (!opened) {
+            _failAutomaticSync('No se pudo abrir Legajo Único Alumno.');
+          }
+        } finally {
+          _automaticActionBusy = false;
+        }
+        return true;
+      case EstadoNavegacionSage.submodulosLegajoUnico:
+        _automaticActionBusy = true;
+        _setAutomaticState(
+          EtapaSincronizacionSageAutomatica.seleccionandoLegajo,
+          'Abriendo Legajo Alumnos',
+          detalle: 'Buscando tu registro estudiantil…',
+          progreso: 0.43,
+        );
+        try {
+          final opened = await _activateSageLink(opcionesSubmodulosSage.first);
+          if (!opened) {
+            _failAutomaticSync('No se pudo abrir Legajo Alumnos.');
+          }
+        } finally {
+          _automaticActionBusy = false;
+        }
+        return true;
+      case EstadoNavegacionSage.listadoLegajos:
+        _setAutomaticState(
+          EtapaSincronizacionSageAutomatica.seleccionandoLegajo,
+          'Leyendo legajos',
+          detalle: 'Esperando los registros disponibles…',
+          progreso: 0.46,
+        );
+        return true;
+      case EstadoNavegacionSage.seccionesLegajo:
+        _setAutomaticState(
+          EtapaSincronizacionSageAutomatica.abriendoEscolares,
+          'Preparando Escolares',
+          detalle: 'Esperando las secciones del legajo…',
+          progreso: 0.56,
+        );
+        return true;
+      case EstadoNavegacionSage.escolares:
+        _setAutomaticState(
+          EtapaSincronizacionSageAutomatica.abriendoHistorial,
+          'Preparando Historial',
+          detalle: 'Esperando las opciones de Nivel Superior…',
+          progreso: 0.68,
+        );
+        return true;
+      case EstadoNavegacionSage.otraPagina:
+      case EstadoNavegacionSage.desconocido:
+        _setAutomaticState(
+          EtapaSincronizacionSageAutomatica.abriendoLegajo,
+          'Preparando recorrido',
+          detalle: 'Esperando la siguiente pantalla de SAGE…',
+          progreso: _automaticState.progreso ?? 0.32,
+        );
+        return true;
+      case EstadoNavegacionSage.error:
+        _failAutomaticSync('SAGE devolvió una pantalla incompatible.');
+        return true;
+      case EstadoNavegacionSage.login:
+      case EstadoNavegacionSage.sesionVencida:
+        return true;
+    }
+  }
+
+  Future<void> _completeAutomaticSync(
+    TrayectoriaSageLaboratorio trajectory,
+  ) async {
+    if (!_automaticMode || _automaticCompleting) return;
+    _automaticCompleting = true;
+    _automaticFlowActive = false;
+    _automaticWatchdog?.cancel();
+    _setAutomaticState(
+      EtapaSincronizacionSageAutomatica.guardando,
+      'Guardando trayectoria',
+      detalle: 'Actualizando la copia local…',
+      progreso: 0.97,
+    );
+    try {
+      final stored = widget.onGuardarTrayectoriaAutomatica == null
+          ? trajectory
+          : await widget.onGuardarTrayectoriaAutomatica!(trajectory);
+      if (!mounted) return;
+      widget.onTrayectoriaLista?.call(stored);
+      _setAutomaticState(
+        EtapaSincronizacionSageAutomatica.completada,
+        'Sincronización completa',
+        detalle: '${stored.totalMaterias} materias actualizadas.',
+        progreso: 1,
+      );
+      await Future<void>.delayed(const Duration(milliseconds: 900));
+      if (!mounted || !widget.cerrarAlCompletar) return;
+      _exitSageToAppHome();
+    } catch (error) {
+      _automaticCompleting = false;
+      final message = error is ErrorSincronizacionSageAutomatica
+          ? error.mensaje
+          : 'La trayectoria se leyó, pero no pudo guardarse en el dispositivo.';
+      _failAutomaticSync(message);
+    }
+  }
+
   void _onSageVisualMessage(JavaScriptMessage message) {
     if (!mounted || _isClosing) return;
     if (message.message != 'login-submit') return;
@@ -472,12 +1181,22 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
                 'form input[type="password"],input[type="password"]'
               )
             );
-            loginError = Boolean(
-              doc.querySelector(
-                '.alert-danger,.invalid-feedback,[role="alert"],'
-                + '.text-danger,.error,.login-error'
-              )
-            );
+            const errorNodes = [...doc.querySelectorAll(
+              '.alert-danger,.invalid-feedback,[role="alert"],'
+              + '.text-danger,.error,.login-error'
+            )];
+            loginError = errorNodes.some(node => {
+              const style = doc.defaultView?.getComputedStyle(node);
+              if (style &&
+                  (style.display === 'none' ||
+                   style.visibility === 'hidden' ||
+                   style.opacity === '0')) {
+                return false;
+              }
+              const rect = node.getBoundingClientRect?.();
+              const hasArea = !rect || (rect.width > 0 && rect.height > 0);
+              return hasArea && normalize(node.textContent).length > 0;
+            });
           }
 
           doc.querySelectorAll('iframe').forEach(frame => {
@@ -520,7 +1239,7 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
     if (!mounted || _logoutBusy) return;
     _cancelLoginTransitionWatchdog();
     setState(() {
-      _authTransitionCoverVisible = true;
+      _authTransitionCoverVisible = !_automaticMode;
       _authTransitionCoverMessage = 'Preparando tus servicios académicos…';
       _privateSageShellActive = true;
       _showOriginalWebView = false;
@@ -529,8 +1248,17 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
       _loginDocumentReady = false;
     });
     _ensureProbeTimer();
-    _requestSageProbe();
-    _scheduleNavigationProbe();
+    if (_automaticMode) {
+      if (!_automaticFlowActive && !_automaticCompleting) {
+        _beginAutomaticFlow();
+      } else {
+        _requestSageProbe();
+        _scheduleNavigationProbe();
+      }
+    } else {
+      _requestSageProbe();
+      _scheduleNavigationProbe();
+    }
     unawaited(_installNavigationObservers());
     if (kDebugMode) {
       debugPrint('[SAGE visual] login_private_shell_confirmed=true');
@@ -562,6 +1290,12 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
     if (state['loginError'] == true) {
       _cancelLoginTransitionWatchdog();
       setState(_resetPrivateSageStateForLogin);
+      if (_automaticMode) {
+        _failAutomaticSync(
+          'El usuario o la contraseña no fueron aceptados por SAGE.',
+          loginAvailable: true,
+        );
+      }
       return;
     }
 
@@ -581,14 +1315,21 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
         _loginDocumentReady = state['loginForm'] == true;
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'SAGE no confirmó el inicio de sesión. '
-            'Revisá la pantalla e intentá nuevamente.',
+      if (_automaticMode) {
+        _failAutomaticSync(
+          'SAGE no confirmó el inicio de sesión. Intentá nuevamente.',
+          loginAvailable: state['loginForm'] == true,
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'SAGE no confirmó el inicio de sesión. '
+              'Revisá la pantalla e intentá nuevamente.',
+            ),
           ),
-        ),
-      );
+        );
+      }
 
       if (kDebugMode) {
         debugPrint(
@@ -1058,10 +1799,13 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
         final intermediateOtherPage =
             result.estado == EstadoNavegacionSage.otraPagina &&
             result.documentoActivo?.pathname == _navigationOriginPath;
+        final transitionTimeout = _automaticMode
+            ? const Duration(seconds: 18)
+            : const Duration(seconds: 8);
         final timedOut =
             _navigationActionStartedAt != null &&
             DateTime.now().difference(_navigationActionStartedAt!) >
-                const Duration(seconds: 8);
+                transitionTimeout;
         if (_tipoAccionLegajo == TipoAccionLegajoSage.abrirHistorial) {
           if (!timedOut) return;
           final tipoFallido = _tipoAccionLegajo;
@@ -1078,9 +1822,14 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
             _legajoOriginSignature = null;
             _usuarioSolicitoEscolares = false;
           });
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(_timeoutMessage(tipoFallido))));
+          final message = _timeoutMessage(tipoFallido);
+          if (_automaticMode) {
+            _failAutomaticSync(message);
+          } else {
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text(message)));
+          }
           return;
         }
         if (transitionConfirmed &&
@@ -1111,13 +1860,23 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
             _tipoAccionLegajo = TipoAccionLegajoSage.ninguna;
             _usuarioSolicitoEscolares = false;
           });
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(_timeoutMessage(tipoFallido))));
+          final message = _timeoutMessage(tipoFallido);
+          if (_automaticMode) {
+            _failAutomaticSync(message);
+          } else {
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text(message)));
+          }
           return;
         } else {
           return;
         }
+      }
+
+      if (_automaticMode &&
+          await _advanceAutomaticSync(result, legajoResult, profiles)) {
+        return;
       }
 
       if (_nativeHistoryVisible &&
@@ -1639,15 +2398,28 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
       _usuarioSolicitoEscolares = false;
     });
 
-    if (profile == PerfilSage.alumnos) {
-      widget.onEstadoPreparacion?.call(
+    if (_automaticMode) {
+      if (profile == PerfilSage.alumnos) {
+        _setAutomaticState(
+          EtapaSincronizacionSageAutomatica.abriendoLegajo,
+          'Perfil Estudiante listo',
+          detalle: 'Preparando el acceso al historial…',
+          progreso: 0.30,
+        );
+        _requestSageProbe();
+        _scheduleNavigationProbe();
+      } else {
+        _failAutomaticSync('La sincronización requiere un perfil Estudiante.');
+      }
+    } else if (profile == PerfilSage.alumnos) {
+      _reportPreparation(
         const EstadoPreparacionSageLaboratorio(
           mensaje: 'Perfil Estudiante listo. Abrí Nivel Superior - Historial.',
         ),
       );
       _startStudentAutomaticLanding(transitionId);
     } else {
-      widget.onEstadoPreparacion?.call(
+      _reportPreparation(
         const EstadoPreparacionSageLaboratorio(
           mensaje: 'La sincronización personal requiere el perfil Estudiante.',
           bloqueado: true,
@@ -1670,6 +2442,18 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
     _stopProfileSwitchWatchdog();
     _profileSwitchTarget = null;
     _ensureProbeTimer();
+    if (_automaticMode) {
+      _manualNavigationActive = false;
+      setState(() {
+        _profileSwitchBusy = false;
+        _profileHomeResetBusy = false;
+        _nativeLoadingVisible = false;
+        _nativeProfileSelectorVisible = false;
+        _profileError = message;
+      });
+      _failAutomaticSync(message);
+      return;
+    }
     _manualNavigationActive = true;
     setState(() {
       _profileSwitchBusy = false;
@@ -2201,7 +2985,7 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
     _profileTransitionId++;
     _profileSwitchTarget = null;
     _privateSageShellActive = false;
-    _showOriginalWebView = true;
+    _showOriginalWebView = !_automaticMode;
     _nativeHistoryVisible = false;
     _nativeModulesVisible = false;
     _nativeSubmodulesVisible = false;
@@ -2250,6 +3034,19 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
     _selectedStudentRecord = null;
     _lastTrajectorySignature = null;
     _historyAutoAttemptedCareerIds.clear();
+    if (_automaticMode) {
+      _automaticRunId++;
+      _automaticWatchdog?.cancel();
+      _automaticFlowActive = false;
+      _automaticActionBusy = false;
+      _automaticCredentialsBusy = false;
+      _automaticProfileMisses = 0;
+      _automaticCompleting = false;
+      _automaticState = const EstadoSincronizacionSageAutomatica(
+        etapa: EtapaSincronizacionSageAutomatica.credenciales,
+        titulo: 'Conectar con SAGE',
+      );
+    }
   }
 
   Future<void> _confirmAndLogoutSage() async {
@@ -2694,7 +3491,7 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
         }
         final careers = _history?.carreras;
         if (_effectiveProfile != PerfilSage.alumnos) {
-          widget.onEstadoPreparacion?.call(
+          _reportPreparation(
             const EstadoPreparacionSageLaboratorio(
               mensaje:
                   'La sincronización personal requiere el perfil Estudiante.',
@@ -2704,7 +3501,7 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
         } else if (result.estado == EstadoHistorialSage.disponible &&
             careers != null &&
             careers.isNotEmpty) {
-          widget.onEstadoPreparacion?.call(
+          _reportPreparation(
             EstadoPreparacionSageLaboratorio(
               mensaje:
                   'Historial detectado. Preparando ${careers.length} carrera(s)…',
@@ -3095,6 +3892,10 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
 
   Future<void> _showNavigationActionFailure(OpcionSubmoduloSage option) async {
     if (!mounted) return;
+    if (_automaticMode) {
+      _failAutomaticSync('No se pudo abrir ${option.titulo} en SAGE.');
+      return;
+    }
     final retry = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -3323,6 +4124,10 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
     Future<void> Function() retry,
   ) async {
     if (!mounted) return;
+    if (_automaticMode) {
+      _failAutomaticSync(message);
+      return;
+    }
     final shouldRetry = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -3401,7 +4206,7 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
           }
         }
         if (current.materiasCargadas) {
-          widget.onEstadoPreparacion?.call(
+          _reportPreparation(
             EstadoPreparacionSageLaboratorio(
               mensaje: 'Preparando carreras ${index + 1} de ${careers.length}…',
               progreso: (index + 1) / careers.length,
@@ -3410,7 +4215,7 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
           continue;
         }
         if (_historyAutoAttemptedCareerIds.contains(current.gridRowId)) {
-          widget.onEstadoPreparacion?.call(
+          _reportPreparation(
             EstadoPreparacionSageLaboratorio(
               mensaje:
                   'La lectura de ${current.nombre} quedó incompleta. Tocá actualizar dentro de Historial para reintentar.',
@@ -3420,7 +4225,7 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
           return;
         }
         _historyAutoAttemptedCareerIds.add(current.gridRowId);
-        widget.onEstadoPreparacion?.call(
+        _reportPreparation(
           EstadoPreparacionSageLaboratorio(
             mensaje:
                 'Leyendo ${current.nombre} (${index + 1}/${careers.length})…',
@@ -3431,7 +4236,7 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
         if (!mounted) return;
         if (result.estado != EstadoCargaMateriasSage.disponible &&
             result.estado != EstadoCargaMateriasSage.vacio) {
-          widget.onEstadoPreparacion?.call(
+          _reportPreparation(
             EstadoPreparacionSageLaboratorio(
               mensaje:
                   'No se pudo completar ${current.nombre}. Volvé a intentarlo desde Historial.',
@@ -3457,12 +4262,11 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
       perfil: _selectedStudentRecord,
     );
     if (!trajectory.listaParaSincronizar) {
-      widget.onEstadoPreparacion?.call(
-        const EstadoPreparacionSageLaboratorio(
-          mensaje: 'SAGE no entregó materias suficientes para sincronizar.',
-          bloqueado: true,
-        ),
+      const status = EstadoPreparacionSageLaboratorio(
+        mensaje: 'SAGE no entregó materias suficientes para sincronizar.',
+        bloqueado: true,
       );
+      _reportPreparation(status);
       return;
     }
     final signature = trajectory.carreras
@@ -3476,8 +4280,12 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
         .join('||');
     if (_lastTrajectorySignature == signature) return;
     _lastTrajectorySignature = signature;
+    if (_automaticMode) {
+      unawaited(_completeAutomaticSync(trajectory));
+      return;
+    }
     widget.onTrayectoriaLista?.call(trajectory);
-    widget.onEstadoPreparacion?.call(
+    _reportPreparation(
       EstadoPreparacionSageLaboratorio(
         mensaje:
             '${trajectory.totalMaterias} materias listas para sincronizar.',
@@ -4613,6 +5421,7 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
     _profileSwitchWatchdog?.cancel();
     _studentAutoLandingWatchdog?.cancel();
     _loginTransitionWatchdog?.cancel();
+    _automaticWatchdog?.cancel();
     _httpClient.close();
     _navigationProgress.dispose();
     _mainFrameError.dispose();
@@ -4625,24 +5434,27 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
     final parentTheme = Theme.of(context);
     final theme = widget.themeOverride ?? parentTheme;
     final scheme = theme.colorScheme;
-    final nativeSurfaceVisible = _showNativeSageSurface;
+    final nativeSurfaceVisible = !_automaticMode && _showNativeSageSurface;
     final webViewVisible =
-        !_shouldCoverWebView &&
-        webViewSageVisible(
-          historial: _nativeHistoryVisible,
-          modulos: _nativeModulesVisible,
-          submodulos: _nativeSubmodulesVisible,
-          carga: _nativeLoadingVisible,
-          legajo: _nativeLegajoVisible,
-          secciones: _nativeSeccionesLegajoVisible,
-          escolares: _nativeEscolaresVisible,
-          agente: _nativeAgentHomeVisible,
-          agentePersonal: _nativeAgentPersonalVisible,
-          agenteAlumno: _nativeAgentStudentMenuVisible,
-          perfil: _nativeProfileSelectorVisible,
-        );
+        _automaticMode ||
+        (!_shouldCoverWebView &&
+            webViewSageVisible(
+              historial: _nativeHistoryVisible,
+              modulos: _nativeModulesVisible,
+              submodulos: _nativeSubmodulesVisible,
+              carga: _nativeLoadingVisible,
+              legajo: _nativeLegajoVisible,
+              secciones: _nativeSeccionesLegajoVisible,
+              escolares: _nativeEscolaresVisible,
+              agente: _nativeAgentHomeVisible,
+              agentePersonal: _nativeAgentPersonalVisible,
+              agenteAlumno: _nativeAgentStudentMenuVisible,
+              perfil: _nativeProfileSelectorVisible,
+            ));
 
-    _scheduleAuthCoverReleaseIfReady();
+    if (!_automaticMode) {
+      _scheduleAuthCoverReleaseIfReady();
+    }
 
     return Theme(
       data: widget.themeOverride ?? temaMensajesLaboratorioSage(context),
@@ -4650,10 +5462,18 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
         builder: (themedContext) => PopScope<void>(
           canPop: false,
           onPopInvokedWithResult: (didPop, _) {
-            if (!didPop) unawaited(_handleBack());
+            if (didPop) return;
+            if (_automaticMode) {
+              _exitSageToAppHome();
+            } else {
+              unawaited(_handleBack());
+            }
           },
           child: Scaffold(
-            appBar: nativeSurfaceVisible || _authTransitionCoverVisible
+            appBar:
+                _automaticMode ||
+                    nativeSurfaceVisible ||
+                    _authTransitionCoverVisible
                 ? null
                 : construirAppBarSage(
                     themedContext,
@@ -4685,9 +5505,15 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
                 Visibility(
                   visible: webViewVisible,
                   maintainState: true,
-                  child: WebViewWidget(
-                    key: const ValueKey('sage-webview-persistent'),
-                    controller: _controller,
+                  child: ExcludeSemantics(
+                    excluding: _automaticMode,
+                    child: IgnorePointer(
+                      ignoring: _automaticMode,
+                      child: WebViewWidget(
+                        key: const ValueKey('sage-webview-persistent'),
+                        controller: _controller,
+                      ),
+                    ),
                   ),
                 ),
                 if (nativeSurfaceVisible)
@@ -4752,24 +5578,25 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
                       },
                     ),
                   ),
-                ValueListenableBuilder<int>(
-                  valueListenable: _navigationProgress,
-                  builder: (context, progress, _) {
-                    if (progress >= 100) return const SizedBox.shrink();
-                    return Positioned(
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      child: LinearProgressIndicator(
-                        value: progress == 0 ? null : progress / 100,
-                        minHeight: 2,
-                        color: scheme.primary,
-                        backgroundColor: scheme.surfaceContainerHighest,
-                      ),
-                    );
-                  },
-                ),
-                if (_authTransitionCoverVisible)
+                if (!_automaticMode)
+                  ValueListenableBuilder<int>(
+                    valueListenable: _navigationProgress,
+                    builder: (context, progress, _) {
+                      if (progress >= 100) return const SizedBox.shrink();
+                      return Positioned(
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        child: LinearProgressIndicator(
+                          value: progress == 0 ? null : progress / 100,
+                          minHeight: 2,
+                          color: scheme.primary,
+                          backgroundColor: scheme.surfaceContainerHighest,
+                        ),
+                      );
+                    },
+                  ),
+                if (!_automaticMode && _authTransitionCoverVisible)
                   Positioned.fill(
                     child: ColoredBox(
                       color: theme.scaffoldBackgroundColor,
@@ -4778,45 +5605,60 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
                       ),
                     ),
                   ),
-                ValueListenableBuilder<String?>(
-                  valueListenable: _mainFrameError,
-                  builder: (context, error, _) {
-                    if (error == null) return const SizedBox.shrink();
-                    return Positioned.fill(
-                      child: ColoredBox(
-                        color: theme.scaffoldBackgroundColor,
-                        child: _ErrorView(message: error, onRetry: _retry),
-                      ),
-                    );
-                  },
-                ),
-                ValueListenableBuilder<_DownloadState>(
-                  valueListenable: _downloadState,
-                  builder: (context, state, _) {
-                    if (state.phase == _DownloadPhase.idle) {
-                      return const SizedBox.shrink();
-                    }
-                    return Positioned(
-                      left: 16,
-                      right: 16,
-                      bottom: 96,
-                      child: _DownloadCard(
-                        state: state,
-                        onView: state.file == null
-                            ? null
-                            : () => _openPdfViewer(state.file!),
-                        onShare: state.file == null
-                            ? null
-                            : () => _shareDownloadedFile(state.file!),
-                        onOpenExternally: state.file == null
-                            ? null
-                            : () => _openDownloadedFile(state.file!),
-                        onDismiss: () =>
-                            _downloadState.value = const _DownloadState.idle(),
-                      ),
-                    );
-                  },
-                ),
+                if (!_automaticMode)
+                  ValueListenableBuilder<String?>(
+                    valueListenable: _mainFrameError,
+                    builder: (context, error, _) {
+                      if (error == null) return const SizedBox.shrink();
+                      return Positioned.fill(
+                        child: ColoredBox(
+                          color: theme.scaffoldBackgroundColor,
+                          child: _ErrorView(message: error, onRetry: _retry),
+                        ),
+                      );
+                    },
+                  ),
+                if (!_automaticMode)
+                  ValueListenableBuilder<_DownloadState>(
+                    valueListenable: _downloadState,
+                    builder: (context, state, _) {
+                      if (state.phase == _DownloadPhase.idle) {
+                        return const SizedBox.shrink();
+                      }
+                      return Positioned(
+                        left: 16,
+                        right: 16,
+                        bottom: 96,
+                        child: _DownloadCard(
+                          state: state,
+                          onView: state.file == null
+                              ? null
+                              : () => _openPdfViewer(state.file!),
+                          onShare: state.file == null
+                              ? null
+                              : () => _shareDownloadedFile(state.file!),
+                          onOpenExternally: state.file == null
+                              ? null
+                              : () => _openDownloadedFile(state.file!),
+                          onDismiss: () => _downloadState.value =
+                              const _DownloadState.idle(),
+                        ),
+                      );
+                    },
+                  ),
+                if (_automaticMode)
+                  Positioned.fill(
+                    child: PantallaSincronizacionSageAutomatica(
+                      estado: _automaticState,
+                      loginDisponible: _loginDocumentReady,
+                      procesandoCredenciales: _automaticCredentialsBusy,
+                      onIngresar: _submitAutomaticCredentials,
+                      onReintentar: _automaticState.permiteReintentar
+                          ? _retryAutomaticSync
+                          : null,
+                      onCancelar: _exitSageToAppHome,
+                    ),
+                  ),
               ],
             ),
           ),

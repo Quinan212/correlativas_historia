@@ -613,19 +613,8 @@ class _PantallaBusquedaGlobalAtlassianState
         ),
       ),
       const _SearchAction(
-        title: 'Abrir SAGE',
-        subtitle: 'Entrar al sistema académico',
-        icon: Icons.hub_outlined,
-        keywords:
-            'sage abrir entrar conectar conexion sistema academico historial escolares servicios docente',
-        group: _ActionGroup.sage,
-        destination: DestinoBusquedaAtlassian(
-          tipo: TipoDestinoBusquedaAtlassian.sage,
-        ),
-      ),
-      const _SearchAction(
         title: 'Sincronizar con SAGE',
-        subtitle: 'Guardar la trayectoria preparada',
+        subtitle: 'Iniciar sesión, leer y guardar la trayectoria',
         icon: Icons.sync_rounded,
         keywords:
             'sincronizar sync guardar importar actualizar trayectoria sage conectar',
