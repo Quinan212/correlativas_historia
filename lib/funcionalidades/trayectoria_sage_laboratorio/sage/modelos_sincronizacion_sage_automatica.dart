@@ -2,6 +2,7 @@ import '../modelos/modelos_trayectoria_sage_laboratorio.dart';
 
 enum ModoPantallaSageLaboratorio {
   manual,
+  autenticacion,
   sincronizacionAutomatica,
   descargaDocumento,
 }

@@ -12,6 +12,7 @@ import '../componentes/componentes_atlassian.dart';
 import '../componentes/inicio_trayectoria_atlassian.dart';
 import '../tema/tema_atlassian.dart';
 import 'pantalla_calendario_atlassian.dart';
+import 'pantalla_centro_sage_atlassian.dart';
 import 'pantalla_disenos_atlassian.dart';
 import 'pantalla_materias_atlassian.dart';
 import 'pantallas_herramientas_atlassian.dart';
@@ -91,7 +92,7 @@ class _PantallaInicioAtlassianState extends State<PantallaInicioAtlassian> {
       if (!mounted) return;
       switch (request.accion) {
         case AccionInicioAtlassian.abrirSage:
-          unawaited(_openSage());
+          unawaited(_openSagePortal());
           return;
         case AccionInicioAtlassian.sincronizar:
           unawaited(_sync());
@@ -236,65 +237,138 @@ class _PantallaInicioAtlassianState extends State<PantallaInicioAtlassian> {
 
   Future<void> _openSage({bool logoutOnOpen = false}) async {
     if (_saving || _sageFlowOpen) return;
-    final automatic = !logoutOnOpen;
     setState(() {
       _sageFlowOpen = true;
       _draft = null;
       _preparation = EstadoPreparacionSageLaboratorio(
-        mensaje: automatic ? 'Preparando sincronización' : 'Abriendo SAGE',
+        mensaje: logoutOnOpen
+            ? 'Cerrando sesión de SAGE'
+            : 'Preparando sincronización',
       );
     });
-    final atlassianTheme = temaLaboratorioAtlassian(context);
     try {
-      await Navigator.of(context, rootNavigator: true).push<void>(
-        rutaAtlassian<void>(
-          builder: (sageContext) => PantallaSageLaboratorio(
-            onClose: () => Navigator.of(sageContext).pop(),
-            themeOverride: atlassianTheme,
-            appBarBackground: atlassianTheme.colorScheme.surface,
-            appBarForeground: atlassianTheme.colorScheme.onSurface,
-            title: logoutOnOpen
-                ? 'Cerrar sesión de SAGE'
-                : 'Sincronizar con SAGE',
-            logoutOnOpen: logoutOnOpen,
-            modo: automatic
-                ? ModoPantallaSageLaboratorio.sincronizacionAutomatica
-                : ModoPantallaSageLaboratorio.manual,
-            onGuardarTrayectoriaAutomatica: automatic
-                ? _saveAutomaticTrajectory
-                : null,
-            perfilEsperado: widget.trajectoryListenable.value?.perfil,
-            onSesionCerrada: () {
-              if (!mounted) return;
-              setState(() {
-                _preparation = const EstadoPreparacionSageLaboratorio(
-                  mensaje: 'Sesión de SAGE cerrada',
-                );
-              });
-            },
-            onTrayectoriaLista: automatic
-                ? null
-                : (trajectory) {
-                    if (!mounted) return;
-                    setState(() {
-                      _draft = trajectory;
-                      _preparation = EstadoPreparacionSageLaboratorio(
-                        mensaje:
-                            '${trajectory.totalMaterias} materias listas para sincronizar.',
-                        progreso: 1,
-                      );
-                    });
-                  },
-            onEstadoPreparacion: (status) {
-              if (!mounted) return;
-              setState(() => _preparation = status);
-            },
-          ),
-        ),
+      await _runSageScreen(
+        automatic: !logoutOnOpen,
+        logoutOnOpen: logoutOnOpen,
       );
     } finally {
       if (mounted) setState(() => _sageFlowOpen = false);
     }
+  }
+
+  Future<void> _openSagePortal() async {
+    if (_saving || _sageFlowOpen) return;
+    setState(() {
+      _sageFlowOpen = true;
+      _draft = null;
+      _preparation = const EstadoPreparacionSageLaboratorio(
+        mensaje: 'Conectando con SAGE',
+      );
+    });
+    final atlassianTheme = temaLaboratorioAtlassian(context);
+    try {
+      final authenticated = await Navigator.of(context, rootNavigator: true)
+          .push<bool>(
+            rutaAtlassian<bool>(
+              builder: (sageContext) => PantallaSageLaboratorio(
+                onClose: () => Navigator.of(sageContext).pop(false),
+                onSesionAutenticada: () {
+                  if (Navigator.of(sageContext).canPop()) {
+                    Navigator.of(sageContext).pop(true);
+                  }
+                },
+                themeOverride: atlassianTheme,
+                appBarBackground: atlassianTheme.colorScheme.surface,
+                appBarForeground: atlassianTheme.colorScheme.onSurface,
+                title: 'Conectar con SAGE',
+                modo: ModoPantallaSageLaboratorio.autenticacion,
+                perfilEsperado: widget.trajectoryListenable.value?.perfil,
+                onEstadoPreparacion: (status) {
+                  if (!mounted) return;
+                  setState(() => _preparation = status);
+                },
+              ),
+            ),
+          );
+      if (!mounted || authenticated != true) return;
+
+      final action = await Navigator.of(context, rootNavigator: true)
+          .push<AccionCentroSageAtlassian>(
+            rutaAtlassian<AccionCentroSageAtlassian>(
+              builder: (_) => PantallaCentroSageAtlassian(
+                ultimaSincronizacion:
+                    widget.trajectoryListenable.value?.sincronizadaEn,
+              ),
+            ),
+          );
+      if (!mounted || action == null) return;
+
+      switch (action) {
+        case AccionCentroSageAtlassian.sincronizar:
+          await _runSageScreen(automatic: true);
+          return;
+        case AccionCentroSageAtlassian.abrirSage:
+          await _runSageScreen(automatic: false);
+          return;
+      }
+    } finally {
+      if (mounted) setState(() => _sageFlowOpen = false);
+    }
+  }
+
+  Future<void> _runSageScreen({
+    required bool automatic,
+    bool logoutOnOpen = false,
+  }) async {
+    final atlassianTheme = temaLaboratorioAtlassian(context);
+    await Navigator.of(context, rootNavigator: true).push<void>(
+      rutaAtlassian<void>(
+        builder: (sageContext) => PantallaSageLaboratorio(
+          onClose: () => Navigator.of(sageContext).pop(),
+          themeOverride: atlassianTheme,
+          appBarBackground: atlassianTheme.colorScheme.surface,
+          appBarForeground: atlassianTheme.colorScheme.onSurface,
+          title: logoutOnOpen
+              ? 'Cerrar sesión de SAGE'
+              : automatic
+              ? 'Sincronizar con SAGE'
+              : 'SAGE',
+          logoutOnOpen: logoutOnOpen,
+          modo: automatic
+              ? ModoPantallaSageLaboratorio.sincronizacionAutomatica
+              : ModoPantallaSageLaboratorio.manual,
+          onGuardarTrayectoriaAutomatica: automatic
+              ? _saveAutomaticTrajectory
+              : null,
+          perfilEsperado: widget.trajectoryListenable.value?.perfil,
+          onSesionCerrada: () {
+            if (!mounted) return;
+            setState(() {
+              _preparation = const EstadoPreparacionSageLaboratorio(
+                mensaje: 'Sesión de SAGE cerrada',
+              );
+            });
+          },
+          onTrayectoriaLista: automatic
+              ? null
+              : (trajectory) {
+                  if (!mounted) return;
+                  setState(() {
+                    _draft = trajectory;
+                    _preparation = EstadoPreparacionSageLaboratorio(
+                      mensaje:
+                          '${trajectory.totalMaterias} materias listas para sincronizar.',
+                      progreso: 1,
+                    );
+                  });
+                },
+          onEstadoPreparacion: (status) {
+            if (!mounted) return;
+            setState(() => _preparation = status);
+          },
+        ),
+      ),
+    );
   }
 
   Future<void> _openAcademicDocument(DocumentoAcademicoSage document) async {
@@ -548,7 +622,7 @@ class _PantallaInicioAtlassianState extends State<PantallaInicioAtlassian> {
                           onTap: () => widget.onNavigate(1),
                         ),
                         const SizedBox(height: 10),
-                        _AtajoSageAtlassian(onTap: _sync),
+                        _AtajoSageAtlassian(onTap: _openSagePortal),
                         const SizedBox(height: 20),
                         SeparadorTituloAtlassian(
                           title: 'Herramientas',
@@ -1177,7 +1251,7 @@ class _AtajoSageAtlassian extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  'Sincronizá tu trayectoria',
+                  'Abrir SAGE',
                   style: Theme.of(
                     context,
                   ).textTheme.titleSmall?.copyWith(color: Colors.white),

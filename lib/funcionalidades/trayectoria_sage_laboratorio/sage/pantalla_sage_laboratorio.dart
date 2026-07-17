@@ -61,6 +61,7 @@ class PantallaSageLaboratorio extends StatefulWidget {
     this.cerrarAlCompletar = true,
     this.perfilEsperado,
     this.onSesionCerrada,
+    this.onSesionAutenticada,
     this.documentoSolicitado,
     this.onDocumentoDescargado,
   });
@@ -78,6 +79,7 @@ class PantallaSageLaboratorio extends StatefulWidget {
   final bool cerrarAlCompletar;
   final PerfilTrayectoriaSageLaboratorio? perfilEsperado;
   final VoidCallback? onSesionCerrada;
+  final VoidCallback? onSesionAutenticada;
   final DocumentoAcademicoSage? documentoSolicitado;
   final ValueChanged<File>? onDocumentoDescargado;
 
@@ -198,6 +200,12 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
   bool _automaticDocumentsPreparing = false;
   bool _automaticDocumentRequestRunning = false;
   bool _automaticDocumentRequestCompleted = false;
+  bool _authenticationResultDelivered = false;
+  int _loginErrorObservations = 0;
+  DateTime? _firstLoginErrorObservedAt;
+
+  bool get _authenticationOnlyMode =>
+      widget.modo == ModoPantallaSageLaboratorio.autenticacion;
 
   bool get _automaticMode => widget.modo != ModoPantallaSageLaboratorio.manual;
   bool get _documentDownloadMode =>
@@ -206,7 +214,7 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
   @override
   void initState() {
     super.initState();
-    if (_automaticMode) {
+    if (_automaticMode && !_authenticationOnlyMode) {
       unawaited(_loadAutomaticSyncMetadata());
       if (!_documentDownloadMode) {
         unawaited(_syncStateRepository.registrarIntento());
@@ -879,7 +887,7 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
     } else {
       _automaticState = state;
     }
-    if (!_documentDownloadMode) {
+    if (!_documentDownloadMode && !_authenticationOnlyMode) {
       unawaited(
         _syncStateRepository.registrarError(
           codigo: code.clave,
@@ -951,6 +959,8 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
     final passwordJson = jsonEncode(password);
     _automaticCredentialsSubmittedThisRun = true;
     _automaticSessionReused = false;
+    _loginErrorObservations = 0;
+    _firstLoginErrorObservedAt = null;
     setState(() => _automaticCredentialsBusy = true);
     _setAutomaticState(
       EtapaSincronizacionSageAutomatica.autenticando,
@@ -1763,6 +1773,8 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
   void _completeLoginTransitionToPrivate() {
     if (!mounted || _logoutBusy) return;
     _cancelLoginTransitionWatchdog();
+    _loginErrorObservations = 0;
+    _firstLoginErrorObservedAt = null;
     setState(() {
       _authTransitionCoverVisible = !_automaticMode;
       _authTransitionCoverMessage = 'Preparando tus servicios académicos…';
@@ -1773,7 +1785,9 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
       _loginDocumentReady = false;
     });
     _ensureProbeTimer();
-    if (_automaticMode) {
+    if (_authenticationOnlyMode) {
+      _deliverAuthenticationResult();
+    } else if (_automaticMode) {
       if (!_automaticFlowActive && !_automaticCompleting) {
         _beginAutomaticFlow();
       } else {
@@ -1788,6 +1802,15 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
     if (kDebugMode) {
       debugPrint('[SAGE visual] login_private_shell_confirmed=true');
     }
+  }
+
+  void _deliverAuthenticationResult() {
+    if (_authenticationResultDelivered) return;
+    _authenticationResultDelivered = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _isClosing) return;
+      widget.onSesionAutenticada?.call();
+    });
   }
 
   Future<void> _pollLoginTransition(int transitionId) async {
@@ -1813,6 +1836,19 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
     }
 
     if (state['loginError'] == true) {
+      _loginErrorObservations++;
+      _firstLoginErrorObservedAt ??= DateTime.now();
+      final errorElapsed = DateTime.now().difference(
+        _firstLoginErrorObservedAt!,
+      );
+      final confirmed =
+          _loginErrorObservations >= 3 &&
+          errorElapsed >= const Duration(milliseconds: 1100) &&
+          state['loginFormVisible'] == true;
+      if (!confirmed) {
+        _scheduleLoginTransitionPoll(transitionId);
+        return;
+      }
       _cancelLoginTransitionWatchdog();
       setState(_resetPrivateSageStateForLogin);
       if (_automaticMode) {
@@ -1825,6 +1861,8 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
       }
       return;
     }
+    _loginErrorObservations = 0;
+    _firstLoginErrorObservedAt = null;
 
     final startedAt = _loginTransitionStartedAt;
     final elapsed = startedAt == null
