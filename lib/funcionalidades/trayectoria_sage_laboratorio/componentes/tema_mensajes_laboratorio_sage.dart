@@ -26,17 +26,9 @@ ThemeData temaMensajesLaboratorioSage(BuildContext context) {
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: const BorderSide(
-          color: Color(0xFF8DB6FF),
-          width: 1,
-        ),
+        side: const BorderSide(color: Color(0xFF8DB6FF), width: 1),
       ),
-      insetPadding: EdgeInsets.fromLTRB(
-        16,
-        8,
-        16,
-        mobile ? 38 : 20,
-      ),
+      insetPadding: EdgeInsets.fromLTRB(16, 8, 16, mobile ? 38 : 20),
     ),
   );
 }

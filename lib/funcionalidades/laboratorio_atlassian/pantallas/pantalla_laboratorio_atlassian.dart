@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../trayectoria_sage_laboratorio/datos/repositorio_estado_sincronizacion_sage.dart';
 import '../../trayectoria_sage_laboratorio/datos/repositorio_trayectoria_sage_laboratorio.dart';
 import '../../trayectoria_sage_laboratorio/modelos/modelos_trayectoria_sage_laboratorio.dart';
 import '../busqueda/modelos_busqueda_atlassian.dart';
@@ -30,6 +31,7 @@ class PantallaLaboratorioAtlassian extends StatefulWidget {
 class _PantallaLaboratorioAtlassianState
     extends State<PantallaLaboratorioAtlassian> {
   static const _repository = RepositorioTrayectoriaSageLaboratorio();
+  static const _syncStateRepository = RepositorioEstadoSincronizacionSage();
 
   final List<GlobalKey<NavigatorState>> _navigatorKeys =
       List<GlobalKey<NavigatorState>>.generate(
@@ -101,7 +103,10 @@ class _PantallaLaboratorioAtlassianState
     );
     if (confirmed != true) return;
 
-    await _repository.borrar();
+    await Future.wait<void>([
+      _repository.borrar(),
+      _syncStateRepository.borrarPreferencias(),
+    ]);
     if (!mounted) return;
     _replaceTrajectory(null);
     _resetRevision.value++;

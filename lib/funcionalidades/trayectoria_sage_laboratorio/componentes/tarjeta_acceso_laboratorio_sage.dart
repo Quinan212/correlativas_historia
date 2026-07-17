@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 
 class TarjetaAccesoLaboratorioSage extends StatelessWidget {
-  const TarjetaAccesoLaboratorioSage({
-    super.key,
-    required this.onTap,
-  });
+  const TarjetaAccesoLaboratorioSage({super.key, required this.onTap});
 
   final VoidCallback onTap;
 
@@ -24,9 +21,7 @@ class TarjetaAccesoLaboratorioSage extends StatelessWidget {
           decoration: BoxDecoration(
             color: scheme.tertiaryContainer.withValues(alpha: 0.62),
             borderRadius: BorderRadius.circular(28),
-            border: Border.all(
-              color: scheme.tertiary.withValues(alpha: 0.22),
-            ),
+            border: Border.all(color: scheme.tertiary.withValues(alpha: 0.22)),
           ),
           child: Row(
             children: [
@@ -37,10 +32,7 @@ class TarjetaAccesoLaboratorioSage extends StatelessWidget {
                   color: scheme.tertiary.withValues(alpha: 0.14),
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: Icon(
-                  Icons.science_rounded,
-                  color: scheme.tertiary,
-                ),
+                child: Icon(Icons.science_rounded, color: scheme.tertiary),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -84,10 +76,7 @@ class TarjetaAccesoLaboratorioSage extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              Icon(
-                Icons.chevron_right_rounded,
-                color: scheme.onSurfaceVariant,
-              ),
+              Icon(Icons.chevron_right_rounded, color: scheme.onSurfaceVariant),
             ],
           ),
         ),

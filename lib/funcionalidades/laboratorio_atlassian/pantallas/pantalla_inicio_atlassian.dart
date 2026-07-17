@@ -204,11 +204,18 @@ class _PantallaInicioAtlassianState extends State<PantallaInicioAtlassian> {
     }
 
     if (mounted) setState(() => _saving = true);
+    final previousCareer = _currentCareer(
+      current,
+      widget.selectedCareerListenable.value,
+    );
     try {
-      final stored = await _repository.guardar(draft);
+      final stored = await _repository.guardarIdempotente(draft);
       if (!mounted) return stored;
       widget.onTrajectoryChanged(stored);
-      widget.selectedCareerListenable.value = 0;
+      widget.selectedCareerListenable.value = _matchingCareerIndex(
+        stored,
+        previousCareer,
+      );
       setState(() {
         _draft = null;
         _preparation = EstadoPreparacionSageLaboratorio(
@@ -256,6 +263,15 @@ class _PantallaInicioAtlassianState extends State<PantallaInicioAtlassian> {
             onGuardarTrayectoriaAutomatica: automatic
                 ? _saveAutomaticTrajectory
                 : null,
+            perfilEsperado: widget.trajectoryListenable.value?.perfil,
+            onSesionCerrada: () {
+              if (!mounted) return;
+              setState(() {
+                _preparation = const EstadoPreparacionSageLaboratorio(
+                  mensaje: 'Sesión de SAGE cerrada',
+                );
+              });
+            },
             onTrayectoriaLista: automatic
                 ? null
                 : (trajectory) {
@@ -312,10 +328,17 @@ class _PantallaInicioAtlassianState extends State<PantallaInicioAtlassian> {
 
     setState(() => _saving = true);
     try {
-      final stored = await _repository.guardar(draft);
+      final previousCareer = _currentCareer(
+        current,
+        widget.selectedCareerListenable.value,
+      );
+      final stored = await _repository.guardarIdempotente(draft);
       if (!mounted) return;
       widget.onTrajectoryChanged(stored);
-      widget.selectedCareerListenable.value = 0;
+      widget.selectedCareerListenable.value = _matchingCareerIndex(
+        stored,
+        previousCareer,
+      );
       setState(() {
         _preparation = const EstadoPreparacionSageLaboratorio(
           mensaje: 'Sincronización completada',
@@ -337,6 +360,28 @@ class _PantallaInicioAtlassianState extends State<PantallaInicioAtlassian> {
     } finally {
       if (mounted) setState(() => _saving = false);
     }
+  }
+
+  int _matchingCareerIndex(
+    TrayectoriaSageLaboratorio trajectory,
+    CarreraTrayectoriaSageLaboratorio? previous,
+  ) {
+    if (trajectory.carreras.isEmpty || previous == null) return 0;
+    final previousKey = _careerIdentity(previous);
+    final index = trajectory.carreras.indexWhere(
+      (career) => _careerIdentity(career) == previousKey,
+    );
+    return index < 0 ? 0 : index;
+  }
+
+  String _careerIdentity(CarreraTrayectoriaSageLaboratorio career) {
+    final structural = career.careerKey.trim();
+    if (structural.isNotEmpty) return structural.toLowerCase();
+    return <String>[
+      career.nombre.trim().toLowerCase(),
+      career.institucion.trim().toLowerCase(),
+      career.anioInicio?.toString() ?? '',
+    ].join('|');
   }
 
   Future<void> _chooseCareer(TrayectoriaSageLaboratorio trajectory) async {
@@ -441,6 +486,7 @@ class _PantallaInicioAtlassianState extends State<PantallaInicioAtlassian> {
                             ? null
                             : _openProgress,
                         onOpenExams: () => widget.onNavigate(1),
+                        ultimaSincronizacion: trajectory?.sincronizadaEn,
                         syncAvailable: !_saving && !_sageFlowOpen,
                         syncing: _saving || _sageFlowOpen,
                         onSync: _sync,
@@ -551,6 +597,7 @@ class _PanelPerfilAtlassian extends StatelessWidget {
     required this.onOpenMaterias,
     required this.onOpenProgress,
     required this.onOpenExams,
+    required this.ultimaSincronizacion,
     required this.syncAvailable,
     required this.syncing,
     required this.onSync,
@@ -562,6 +609,7 @@ class _PanelPerfilAtlassian extends StatelessWidget {
   final VoidCallback? onOpenMaterias;
   final VoidCallback? onOpenProgress;
   final VoidCallback onOpenExams;
+  final DateTime? ultimaSincronizacion;
   final bool syncAvailable;
   final bool syncing;
   final VoidCallback onSync;
@@ -698,9 +746,44 @@ class _PanelPerfilAtlassian extends StatelessWidget {
               );
             },
           ),
+          if (ultimaSincronizacion != null) ...[
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.schedule_rounded,
+                  size: 15,
+                  color: scheme.onSurfaceVariant,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  'Actualizado ${_formatLastSync(ultimaSincronizacion!)}',
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );
+  }
+
+  String _formatLastSync(DateTime value) {
+    final local = value.toLocal();
+    final now = DateTime.now();
+    final sameDay =
+        local.year == now.year &&
+        local.month == now.month &&
+        local.day == now.day;
+    final hour = local.hour.toString().padLeft(2, '0');
+    final minute = local.minute.toString().padLeft(2, '0');
+    if (sameDay) return 'hoy $hour:$minute';
+    final day = local.day.toString().padLeft(2, '0');
+    final month = local.month.toString().padLeft(2, '0');
+    return '$day/$month $hour:$minute';
   }
 }
 

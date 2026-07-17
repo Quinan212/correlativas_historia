@@ -157,12 +157,14 @@ class _PantallaLaboratorioSageState extends State<PantallaLaboratorioSage> {
         : IndexedStack(index: _section, children: tabs);
 
     if (desktop) {
-      final selected = _planVisible ? 2 : switch (_section) {
-        0 => 0,
-        1 => 1,
-        2 => 3,
-        _ => 4,
-      };
+      final selected = _planVisible
+          ? 2
+          : switch (_section) {
+              0 => 0,
+              1 => 1,
+              2 => 3,
+              _ => 4,
+            };
       content = Row(
         children: [
           NavigationRail(
@@ -313,9 +315,7 @@ class _PantallaInicioTrayectoriaSageLaboratorioState
 
   TrayectoriaSageLaboratorio? _draft;
   EstadoPreparacionSageLaboratorio _preparation =
-      const EstadoPreparacionSageLaboratorio(
-        mensaje: 'Pendiente',
-      );
+      const EstadoPreparacionSageLaboratorio(mensaje: 'Pendiente');
   bool _saving = false;
   int _selectedCareer = 0;
   final ScrollController _scrollController = ScrollController();
@@ -449,9 +449,7 @@ class _PantallaInicioTrayectoriaSageLaboratorioState
                   ? Icons.radio_button_checked_rounded
                   : Icons.radio_button_off_rounded,
             ),
-            title: Text(
-              _nombreCarreraPresentableLaboratorio(career.nombre),
-            ),
+            title: Text(_nombreCarreraPresentableLaboratorio(career.nombre)),
             subtitle: career.institucion.trim().isEmpty
                 ? null
                 : Text(career.institucion),
@@ -504,9 +502,7 @@ class _PantallaInicioTrayectoriaSageLaboratorioState
         context: context,
         builder: (dialogContext) => AlertDialog(
           title: const Text('Reemplazar trayectoria'),
-          content: Text(
-            '${current.perfil.nombre} → ${draft.perfil.nombre}',
-          ),
+          content: Text('${current.perfil.nombre} → ${draft.perfil.nombre}'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(false),
@@ -742,9 +738,7 @@ class _PantallaMateriasSageLaboratorioState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Materias desde SAGE'),
-      ),
+      appBar: AppBar(title: const Text('Materias desde SAGE')),
       body: ValueListenableBuilder<bool>(
         valueListenable: widget.localLoadedListenable,
         builder: (context, loaded, _) {
@@ -762,29 +756,35 @@ class _PantallaMateriasSageLaboratorioState
                   .clamp(0, trajectory.carreras.length - 1)
                   .toInt();
               final career = trajectory.carreras[safeIndex];
-              final years = career.materias
-                  .map((subject) => subject.anio)
-                  .whereType<int>()
-                  .toSet()
-                  .toList()
-                ..sort();
+              final years =
+                  career.materias
+                      .map((subject) => subject.anio)
+                      .whereType<int>()
+                      .toSet()
+                      .toList()
+                    ..sort();
               final query = _query.trim().toLowerCase();
-              final subjects = career.materias.where((subject) {
-                if (_year != null && subject.anio != _year) return false;
-                if (_status != null && subject.estado != _status) return false;
-                if (query.isNotEmpty &&
-                    !subject.nombre.toLowerCase().contains(query)) {
-                  return false;
-                }
-                return true;
-              }).toList(growable: false)
-                ..sort((a, b) {
-                  final year = (a.anio ?? 999).compareTo(b.anio ?? 999);
-                  if (year != 0) return year;
-                  return a.nombre.toLowerCase().compareTo(
-                    b.nombre.toLowerCase(),
-                  );
-                });
+              final subjects =
+                  career.materias
+                      .where((subject) {
+                        if (_year != null && subject.anio != _year)
+                          return false;
+                        if (_status != null && subject.estado != _status)
+                          return false;
+                        if (query.isNotEmpty &&
+                            !subject.nombre.toLowerCase().contains(query)) {
+                          return false;
+                        }
+                        return true;
+                      })
+                      .toList(growable: false)
+                    ..sort((a, b) {
+                      final year = (a.anio ?? 999).compareTo(b.anio ?? 999);
+                      if (year != 0) return year;
+                      return a.nombre.toLowerCase().compareTo(
+                        b.nombre.toLowerCase(),
+                      );
+                    });
 
               return ListView(
                 padding: const EdgeInsets.fromLTRB(16, 10, 16, 120),
@@ -801,9 +801,11 @@ class _PantallaMateriasSageLaboratorioState
                         border: OutlineInputBorder(),
                       ),
                       items: [
-                        for (var index = 0;
-                            index < trajectory.carreras.length;
-                            index++)
+                        for (
+                          var index = 0;
+                          index < trajectory.carreras.length;
+                          index++
+                        )
                           DropdownMenuItem<int>(
                             value: index,
                             child: Text(
@@ -1055,10 +1057,7 @@ class PantallaDatosSageLaboratorio extends StatelessWidget {
                           trajectory.sincronizadaEn ?? trajectory.capturadaEn,
                         ),
                       ),
-                      const _DatoLaboratorio(
-                        label: 'Origen',
-                        value: 'SAGE',
-                      ),
+                      const _DatoLaboratorio(label: 'Origen', value: 'SAGE'),
                     ],
                   ),
                   if (_camposPerfilPresentablesLaboratorio(
@@ -1118,7 +1117,6 @@ class PantallaDatosSageLaboratorio extends StatelessWidget {
   }
 }
 
-
 class _IconoAplicacionLaboratorio extends StatelessWidget {
   const _IconoAplicacionLaboratorio({this.size = 36});
 
@@ -1143,10 +1141,8 @@ class _IconoAplicacionLaboratorio extends StatelessWidget {
           fit: BoxFit.cover,
           cacheWidth: 112,
           cacheHeight: 112,
-          errorBuilder: (_, _, _) => const Icon(
-            Icons.school_rounded,
-            color: Color(0xFF0E5E86),
-          ),
+          errorBuilder: (_, _, _) =>
+              const Icon(Icons.school_rounded, color: Color(0xFF0E5E86)),
         ),
       ),
     );
@@ -1226,9 +1222,7 @@ class _EncabezadoInicioLaboratorioState
     final compact = _compact;
     final titleWidth = compact ? 64.0 : 104.0;
     final searchProgress = _searchProgress;
-    final titleOpacity = (1 - searchProgress * 1.25)
-        .clamp(0.0, 1.0)
-        .toDouble();
+    final titleOpacity = (1 - searchProgress * 1.25).clamp(0.0, 1.0).toDouble();
     final titleOffset = -52 * searchProgress;
     final actionsOpacity = (1 - searchProgress * 1.15)
         .clamp(0.0, 1.0)
@@ -1283,8 +1277,9 @@ class _EncabezadoInicioLaboratorioState
                                     fit: StackFit.expand,
                                     children: [
                                       AnimatedOpacity(
-                                        duration:
-                                            const Duration(milliseconds: 140),
+                                        duration: const Duration(
+                                          milliseconds: 140,
+                                        ),
                                         opacity: compact ? 0 : 1,
                                         child: Text(
                                           title,
@@ -1294,8 +1289,9 @@ class _EncabezadoInicioLaboratorioState
                                         ),
                                       ),
                                       AnimatedOpacity(
-                                        duration:
-                                            const Duration(milliseconds: 140),
+                                        duration: const Duration(
+                                          milliseconds: 140,
+                                        ),
                                         opacity: compact ? 1 : 0,
                                         child: Text(
                                           firstName ?? 'Hola',
@@ -1496,12 +1492,7 @@ class _FondoEsquinasInicioLaboratorioPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final totalHeight = math.max(gradientTopExtension + bannerHeight, 1.0);
     final bandTop = gradientTopExtension - size.height + scrollOffset;
-    final shaderRect = Rect.fromLTWH(
-      0,
-      -bandTop,
-      size.width,
-      totalHeight,
-    );
+    final shaderRect = Rect.fromLTWH(0, -bandTop, size.width, totalHeight);
     const gradient = LinearGradient(
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
@@ -1633,9 +1624,7 @@ class _BannerPerfilInicioLaboratorio extends StatelessWidget {
                     )
                   else ...[
                     Text(
-                      _nombrePerfilPresentableLaboratorio(
-                        trajectory!.perfil,
-                      ),
+                      _nombrePerfilPresentableLaboratorio(trajectory!.perfil),
                       style: theme.textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.w900,
                         height: 1.04,
@@ -1775,7 +1764,8 @@ class _AccionCircularInicioLaboratorio extends StatelessWidget {
                   shape: BoxShape.circle,
                   color: circleColor ?? scheme.primary.withValues(alpha: 0.10),
                   border: Border.all(
-                    color: circleBorderColor ??
+                    color:
+                        circleBorderColor ??
                         scheme.primary.withValues(alpha: 0.08),
                   ),
                 ),
@@ -1829,9 +1819,7 @@ class _FranjaResumenInicioLaboratorio extends StatelessWidget {
                   height: tileHeight,
                   child: GestureDetector(
                     onTap: onOpenSubjects,
-                    child: _TarjetaProgresoInicioLaboratorio(
-                      loaded: loaded,
-                    ),
+                    child: _TarjetaProgresoInicioLaboratorio(loaded: loaded),
                   ),
                 ),
                 const SizedBox(width: spacing),
@@ -2020,9 +2008,7 @@ class _ExamShortcutLaboratorio extends StatelessWidget {
           decoration: BoxDecoration(
             color: scheme.secondaryContainer.withValues(alpha: 0.46),
             borderRadius: BorderRadius.circular(30),
-            border: Border.all(
-              color: scheme.secondary.withValues(alpha: 0.14),
-            ),
+            border: Border.all(color: scheme.secondary.withValues(alpha: 0.14)),
           ),
           child: Row(
             children: [
@@ -2133,7 +2119,9 @@ class _GrillaAccionesInicioLaboratorio extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final outline = Theme.of(context).colorScheme.outline.withValues(alpha: 0.12);
+    final outline = Theme.of(
+      context,
+    ).colorScheme.outline.withValues(alpha: 0.12);
     return LayoutBuilder(
       builder: (context, constraints) {
         const spacing = 8.0;
@@ -2299,9 +2287,7 @@ class _PromocionalInicioLaboratorioDelegate
   double _collision(int index, double scroll) {
     if (index >= _items.length - 1) return 0;
     final distance = _topFor(index + 1, scroll) - _topFor(index, scroll);
-    return (1 - (distance / _cardHeight))
-        .clamp(0.0, 1.0)
-        .toDouble();
+    return (1 - (distance / _cardHeight)).clamp(0.0, 1.0).toDouble();
   }
 
   double _depth(int index, double scroll) {
@@ -2323,7 +2309,11 @@ class _PromocionalInicioLaboratorioDelegate
   }
 
   @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
     final double scroll = math
         .max(shrinkOffset - _pinTravel, 0.0)
         .clamp(0.0, _stackScrollExtent)
@@ -2354,9 +2344,7 @@ class _PromocionalInicioLaboratorioDelegate
           left: _horizontalPadding,
           right: _horizontalPadding,
           top: _sectionTopPadding,
-          child: _InicioSugerenciasLaboratorio(
-            height: _sectionHeaderHeight,
-          ),
+          child: _InicioSugerenciasLaboratorio(height: _sectionHeaderHeight),
         ),
       ],
     );
@@ -2425,10 +2413,26 @@ class _CardPromocionalInicioLaboratorioWidget extends StatelessWidget {
 
   ColorFilter _brightnessFilter(double brightness) {
     return ColorFilter.matrix(<double>[
-      brightness, 0, 0, 0, 0,
-      0, brightness, 0, 0, 0,
-      0, 0, brightness, 0, 0,
-      0, 0, 0, 1, 0,
+      brightness,
+      0,
+      0,
+      0,
+      0,
+      0,
+      brightness,
+      0,
+      0,
+      0,
+      0,
+      0,
+      brightness,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
     ]);
   }
 
@@ -2571,10 +2575,7 @@ String _nombrePerfilPresentableLaboratorio(
   if (perfil == null) return 'Estudiante SAGE';
 
   final entries = perfil.campos.entries.toList(growable: false);
-  String? findField(
-    Iterable<String> tokens, {
-    bool allowSingleWord = false,
-  }) {
+  String? findField(Iterable<String> tokens, {bool allowSingleWord = false}) {
     for (final entry in entries) {
       final key = _normalizarTextoLaboratorio(entry.key);
       if (!tokens.any(key.contains)) continue;
@@ -2587,10 +2588,10 @@ String _nombrePerfilPresentableLaboratorio(
   }
 
   final givenNames = findField(const ['nombres', 'nombre']);
-  final surname = findField(
-    const ['apellidos', 'apellido'],
-    allowSingleWord: true,
-  );
+  final surname = findField(const [
+    'apellidos',
+    'apellido',
+  ], allowSingleWord: true);
   if (givenNames != null && surname != null && givenNames != surname) {
     return _capitalizarNombreLaboratorio('$givenNames $surname');
   }
@@ -2663,7 +2664,8 @@ String _ordenarNombreSageLaboratorio(String value) {
     }
   }
   final words = clean.split(' ');
-  final uppercase = clean == clean.toUpperCase() && clean != clean.toLowerCase();
+  final uppercase =
+      clean == clean.toUpperCase() && clean != clean.toLowerCase();
   if (uppercase && words.length >= 2) {
     return _capitalizarNombreLaboratorio(
       '${words.sublist(1).join(' ')} ${words.first}',
@@ -2734,7 +2736,12 @@ List<MapEntry<String, String>> _camposPerfilPresentablesLaboratorio(
     final label = _etiquetaCampoSageLaboratorio(entry.key);
     final normalizedValue = _normalizarTextoLaboratorio(value);
     if (label == 'Estudiante' &&
-        const {'dni', 'alumno', 'estudiante', 'perfil'}.contains(normalizedValue)) {
+        const {
+          'dni',
+          'alumno',
+          'estudiante',
+          'perfil',
+        }.contains(normalizedValue)) {
       continue;
     }
     final signature = '${label.toLowerCase()}|${value.toLowerCase()}';
@@ -2835,7 +2842,9 @@ String _lineaPerfilLaboratorio(
 
 int? _anioActualLaboratorio(CarreraTrayectoriaSageLaboratorio career) {
   final current = career.materias
-      .where((subject) => subject.estado == EstadoMateriaSageLaboratorio.cursando)
+      .where(
+        (subject) => subject.estado == EstadoMateriaSageLaboratorio.cursando,
+      )
       .map((subject) => subject.anio)
       .whereType<int>()
       .toList();
@@ -2870,9 +2879,7 @@ class _ChipDesincronizarLaboratorio extends StatelessWidget {
             decoration: BoxDecoration(
               color: const Color(0xFFD9363E),
               borderRadius: BorderRadius.circular(999),
-              border: Border.all(
-                color: const Color(0xFFFF9499),
-              ),
+              border: Border.all(color: const Color(0xFFFF9499)),
               boxShadow: [
                 BoxShadow(
                   color: const Color(0xFFD9363E).withValues(alpha: 0.28),
@@ -3119,10 +3126,7 @@ class _EstadoVacioSeccionLaboratorio extends StatelessWidget {
 }
 
 class _SeccionDatosLaboratorio extends StatelessWidget {
-  const _SeccionDatosLaboratorio({
-    required this.title,
-    required this.rows,
-  });
+  const _SeccionDatosLaboratorio({required this.title, required this.rows});
 
   final String title;
   final List<_DatoLaboratorio> rows;
@@ -3302,10 +3306,8 @@ bool _sameSageProfile(
   if (firstDni.isNotEmpty && secondDni.isNotEmpty) {
     return firstDni == secondDni;
   }
-  String normalize(String value) => value
-      .toLowerCase()
-      .replaceAll(RegExp(r'\s+'), ' ')
-      .trim();
+  String normalize(String value) =>
+      value.toLowerCase().replaceAll(RegExp(r'\s+'), ' ').trim();
   return normalize(first.nombre) == normalize(second.nombre);
 }
 
@@ -3319,8 +3321,7 @@ Color _stateColor(EstadoMateriaSageLaboratorio state) => switch (state) {
 
 IconData _stateIcon(EstadoMateriaSageLaboratorio state) => switch (state) {
   EstadoMateriaSageLaboratorio.aprobada => Icons.check_circle_rounded,
-  EstadoMateriaSageLaboratorio.regular =>
-    Icons.assignment_turned_in_rounded,
+  EstadoMateriaSageLaboratorio.regular => Icons.assignment_turned_in_rounded,
   EstadoMateriaSageLaboratorio.cursando => Icons.play_circle_rounded,
   EstadoMateriaSageLaboratorio.noRegularizada => Icons.cancel_rounded,
   EstadoMateriaSageLaboratorio.desconocida => Icons.help_outline_rounded,

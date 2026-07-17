@@ -122,14 +122,19 @@ class _PantallaSincronizacionSageAutomaticaState
             ),
             const SizedBox(height: 22),
             Text(
-              'Conectar con SAGE',
+              state.codigoError == CodigoErrorSincronizacionSage.sesionVencida
+                  ? 'Volver a conectar SAGE'
+                  : 'Conectar con SAGE',
               style: Theme.of(
                 context,
               ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
             ),
             if (state.detalle?.trim().isNotEmpty == true) ...[
               const SizedBox(height: 12),
-              _MensajeErrorSage(mensaje: state.detalle!),
+              _MensajeErrorSage(
+                mensaje: state.detalle!,
+                codigo: state.codigoVisible,
+              ),
             ],
             const SizedBox(height: 22),
             TextFormField(
@@ -209,6 +214,7 @@ class _PantallaSincronizacionSageAutomaticaState
     final scheme = Theme.of(context).colorScheme;
     final completed = state.completada;
     final isError = state.esError;
+    final retrying = state.reintentando;
     return KeyedSubtree(
       key: ValueKey('sage-auto-${state.etapa.name}'),
       child: Column(
@@ -232,6 +238,10 @@ class _PantallaSincronizacionSageAutomaticaState
                     ? Icons.check_rounded
                     : isError
                     ? Icons.error_outline_rounded
+                    : retrying
+                    ? Icons.refresh_rounded
+                    : state.sesionReutilizada
+                    ? Icons.lock_open_rounded
                     : Icons.sync_rounded,
                 color: completed
                     ? scheme.onTertiaryContainer
@@ -258,6 +268,31 @@ class _PantallaSincronizacionSageAutomaticaState
               ).textTheme.bodyLarge?.copyWith(color: scheme.onSurfaceVariant),
             ),
           ],
+          if (state.sesionReutilizada || state.intentoActual > 0) ...[
+            const SizedBox(height: 14),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                if (state.sesionReutilizada)
+                  const _EstadoChip(
+                    icon: Icons.cookie_outlined,
+                    label: 'Sesión reutilizada',
+                  ),
+                if (state.intentoActual > 0)
+                  _EstadoChip(
+                    icon: Icons.replay_rounded,
+                    label:
+                        'Intento ${state.intentoActual}/${state.intentosMaximos}',
+                  ),
+                if (state.codigoVisible != null)
+                  _EstadoChip(
+                    icon: Icons.tag_rounded,
+                    label: state.codigoVisible!,
+                  ),
+              ],
+            ),
+          ],
           if (!completed && !isError) ...[
             const SizedBox(height: 24),
             LinearProgressIndicator(
@@ -271,7 +306,7 @@ class _PantallaSincronizacionSageAutomaticaState
             FilledButton.icon(
               onPressed: widget.onReintentar,
               icon: const Icon(Icons.refresh_rounded),
-              label: const Text('Reintentar'),
+              label: const Text('Reintentar este paso'),
             ),
           ],
         ],
@@ -280,10 +315,39 @@ class _PantallaSincronizacionSageAutomaticaState
   }
 }
 
+class _EstadoChip extends StatelessWidget {
+  const _EstadoChip({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: scheme.outlineVariant),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 15, color: scheme.onSurfaceVariant),
+          const SizedBox(width: 6),
+          Text(label, style: Theme.of(context).textTheme.labelMedium),
+        ],
+      ),
+    );
+  }
+}
+
 class _MensajeErrorSage extends StatelessWidget {
-  const _MensajeErrorSage({required this.mensaje});
+  const _MensajeErrorSage({required this.mensaje, this.codigo});
 
   final String mensaje;
+  final String? codigo;
 
   @override
   Widget build(BuildContext context) {
@@ -301,11 +365,26 @@ class _MensajeErrorSage extends StatelessWidget {
           Icon(Icons.error_outline_rounded, color: scheme.onErrorContainer),
           const SizedBox(width: 10),
           Expanded(
-            child: Text(
-              mensaje,
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: scheme.onErrorContainer),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  mensaje,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: scheme.onErrorContainer,
+                  ),
+                ),
+                if (codigo != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    codigo!,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: scheme.onErrorContainer,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
         ],

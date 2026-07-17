@@ -51,9 +51,7 @@ class PerfilTrayectoriaSageLaboratorio {
     'campos': campos,
   };
 
-  factory PerfilTrayectoriaSageLaboratorio.fromJson(
-    Map<String, dynamic> json,
-  ) {
+  factory PerfilTrayectoriaSageLaboratorio.fromJson(Map<String, dynamic> json) {
     final rawFields = json['campos'];
     final fields = <String, String>{};
     if (rawFields is Map) {
@@ -149,8 +147,7 @@ class CarreraTrayectoriaSageLaboratorio {
       cursandoInformadas ?? contar(EstadoMateriaSageLaboratorio.cursando);
   int get noRegularizadas =>
       contar(EstadoMateriaSageLaboratorio.noRegularizada);
-  int get sinClasificar =>
-      contar(EstadoMateriaSageLaboratorio.desconocida);
+  int get sinClasificar => contar(EstadoMateriaSageLaboratorio.desconocida);
 
   Map<String, dynamic> toJson() => <String, dynamic>{
     'grid_row_id': gridRowId,
@@ -263,9 +260,7 @@ class TrayectoriaSageLaboratorio {
           ? PerfilTrayectoriaSageLaboratorio.fromJson(
               Map<String, dynamic>.from(rawProfile),
             )
-          : const PerfilTrayectoriaSageLaboratorio(
-              nombre: 'Estudiante SAGE',
-            ),
+          : const PerfilTrayectoriaSageLaboratorio(nombre: 'Estudiante SAGE'),
       carreras: List<CarreraTrayectoriaSageLaboratorio>.unmodifiable(careers),
       capturadaEn:
           DateTime.tryParse((json['capturada_en'] ?? '').toString()) ??

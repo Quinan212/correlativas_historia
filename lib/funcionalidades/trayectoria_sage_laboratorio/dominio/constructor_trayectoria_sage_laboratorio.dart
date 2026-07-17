@@ -70,9 +70,7 @@ class ConstructorTrayectoriaSageLaboratorio {
 
   static PerfilTrayectoriaSageLaboratorio _perfil(PerfilLegajoSage? profile) {
     if (profile == null) {
-      return const PerfilTrayectoriaSageLaboratorio(
-        nombre: 'Estudiante SAGE',
-      );
+      return const PerfilTrayectoriaSageLaboratorio(nombre: 'Estudiante SAGE');
     }
     return PerfilTrayectoriaSageLaboratorio(
       nombre: _extraerNombre(profile),
@@ -100,10 +98,10 @@ class ConstructorTrayectoriaSageLaboratorio {
     }
 
     final names = fieldValue(const ['nombres', 'nombre']);
-    final surname = fieldValue(
-      const ['apellidos', 'apellido'],
-      allowSingleWord: true,
-    );
+    final surname = fieldValue(const [
+      'apellidos',
+      'apellido',
+    ], allowSingleWord: true);
     if (names != null && surname != null && names != surname) {
       return _capitalizar('$names $surname');
     }
@@ -176,7 +174,8 @@ class ConstructorTrayectoriaSageLaboratorio {
       }
     }
     final words = clean.split(' ');
-    final uppercase = clean == clean.toUpperCase() && clean != clean.toLowerCase();
+    final uppercase =
+        clean == clean.toUpperCase() && clean != clean.toLowerCase();
     if (uppercase && words.length >= 2) {
       return _capitalizar('${words.sublist(1).join(' ')} ${words.first}');
     }
