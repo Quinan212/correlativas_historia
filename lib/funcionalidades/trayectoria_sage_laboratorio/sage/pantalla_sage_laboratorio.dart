@@ -61,6 +61,8 @@ class PantallaSageLaboratorio extends StatefulWidget {
     this.cerrarAlCompletar = true,
     this.perfilEsperado,
     this.onSesionCerrada,
+    this.documentoSolicitado,
+    this.onDocumentoDescargado,
   });
 
   final VoidCallback? onClose;
@@ -76,6 +78,8 @@ class PantallaSageLaboratorio extends StatefulWidget {
   final bool cerrarAlCompletar;
   final PerfilTrayectoriaSageLaboratorio? perfilEsperado;
   final VoidCallback? onSesionCerrada;
+  final DocumentoAcademicoSage? documentoSolicitado;
+  final ValueChanged<File>? onDocumentoDescargado;
 
   @override
   State<PantallaSageLaboratorio> createState() =>
@@ -191,16 +195,22 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
       CodigoErrorSincronizacionSage.desconocido;
   bool _automaticSessionReused = false;
   bool _automaticCredentialsSubmittedThisRun = false;
+  bool _automaticDocumentsPreparing = false;
+  bool _automaticDocumentRequestRunning = false;
+  bool _automaticDocumentRequestCompleted = false;
 
-  bool get _automaticMode =>
-      widget.modo == ModoPantallaSageLaboratorio.sincronizacionAutomatica;
+  bool get _automaticMode => widget.modo != ModoPantallaSageLaboratorio.manual;
+  bool get _documentDownloadMode =>
+      widget.modo == ModoPantallaSageLaboratorio.descargaDocumento;
 
   @override
   void initState() {
     super.initState();
     if (_automaticMode) {
       unawaited(_loadAutomaticSyncMetadata());
-      unawaited(_syncStateRepository.registrarIntento());
+      if (!_documentDownloadMode) {
+        unawaited(_syncStateRepository.registrarIntento());
+      }
     }
     if (kDebugMode && Platform.isAndroid) {
       unawaited(AndroidWebViewController.enableDebugging(true));
@@ -279,6 +289,18 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
             _authTransitionCoverVisible &&
             !_logoutBusy) {
           _completeLoginTransitionToPrivate();
+        } else if (_automaticMode &&
+            !isSageLogin &&
+            _automaticCredentialsSubmittedThisRun &&
+            !_logoutBusy) {
+          unawaited(() async {
+            final state = await _readLoginTransitionState();
+            if (!mounted || _logoutBusy) return;
+            if (state['authenticated'] == true ||
+                state['privateShell'] == true) {
+              _completeLoginTransitionToPrivate();
+            }
+          }());
         }
         unawaited(_installNavigationObservers());
         unawaited(_installLoginTransitionObserver());
@@ -462,6 +484,9 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
         PasoSincronizacionSageAutomatica.historial,
       EtapaSincronizacionSageAutomatica.leyendoTrayectoria =>
         PasoSincronizacionSageAutomatica.carreras,
+      EtapaSincronizacionSageAutomatica.preparandoDocumentos ||
+      EtapaSincronizacionSageAutomatica.descargandoDocumento =>
+        PasoSincronizacionSageAutomatica.documentos,
       EtapaSincronizacionSageAutomatica.guardando ||
       EtapaSincronizacionSageAutomatica.completada =>
         PasoSincronizacionSageAutomatica.guardado,
@@ -522,6 +547,22 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
           await _refreshHistory();
         }
         return;
+      case PasoSincronizacionSageAutomatica.documentos:
+        if (_documentDownloadMode) {
+          _automaticDocumentRequestRunning = false;
+          await _tryDownloadRequestedDocument();
+        } else {
+          _automaticDocumentsPreparing = false;
+          final history = _history;
+          if (history != null && history.carreras.isNotEmpty) {
+            final trajectory = ConstructorTrayectoriaSageLaboratorio.construir(
+              historial: history,
+              perfil: _selectedStudentRecord,
+            );
+            await _prepareDocumentsAndCompleteAutomaticSync(trajectory);
+          }
+        }
+        return;
       case PasoSincronizacionSageAutomatica.guardado:
         final trajectory = _history == null
             ? null
@@ -530,7 +571,7 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
                 perfil: _selectedStudentRecord,
               );
         if (trajectory != null && trajectory.listaParaSincronizar) {
-          await _completeAutomaticSync(trajectory);
+          await _prepareDocumentsAndCompleteAutomaticSync(trajectory);
         }
         return;
     }
@@ -761,6 +802,9 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
     _automaticCredentialsBusy = false;
     _automaticProfileMisses = 0;
     _automaticStepAttempts.clear();
+    _automaticDocumentsPreparing = false;
+    _automaticDocumentRequestRunning = false;
+    _automaticDocumentRequestCompleted = false;
     _automaticLastFailedStep = null;
     _automaticRetryAction = null;
     _automaticRetryMessage = null;
@@ -772,9 +816,15 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
       _automaticSessionReused
           ? EtapaSincronizacionSageAutomatica.reanudandoSesion
           : EtapaSincronizacionSageAutomatica.detectandoPerfil,
-      _automaticSessionReused ? 'Sesión activa' : 'Detectando perfil',
+      _automaticSessionReused
+          ? 'Sesión activa'
+          : _documentDownloadMode
+          ? 'Preparando documento'
+          : 'Detectando perfil',
       detalle: _automaticSessionReused
-          ? 'SAGE sigue conectado. Continuando la sincronización…'
+          ? (_documentDownloadMode
+                ? 'SAGE sigue conectado. Buscando el documento…'
+                : 'SAGE sigue conectado. Continuando la sincronización…')
           : 'Buscando el perfil Estudiante…',
       progreso: _automaticSessionReused ? 0.18 : 0.22,
       paso: PasoSincronizacionSageAutomatica.sesion,
@@ -802,6 +852,8 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
     _automaticCredentialsBusy = false;
     _automaticProfileMisses = 0;
     _automaticCompleting = false;
+    _automaticDocumentsPreparing = false;
+    _automaticDocumentRequestRunning = false;
     _navigationAwaitingTransition = false;
     _navigationActionInFlight = null;
     _legajoActionInFlight = null;
@@ -827,13 +879,15 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
     } else {
       _automaticState = state;
     }
-    unawaited(
-      _syncStateRepository.registrarError(
-        codigo: code.clave,
-        mensaje: message,
-        sesionVencida: code == CodigoErrorSincronizacionSage.sesionVencida,
-      ),
-    );
+    if (!_documentDownloadMode) {
+      unawaited(
+        _syncStateRepository.registrarError(
+          codigo: code.clave,
+          mensaje: message,
+          sesionVencida: code == CodigoErrorSincronizacionSage.sesionVencida,
+        ),
+      );
+    }
     widget.onEstadoPreparacion?.call(
       EstadoPreparacionSageLaboratorio(mensaje: message, bloqueado: true),
     );
@@ -855,11 +909,42 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
     _retryLastAutomaticStep();
   }
 
+  Future<bool> _ensureAutomaticLoginDocumentReady() async {
+    if (_loginDocumentReady) return true;
+    final current = Uri.tryParse(await _controller.currentUrl() ?? '');
+    if (!_isLoginUri(current)) {
+      await _controller.loadRequest(_initialUri);
+    }
+    for (var attempt = 0; attempt < 40; attempt++) {
+      if (!mounted || _isClosing) return false;
+      final state = await _readLoginTransitionState();
+      if (state['authenticated'] == true) {
+        _completeLoginTransitionToPrivate();
+        return false;
+      }
+      if (state['loginFormVisible'] == true || state['loginForm'] == true) {
+        if (mounted) setState(() => _loginDocumentReady = true);
+        return true;
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 200));
+    }
+    return false;
+  }
+
   Future<void> _submitAutomaticCredentials(
     String usuario,
     String password,
   ) async {
-    if (!_automaticMode || _automaticCredentialsBusy || !_loginDocumentReady) {
+    if (!_automaticMode || _automaticCredentialsBusy) return;
+    if (!await _ensureAutomaticLoginDocumentReady()) {
+      if (mounted && !_privateSageShellActive) {
+        _failAutomaticSync(
+          'SAGE todavía no mostró el formulario de acceso.',
+          loginAvailable: true,
+          code: CodigoErrorSincronizacionSage.estructuraIncompatible,
+          step: PasoSincronizacionSageAutomatica.sesion,
+        );
+      }
       return;
     }
     final userJson = jsonEncode(usuario.trim());
@@ -1252,6 +1337,12 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
         progreso: 0.80,
       );
       final history = _history;
+      if (_documentDownloadMode &&
+          history != null &&
+          history.carreras.isNotEmpty) {
+        unawaited(_tryDownloadRequestedDocument());
+        return true;
+      }
       if (history != null &&
           history.carreras.isNotEmpty &&
           history.carreras.every((career) => career.materiasCargadas)) {
@@ -1432,7 +1523,8 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
   Future<void> _completeAutomaticSync(
     TrayectoriaSageLaboratorio trajectory,
   ) async {
-    if (!_automaticMode || _automaticCompleting) return;
+    if (!_automaticMode || _documentDownloadMode || _automaticCompleting)
+      return;
     _automaticCompleting = true;
     _automaticFlowActive = false;
     _automaticWatchdog?.cancel();
@@ -1531,8 +1623,22 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
         let privateShell = false;
         let privateHome = false;
         let loginForm = false;
+        let loginFormVisible = false;
         let loginError = false;
         let pathname = '';
+        let authenticatedScore = 0;
+        let documentCount = 0;
+
+        const visible = node => {
+          if (!node || !node.isConnected) return false;
+          const style = node.ownerDocument?.defaultView?.getComputedStyle(node);
+          if (style && (style.display === 'none' ||
+              style.visibility === 'hidden' || style.opacity === '0')) {
+            return false;
+          }
+          const rect = node.getBoundingClientRect?.();
+          return !rect || (rect.width > 0 && rect.height > 0);
+        };
 
         const visit = win => {
           if (!win || seen.has(win)) return;
@@ -1545,52 +1651,66 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
           } catch (_) {
             return;
           }
+          documentCount += 1;
 
           const path = String(win.location.pathname || '').toLowerCase();
           const body = normalize(doc.body?.innerText || '');
+          const isLoginPath = path === '/login' || path.startsWith('/login/');
+          const passwordInputs = [...doc.querySelectorAll('input[type="password"]')];
+          const visiblePassword = passwordInputs.find(visible) || null;
 
-          if (path.startsWith('/pregase/')) {
+          if (passwordInputs.length > 0) loginForm = true;
+          if (visiblePassword) loginFormVisible = true;
+
+          if (path.startsWith('/pregase/') && !isLoginPath) {
             privateShell = true;
+            authenticatedScore += 5;
           }
 
           if (path === '/pregase/menuprincipal_nuevo.php') {
             privateHome = true;
+            authenticatedScore += 4;
           }
 
-          if (doc.querySelector(
-            'button.btn.btn-user,iframe#Main,button.menuItem,button.menuItemMobile'
-          )) {
+          const mainFrame = doc.querySelector('iframe#Main');
+          const profileControl = doc.querySelector(
+            'button.btn.btn-user,[data-bs-toggle="dropdown"],'
+            + 'button.menuItem,button.menuItemMobile'
+          );
+          const logoutControl = [...doc.querySelectorAll('a,button,[onclick]')]
+            .find(node => /cerrar sesion|salir|logout/.test(normalize(node.textContent)));
+
+          if (mainFrame) {
             privateShell = true;
+            authenticatedScore += 4;
+          }
+          if (profileControl) {
+            privateShell = true;
+            authenticatedScore += 3;
+          }
+          if (logoutControl) {
+            privateShell = true;
+            authenticatedScore += 3;
           }
 
           if (body.includes('l.u.a.') ||
               body.includes('l.u.p.') ||
               body.includes('legajo unico alumno') ||
-              body.includes('legajo unico personal')) {
+              body.includes('legajo unico personal') ||
+              body.includes('seleccionar perfil')) {
             privateShell = true;
+            authenticatedScore += 3;
           }
 
-          if (path === '/login' || path.startsWith('/login/')) {
-            loginForm = Boolean(
-              doc.querySelector(
-                'form input[type="password"],input[type="password"]'
-              )
-            );
+          if (isLoginPath) {
             const errorNodes = [...doc.querySelectorAll(
               '.alert-danger,.invalid-feedback,[role="alert"],'
               + '.text-danger,.error,.login-error'
             )];
             loginError = errorNodes.some(node => {
-              const style = doc.defaultView?.getComputedStyle(node);
-              if (style &&
-                  (style.display === 'none' ||
-                   style.visibility === 'hidden' ||
-                   style.opacity === '0')) {
-                return false;
-              }
-              const rect = node.getBoundingClientRect?.();
-              const hasArea = !rect || (rect.width > 0 && rect.height > 0);
-              return hasArea && normalize(node.textContent).length > 0;
+              const text = normalize(node.textContent);
+              return visible(node) && text.length > 0 &&
+                /(incorrect|inval|error|usuario|contrasena|clave|credencial)/.test(text);
             });
           }
 
@@ -1600,13 +1720,19 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
         };
 
         visit(window);
+        const authenticated = privateShell ||
+          (authenticatedScore >= 4 && !loginFormVisible);
 
         return JSON.stringify({
           privateShell,
           privateHome,
+          authenticated,
+          authenticatedScore,
           loginForm,
-          loginError,
+          loginFormVisible,
+          loginError: loginError && loginFormVisible && !authenticated,
           pathname,
+          documentCount,
           readyState: String(document.readyState || ''),
         });
       })()''');
@@ -1623,9 +1749,13 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
     return const {
       'privateShell': false,
       'privateHome': false,
+      'authenticated': false,
+      'authenticatedScore': 0,
       'loginForm': false,
+      'loginFormVisible': false,
       'loginError': false,
       'pathname': '',
+      'documentCount': 0,
       'readyState': '',
     };
   }
@@ -1677,7 +1807,7 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
       return;
     }
 
-    if (state['privateShell'] == true) {
+    if (state['authenticated'] == true || state['privateShell'] == true) {
       _completeLoginTransitionToPrivate();
       return;
     }
@@ -1701,7 +1831,7 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
         ? Duration.zero
         : DateTime.now().difference(startedAt);
 
-    if (elapsed >= const Duration(seconds: 24)) {
+    if (elapsed >= const Duration(seconds: 30)) {
       _cancelLoginTransitionWatchdog();
       setState(() {
         _authTransitionCoverVisible = false;
@@ -1715,7 +1845,8 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
       if (_automaticMode) {
         _failAutomaticSync(
           'SAGE no confirmó el inicio de sesión. Intentá nuevamente.',
-          loginAvailable: state['loginForm'] == true,
+          loginAvailable:
+              state['loginFormVisible'] == true || state['loginForm'] == true,
           code: CodigoErrorSincronizacionSage.tiempoAgotado,
           step: PasoSincronizacionSageAutomatica.sesion,
         );
@@ -1735,6 +1866,8 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
           '[SAGE visual] login_timeout=true; '
           'pathname=${state['pathname']}; '
           'login_form=${state['loginForm']}; '
+          'login_form_visible=${state['loginFormVisible']}; '
+          'authenticated_score=${state['authenticatedScore']}; '
           'ready_state=${state['readyState']}',
         );
       }
@@ -3477,6 +3610,9 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
       _automaticCredentialsBusy = false;
       _automaticProfileMisses = 0;
       _automaticCompleting = false;
+      _automaticDocumentsPreparing = false;
+      _automaticDocumentRequestRunning = false;
+      _automaticDocumentRequestCompleted = false;
       _automaticSessionReused = false;
       _automaticStepAttempts.clear();
       _automaticState = const EstadoSincronizacionSageAutomatica(
@@ -3943,12 +4079,17 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
             careers.isNotEmpty) {
           _reportPreparation(
             EstadoPreparacionSageLaboratorio(
-              mensaje:
-                  'Historial detectado. Preparando ${careers.length} carrera(s)…',
+              mensaje: _documentDownloadMode
+                  ? 'Historial detectado. Preparando el documento…'
+                  : 'Historial detectado. Preparando ${careers.length} carrera(s)…',
               progreso: 0,
             ),
           );
-          unawaited(_autoLoadAllCareers(careers));
+          if (_documentDownloadMode) {
+            unawaited(_tryDownloadRequestedDocument());
+          } else {
+            unawaited(_autoLoadAllCareers(careers));
+          }
         }
       } else if (!_nativeHistoryVisible &&
           result.estado != EstadoHistorialSage.esperandoPagina) {
@@ -4499,9 +4640,14 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
   }
 
   Future<void> _activateEscolarOption(OpcionEscolarSage option) async {
+    final normalizedTitle = normalizarLegajoSage(option.titulo);
     final isHistory =
         option.clave == 'nivel_superior_historial' ||
-        normalizarLegajoSage(option.titulo) == 'nivel superior - historial';
+        option.clave == 'historial_del_alumnado' ||
+        normalizedTitle == 'nivel superior - historial' ||
+        normalizedTitle == 'historial del alumnado' ||
+        (normalizedTitle.contains('nivel superior') &&
+            normalizedTitle.contains('historial'));
     if (!isHistory) {
       _showUnavailableFeature(option.titulo);
       return;
@@ -4723,6 +4869,183 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
     }
   }
 
+  Future<List<DocumentoAcademicoSage>> _detectAcademicDocuments(
+    HistorialNivelSuperiorSage history,
+  ) async {
+    final documents = <DocumentoAcademicoSage>[];
+    for (var index = 0; index < history.carreras.length; index++) {
+      if (!mounted || _isClosing) break;
+      final career = history.carreras[index];
+      _setAutomaticState(
+        EtapaSincronizacionSageAutomatica.preparandoDocumentos,
+        'Preparando documentos',
+        detalle:
+            'Revisando ${career.nombre} (${index + 1}/${history.carreras.length})…',
+        progreso: 0.94 + ((index + 1) / history.carreras.length) * 0.035,
+        paso: PasoSincronizacionSageAutomatica.documentos,
+      );
+      try {
+        final prepared = await _historialController.asegurarSubgrillaLista(
+          _evaluateJavascript,
+          career,
+          reportTitle:
+              TipoDocumentoAcademicoSage.situacionAcademica.tituloReporte,
+          restoreOriginal: false,
+          timeout: const Duration(seconds: 8),
+        );
+        if (prepared.estado != EstadoSubgrillaSage.expandedReady) continue;
+        void add(TipoDocumentoAcademicoSage type, bool available) {
+          if (!available) return;
+          documents.add(
+            DocumentoAcademicoSage(
+              tipo: type,
+              gridRowId: career.gridRowId,
+              careerKey: career.careerKey,
+              carrera: career.nombre,
+              institucion: career.institucion,
+            ),
+          );
+        }
+
+        add(
+          TipoDocumentoAcademicoSage.situacionAcademica,
+          prepared.academicButtonFound,
+        );
+        add(
+          TipoDocumentoAcademicoSage.analitico,
+          prepared.transcriptButtonFound,
+        );
+        add(TipoDocumentoAcademicoSage.libreta, prepared.recordButtonFound);
+      } catch (_) {
+        // Los documentos son complementarios; la trayectoria se guarda igual.
+      }
+    }
+    return List<DocumentoAcademicoSage>.unmodifiable(documents);
+  }
+
+  Future<void> _prepareDocumentsAndCompleteAutomaticSync(
+    TrayectoriaSageLaboratorio trajectory,
+  ) async {
+    if (_automaticDocumentsPreparing || _automaticCompleting) return;
+    _automaticDocumentsPreparing = true;
+    try {
+      final history = _history;
+      final documents = history == null
+          ? const <DocumentoAcademicoSage>[]
+          : await _detectAcademicDocuments(history);
+      await _completeAutomaticSync(trajectory.conDocumentos(documents));
+    } finally {
+      _automaticDocumentsPreparing = false;
+    }
+  }
+
+  CarreraHistorialSage? _requestedDocumentCareer() {
+    final request = widget.documentoSolicitado;
+    final history = _history;
+    if (request == null || history == null) return null;
+    final requestedKey = request.careerKey.trim().toLowerCase();
+    for (final career in history.carreras) {
+      if (requestedKey.isNotEmpty &&
+          career.careerKey.trim().isNotEmpty &&
+          career.careerKey.trim().toLowerCase() == requestedKey) {
+        return career;
+      }
+      if (request.gridRowId.trim().isNotEmpty &&
+          career.gridRowId.trim() == request.gridRowId.trim()) {
+        return career;
+      }
+      if (career.nombre.trim().toLowerCase() ==
+              request.carrera.trim().toLowerCase() &&
+          career.institucion.trim().toLowerCase() ==
+              request.institucion.trim().toLowerCase()) {
+        return career;
+      }
+    }
+    return null;
+  }
+
+  Future<void> _tryDownloadRequestedDocument() async {
+    if (!_documentDownloadMode ||
+        _automaticDocumentRequestRunning ||
+        _automaticDocumentRequestCompleted ||
+        _automaticCompleting ||
+        !mounted) {
+      return;
+    }
+    final request = widget.documentoSolicitado;
+    if (request == null) {
+      _failAutomaticSync(
+        'No se indicó qué documento debe descargarse.',
+        code: CodigoErrorSincronizacionSage.documentoNoDisponible,
+        step: PasoSincronizacionSageAutomatica.documentos,
+        permiteReintentar: false,
+      );
+      return;
+    }
+    final career = _requestedDocumentCareer();
+    if (career == null) {
+      _failAutomaticSync(
+        'SAGE no encontró la carrera asociada al documento.',
+        code: CodigoErrorSincronizacionSage.documentoNoDisponible,
+        step: PasoSincronizacionSageAutomatica.documentos,
+      );
+      return;
+    }
+
+    _automaticDocumentRequestRunning = true;
+    _automaticWatchdog?.cancel();
+    _automaticRetryTimer?.cancel();
+    _setAutomaticState(
+      EtapaSincronizacionSageAutomatica.descargandoDocumento,
+      'Preparando ${request.tipo.etiqueta}',
+      detalle: request.carrera.trim().isEmpty
+          ? 'Generando el PDF desde SAGE…'
+          : 'Generando el PDF de ${request.carrera}…',
+      progreso: 0.94,
+      paso: PasoSincronizacionSageAutomatica.documentos,
+    );
+    try {
+      final file = await _openHistoryReport(
+        career,
+        request.tipo.tituloReporte,
+        silent: true,
+      );
+      if (file == null) {
+        throw const ErrorSincronizacionSageAutomatica(
+          'SAGE no pudo generar el documento solicitado.',
+          codigo: CodigoErrorSincronizacionSage.descargaDocumento,
+        );
+      }
+      _automaticDocumentRequestCompleted = true;
+      widget.onDocumentoDescargado?.call(file);
+      _setAutomaticState(
+        EtapaSincronizacionSageAutomatica.completada,
+        'Documento descargado',
+        detalle: request.tipo.etiqueta,
+        progreso: 1,
+        paso: PasoSincronizacionSageAutomatica.documentos,
+      );
+      await Future<void>.delayed(const Duration(milliseconds: 450));
+      if (mounted && widget.cerrarAlCompletar) _exitSageToAppHome();
+    } catch (error) {
+      _scheduleAutomaticStepRetry(
+        step: PasoSincronizacionSageAutomatica.documentos,
+        message: error is ErrorSincronizacionSageAutomatica
+            ? error.mensaje
+            : 'No se pudo descargar el documento de SAGE.',
+        code: error is ErrorSincronizacionSageAutomatica
+            ? error.codigo
+            : CodigoErrorSincronizacionSage.descargaDocumento,
+        action: () async {
+          _automaticDocumentRequestRunning = false;
+          await _tryDownloadRequestedDocument();
+        },
+      );
+    } finally {
+      _automaticDocumentRequestRunning = false;
+    }
+  }
+
   void _emitTrajectoryIfReady() {
     if (!mounted || _effectiveProfile != PerfilSage.alumnos) return;
     final history = _history;
@@ -4751,8 +5074,12 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
         .join('||');
     if (_lastTrajectorySignature == signature) return;
     _lastTrajectorySignature = signature;
+    if (_documentDownloadMode) {
+      unawaited(_tryDownloadRequestedDocument());
+      return;
+    }
     if (_automaticMode) {
-      unawaited(_completeAutomaticSync(trajectory));
+      unawaited(_prepareDocumentsAndCompleteAutomaticSync(trajectory));
       return;
     }
     widget.onTrayectoriaLista?.call(trajectory);
@@ -4810,7 +5137,11 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
         _historyState = effectiveState;
       });
       if (result.historial?.carreras.isNotEmpty ?? false) {
-        unawaited(_autoLoadAllCareers(result.historial!.carreras));
+        if (_documentDownloadMode) {
+          unawaited(_tryDownloadRequestedDocument());
+        } else {
+          unawaited(_autoLoadAllCareers(result.historial!.carreras));
+        }
       }
     } catch (_) {
       if (mounted) setState(() => _historyState = EstadoHistorialSage.error);
@@ -4896,27 +5227,30 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
     }
   }
 
-  Future<void> _openHistoryReport(
+  Future<File?> _openHistoryReport(
     CarreraHistorialSage career,
-    String title,
-  ) async {
-    if (_reportInFlight) return;
+    String title, {
+    bool silent = false,
+  }) async {
+    if (_reportInFlight) return null;
     if (_historyState == EstadoHistorialSage.cargandoCarreras) {
-      if (mounted) {
+      if (mounted && !silent) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Esperá a que termine la actualización.'),
           ),
         );
       }
-      return;
+      return null;
     }
     setState(() => _reportInFlight = true);
     final pending = Completer<Uri>();
     _pendingReportUrl = pending;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Preparando reporte…')));
+    if (!silent) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Preparando reporte…')));
+    }
     try {
       await _installReportBridge();
       await _installReportDiagnostics();
@@ -4934,37 +5268,36 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
           'report_click_dispatched=${report.estado == EstadoReporteSage.iniciado}; '
           'state=${report.estado.name}',
         );
-        debugPrint('[SAGE report] button_found=${report.reportButtonFound}');
-        debugPrint('[SAGE report] inline_onclick=${report.inlineOnclick}');
-        debugPrint('[SAGE report] jquery_handlers=${report.jqueryHandlers}');
-        debugPrint('[SAGE report] bridge_patched=${report.bridgePatched}');
-        debugPrint(
-          '[SAGE report] function_owner=${report.functionOwner ?? 'missing'}',
-        );
-        debugPrint(
-          '[SAGE report] click_dispatched=${report.estado == EstadoReporteSage.iniciado}',
-        );
       }
       if (report.estado == EstadoReporteSage.iniciado) {
         try {
-          final uri = await pending.future.timeout(const Duration(seconds: 5));
-          await _procesarDescargaWeb(uri: uri);
-          if (kDebugMode) debugPrint('[SAGE report V3] download_started=true');
+          final uri = await pending.future.timeout(const Duration(seconds: 8));
+          final file = await _procesarDescargaWeb(
+            uri: uri,
+            abrirAlCompletar: true,
+          );
+          if (kDebugMode && file != null) {
+            debugPrint('[SAGE report V3] download_started=true');
+          }
+          return file;
         } on TimeoutException {
           if (kDebugMode) debugPrint('[SAGE report] timeout=true');
-          if (mounted) {
+          if (mounted && !silent) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('SAGE no generó el enlace del reporte.'),
               ),
             );
           }
+          return null;
         }
-      } else if (mounted) {
+      }
+      if (mounted && !silent) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(_reportErrorMessage(report.estado))),
         );
       }
+      return null;
     } finally {
       if (identical(_pendingReportUrl, pending)) _pendingReportUrl = null;
       if (mounted) setState(() => _reportInFlight = false);
@@ -5437,7 +5770,9 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
           historial: _history,
           estado: _historyState,
           onExpandCareer: _expandHistoryCareer,
-          onReport: _openHistoryReport,
+          onReport: (career, title) async {
+            await _openHistoryReport(career, title);
+          },
           onRefresh: _refreshHistory,
           onShowOriginal: _showOriginalHistory,
           onBack: _handleBack,
@@ -5575,47 +5910,49 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
     }
   }
 
-  Future<void> _procesarDescargaWeb({
+  Future<File?> _procesarDescargaWeb({
     required Uri uri,
     String? userAgent,
     String? contentDisposition,
     String? mimeType,
     int? contentLength,
+    bool abrirAlCompletar = true,
   }) async {
-    if (!_canStayInWebView(uri) || !_isPdfDownloadUri(uri)) return;
+    if (!_canStayInWebView(uri) || !_isPdfDownloadUri(uri)) return null;
     final now = DateTime.now();
     if (_activeDownloadUri == uri &&
         _activeDownloadStartedAt != null &&
         now.difference(_activeDownloadStartedAt!) <
             const Duration(seconds: 5)) {
-      return;
+      return null;
     }
 
     _activeDownloadUri = uri;
     _activeDownloadStartedAt = now;
     _navigationProgress.value = 100;
     _mainFrameError.value = null;
-    final task = _downloadPdf(
-      uri,
-      userAgentHint: userAgent,
-      contentDispositionHint: contentDisposition,
-      mimeTypeHint: mimeType,
-      contentLengthHint: contentLength,
-    );
     try {
-      await task;
+      return await _downloadPdf(
+        uri,
+        userAgentHint: userAgent,
+        contentDispositionHint: contentDisposition,
+        mimeTypeHint: mimeType,
+        contentLengthHint: contentLength,
+        abrirAlCompletar: abrirAlCompletar,
+      );
     } finally {
       _activeDownloadUri = null;
       _activeDownloadStartedAt = null;
     }
   }
 
-  Future<void> _downloadPdf(
+  Future<File?> _downloadPdf(
     Uri initialUri, {
     String? userAgentHint,
     String? contentDispositionHint,
     String? mimeTypeHint,
     int? contentLengthHint,
+    bool abrirAlCompletar = true,
   }) async {
     _downloadState.value = const _DownloadState.downloading();
     try {
@@ -5679,13 +6016,15 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
 
       final savedFile = await temporaryFile.rename(file.path);
       _downloadState.value = _DownloadState.completed(savedFile);
-      if (mounted) {
+      if (mounted && abrirAlCompletar) {
         await _openPdfViewer(savedFile);
       }
+      return savedFile;
     } catch (_) {
       _showDownloadFailure(
         'No se pudo descargar el documento. Verificá la sesión de SAGE e intentá nuevamente.',
       );
+      return null;
     }
   }
 

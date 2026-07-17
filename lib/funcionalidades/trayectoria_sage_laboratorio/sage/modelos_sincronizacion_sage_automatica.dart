@@ -1,6 +1,10 @@
 import '../modelos/modelos_trayectoria_sage_laboratorio.dart';
 
-enum ModoPantallaSageLaboratorio { manual, sincronizacionAutomatica }
+enum ModoPantallaSageLaboratorio {
+  manual,
+  sincronizacionAutomatica,
+  descargaDocumento,
+}
 
 enum EtapaSincronizacionSageAutomatica {
   preparando,
@@ -15,6 +19,8 @@ enum EtapaSincronizacionSageAutomatica {
   abriendoEscolares,
   abriendoHistorial,
   leyendoTrayectoria,
+  preparandoDocumentos,
+  descargandoDocumento,
   reintentandoPaso,
   guardando,
   completada,
@@ -28,6 +34,7 @@ enum PasoSincronizacionSageAutomatica {
   escolares,
   historial,
   carreras,
+  documentos,
   guardado,
 }
 
@@ -47,6 +54,8 @@ enum CodigoErrorSincronizacionSage {
   lecturaCarrera,
   estructuraIncompatible,
   guardadoLocal,
+  documentoNoDisponible,
+  descargaDocumento,
   tiempoAgotado,
   cancelada,
   desconocido,
@@ -69,6 +78,8 @@ extension CodigoErrorSincronizacionSageX on CodigoErrorSincronizacionSage {
     CodigoErrorSincronizacionSage.lecturaCarrera => 'SAGE-CARRERA',
     CodigoErrorSincronizacionSage.estructuraIncompatible => 'SAGE-ESTRUCTURA',
     CodigoErrorSincronizacionSage.guardadoLocal => 'SAGE-GUARDADO',
+    CodigoErrorSincronizacionSage.documentoNoDisponible => 'SAGE-DOC-01',
+    CodigoErrorSincronizacionSage.descargaDocumento => 'SAGE-DOC-02',
     CodigoErrorSincronizacionSage.tiempoAgotado => 'SAGE-TIEMPO',
     CodigoErrorSincronizacionSage.cancelada => 'SAGE-CANCELADA',
     CodigoErrorSincronizacionSage.desconocido => 'SAGE-DESCONOCIDO',

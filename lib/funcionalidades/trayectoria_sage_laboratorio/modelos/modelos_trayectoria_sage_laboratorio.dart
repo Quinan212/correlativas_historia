@@ -34,6 +34,88 @@ extension EstadoMateriaSageLaboratorioX on EstadoMateriaSageLaboratorio {
   }
 }
 
+enum TipoDocumentoAcademicoSage { situacionAcademica, analitico, libreta }
+
+extension TipoDocumentoAcademicoSageX on TipoDocumentoAcademicoSage {
+  String get clave => switch (this) {
+    TipoDocumentoAcademicoSage.situacionAcademica => 'situacion_academica',
+    TipoDocumentoAcademicoSage.analitico => 'analitico',
+    TipoDocumentoAcademicoSage.libreta => 'libreta',
+  };
+
+  String get etiqueta => switch (this) {
+    TipoDocumentoAcademicoSage.situacionAcademica => 'Situación académica',
+    TipoDocumentoAcademicoSage.analitico => 'Analítico',
+    TipoDocumentoAcademicoSage.libreta => 'Libreta',
+  };
+
+  String get tituloReporte => switch (this) {
+    TipoDocumentoAcademicoSage.situacionAcademica =>
+      'Imprimir la Situación Académica del alumno en la carrera',
+    TipoDocumentoAcademicoSage.analitico =>
+      'Imprimir listado de materias aprobadas',
+    TipoDocumentoAcademicoSage.libreta => 'Imprimir libreta de calificaciones',
+  };
+
+  static TipoDocumentoAcademicoSage? desdeClave(String value) {
+    return switch (value.trim().toLowerCase()) {
+      'situacion_academica' => TipoDocumentoAcademicoSage.situacionAcademica,
+      'analitico' => TipoDocumentoAcademicoSage.analitico,
+      'libreta' => TipoDocumentoAcademicoSage.libreta,
+      _ => null,
+    };
+  }
+}
+
+class DocumentoAcademicoSage {
+  const DocumentoAcademicoSage({
+    required this.tipo,
+    required this.gridRowId,
+    required this.careerKey,
+    required this.carrera,
+    required this.institucion,
+    this.disponible = true,
+  });
+
+  final TipoDocumentoAcademicoSage tipo;
+  final String gridRowId;
+  final String careerKey;
+  final String carrera;
+  final String institucion;
+  final bool disponible;
+
+  String get identidadCarrera => careerKey.trim().isNotEmpty
+      ? careerKey.trim().toLowerCase()
+      : <String>[
+          carrera.trim().toLowerCase(),
+          institucion.trim().toLowerCase(),
+        ].join('|');
+
+  Map<String, dynamic> toJson() => <String, dynamic>{
+    'tipo': tipo.clave,
+    'grid_row_id': gridRowId,
+    'career_key': careerKey,
+    'carrera': carrera,
+    'institucion': institucion,
+    'disponible': disponible,
+  };
+
+  factory DocumentoAcademicoSage.fromJson(Map<String, dynamic> json) {
+    return DocumentoAcademicoSage(
+      tipo:
+          TipoDocumentoAcademicoSageX.desdeClave(
+            (json['tipo'] ?? '').toString(),
+          ) ??
+          TipoDocumentoAcademicoSage.analitico,
+      gridRowId: (json['grid_row_id'] ?? '').toString(),
+      careerKey: (json['career_key'] ?? '').toString(),
+      carrera: (json['carrera'] ?? '').toString(),
+      institucion: (json['institucion'] ?? '').toString(),
+      disponible: json['disponible'] != false,
+    );
+  }
+}
+
 class PerfilTrayectoriaSageLaboratorio {
   const PerfilTrayectoriaSageLaboratorio({
     required this.nombre,
@@ -205,12 +287,14 @@ class TrayectoriaSageLaboratorio {
     required this.carreras,
     required this.capturadaEn,
     this.sincronizadaEn,
-    this.versionEsquema = 1,
+    this.documentos = const <DocumentoAcademicoSage>[],
+    this.versionEsquema = 2,
   });
 
   final int versionEsquema;
   final PerfilTrayectoriaSageLaboratorio perfil;
   final List<CarreraTrayectoriaSageLaboratorio> carreras;
+  final List<DocumentoAcademicoSage> documentos;
   final DateTime capturadaEn;
   final DateTime? sincronizadaEn;
 
@@ -226,15 +310,52 @@ class TrayectoriaSageLaboratorio {
       versionEsquema: versionEsquema,
       perfil: perfil,
       carreras: carreras,
+      documentos: documentos,
       capturadaEn: capturadaEn,
       sincronizadaEn: instant,
     );
+  }
+
+  TrayectoriaSageLaboratorio conDocumentos(
+    List<DocumentoAcademicoSage> nuevosDocumentos,
+  ) {
+    return TrayectoriaSageLaboratorio(
+      versionEsquema: versionEsquema < 2 ? 2 : versionEsquema,
+      perfil: perfil,
+      carreras: carreras,
+      documentos: List<DocumentoAcademicoSage>.unmodifiable(nuevosDocumentos),
+      capturadaEn: capturadaEn,
+      sincronizadaEn: sincronizadaEn,
+    );
+  }
+
+  List<DocumentoAcademicoSage> documentosDeCarrera(
+    CarreraTrayectoriaSageLaboratorio carrera,
+  ) {
+    final structural = carrera.careerKey.trim().toLowerCase();
+    return documentos
+        .where((documento) {
+          if (!documento.disponible) return false;
+          if (structural.isNotEmpty && documento.careerKey.trim().isNotEmpty) {
+            return documento.careerKey.trim().toLowerCase() == structural;
+          }
+          if (documento.gridRowId.trim().isNotEmpty &&
+              carrera.gridRowId.trim().isNotEmpty) {
+            return documento.gridRowId.trim() == carrera.gridRowId.trim();
+          }
+          return documento.carrera.trim().toLowerCase() ==
+                  carrera.nombre.trim().toLowerCase() &&
+              documento.institucion.trim().toLowerCase() ==
+                  carrera.institucion.trim().toLowerCase();
+        })
+        .toList(growable: false);
   }
 
   Map<String, dynamic> toJson() => <String, dynamic>{
     'version_esquema': versionEsquema,
     'perfil': perfil.toJson(),
     'carreras': carreras.map((carrera) => carrera.toJson()).toList(),
+    'documentos': documentos.map((documento) => documento.toJson()).toList(),
     'capturada_en': capturadaEn.toIso8601String(),
     'sincronizada_en': sincronizadaEn?.toIso8601String(),
   };
@@ -253,6 +374,17 @@ class TrayectoriaSageLaboratorio {
         }
       }
     }
+    final rawDocuments = json['documentos'];
+    final documents = <DocumentoAcademicoSage>[];
+    if (rawDocuments is List) {
+      for (final item in rawDocuments) {
+        if (item is Map) {
+          documents.add(
+            DocumentoAcademicoSage.fromJson(Map<String, dynamic>.from(item)),
+          );
+        }
+      }
+    }
     final rawProfile = json['perfil'];
     return TrayectoriaSageLaboratorio(
       versionEsquema: _nullableInt(json['version_esquema']) ?? 1,
@@ -262,6 +394,7 @@ class TrayectoriaSageLaboratorio {
             )
           : const PerfilTrayectoriaSageLaboratorio(nombre: 'Estudiante SAGE'),
       carreras: List<CarreraTrayectoriaSageLaboratorio>.unmodifiable(careers),
+      documentos: List<DocumentoAcademicoSage>.unmodifiable(documents),
       capturadaEn:
           DateTime.tryParse((json['capturada_en'] ?? '').toString()) ??
           DateTime.fromMillisecondsSinceEpoch(0),

@@ -42,8 +42,12 @@ class _PantallaSincronizacionSageAutomaticaState
     super.dispose();
   }
 
+  bool get _puedeEnviarCredenciales =>
+      !widget.procesandoCredenciales &&
+      (widget.loginDisponible || widget.estado.solicitaCredenciales);
+
   Future<void> _submit() async {
-    if (widget.procesandoCredenciales || !widget.loginDisponible) return;
+    if (!_puedeEnviarCredenciales) return;
     if (_formKey.currentState?.validate() != true) return;
     TextInput.finishAutofillContext();
     final usuario = _usuarioController.text.trim();
@@ -187,10 +191,7 @@ class _PantallaSincronizacionSageAutomaticaState
             ),
             const SizedBox(height: 20),
             FilledButton.icon(
-              onPressed:
-                  widget.procesandoCredenciales || !widget.loginDisponible
-                  ? null
-                  : _submit,
+              onPressed: _puedeEnviarCredenciales ? _submit : null,
               icon: widget.procesandoCredenciales
                   ? const SizedBox.square(
                       dimension: 18,

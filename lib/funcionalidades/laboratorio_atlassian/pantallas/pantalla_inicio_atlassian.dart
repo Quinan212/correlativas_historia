@@ -297,6 +297,48 @@ class _PantallaInicioAtlassianState extends State<PantallaInicioAtlassian> {
     }
   }
 
+  Future<void> _openAcademicDocument(DocumentoAcademicoSage document) async {
+    if (_saving || _sageFlowOpen) return;
+    setState(() {
+      _sageFlowOpen = true;
+      _preparation = EstadoPreparacionSageLaboratorio(
+        mensaje: 'Preparando ${document.tipo.etiqueta}',
+      );
+    });
+    final atlassianTheme = temaLaboratorioAtlassian(context);
+    try {
+      await Navigator.of(context, rootNavigator: true).push<void>(
+        rutaAtlassian<void>(
+          builder: (sageContext) => PantallaSageLaboratorio(
+            onClose: () => Navigator.of(sageContext).pop(),
+            themeOverride: atlassianTheme,
+            appBarBackground: atlassianTheme.colorScheme.surface,
+            appBarForeground: atlassianTheme.colorScheme.onSurface,
+            title: document.tipo.etiqueta,
+            modo: ModoPantallaSageLaboratorio.descargaDocumento,
+            documentoSolicitado: document,
+            perfilEsperado: widget.trajectoryListenable.value?.perfil,
+            onDocumentoDescargado: (_) {
+              if (!mounted) return;
+              setState(() {
+                _preparation = EstadoPreparacionSageLaboratorio(
+                  mensaje: '${document.tipo.etiqueta} descargado',
+                  progreso: 1,
+                );
+              });
+            },
+            onEstadoPreparacion: (status) {
+              if (!mounted) return;
+              setState(() => _preparation = status);
+            },
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _sageFlowOpen = false);
+    }
+  }
+
   Future<void> _sync() async {
     if (_saving || _sageFlowOpen) return;
     final draft = _draft;
@@ -528,6 +570,16 @@ class _PantallaInicioAtlassianState extends State<PantallaInicioAtlassian> {
                           career: career,
                           onOpenAll: () => widget.onNavigate(3),
                         ),
+                        if (trajectory
+                            .documentosDeCarrera(career)
+                            .isNotEmpty) ...[
+                          const SizedBox(height: 22),
+                          _DocumentosAcademicosAtlassian(
+                            documentos: trajectory.documentosDeCarrera(career),
+                            busy: _sageFlowOpen || _saving,
+                            onOpen: _openAcademicDocument,
+                          ),
+                        ],
                       ],
                     ],
                   ),
@@ -1217,6 +1269,65 @@ class _MateriasRecientesAtlassian extends StatelessWidget {
       ],
     );
   }
+}
+
+class _DocumentosAcademicosAtlassian extends StatelessWidget {
+  const _DocumentosAcademicosAtlassian({
+    required this.documentos,
+    required this.busy,
+    required this.onOpen,
+  });
+
+  final List<DocumentoAcademicoSage> documentos;
+  final bool busy;
+  final ValueChanged<DocumentoAcademicoSage> onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    final ordered = <DocumentoAcademicoSage>[
+      for (final type in TipoDocumentoAcademicoSage.values)
+        ...documentos.where((documento) => documento.tipo == type),
+    ];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const SeparadorTituloAtlassian(title: 'Documentos académicos'),
+        const SizedBox(height: 8),
+        PanelAtlassian(
+          padding: EdgeInsets.zero,
+          child: Column(
+            children: [
+              for (var index = 0; index < ordered.length; index++) ...[
+                ListTile(
+                  enabled: !busy,
+                  leading: Icon(
+                    _documentIcon(ordered[index].tipo),
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  title: Text(ordered[index].tipo.etiqueta),
+                  trailing: busy
+                      ? const SizedBox.square(
+                          dimension: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.download_rounded),
+                  onTap: busy ? null : () => onOpen(ordered[index]),
+                ),
+                if (index != ordered.length - 1) const Divider(height: 1),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  IconData _documentIcon(TipoDocumentoAcademicoSage type) => switch (type) {
+    TipoDocumentoAcademicoSage.situacionAcademica =>
+      Icons.assignment_ind_outlined,
+    TipoDocumentoAcademicoSage.analitico => Icons.fact_check_outlined,
+    TipoDocumentoAcademicoSage.libreta => Icons.menu_book_outlined,
+  };
 }
 
 class _PanelConexionAtlassian extends StatelessWidget {

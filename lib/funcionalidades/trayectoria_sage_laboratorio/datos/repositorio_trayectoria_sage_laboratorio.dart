@@ -78,9 +78,27 @@ class RepositorioTrayectoriaSageLaboratorio {
       versionEsquema: draft.versionEsquema,
       perfil: draft.perfil,
       carreras: List<CarreraTrayectoriaSageLaboratorio>.unmodifiable(careers),
+      documentos: _normalizarDocumentos(draft.documentos),
       capturadaEn: draft.capturadaEn,
       sincronizadaEn: draft.sincronizadaEn,
     );
+  }
+
+  List<DocumentoAcademicoSage> _normalizarDocumentos(
+    List<DocumentoAcademicoSage> documentos,
+  ) {
+    final result = <DocumentoAcademicoSage>[];
+    final seen = <String>{};
+    for (final documento in documentos) {
+      if (!documento.disponible) continue;
+      final key = <String>[
+        documento.identidadCarrera,
+        documento.tipo.clave,
+      ].join('|');
+      if (!seen.add(key)) continue;
+      result.add(documento);
+    }
+    return List<DocumentoAcademicoSage>.unmodifiable(result);
   }
 
   CarreraTrayectoriaSageLaboratorio _normalizarCarrera(
