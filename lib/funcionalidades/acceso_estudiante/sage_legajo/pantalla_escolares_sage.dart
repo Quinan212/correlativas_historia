@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../trayectoria_sage_laboratorio/sage/estilo_visual_sage.dart';
+
 import '../sage_navegacion/lista_opciones_sage.dart';
 import 'modelos_legajo_sage.dart';
 
@@ -45,10 +47,9 @@ class PantallaEscolaresSage extends StatelessWidget {
     ];
 
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF0E5E86),
-        foregroundColor: Colors.white,
-        title: const Text('Escolares'),
+      appBar: construirAppBarSage(
+        context,
+        title: 'Escolares',
         leading: IconButton(
           tooltip: 'Volver',
           onPressed: busy ? null : onBack,

@@ -1,6 +1,7 @@
 name: correlativas_historia
 description: "correlativas"
-publish_to: "none"version: 1.3.150726+760
+publish_to: "none"
+version: 1.3.150726+760
 environment:
   sdk: ">=3.12.0 <4.0.0"
 
@@ -66,16 +67,17 @@ flutter:
     - assets/data/
     - assets/logo.png
     - assets/icon_fore.png
-    - assets/career_icons/career_logo.png
-    - assets/career_icons/logo_pscs_overlay.png
-    - assets/career_icons/logo_artes.png
+    - assets/career_icons/
     - assets/sage_banner.png
     - assets/examenes_llamado1.json
     - assets/examenes_llamado2.json
     - assets/coloquios_feb_mar_2026.json
     - assets/examenes_mayo_2026.json
     - assets/coloquios_mayo_2026.json
-    - assets/banners/historia/recorrido/cat3.jpg
+    - assets/banners/historia/1/pedagogia_ancho.png
+    - assets/banners/historia/2/didactica_ciencias_sociales_ancho.png
+    - assets/banners/historia/3/procesos_argentina_i.png
+    - assets/banners/historia/recorrido/
     - shorebird.yaml
 
   fonts:

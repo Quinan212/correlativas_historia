@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../trayectoria_sage_laboratorio/sage/estilo_visual_sage.dart';
+
 import 'lista_opciones_sage.dart';
 import 'modelos_navegacion_sage.dart';
 
@@ -19,10 +21,9 @@ class PantallaSubmodulosSage extends StatelessWidget {
   Widget build(BuildContext context) {
     final busy = loadingTitle != null;
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF0E5E86),
-        foregroundColor: Colors.white,
-        title: const Text('Legajo Único Alumno'),
+      appBar: construirAppBarSage(
+        context,
+        title: 'Legajo Único Alumno',
         leading: IconButton(
           tooltip: 'Volver',
           onPressed: busy ? null : onBack,
@@ -37,10 +38,7 @@ class PantallaSubmodulosSage extends StatelessWidget {
             for (final option in opcionesSubmodulosSage)
               ItemListaOpcionSage(
                 titulo: option.titulo,
-                icono: IconData(
-                  option.icono,
-                  fontFamily: 'MaterialIcons',
-                ),
+                icono: IconData(option.icono, fontFamily: 'MaterialIcons'),
                 enabled: !busy,
                 available: option.titulo == 'Legajo Alumnos',
                 highlighted: option.titulo == 'Legajo Alumnos',

@@ -297,95 +297,95 @@ class _EncabezadoEstudianteFijoState extends State<_EncabezadoEstudianteFijo> {
                       onTap: widget.onOpenAccountSheet,
                       borderRadius: BorderRadius.circular(14),
                       child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 2),
-                      child: Transform.translate(
-                        offset: Offset(titleOffset, 0),
-                        child: Opacity(
-                          opacity: titleOpacity,
-                          child: Row(
-                            children: [
-                              _InstitutionLogoMark(
-                                loggedIn: widget.loggedIn,
-                                assetPath: currentStudent == null
-                                    ? null
-                                    : _institutionLogoAssetFor(
-                                        currentStudent.careerId,
-                                      ),
-                                size: 36,
-                              ),
-                              const SizedBox(width: 10),
-                              if (!widget.loggedIn)
-                                SizedBox(
-                                  width: 180,
-                                  child: Text(
-                                    headerTitle,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: titleStyle,
-                                  ),
-                                )
-                              else
-                                AnimatedContainer(
-                                  duration: const Duration(milliseconds: 220),
-                                  curve: Curves.easeOutCubic,
-                                  width: titleWidth,
-                                  height: 24,
-                                  child: Stack(
-                                    fit: StackFit.expand,
-                                    children: [
-                                      AnimatedOpacity(
-                                        duration: const Duration(
-                                          milliseconds: 140,
+                        padding: const EdgeInsets.symmetric(vertical: 2),
+                        child: Transform.translate(
+                          offset: Offset(titleOffset, 0),
+                          child: Opacity(
+                            opacity: titleOpacity,
+                            child: Row(
+                              children: [
+                                _InstitutionLogoMark(
+                                  loggedIn: widget.loggedIn,
+                                  assetPath: currentStudent == null
+                                      ? null
+                                      : _institutionLogoAssetFor(
+                                          currentStudent.careerId,
                                         ),
-                                        curve: Curves.easeOut,
-                                        opacity: compact ? 0 : 1,
-                                        child: AnimatedSlide(
-                                          duration: const Duration(
-                                            milliseconds: 140,
-                                          ),
-                                          curve: Curves.easeOut,
-                                          offset: compact
-                                              ? const Offset(-0.06, 0)
-                                              : Offset.zero,
-                                          child: Text(
-                                            headerTitle,
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: titleStyle,
-                                          ),
-                                        ),
-                                      ),
-                                      AnimatedOpacity(
-                                        duration: const Duration(
-                                          milliseconds: 140,
-                                        ),
-                                        curve: Curves.easeOut,
-                                        opacity: compact ? 1 : 0,
-                                        child: AnimatedSlide(
-                                          duration: const Duration(
-                                            milliseconds: 140,
-                                          ),
-                                          curve: Curves.easeOut,
-                                          offset: compact
-                                              ? Offset.zero
-                                              : const Offset(0.06, 0),
-                                          child: Text(
-                                            greetingName,
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: titleStyle,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
+                                  size: 36,
                                 ),
-                            ],
+                                const SizedBox(width: 10),
+                                if (!widget.loggedIn)
+                                  SizedBox(
+                                    width: 180,
+                                    child: Text(
+                                      headerTitle,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: titleStyle,
+                                    ),
+                                  )
+                                else
+                                  AnimatedContainer(
+                                    duration: const Duration(milliseconds: 220),
+                                    curve: Curves.easeOutCubic,
+                                    width: titleWidth,
+                                    height: 24,
+                                    child: Stack(
+                                      fit: StackFit.expand,
+                                      children: [
+                                        AnimatedOpacity(
+                                          duration: const Duration(
+                                            milliseconds: 140,
+                                          ),
+                                          curve: Curves.easeOut,
+                                          opacity: compact ? 0 : 1,
+                                          child: AnimatedSlide(
+                                            duration: const Duration(
+                                              milliseconds: 140,
+                                            ),
+                                            curve: Curves.easeOut,
+                                            offset: compact
+                                                ? const Offset(-0.06, 0)
+                                                : Offset.zero,
+                                            child: Text(
+                                              headerTitle,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: titleStyle,
+                                            ),
+                                          ),
+                                        ),
+                                        AnimatedOpacity(
+                                          duration: const Duration(
+                                            milliseconds: 140,
+                                          ),
+                                          curve: Curves.easeOut,
+                                          opacity: compact ? 1 : 0,
+                                          child: AnimatedSlide(
+                                            duration: const Duration(
+                                              milliseconds: 140,
+                                            ),
+                                            curve: Curves.easeOut,
+                                            offset: compact
+                                                ? Offset.zero
+                                                : const Offset(0.06, 0),
+                                            child: Text(
+                                              greetingName,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: titleStyle,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
                   ),
                   if (hasSearch)
                     Opacity(

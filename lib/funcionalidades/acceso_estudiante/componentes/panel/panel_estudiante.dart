@@ -292,7 +292,7 @@ class _TarjetaIngreso extends StatelessWidget {
                       color: cs.error,
                       size: 20,
                     ),
-              const SizedBox(width: 2),
+                    const SizedBox(width: 2),
                     Expanded(
                       child: Text(
                         error!,
@@ -367,10 +367,10 @@ class _FranjaResumen extends StatelessWidget {
                   child: GestureDetector(
                     onTap: onTapAprobadas,
                     child: _TarjetaProgresoGrande(
-                        progress: progress,
-                        approved: approved,
-                        totalPlan: totalPlan,
-                      ),
+                      progress: progress,
+                      approved: approved,
+                      totalPlan: totalPlan,
+                    ),
                   ),
                 ),
                 const SizedBox(width: spacing),
@@ -621,11 +621,7 @@ class _SageAccessBanner extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 12),
-              Container(
-                width: 1,
-                height: 24,
-                color: Colors.white,
-              ),
+              Container(width: 1, height: 24, color: Colors.white),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(

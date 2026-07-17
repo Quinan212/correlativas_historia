@@ -40,13 +40,11 @@ class EjecutorShellAgenteSage {
         );
       }
     } catch (_) {}
-    return const ResultadoAccionShellAgenteSage(
-      found: false,
-      activated: false,
-    );
+    return const ResultadoAccionShellAgenteSage(found: false, activated: false);
   }
 
-  static String _script(String label) => '''(() => {
+  static String _script(String label) =>
+      '''(() => {
     const wanted = ${jsonEncode(label)};
     const normalize = value => String(value || '').toLowerCase()
       .normalize('NFD').replace(/[\\u0300-\\u036f]/g, '')

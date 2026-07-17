@@ -2764,6 +2764,9 @@ String _etiquetaCampoSageLaboratorio(String raw) {
     'nombres': 'Nombre',
     'apellido': 'Apellido',
     'apellidos': 'Apellido',
+    'apenom': 'Nombre completo',
+    'apenom 2': 'Nombre completo',
+    'apenom2': 'Nombre completo',
     'dni': 'DNI',
     'nro doc': 'DNI',
     'numero documento': 'DNI',
@@ -2865,11 +2868,18 @@ class _ChipDesincronizarLaboratorio extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.16),
+              color: const Color(0xFFD9363E),
               borderRadius: BorderRadius.circular(999),
               border: Border.all(
-                color: Colors.white.withValues(alpha: 0.28),
+                color: const Color(0xFFFF9499),
               ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFD9363E).withValues(alpha: 0.28),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
+              ],
             ),
             child: const Row(
               mainAxisSize: MainAxisSize.min,

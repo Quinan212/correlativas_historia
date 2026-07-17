@@ -38,7 +38,11 @@ class ItemPreguntaFrecuente {
   final String answer;
 
   const ItemPreguntaFrecuente(
-      this.id, this.section, this.question, this.answer);
+    this.id,
+    this.section,
+    this.question,
+    this.answer,
+  );
 }
 
 const List<ItemPreguntaFrecuente> _faqItems = [
@@ -361,9 +365,9 @@ bool _matches(ItemPreguntaFrecuente item, String query) {
   if (haystack.contains(q)) return true;
 
   final qTokens = q.split(RegExp(r'\s+')).where((t) => t.isNotEmpty).toList();
-  final titleTokens = _normalize(item.question)
-      .split(RegExp(r'[^a-z0-9]+'))
-      .where((t) => t.isNotEmpty);
+  final titleTokens = _normalize(
+    item.question,
+  ).split(RegExp(r'[^a-z0-9]+')).where((t) => t.isNotEmpty);
 
   for (final qt in qTokens) {
     for (final tt in titleTokens) {
@@ -378,7 +382,8 @@ bool _matches(ItemPreguntaFrecuente item, String query) {
 }
 
 Map<String, List<ItemPreguntaFrecuente>> _groupBySection(
-    List<ItemPreguntaFrecuente> items) {
+  List<ItemPreguntaFrecuente> items,
+) {
   final map = <String, List<ItemPreguntaFrecuente>>{};
   for (final it in items) {
     map.putIfAbsent(it.section, () => <ItemPreguntaFrecuente>[]).add(it);
@@ -387,36 +392,47 @@ Map<String, List<ItemPreguntaFrecuente>> _groupBySection(
 }
 
 class PantallaPreguntasFrecuentes extends ConsumerWidget {
-  const PantallaPreguntasFrecuentes({super.key});
+  const PantallaPreguntasFrecuentes({
+    super.key,
+    this.showHeader = true,
+    this.atlassianStyle = false,
+  });
+
+  final bool showHeader;
+  final bool atlassianStyle;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final topInset = MediaQuery.of(context).viewPadding.top;
 
     return Scaffold(
+      backgroundColor: atlassianStyle
+          ? Theme.of(context).scaffoldBackgroundColor
+          : null,
       body: SafeArea(
         top: false,
         bottom: true,
         child: CustomScrollView(
           slivers: [
-            SliverPersistentHeader(
-              pinned: true,
-              delegate: _DelegadoBannerColapsable(
-                topInset: topInset,
-                subtitle: 'Normativa y trayectorias',
+            if (showHeader)
+              SliverPersistentHeader(
+                pinned: true,
+                delegate: _DelegadoBannerColapsable(
+                  topInset: topInset,
+                  subtitle: 'Normativa y trayectorias',
+                ),
               ),
-            ),
-            const SliverToBoxAdapter(
+            SliverToBoxAdapter(
               child: Padding(
-                padding: EdgeInsets.fromLTRB(16, 12, 16, 24),
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _SearchBar(),
-                    SizedBox(height: 12),
-                    _FaqList(),
-                    SizedBox(height: 24),
-                    _AutorBlock(),
+                    _SearchBar(atlassianStyle: atlassianStyle),
+                    const SizedBox(height: 12),
+                    _FaqList(atlassianStyle: atlassianStyle),
+                    const SizedBox(height: 24),
+                    _AutorBlock(atlassianStyle: atlassianStyle),
                   ],
                 ),
               ),
@@ -429,32 +445,48 @@ class PantallaPreguntasFrecuentes extends ConsumerWidget {
 }
 
 class _SearchBar extends ConsumerWidget {
-  const _SearchBar();
+  const _SearchBar({required this.atlassianStyle});
 
-  static InputDecoration _dec(BuildContext context, {String? hint}) {
+  final bool atlassianStyle;
+
+  static InputDecoration _dec(
+    BuildContext context, {
+    String? hint,
+    required bool atlassianStyle,
+  }) {
     final cs = Theme.of(context).colorScheme;
     final isDark = _isDark(context);
     return InputDecoration(
       hintText: hint ?? 'Buscar en preguntas…',
       filled: true,
-      fillColor: isDark ? _darken(cs.surface, 0.25) : Colors.white,
+      fillColor: atlassianStyle
+          ? cs.surface
+          : (isDark ? _darken(cs.surface, 0.25) : Colors.white),
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(atlassianStyle ? 28 : 12),
         borderSide: BorderSide(
-          color: isDark ? cs.outlineVariant : const Color(0xFFE5E7EB),
+          color: atlassianStyle
+              ? cs.outlineVariant
+              : (isDark ? cs.outlineVariant : const Color(0xFFE5E7EB)),
         ),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(atlassianStyle ? 28 : 12),
         borderSide: BorderSide(
-          color: isDark ? cs.outlineVariant : const Color(0xFFE5E7EB),
+          color: atlassianStyle
+              ? cs.outlineVariant
+              : (isDark ? cs.outlineVariant : const Color(0xFFE5E7EB)),
         ),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide:
-            BorderSide(color: isDark ? cs.primary : const Color(0xFF93C5FD)),
+        borderRadius: BorderRadius.circular(atlassianStyle ? 28 : 12),
+        borderSide: BorderSide(
+          color: atlassianStyle
+              ? cs.primary
+              : (isDark ? cs.primary : const Color(0xFF93C5FD)),
+          width: atlassianStyle ? 1.5 : 1,
+        ),
       ),
     );
   }
@@ -469,27 +501,35 @@ class _SearchBar extends ConsumerWidget {
       style: TextStyle(color: isDark ? cs.onSurface : null),
       controller: TextEditingController(text: term)
         ..selection = TextSelection.collapsed(offset: term.length),
-      decoration: _dec(
-        context,
-        hint: 'Busca por tema o situacion: promocion, correlativa, mesa...',
-      ).copyWith(
-        prefixIcon: Icon(
-          Icons.search,
-          color: isDark ? cs.onSurfaceVariant : const Color(0xFF6B7280),
-        ),
-        suffixIcon: term.isEmpty
-            ? null
-            : IconButton(
-                tooltip: 'Limpiar',
-                onPressed: () => ref
-                    .read(proveedorBusquedaPreguntasFrecuentes.notifier)
-                    .state = '',
-                icon: Icon(
-                  Icons.close,
-                  color: isDark ? cs.onSurfaceVariant : const Color(0xFF9CA3AF),
-                ),
-              ),
-      ),
+      decoration:
+          _dec(
+            context,
+            hint: 'Busca por tema o situacion: promocion, correlativa, mesa...',
+            atlassianStyle: atlassianStyle,
+          ).copyWith(
+            prefixIcon: Icon(
+              Icons.search,
+              color: isDark ? cs.onSurfaceVariant : const Color(0xFF6B7280),
+            ),
+            suffixIcon: term.isEmpty
+                ? null
+                : IconButton(
+                    tooltip: 'Limpiar',
+                    onPressed: () =>
+                        ref
+                                .read(
+                                  proveedorBusquedaPreguntasFrecuentes.notifier,
+                                )
+                                .state =
+                            '',
+                    icon: Icon(
+                      Icons.close,
+                      color: isDark
+                          ? cs.onSurfaceVariant
+                          : const Color(0xFF9CA3AF),
+                    ),
+                  ),
+          ),
       onChanged: (v) =>
           ref.read(proveedorBusquedaPreguntasFrecuentes.notifier).state = v,
       textInputAction: TextInputAction.search,
@@ -498,7 +538,9 @@ class _SearchBar extends ConsumerWidget {
 }
 
 class _FaqList extends ConsumerWidget {
-  const _FaqList();
+  const _FaqList({required this.atlassianStyle});
+
+  final bool atlassianStyle;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -513,12 +555,18 @@ class _FaqList extends ConsumerWidget {
       return Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isDark ? _darken(cs.surface) : Colors.white,
-          borderRadius: BorderRadius.circular(14),
+          color: atlassianStyle
+              ? cs.surface
+              : (isDark ? _darken(cs.surface) : Colors.white),
+          borderRadius: BorderRadius.circular(atlassianStyle ? 8 : 14),
           border: Border.all(
-            color: isDark ? cs.outlineVariant : const Color(0xFFE5E7EB),
+            color: atlassianStyle
+                ? cs.outlineVariant
+                : (isDark ? cs.outlineVariant : const Color(0xFFE5E7EB)),
           ),
-          boxShadow: const [BoxShadow(blurRadius: 4, color: Color(0x0F000000))],
+          boxShadow: atlassianStyle
+              ? const []
+              : const [BoxShadow(blurRadius: 4, color: Color(0x0F000000))],
         ),
         child: Text(
           'No encontramos respuestas para esa busqueda. Proba con otra palabra o un tema mas general.',
@@ -540,10 +588,14 @@ class _FaqList extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         for (final section in sectionOrder) ...[
-          _TituloSeccion(section),
+          _TituloSeccion(section, atlassianStyle: atlassianStyle),
           const SizedBox(height: 8),
           for (final qa in grouped[section]!) ...[
-            _TarjetaPreguntaRespuesta(q: qa.question, a: qa.answer),
+            _TarjetaPreguntaRespuesta(
+              q: qa.question,
+              a: qa.answer,
+              atlassianStyle: atlassianStyle,
+            ),
             const SizedBox(height: 8),
           ],
           const SizedBox(height: 8),
@@ -555,8 +607,9 @@ class _FaqList extends ConsumerWidget {
 
 class _TituloSeccion extends StatelessWidget {
   final String text;
+  final bool atlassianStyle;
 
-  const _TituloSeccion(this.text);
+  const _TituloSeccion(this.text, {required this.atlassianStyle});
 
   @override
   Widget build(BuildContext context) {
@@ -566,10 +619,14 @@ class _TituloSeccion extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: isDark ? _darken(cs.surface) : Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        color: atlassianStyle
+            ? cs.surface
+            : (isDark ? _darken(cs.surface) : Colors.white),
+        borderRadius: BorderRadius.circular(atlassianStyle ? 8 : 12),
         border: Border.all(
-          color: isDark ? cs.outlineVariant : const Color(0xFFE5E7EB),
+          color: atlassianStyle
+              ? cs.outlineVariant
+              : (isDark ? cs.outlineVariant : const Color(0xFFE5E7EB)),
         ),
       ),
       child: Text(
@@ -587,26 +644,38 @@ class _TituloSeccion extends StatelessWidget {
 class _TarjetaPreguntaRespuesta extends StatelessWidget {
   final String q;
   final String a;
+  final bool atlassianStyle;
 
-  const _TarjetaPreguntaRespuesta({required this.q, required this.a});
+  const _TarjetaPreguntaRespuesta({
+    required this.q,
+    required this.a,
+    required this.atlassianStyle,
+  });
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final isDark = _isDark(context);
 
-    final cardColor = isDark ? _darken(cs.surface) : Colors.white;
-    final innerColor =
-        isDark ? _darken(cs.surface, 0.28) : const Color(0xFFFAFAFA);
+    final cardColor = atlassianStyle
+        ? cs.surface
+        : (isDark ? _darken(cs.surface) : Colors.white);
+    final innerColor = atlassianStyle
+        ? cs.surfaceContainerLowest
+        : (isDark ? _darken(cs.surface, 0.28) : const Color(0xFFFAFAFA));
 
     return Container(
       decoration: BoxDecoration(
         color: cardColor,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(atlassianStyle ? 8 : 14),
         border: Border.all(
-          color: isDark ? cs.outlineVariant : const Color(0xFFE5E7EB),
+          color: atlassianStyle
+              ? cs.outlineVariant
+              : (isDark ? cs.outlineVariant : const Color(0xFFE5E7EB)),
         ),
-        boxShadow: const [BoxShadow(blurRadius: 4, color: Color(0x0F000000))],
+        boxShadow: atlassianStyle
+            ? const []
+            : const [BoxShadow(blurRadius: 4, color: Color(0x0F000000))],
       ),
       child: Theme(
         data: Theme.of(context).copyWith(
@@ -626,13 +695,16 @@ class _TarjetaPreguntaRespuesta extends StatelessWidget {
             side: BorderSide(color: Colors.transparent),
           ),
           iconColor: isDark ? cs.onSurfaceVariant : const Color(0xFF6B7280),
-          collapsedIconColor:
-              isDark ? cs.onSurfaceVariant : const Color(0xFF6B7280),
+          collapsedIconColor: isDark
+              ? cs.onSurfaceVariant
+              : const Color(0xFF6B7280),
           title: Text(
             q,
             style: TextStyle(
               fontWeight: FontWeight.w700,
-              color: isDark ? cs.onSurface : const Color(0xFF111827),
+              color: atlassianStyle
+                  ? cs.onSurface
+                  : (isDark ? cs.onSurface : const Color(0xFF111827)),
             ),
           ),
           children: [
@@ -641,9 +713,11 @@ class _TarjetaPreguntaRespuesta extends StatelessWidget {
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: innerColor,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(atlassianStyle ? 6 : 10),
                 border: Border.all(
-                  color: isDark ? cs.outlineVariant : const Color(0xFFE5E7EB),
+                  color: atlassianStyle
+                      ? cs.outlineVariant
+                      : (isDark ? cs.outlineVariant : const Color(0xFFE5E7EB)),
                 ),
               ),
               child: Text(
@@ -662,7 +736,9 @@ class _TarjetaPreguntaRespuesta extends StatelessWidget {
 }
 
 class _AutorBlock extends StatelessWidget {
-  const _AutorBlock();
+  const _AutorBlock({required this.atlassianStyle});
+
+  final bool atlassianStyle;
 
   @override
   Widget build(BuildContext context) {
@@ -671,12 +747,16 @@ class _AutorBlock extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? _darken(cs.surface) : Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        color: atlassianStyle
+            ? cs.surface
+            : (isDark ? _darken(cs.surface) : Colors.white),
+        borderRadius: BorderRadius.circular(atlassianStyle ? 8 : 16),
         border: Border.all(
           color: isDark ? cs.outlineVariant : const Color(0xFFE5E7EB),
         ),
-        boxShadow: const [BoxShadow(blurRadius: 6, color: Color(0x12000000))],
+        boxShadow: atlassianStyle
+            ? const []
+            : const [BoxShadow(blurRadius: 6, color: Color(0x12000000))],
       ),
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -727,7 +807,10 @@ class _DelegadoBannerColapsable extends SliverPersistentHeaderDelegate {
 
   @override
   Widget build(
-      BuildContext context, double shrinkOffset, bool overlapsContent) {
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
     final range = maxExtent - minExtent;
     final t = (maxExtent - shrinkOffset - minExtent) / range;
     final vis = t.clamp(0.0, 1.0);

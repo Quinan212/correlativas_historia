@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../trayectoria_sage_laboratorio/sage/estilo_visual_sage.dart';
+
 class ItemListaOpcionSage {
   const ItemListaOpcionSage({
     required this.titulo,
@@ -23,7 +25,7 @@ class ItemListaOpcionSage {
   final String unavailableMessage;
 }
 
-class ListaOpcionesSage extends StatelessWidget {
+class ListaOpcionesSage extends StatefulWidget {
   const ListaOpcionesSage({
     super.key,
     required this.titulo,
@@ -33,6 +35,8 @@ class ListaOpcionesSage extends StatelessWidget {
     this.padding = const EdgeInsets.fromLTRB(24, 22, 24, 28),
     this.shrinkWrap = false,
     this.physics,
+    this.mostrarBusqueda = true,
+    this.textoBusqueda = 'Buscar en SAGE',
   });
 
   final String titulo;
@@ -42,45 +46,110 @@ class ListaOpcionesSage extends StatelessWidget {
   final EdgeInsets padding;
   final bool shrinkWrap;
   final ScrollPhysics? physics;
+  final bool mostrarBusqueda;
+  final String textoBusqueda;
+
+  @override
+  State<ListaOpcionesSage> createState() => _ListaOpcionesSageState();
+}
+
+class _ListaOpcionesSageState extends State<ListaOpcionesSage> {
+  final TextEditingController _controller = TextEditingController();
+  String _query = '';
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(covariant ListaOpcionesSage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.opciones.length < 3 && _query.isNotEmpty) {
+      _controller.clear();
+      _query = '';
+    }
+  }
+
+  List<ItemListaOpcionSage> get _filtered {
+    final query = _normalize(_query);
+    if (query.isEmpty) return widget.opciones;
+    return widget.opciones
+        .where((option) {
+          return _normalize(
+            '${option.titulo} ${option.subtitulo ?? ''}',
+          ).contains(query);
+        })
+        .toList(growable: false);
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final dividerColor = theme.colorScheme.outline.withOpacity(0.46);
+    final atlassian = usaEstiloAtlassianSage(context);
+    final showSearch =
+        atlassian && widget.mostrarBusqueda && widget.opciones.length >= 3;
+    final options = _filtered;
+
     return ListView(
-      padding: padding,
-      shrinkWrap: shrinkWrap,
-      physics: physics,
+      padding: widget.padding,
+      shrinkWrap: widget.shrinkWrap,
+      physics: widget.physics,
       children: [
-        if (titulo.trim().isNotEmpty) ...[
+        if (widget.titulo.trim().isNotEmpty) ...[
           Text(
-            titulo,
+            widget.titulo,
             style: theme.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w700,
             ),
           ),
           const SizedBox(height: 8),
         ],
-        if (descripcion.trim().isNotEmpty) ...[
+        if (widget.descripcion.trim().isNotEmpty) ...[
           Text(
-            descripcion,
+            widget.descripcion,
             style: theme.textTheme.bodyLarge?.copyWith(height: 1.45),
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: showSearch ? 16 : 24),
         ],
-        if (opciones.isEmpty)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 20),
-            child: Text(emptyMessage),
+        if (showSearch) ...[
+          TextField(
+            controller: _controller,
+            onChanged: (value) => setState(() => _query = value),
+            textInputAction: TextInputAction.search,
+            decoration: decoracionBusquedaSage(
+              context,
+              hintText: widget.textoBusqueda,
+              showClear: _query.isNotEmpty,
+              onClear: () {
+                _controller.clear();
+                setState(() => _query = '');
+              },
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
+        if (options.isEmpty)
+          _EstadoSinOpcionesSage(
+            text: _query.isEmpty
+                ? widget.emptyMessage
+                : 'No hay opciones que coincidan con la búsqueda.',
           )
+        else if (atlassian)
+          _PanelOpcionesAtlassian(opciones: options)
         else
-          ...List.generate(opciones.length, (index) {
-            final option = opciones[index];
+          ...List.generate(options.length, (index) {
+            final option = options[index];
             return Column(
               children: [
                 _OpcionSageTile(option: option),
-                if (index < opciones.length - 1)
-                  Divider(height: 1, thickness: 1, color: dividerColor),
+                if (index < options.length - 1)
+                  Divider(
+                    height: 1,
+                    thickness: 1,
+                    color: theme.colorScheme.outline.withValues(alpha: 0.46),
+                  ),
               ],
             );
           }),
@@ -89,10 +158,63 @@ class ListaOpcionesSage extends StatelessWidget {
   }
 }
 
+class _PanelOpcionesAtlassian extends StatelessWidget {
+  const _PanelOpcionesAtlassian({required this.opciones});
+
+  final List<ItemListaOpcionSage> opciones;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: scheme.surface,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: scheme.outlineVariant),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: Column(
+          children: [
+            for (var index = 0; index < opciones.length; index++) ...[
+              _OpcionSageTile(option: opciones[index], atlassian: true),
+              if (index != opciones.length - 1)
+                Divider(height: 1, color: scheme.outlineVariant),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _EstadoSinOpcionesSage extends StatelessWidget {
+  const _EstadoSinOpcionesSage({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: decoracionPanelSage(context),
+      child: Row(
+        children: [
+          Icon(Icons.search_off_rounded, color: scheme.onSurfaceVariant),
+          const SizedBox(width: 12),
+          Expanded(child: Text(text)),
+        ],
+      ),
+    );
+  }
+}
+
 class _OpcionSageTile extends StatelessWidget {
-  const _OpcionSageTile({required this.option});
+  const _OpcionSageTile({required this.option, this.atlassian = false});
 
   final ItemListaOpcionSage option;
+  final bool atlassian;
 
   void _handleTap(BuildContext context) {
     if (!option.enabled) return;
@@ -120,87 +242,113 @@ class _OpcionSageTile extends StatelessWidget {
     final available = option.available;
     final interactionEnabled = option.enabled;
     final titleColor = !interactionEnabled
-        ? scheme.onSurface.withOpacity(0.30)
+        ? scheme.onSurface.withValues(alpha: 0.30)
         : available
-            ? (option.highlighted ? scheme.primary : scheme.onSurface)
-            : scheme.onSurface.withOpacity(0.42);
+        ? (option.highlighted ? scheme.primary : scheme.onSurface)
+        : scheme.onSurface.withValues(alpha: 0.42);
     final iconColor = !interactionEnabled
-        ? scheme.onSurface.withOpacity(0.26)
+        ? scheme.onSurface.withValues(alpha: 0.26)
         : available
-            ? (option.highlighted
-                ? scheme.primary
-                : scheme.onSurfaceVariant)
-            : scheme.onSurface.withOpacity(0.34);
+        ? (option.highlighted ? scheme.primary : scheme.onSurfaceVariant)
+        : scheme.onSurface.withValues(alpha: 0.34);
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Material(
-        color: option.highlighted && available
-            ? scheme.primaryContainer.withOpacity(0.46)
-            : Colors.transparent,
-        borderRadius: BorderRadius.circular(16),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: interactionEnabled ? () => _handleTap(context) : null,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 78),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-              child: Row(
-                children: [
-                  SizedBox(
-                    width: 40,
-                    child: Icon(option.icono, size: 27, color: iconColor),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          option.titulo,
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w700,
-                            height: 1.25,
-                            color: titleColor,
-                          ),
+    final radius = BorderRadius.circular(atlassian ? 0 : 16);
+    return Material(
+      color: option.highlighted && available
+          ? scheme.primaryContainer.withValues(alpha: atlassian ? 0.72 : 0.46)
+          : Colors.transparent,
+      borderRadius: radius,
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: interactionEnabled ? () => _handleTap(context) : null,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minHeight: atlassian ? 68 : 78),
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: atlassian ? 14 : 12,
+              vertical: atlassian ? 12 : 14,
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 38,
+                  height: 38,
+                  alignment: Alignment.center,
+                  decoration: atlassian
+                      ? BoxDecoration(
+                          color: option.highlighted && available
+                              ? scheme.primary.withValues(alpha: 0.12)
+                              : scheme.surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(8),
+                        )
+                      : null,
+                  child: Icon(option.icono, size: 23, color: iconColor),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        option.titulo,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          height: 1.25,
+                          color: titleColor,
                         ),
-                        if (option.subtitulo?.trim().isNotEmpty == true) ...[
-                          const SizedBox(height: 4),
-                          Text(
-                            option.subtitulo!,
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: available
-                                  ? (option.highlighted
+                      ),
+                      if (option.subtitulo?.trim().isNotEmpty == true) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          option.subtitulo!,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: available
+                                ? (option.highlighted
                                       ? scheme.primary
                                       : scheme.onSurfaceVariant)
-                                  : scheme.onSurface.withOpacity(0.38),
-                              fontWeight: option.highlighted
-                                  ? FontWeight.w600
-                                  : FontWeight.w400,
-                              height: 1.3,
-                            ),
+                                : scheme.onSurface.withValues(alpha: 0.38),
+                            fontWeight: option.highlighted
+                                ? FontWeight.w600
+                                : FontWeight.w400,
+                            height: 1.3,
                           ),
-                        ],
+                        ),
                       ],
-                    ),
+                    ],
                   ),
-                  const SizedBox(width: 8),
-                  Icon(
-                    Icons.chevron_right_rounded,
-                    color: !interactionEnabled
-                        ? scheme.onSurface.withOpacity(0.20)
-                        : available
-                            ? scheme.onSurfaceVariant.withOpacity(0.62)
-                            : scheme.onSurface.withOpacity(0.34),
-                  ),
-                ],
-              ),
+                ),
+                const SizedBox(width: 8),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: !interactionEnabled
+                      ? scheme.onSurface.withValues(alpha: 0.20)
+                      : available
+                      ? scheme.onSurfaceVariant.withValues(alpha: 0.62)
+                      : scheme.onSurface.withValues(alpha: 0.34),
+                ),
+              ],
             ),
           ),
         ),
       ),
     );
   }
+}
+
+String _normalize(String value) {
+  const replacements = <String, String>{
+    'á': 'a',
+    'é': 'e',
+    'í': 'i',
+    'ó': 'o',
+    'ú': 'u',
+    'ü': 'u',
+    'ñ': 'n',
+  };
+  var output = value.toLowerCase();
+  replacements.forEach((key, replacement) {
+    output = output.replaceAll(key, replacement);
+  });
+  return output.replaceAll(RegExp(r'\s+'), ' ').trim();
 }

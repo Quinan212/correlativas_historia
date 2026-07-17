@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../trayectoria_sage_laboratorio/sage/estilo_visual_sage.dart';
 import 'modelos_legajo_sage.dart';
 
 class PantallaMiLegajoSage extends StatelessWidget {
@@ -21,13 +22,11 @@ class PantallaMiLegajoSage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
     final busy = loadingTitle != null;
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF0E5E86),
-        foregroundColor: Colors.white,
-        title: const Text('Mi legajo'),
+      appBar: construirAppBarSage(
+        context,
+        title: 'Mi legajo',
         leading: IconButton(
           tooltip: 'Volver',
           onPressed: busy ? null : onBack,
@@ -36,56 +35,32 @@ class PantallaMiLegajoSage extends StatelessWidget {
       ),
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 24, 16, 32),
+          padding: const EdgeInsets.fromLTRB(16, 20, 16, 28),
           children: [
             Text(
               'Seleccioná el perfil académico para continuar.',
               style: theme.textTheme.titleMedium,
             ),
             const SizedBox(height: 18),
-            if (errorMessage != null)
+            if (errorMessage != null) ...[
               _MessageCard(message: errorMessage!, error: true),
+              const SizedBox(height: 10),
+            ],
             if (perfiles.isEmpty && errorMessage == null)
               const _MessageCard(
                 message: 'No se encontraron perfiles disponibles.',
               ),
-            for (final perfil in perfiles)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: Card(
-                  color: scheme.primaryContainer.withOpacity(0.42),
-                  clipBehavior: Clip.antiAlias,
-                  child: ListTile(
-                    enabled: !busy,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 18,
-                      vertical: 12,
-                    ),
-                    leading: CircleAvatar(
-                      backgroundColor: scheme.primary,
-                      child: Icon(
-                        Icons.badge_outlined,
-                        color: scheme.onPrimary,
-                      ),
-                    ),
-                    title: Text(
-                      perfil.nombreVisible.isEmpty
-                          ? 'Perfil académico'
-                          : perfil.nombreVisible,
-                      style: TextStyle(
-                        color: scheme.primary,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    subtitle: _secondary(perfil),
-                    trailing: const Icon(Icons.chevron_right_rounded),
-                    onTap: busy ? null : () => onSelect(perfil),
-                  ),
-                ),
+            for (final perfil in perfiles) ...[
+              _TarjetaLegajoSage(
+                perfil: perfil,
+                enabled: !busy,
+                onTap: () => onSelect(perfil),
               ),
+              const SizedBox(height: 10),
+            ],
             if (loadingTitle != null)
               Padding(
-                padding: const EdgeInsets.only(top: 12),
+                padding: const EdgeInsets.only(top: 8),
                 child: Row(
                   children: [
                     const SizedBox(
@@ -103,13 +78,72 @@ class PantallaMiLegajoSage extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget? _secondary(PerfilLegajoSage perfil) {
-    final values = perfil.camposVisibles.values
+class _TarjetaLegajoSage extends StatelessWidget {
+  const _TarjetaLegajoSage({
+    required this.perfil,
+    required this.enabled,
+    required this.onTap,
+  });
+
+  final PerfilLegajoSage perfil;
+  final bool enabled;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final secondary = perfil.camposVisibles.values
         .where((value) => value != perfil.nombreVisible)
         .take(3)
         .join(' · ');
-    return values.isEmpty ? const Text('Disponible') : Text(values);
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: enabled ? onTap : null,
+        borderRadius: BorderRadius.circular(10),
+        child: Ink(
+          padding: const EdgeInsets.all(14),
+          decoration: decoracionPanelSage(context, selected: true),
+          child: Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: scheme.primary.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(Icons.badge_outlined, color: scheme.primary),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      perfil.nombreVisible.isEmpty
+                          ? 'Perfil académico'
+                          : perfil.nombreVisible,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      secondary.isEmpty ? 'Disponible' : secondary,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right_rounded, color: scheme.onSurfaceVariant),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -120,16 +154,29 @@ class _MessageCard extends StatelessWidget {
   final bool error;
 
   @override
-  Widget build(BuildContext context) => Card(
-    child: Padding(
-      padding: const EdgeInsets.all(18),
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: error ? scheme.errorContainer : scheme.surface,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: error
+              ? scheme.error.withValues(alpha: 0.35)
+              : scheme.outlineVariant,
+        ),
+      ),
       child: Row(
         children: [
-          Icon(error ? Icons.error_outline : Icons.info_outline),
+          Icon(
+            error ? Icons.error_outline_rounded : Icons.info_outline_rounded,
+            color: error ? scheme.error : scheme.primary,
+          ),
           const SizedBox(width: 12),
           Expanded(child: Text(message)),
         ],
       ),
-    ),
-  );
+    );
+  }
 }

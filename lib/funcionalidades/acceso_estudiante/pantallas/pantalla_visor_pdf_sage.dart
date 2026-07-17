@@ -6,6 +6,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:pdfx/pdfx.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../../trayectoria_sage_laboratorio/sage/estilo_visual_sage.dart';
+
 class PantallaVisorPdfSage extends StatefulWidget {
   const PantallaVisorPdfSage({
     super.key,
@@ -113,11 +115,13 @@ class _PantallaVisorPdfSageState extends State<PantallaVisorPdfSage> {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          widget.nombreArchivo,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
+      appBar: construirAppBarSage(
+        context,
+        title: widget.nombreArchivo,
+        leading: IconButton(
+          tooltip: 'Volver',
+          onPressed: () => Navigator.of(context).pop(),
+          icon: const Icon(Icons.arrow_back_rounded),
         ),
         actions: [
           IconButton(

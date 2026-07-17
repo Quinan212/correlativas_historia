@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../trayectoria_sage_laboratorio/sage/estilo_visual_sage.dart';
+
 import 'modelos_historial_sage.dart';
 
 class PantallaHistorialSage extends StatefulWidget {
@@ -49,11 +51,10 @@ class _PantallaHistorialSageState extends State<PantallaHistorialSage> {
     final theme = Theme.of(context);
     final career = _selectedCareer;
     return Scaffold(
-      backgroundColor: theme.colorScheme.surface,
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF0E5E86),
-        foregroundColor: Colors.white,
-        title: const Text('Historial académico'),
+      backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: construirAppBarSage(
+        context,
+        title: 'Historial académico',
         leading: IconButton(
           tooltip: 'Volver',
           onPressed: widget.onBack,
@@ -128,7 +129,7 @@ class _PantallaHistorialSageState extends State<PantallaHistorialSage> {
             FilledButton.icon(
               onPressed: isLoading ? null : () => _expand(selected),
               icon: const Icon(Icons.table_rows_rounded),
-              label:                 Text(
+              label: Text(
                 isLoading
                     ? 'Cargando materias…'
                     : loadState == null ||
@@ -254,8 +255,10 @@ class _CareerPicker extends StatelessWidget {
       decoration: InputDecoration(
         labelText: 'Carrera',
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 10,
+        ),
       ),
       items: careers
           .map(
@@ -282,6 +285,56 @@ class _CareerHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final atlassian = usaEstiloAtlassianSage(context);
+
+    if (atlassian) {
+      return Container(
+        decoration: decoracionPanelSage(context, selected: true),
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+        child: Row(
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: scheme.primary.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                Icons.description_outlined,
+                color: scheme.primary,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'RESOLUCIÓN',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.7,
+                      color: scheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    _titulo(career.nombre),
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Container(
       decoration: BoxDecoration(
         gradient: const LinearGradient(
@@ -345,6 +398,65 @@ class _CareerDetail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final atlassian = usaEstiloAtlassianSage(context);
+
+    if (atlassian) {
+      return Container(
+        decoration: decoracionPanelSage(context),
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: scheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    Icons.school_outlined,
+                    color: scheme.primary,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    _titulo(career.institucion),
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _DatoCarreraSage(
+                  label: 'Inicio',
+                  value: career.anioInicio?.toString() ?? 'Sin informar',
+                ),
+                _DatoCarreraSage(
+                  label: 'Estado',
+                  value: career.estado != null
+                      ? _titulo(career.estado!)
+                      : 'Sin informar',
+                ),
+                const _DatoCarreraSage(label: 'Nivel', value: 'Superior'),
+              ],
+            ),
+          ],
+        ),
+      );
+    }
+
     return Container(
       decoration: BoxDecoration(
         gradient: const LinearGradient(
@@ -413,6 +525,29 @@ class _CareerDetail extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _DatoCarreraSage extends StatelessWidget {
+  const _DatoCarreraSage({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        '$label: $value',
+        style: Theme.of(context).textTheme.labelMedium,
       ),
     );
   }
@@ -510,9 +645,7 @@ class _Metric extends StatelessWidget {
         decoration: BoxDecoration(
           color: theme.colorScheme.surface,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: theme.colorScheme.outlineVariant,
-          ),
+          border: Border.all(color: theme.colorScheme.outlineVariant),
         ),
         padding: const EdgeInsets.symmetric(vertical: 10),
         child: Column(
@@ -613,16 +746,14 @@ class _PdfChip extends StatelessWidget {
               Icon(
                 Icons.picture_as_pdf_outlined,
                 size: 16,
-                color: enabled ? const Color(0xFFE53935) : Colors.grey,
+                color: enabled ? theme.colorScheme.error : Colors.grey,
               ),
               const SizedBox(width: 6),
               Text(
                 label,
                 style: theme.textTheme.labelMedium?.copyWith(
                   fontWeight: FontWeight.w700,
-                  color: enabled
-                      ? theme.colorScheme.onSurface
-                      : Colors.grey,
+                  color: enabled ? theme.colorScheme.onSurface : Colors.grey,
                 ),
               ),
             ],
@@ -651,10 +782,15 @@ class _Filters extends StatelessWidget {
       TextField(
         controller: controller,
         onChanged: onChanged,
-        decoration: const InputDecoration(
-          labelText: 'Buscar materia',
-          prefixIcon: Icon(Icons.search_rounded),
-          border: OutlineInputBorder(),
+        textInputAction: TextInputAction.search,
+        decoration: decoracionBusquedaSage(
+          context,
+          hintText: 'Buscar materia',
+          showClear: controller.text.isNotEmpty,
+          onClear: () {
+            controller.clear();
+            onChanged('');
+          },
         ),
       ),
       const SizedBox(height: 10),
@@ -662,65 +798,61 @@ class _Filters extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         child: Row(
           children: ['Todas', 'Aprobadas', 'Regulares', 'Cursando']
-              .map(
-                (value) {
-                  final active = filter == value;
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: () => onFilter(value),
-                        borderRadius: BorderRadius.circular(14),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
+              .map((value) {
+                final active = filter == value;
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () => onFilter(value),
+                      borderRadius: BorderRadius.circular(14),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: active
+                              ? Theme.of(context).colorScheme.primaryContainer
+                              : Theme.of(context).colorScheme.surface,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
                             color: active
-                                ? const Color(0xFF0E5E86).withValues(alpha: 0.08)
-                                : Theme.of(context).colorScheme.surface,
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(
-                              color: active
-                                  ? const Color(0xFF0E5E86).withValues(alpha: 0.3)
-                                  : Theme.of(context)
-                                      .colorScheme
-                                      .outlineVariant,
-                            ),
+                                ? Theme.of(
+                                    context,
+                                  ).colorScheme.primary.withValues(alpha: 0.34)
+                                : Theme.of(context).colorScheme.outlineVariant,
                           ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              if (active) ...[
-                                Icon(
-                                  Icons.check_rounded,
-                                  size: 14,
-                                  color: const Color(0xFF0E5E86),
-                                ),
-                                const SizedBox(width: 4),
-                              ],
-                              Text(
-                                value,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .labelMedium
-                                    ?.copyWith(
-                                      fontWeight: FontWeight.w700,
-                                      color: active
-                                          ? const Color(0xFF0E5E86)
-                                          : null,
-                                    ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (active) ...[
+                              Icon(
+                                Icons.check_rounded,
+                                size: 14,
+                                color: Theme.of(context).colorScheme.primary,
                               ),
+                              const SizedBox(width: 4),
                             ],
-                          ),
+                            Text(
+                              value,
+                              style: Theme.of(context).textTheme.labelMedium
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                    color: active
+                                        ? Theme.of(context).colorScheme.primary
+                                        : null,
+                                  ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
-                  );
-                },
-              )
+                  ),
+                );
+              })
               .toList(growable: false),
         ),
       ),
@@ -752,74 +884,73 @@ class _SubjectsList extends StatelessWidget {
               ),
             ),
           ),
-          ...groups[year]!.map(
-            (subject) {
-              final statusLower = subject.estado.toLowerCase();
-              final statusColor = statusLower.contains('aprob')
-                  ? const Color(0xFF2E7D32)
-                  : statusLower.contains('curs')
-                      ? const Color(0xFF1565C0)
-                      : statusLower.contains('regular')
-                          ? const Color(0xFFE65100)
-                          : null;
+          ...groups[year]!.map((subject) {
+            final statusLower = subject.estado.toLowerCase();
+            final statusColor = statusLower.contains('aprob')
+                ? const Color(0xFF2E7D32)
+                : statusLower.contains('curs')
+                ? const Color(0xFF1565C0)
+                : statusLower.contains('regular')
+                ? const Color(0xFFE65100)
+                : null;
 
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surface,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: theme.colorScheme.outlineVariant,
-                    ),
-                  ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 12,
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              subject.nombre.isEmpty
-                                  ? 'Materia'
-                                  : _titulo(subject.nombre),
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              subject.estado.isEmpty
-                                  ? 'Estado no informado'
-                                  : _titulo(subject.estado),
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                fontWeight: FontWeight.w600,
-                                color: statusColor ??
-                                    theme.colorScheme.onSurface
-                                        .withValues(alpha: 0.5),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Text(
-                        subject.anio?.toString() ?? '—',
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          color: theme.colorScheme.onSurface
-                              .withValues(alpha: 0.3),
-                        ),
-                      ),
-                    ],
-                  ),
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surface,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: theme.colorScheme.outlineVariant),
                 ),
-              );
-            },
-          ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 12,
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            subject.nombre.isEmpty
+                                ? 'Materia'
+                                : _titulo(subject.nombre),
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            subject.estado.isEmpty
+                                ? 'Estado no informado'
+                                : _titulo(subject.estado),
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color:
+                                  statusColor ??
+                                  theme.colorScheme.onSurface.withValues(
+                                    alpha: 0.5,
+                                  ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Text(
+                      subject.anio?.toString() ?? '—',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.3,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }),
         ],
       ],
     );
@@ -837,9 +968,7 @@ class _InfoCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: theme.colorScheme.outlineVariant,
-        ),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
       ),
       padding: const EdgeInsets.all(14),
       child: Text(text),
@@ -861,9 +990,7 @@ class _LoadingBanner extends StatelessWidget {
         decoration: BoxDecoration(
           color: theme.colorScheme.surface,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: theme.colorScheme.outlineVariant,
-          ),
+          border: Border.all(color: theme.colorScheme.outlineVariant),
         ),
         padding: const EdgeInsets.all(14),
         child: Row(
@@ -873,7 +1000,7 @@ class _LoadingBanner extends StatelessWidget {
               height: 22,
               child: CircularProgressIndicator(strokeWidth: 2.5),
             ),
-              const SizedBox(width: 12),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -888,8 +1015,7 @@ class _LoadingBanner extends StatelessWidget {
                   Text(
                     'La sesión original de SAGE sigue activa.',
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurface
-                          .withValues(alpha: 0.5),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                     ),
                   ),
                 ],
@@ -904,9 +1030,32 @@ class _LoadingBanner extends StatelessWidget {
 
 String _titulo(String texto) {
   if (texto.isEmpty) return texto;
-  const conectores = {'de', 'en', 'y', 'e', 'o', 'u', 'a', 'el', 'la', 'los',
-      'las', 'del', 'al', 'por', 'para', 'con', 'sin', 'su', 'sus', 'un', 'una',
-      'unos', 'unas', 'lo'};
+  const conectores = {
+    'de',
+    'en',
+    'y',
+    'e',
+    'o',
+    'u',
+    'a',
+    'el',
+    'la',
+    'los',
+    'las',
+    'del',
+    'al',
+    'por',
+    'para',
+    'con',
+    'sin',
+    'su',
+    'sus',
+    'un',
+    'una',
+    'unos',
+    'unas',
+    'lo',
+  };
   return _normalizarTexto(texto)
       .split(' ')
       .map((p) {
@@ -927,7 +1076,10 @@ bool _esSiglaConPuntos(String palabra) {
 String _normalizarTexto(String texto) {
   var t = texto
       .replaceAll(RegExp(r'\s+'), ' ')
-      .replaceAllMapped(RegExp(r'(\w),(\w)'), (m) => '${m.group(1)}, ${m.group(2)}')
+      .replaceAllMapped(
+        RegExp(r'(\w),(\w)'),
+        (m) => '${m.group(1)}, ${m.group(2)}',
+      )
       .replaceAllMapped(RegExp(r'\.(\S)'), (m) => '. ${m.group(1)}')
       .trim();
   while (t.contains('.  ')) {

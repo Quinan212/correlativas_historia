@@ -52,20 +52,18 @@ class ExtractorAgenteSage {
     return value is Map ? Map<String, dynamic>.from(value) : const {};
   }
 
-  static List<OpcionAgenteSage> _list(
-    Map<String, dynamic> value,
-    String key,
-  ) => [
-    for (final item in value[key] as List<dynamic>? ?? const [])
-      if (item is Map)
-        OpcionAgenteSage(
-          claveCanonica: item['key']?.toString() ?? '',
-          etiqueta: item['label']?.toString() ?? '',
-          ruta: item['path']?.toString(),
-          sigla: item['shortLabel']?.toString(),
-          icono: _iconForKey(item['key']?.toString() ?? ''),
-        ),
-  ];
+  static List<OpcionAgenteSage> _list(Map<String, dynamic> value, String key) =>
+      [
+        for (final item in value[key] as List<dynamic>? ?? const [])
+          if (item is Map)
+            OpcionAgenteSage(
+              claveCanonica: item['key']?.toString() ?? '',
+              etiqueta: item['label']?.toString() ?? '',
+              ruta: item['path']?.toString(),
+              sigla: item['shortLabel']?.toString(),
+              icono: _iconForKey(item['key']?.toString() ?? ''),
+            ),
+      ];
 
   static int _iconForKey(String key) {
     if (key.contains('legajo_unico_alumno') || key == 'legajo_alumnos') {

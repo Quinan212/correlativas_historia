@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../trayectoria_sage_laboratorio/sage/estilo_visual_sage.dart';
+
 import 'lista_opciones_sage.dart';
 
 class PantallaModulosSage extends StatelessWidget {
@@ -20,10 +22,9 @@ class PantallaModulosSage extends StatelessWidget {
   Widget build(BuildContext context) {
     final busy = loadingTitle != null;
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF0E5E86),
-        foregroundColor: Colors.white,
-        title: const Text('Estudiante'),
+      appBar: construirAppBarSage(
+        context,
+        title: 'Estudiante',
         leading: IconButton(
           tooltip: 'Cambiar perfil',
           onPressed: busy ? null : onBack,

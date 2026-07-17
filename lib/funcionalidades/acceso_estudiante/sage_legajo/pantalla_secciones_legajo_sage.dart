@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../trayectoria_sage_laboratorio/sage/estilo_visual_sage.dart';
+
 import '../sage_navegacion/lista_opciones_sage.dart';
 import 'modelos_legajo_sage.dart';
 
@@ -25,10 +27,9 @@ class PantallaSeccionesLegajoSage extends StatelessWidget {
   Widget build(BuildContext context) {
     final busy = loadingTitle != null;
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF0E5E86),
-        foregroundColor: Colors.white,
-        title: const Text('Mi legajo'),
+      appBar: construirAppBarSage(
+        context,
+        title: 'Mi legajo',
         leading: IconButton(
           tooltip: 'Volver',
           onPressed: busy ? null : onBack,

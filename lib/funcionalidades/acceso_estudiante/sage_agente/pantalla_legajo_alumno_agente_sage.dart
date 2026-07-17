@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../trayectoria_sage_laboratorio/sage/estilo_visual_sage.dart';
+
 import '../sage_navegacion/lista_opciones_sage.dart';
 import 'modelos_agente_sage.dart';
 
@@ -22,10 +24,9 @@ class PantallaLegajoAlumnoAgenteSage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(
-      backgroundColor: const Color(0xFF0E5E86),
-      foregroundColor: Colors.white,
-      title: const Text('Legajo Único Alumno'),
+    appBar: construirAppBarSage(
+      context,
+      title: 'Legajo Único Alumno',
       leading: IconButton(
         tooltip: 'Volver',
         onPressed: busy ? null : onBack,

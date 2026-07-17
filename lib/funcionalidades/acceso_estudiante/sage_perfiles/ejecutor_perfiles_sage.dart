@@ -28,7 +28,8 @@ class ResultadoCambioPerfilSage {
   final String stage;
 
   bool get dispatchSucceeded =>
-      alreadyActive || (avatarFound && panelOpened && found && dispatched && activated);
+      alreadyActive ||
+      (avatarFound && panelOpened && found && dispatched && activated);
 
   bool get success => dispatchSucceeded && (confirmed || alreadyActive);
 
@@ -140,7 +141,8 @@ class EjecutorPerfilesSage {
     return value is Map ? Map<String, dynamic>.from(value) : const {};
   }
 
-  static String _inspectionScript(bool openPanel) => '''(() => {
+  static String _inspectionScript(bool openPanel) =>
+      '''(() => {
     const shouldOpen = ${openPanel ? 'true' : 'false'};
     const normalize = value => String(value || '')
       .toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g, '')
@@ -257,7 +259,8 @@ class EjecutorPerfilesSage {
     });
   })()''';
 
-  static String _clickScript(String label) => '''(() => {
+  static String _clickScript(String label) =>
+      '''(() => {
     const wanted = ${jsonEncode(label)};
     const normalize = value => String(value || '')
       .toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g, '')

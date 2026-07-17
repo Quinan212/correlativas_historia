@@ -19,6 +19,10 @@ import '../../../funcionalidades/examenes/componentes/etiqueta_carrera_examenes.
 import '../../../funcionalidades/examenes/examenes_pantalla.dart';
 import '../../../funcionalidades/preguntas_frecuentes/preguntas_frecuentes_pantalla.dart';
 import '../../../modelos/materia.dart';
+import '../../laboratorio_atlassian/componentes/tarjeta_acceso_laboratorio_atlassian.dart';
+import '../../laboratorio_atlassian/pantallas/pantalla_laboratorio_atlassian.dart';
+import '../../laboratorio_interfaces/componentes/tarjeta_acceso_laboratorio_interfaces.dart';
+import '../../laboratorio_interfaces/pantallas/pantalla_laboratorio_liquid_glass.dart';
 import '../../trayectoria_sage_laboratorio/componentes/tarjeta_acceso_laboratorio_sage.dart';
 import '../../trayectoria_sage_laboratorio/pantallas/pantalla_laboratorio_sage.dart';
 import '../datos/repositorio_acceso_estudiante.dart';
@@ -323,8 +327,22 @@ class _AccesoEstudiantePantallaState
 
   void _openSageLaboratory() {
     Navigator.of(context, rootNavigator: true).push<void>(
+      MaterialPageRoute<void>(builder: (_) => const PantallaLaboratorioSage()),
+    );
+  }
+
+  void _openInterfaceLaboratory() {
+    Navigator.of(context, rootNavigator: true).push<void>(
       MaterialPageRoute<void>(
-        builder: (_) => const PantallaLaboratorioSage(),
+        builder: (_) => const PantallaLaboratorioLiquidGlass(),
+      ),
+    );
+  }
+
+  void _openAtlassianLaboratory() {
+    Navigator.of(context, rootNavigator: true).push<void>(
+      MaterialPageRoute<void>(
+        builder: (_) => const PantallaLaboratorioAtlassian(),
       ),
     );
   }
@@ -794,10 +812,9 @@ class _AccesoEstudiantePantallaState
     final sessionId = _navSession;
     final careerId = _payload?.student.careerId;
     prewarmExamenesData(ref, careerId: careerId);
-    Navigator.of(context).pushAndRemoveUntil(
-      buildExamenesRoute(),
-      (r) => r.isFirst,
-    ).then((_) {
+    Navigator.of(
+      context,
+    ).pushAndRemoveUntil(buildExamenesRoute(), (r) => r.isFirst).then((_) {
       if (mounted && _navSession == sessionId) {
         ref.read(proveedorSeccionNav.notifier).state = 0;
       }
@@ -811,20 +828,22 @@ class _AccesoEstudiantePantallaState
       return;
     }
     final sessionId = _navSession;
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute<void>(
-        builder: (context) => _MateriasEstudiantePantalla(
-          payload: payload,
-          planFuture:
-              _planFuture ?? _loadPlanForCareer(payload.student.careerId),
-        ),
-      ),
-      (r) => r.isFirst,
-    ).then((_) {
-      if (mounted && _navSession == sessionId) {
-        ref.read(proveedorSeccionNav.notifier).state = 0;
-      }
-    });
+    Navigator.of(context)
+        .pushAndRemoveUntil(
+          MaterialPageRoute<void>(
+            builder: (context) => _MateriasEstudiantePantalla(
+              payload: payload,
+              planFuture:
+                  _planFuture ?? _loadPlanForCareer(payload.student.careerId),
+            ),
+          ),
+          (r) => r.isFirst,
+        )
+        .then((_) {
+          if (mounted && _navSession == sessionId) {
+            ref.read(proveedorSeccionNav.notifier).state = 0;
+          }
+        });
   }
 
   void _abrirDatosRemoviendo() {
@@ -834,19 +853,21 @@ class _AccesoEstudiantePantallaState
       return;
     }
     final sessionId = _navSession;
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute<void>(
-        builder: (context) => _DatosEstudiantePantalla(
-          student: student,
-          onSaveContact: _saveStudentContact,
-        ),
-      ),
-      (r) => r.isFirst,
-    ).then((_) {
-      if (mounted && _navSession == sessionId) {
-        ref.read(proveedorSeccionNav.notifier).state = 0;
-      }
-    });
+    Navigator.of(context)
+        .pushAndRemoveUntil(
+          MaterialPageRoute<void>(
+            builder: (context) => _DatosEstudiantePantalla(
+              student: student,
+              onSaveContact: _saveStudentContact,
+            ),
+          ),
+          (r) => r.isFirst,
+        )
+        .then((_) {
+          if (mounted && _navSession == sessionId) {
+            ref.read(proveedorSeccionNav.notifier).state = 0;
+          }
+        });
   }
 
   Future<void> _saveStudentContact({
@@ -998,6 +1019,14 @@ class _AccesoEstudiantePantallaState
                                 TarjetaAccesoLaboratorioSage(
                                   onTap: _openSageLaboratory,
                                 ),
+                                const SizedBox(height: 10),
+                                TarjetaAccesoLaboratorioInterfaces(
+                                  onTap: _openInterfaceLaboratory,
+                                ),
+                                const SizedBox(height: 10),
+                                TarjetaAccesoLaboratorioAtlassian(
+                                  onTap: _openAtlassianLaboratory,
+                                ),
                               ],
                             ),
                           ),
@@ -1054,6 +1083,14 @@ class _AccesoEstudiantePantallaState
                                     const SizedBox(height: 12),
                                     TarjetaAccesoLaboratorioSage(
                                       onTap: _openSageLaboratory,
+                                    ),
+                                    const SizedBox(height: 10),
+                                    TarjetaAccesoLaboratorioInterfaces(
+                                      onTap: _openInterfaceLaboratory,
+                                    ),
+                                    const SizedBox(height: 10),
+                                    TarjetaAccesoLaboratorioAtlassian(
+                                      onTap: _openAtlassianLaboratory,
                                     ),
                                     const SizedBox(height: 14),
                                     _GrillaAccionesEstudiante(
