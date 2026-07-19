@@ -141,6 +141,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
       child: tabs[routerIndex],
     );
 
+    /*
     if (isDesktop) {
       content = Row(
         children: [
@@ -223,6 +224,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
         ],
       );
     }
+    */
 
     return PopScope(
       canPop: false,
