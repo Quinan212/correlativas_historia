@@ -108,8 +108,8 @@ class _MainScreenState extends ConsumerState<MainScreen> {
     final showAdminFab = adminStatus?.isAdmin == true;
     final width = MediaQuery.of(context).size.width;
     final isDesktop = width >= 900;
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    // final theme = Theme.of(context);
+    // final isDark = theme.brightness == Brightness.dark;
     final loggedIn = ref.watch(proveedorSesionActivaSupabase);
     final sageActivo = ref.watch(proveedorSageActivo);
     final showNavBar = !isDesktop && loggedIn && !sageActivo;
