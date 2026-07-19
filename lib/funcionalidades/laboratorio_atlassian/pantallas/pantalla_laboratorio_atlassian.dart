@@ -21,7 +21,9 @@ import 'pantallas_herramientas_atlassian.dart';
 import 'utilidades_atlassian.dart';
 
 class PantallaLaboratorioAtlassian extends StatefulWidget {
-  const PantallaLaboratorioAtlassian({super.key});
+  const PantallaLaboratorioAtlassian({super.key, this.hideExit = false});
+
+  final bool hideExit;
 
   @override
   State<PantallaLaboratorioAtlassian> createState() =>
@@ -370,7 +372,13 @@ class _PantallaLaboratorioAtlassianState
         onTrajectoryChanged: _replaceTrajectory,
         onNavigate: _selectSection,
         onSearch: _openGlobalSearch,
-        onExit: () => Navigator.of(context).pop(),
+        onExit: widget.hideExit
+            ? null
+            : () {
+                if (Navigator.of(context, rootNavigator: true).canPop()) {
+                  Navigator.of(context).pop();
+                }
+              },
       ),
       PantallaExamenesAtlassian(
         onSearch: _openGlobalSearch,
@@ -415,7 +423,13 @@ class _PantallaLaboratorioAtlassianState
                   NavegacionLateralAtlassian(
                     selectedIndex: _section,
                     onSelected: _selectSection,
-                    onExit: () => Navigator.of(context).pop(),
+                    onExit: widget.hideExit
+            ? null
+            : () {
+                if (Navigator.of(context, rootNavigator: true).canPop()) {
+                  Navigator.of(context).pop();
+                }
+              },
                     nombreEstudiante: trajectory?.perfil.nombre,
                   ),
                   Expanded(child: content),

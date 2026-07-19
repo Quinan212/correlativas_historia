@@ -339,10 +339,10 @@ class _AccesoEstudiantePantallaState
     );
   }
 
-  void _openAtlassianLaboratory() {
+  void _openAtlassianLaboratory({bool hideExit = false}) {
     Navigator.of(context, rootNavigator: true).push<void>(
       MaterialPageRoute<void>(
-        builder: (_) => const PantallaLaboratorioAtlassian(),
+        builder: (_) => PantallaLaboratorioAtlassian(hideExit: hideExit),
       ),
     );
   }

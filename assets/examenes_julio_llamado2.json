@@ -1,0 +1,551 @@
+[
+  {
+    "careerId": "historia",
+    "anio": 1,
+    "fecha": "2026-07-27",
+    "hora": "19:00",
+    "materia": "Problemática del Conocimiento Histórico",
+    "instancia": "llamado_2",
+    "docentes": ["Carmarán, Rosana", "Borche, Javier", "Medina, Jorge"]
+  },
+  {
+    "careerId": "historia",
+    "anio": 1,
+    "fecha": "2026-07-27",
+    "hora": "19:00",
+    "materia": "Pedagogía",
+    "instancia": "llamado_2",
+    "docentes": ["Barrios, Eugenia", "Salud, Diana", "Leiva, Carina", "Díaz, Romina"]
+  },
+  {
+    "careerId": "historia",
+    "anio": 1,
+    "fecha": "2026-07-29",
+    "hora": "19:00",
+    "materia": "Didáctica General",
+    "instancia": "llamado_2",
+    "docentes": ["Fernández, María", "Pizzio, Marcos", "Diaz, Romina"]
+  },
+  {
+    "careerId": "historia",
+    "anio": 1,
+    "fecha": "2026-07-27",
+    "hora": "19:00",
+    "materia": "P.S.P.E. y C. de la Antigüedad",
+    "instancia": "llamado_2",
+    "docentes": ["Carmarán, Rosana", "Borche, Javier", "Medina, Jorge"]
+  },
+  {
+    "careerId": "historia",
+    "anio": 1,
+    "fecha": "2026-07-29",
+    "hora": "19:00",
+    "materia": "P.S.P.E. y C. de los Pueblos Originarios de América",
+    "instancia": "llamado_2",
+    "docentes": ["Frigo, Flavia", "Galarza, Guillermo", "Olivieri, Alejandro"]
+  },
+  {
+    "careerId": "geografia",
+    "anio": 1,
+    "fecha": "2026-07-29",
+    "hora": "19:00",
+    "materia": "Naturaleza y Sociedad I",
+    "instancia": "llamado_2",
+    "docentes": ["Carrera, Franklin", "Lindt, Elizabet", "Moser, Sebastián"]
+  },
+  {
+    "careerId": "geografia",
+    "anio": 1,
+    "fecha": "2026-07-27",
+    "hora": "19:00",
+    "materia": "Geografía de Entre Ríos",
+    "instancia": "llamado_2",
+    "docentes": ["Lugrín, Patricia", "Carrera, Franklin", "Lindt, Elizabet"]
+  },
+  {
+    "careerId": "geografia",
+    "anio": 1,
+    "fecha": "2026-07-27",
+    "hora": "19:00",
+    "materia": "Paisajes Geográficos Mundiales",
+    "instancia": "llamado_2",
+    "docentes": ["Coduri, Emilia", "Palavicini, Patricia", "Menoni, Evelyn"]
+  },
+  {
+    "careerId": "geografia",
+    "anio": 1,
+    "fecha": "2026-07-28",
+    "hora": "19:00",
+    "materia": "Espacios Urbanos y Rurales en el Mundo Contemporáneo",
+    "instancia": "llamado_2",
+    "docentes": ["Coduri, Emilia", "Lugrin, Patricia", "Palavicini, Patricia"]
+  },
+  {
+    "careerId": "geografia",
+    "anio": 1,
+    "fecha": "2026-07-27",
+    "hora": "19:00",
+    "materia": "Pedagogía",
+    "instancia": "llamado_2",
+    "docentes": ["Barrios, Eugenia", "Salud, Diana", "Leiva, Carina", "Díaz, Romina"]
+  },
+  {
+    "careerId": "geografia",
+    "anio": 1,
+    "fecha": "2026-07-29",
+    "hora": "19:00",
+    "materia": "Didáctica General",
+    "instancia": "llamado_2",
+    "docentes": ["Fernández, María", "Pizzio, Marcos", "Diaz, Romina"]
+  },
+  {
+    "careerId": "politica",
+    "anio": 1,
+    "fecha": "2026-07-28",
+    "hora": "19:00",
+    "materia": "Instituciones del Derecho Privado / Derecho Privado",
+    "instancia": "llamado_2",
+    "docentes": ["Morel, José Luis", "Piedrabuena, Aldo", "Moser, Sebastian"]
+  },
+  {
+    "careerId": "politica",
+    "anio": 1,
+    "fecha": "2026-07-27",
+    "hora": "19:00",
+    "materia": "Problemática de la Ciencia Política I",
+    "instancia": "llamado_2",
+    "docentes": ["Velazque Pens, Marcelo", "Diaz, Ignacio", "Piedrabuena, Aldo"]
+  },
+  {
+    "careerId": "politica",
+    "anio": 1,
+    "fecha": "2026-07-27",
+    "hora": "19:00",
+    "materia": "Procesos Históricos Modernos",
+    "instancia": "llamado_2",
+    "docentes": ["Velazque Pens, Marcelo", "Robinson, Soledad", "Alanis, Araceli"]
+  },
+  {
+    "careerId": "politica",
+    "anio": 1,
+    "fecha": "2026-07-28",
+    "hora": "19:00",
+    "materia": "Antropología Social",
+    "instancia": "llamado_2",
+    "docentes": ["Martínez, Gustavo", "Morel, José Luis", "Piedrabuena, Aldo"]
+  },
+  {
+    "careerId": "politica",
+    "anio": 1,
+    "fecha": "2026-07-27",
+    "hora": "19:00",
+    "materia": "Pedagogía",
+    "instancia": "llamado_2",
+    "docentes": ["Barrios, Eugenia", "Salud, Diana", "Leiva, Carina", "Díaz, Romina"]
+  },
+  {
+    "careerId": "politica",
+    "anio": 1,
+    "fecha": "2026-07-29",
+    "hora": "19:00",
+    "materia": "Didáctica General",
+    "instancia": "llamado_2",
+    "docentes": ["Fernández, María", "Pizzio, Marcos", "Diaz, Romina"]
+  },
+  {
+    "careerId": "politica",
+    "anio": 1,
+    "fecha": "2026-07-29",
+    "hora": "19:00",
+    "materia": "Economía",
+    "instancia": "llamado_2",
+    "docentes": ["Belottini, Fernando", "Morel, José Luis", "Piedrabuena, Aldo"]
+  },
+  {
+    "careerId": "historia",
+    "anio": 2,
+    "fecha": "2026-07-29",
+    "hora": "19:00",
+    "materia": "Filosofía",
+    "instancia": "llamado_2",
+    "docentes": ["Leiva, Carina", "Pizzio, Marcos", "Ochoa, Natalia"]
+  },
+  {
+    "careerId": "historia",
+    "anio": 2,
+    "fecha": "2026-07-30",
+    "hora": "19:00",
+    "materia": "P.S.P.E. y C. del Feudalismo y la Modernidad",
+    "instancia": "llamado_2",
+    "docentes": ["Frigo, Flavia", "Medina, Jorge", "Galarza, Guillermo"]
+  },
+  {
+    "careerId": "historia",
+    "anio": 2,
+    "fecha": "2026-07-30",
+    "hora": "19:00",
+    "materia": "Psicología Educacional",
+    "instancia": "llamado_2",
+    "docentes": ["Cañete, Marcela", "Gay, Giuliana", "Leiva, Carina"]
+  },
+  {
+    "careerId": "historia",
+    "anio": 2,
+    "fecha": "2026-07-22",
+    "hora": "19:00",
+    "materia": "El Mundo y las Nuevas Territorialidades",
+    "instancia": "llamado_2",
+    "docentes": ["Robinson, Soledad", "Medina, Jorge", "Olivieri, Alejandro"]
+  },
+  {
+    "careerId": "historia",
+    "anio": 2,
+    "fecha": "2026-07-29",
+    "hora": "19:00",
+    "materia": "P.S.P.E. y C. Americanos I",
+    "instancia": "llamado_2",
+    "docentes": ["Frigo, Flavia", "Medina, Jorge", "Olivieri, Alejandro"]
+  },
+  {
+    "careerId": "geografia",
+    "anio": 2,
+    "fecha": "2026-07-29",
+    "hora": "19:00",
+    "materia": "Filosofía",
+    "instancia": "llamado_2",
+    "docentes": ["Leiva, Carina", "Pizzio, Marcos", "Ochoa, Natalia"]
+  },
+  {
+    "careerId": "geografia",
+    "anio": 2,
+    "fecha": "2026-07-31",
+    "hora": "19:00",
+    "materia": "Didáctica de las Ciencias Sociales",
+    "instancia": "llamado_2",
+    "docentes": ["Palavicini, Patricia", "Carrera, Franklin", "Velazque Pens, Marcelo"]
+  },
+  {
+    "careerId": "geografia",
+    "anio": 2,
+    "fecha": "2026-07-30",
+    "hora": "19:00",
+    "materia": "Psicología Educacional",
+    "instancia": "llamado_2",
+    "docentes": ["Cañete, Marcela", "Gay, Giuliana", "Leiva, Carina"]
+  },
+  {
+    "careerId": "geografia",
+    "anio": 2,
+    "fecha": "2026-07-28",
+    "hora": "19:00",
+    "materia": "Organización del Espacio Geográfico Americano",
+    "instancia": "llamado_2",
+    "docentes": ["Lugrín, Patricia", "Carrera, Franklin", "Lindt, Elizabet"]
+  },
+  {
+    "careerId": "geografia",
+    "anio": 2,
+    "fecha": "2026-07-28",
+    "hora": "19:00",
+    "materia": "Historia Social y Política Argentina y Latinoamericana",
+    "instancia": "llamado_2",
+    "docentes": ["Moser, Sebastián", "Leiva, Carina", "Leguiza, Julieta"]
+  },
+  {
+    "careerId": "politica",
+    "anio": 2,
+    "fecha": "2026-07-28",
+    "hora": "19:00",
+    "materia": "Problemática de la Ciencia Política II",
+    "instancia": "llamado_2",
+    "docentes": ["Velazque Pens, Marcelo", "Diaz, Ignacio", "Ozuna, Ana"]
+  },
+  {
+    "careerId": "politica",
+    "anio": 2,
+    "fecha": "2026-07-29",
+    "hora": "19:00",
+    "materia": "Filosofía",
+    "instancia": "llamado_2",
+    "docentes": ["Leiva, Carina", "Pizzio, Marcos", "Ochoa, Natalia"]
+  },
+  {
+    "careerId": "politica",
+    "anio": 2,
+    "fecha": "2026-07-30",
+    "hora": "19:00",
+    "materia": "Psicología Educacional",
+    "instancia": "llamado_2",
+    "docentes": ["Cañete, Marcela", "Gay, Giuliana", "Leiva, Carina"]
+  },
+  {
+    "careerId": "politica",
+    "anio": 2,
+    "fecha": "2026-07-29",
+    "hora": "19:00",
+    "materia": "Economía Política",
+    "instancia": "llamado_2",
+    "docentes": ["Belottini, Fernando", "Morel, José Luis", "Piedrabuena, Aldo"]
+  },
+  {
+    "careerId": "politica",
+    "anio": 2,
+    "fecha": "2026-07-27",
+    "hora": "19:00",
+    "materia": "Teoría Política",
+    "instancia": "llamado_2",
+    "docentes": ["Diaz, Ignacio", "Ozuna, Ana", "Espíndola, Estéfano"]
+  },
+  {
+    "careerId": "politica",
+    "anio": 2,
+    "fecha": "2026-07-28",
+    "hora": "19:00",
+    "materia": "Historia Social y Política Argentina y Latinoamericana",
+    "instancia": "llamado_2",
+    "docentes": ["Moser, Sebastián", "Leiva, Carina", "Leguiza, Julieta"]
+  },
+  {
+    "careerId": "politica",
+    "anio": 2,
+    "fecha": "2026-07-28",
+    "hora": "19:00",
+    "materia": "Derecho Constitucional",
+    "instancia": "llamado_2",
+    "docentes": ["Morel, José Luis", "Piedrabuena, Aldo", "Moser, Sebastian"]
+  },
+  {
+    "careerId": "historia",
+    "anio": 3,
+    "fecha": "2026-07-31",
+    "hora": "19:00",
+    "materia": "Historia de la Educación Argentina",
+    "instancia": "llamado_2",
+    "docentes": ["Borche, Javier", "Coduri, Emilia", "Leiva, Carina"]
+  },
+  {
+    "careerId": "historia",
+    "anio": 3,
+    "fecha": "2026-07-28",
+    "hora": "19:00",
+    "materia": "Didáctica de la Historia",
+    "instancia": "llamado_2",
+    "docentes": ["Robinson, Soledad", "Velazque, Pens", "Lower, Griselda"]
+  },
+  {
+    "careerId": "historia",
+    "anio": 3,
+    "fecha": "2026-07-29",
+    "hora": "19:00",
+    "materia": "P.S.P.E. y C. Argentinos I",
+    "instancia": "llamado_2",
+    "docentes": ["Dri, Gabriela", "Medina, Jorge", "Segovia, Paola"]
+  },
+  {
+    "careerId": "historia",
+    "anio": 3,
+    "fecha": "2026-07-29",
+    "hora": "19:00",
+    "materia": "P.S.P.E. y C. Americanos II",
+    "instancia": "llamado_2",
+    "docentes": ["Carmarán, Rosana", "Pozzi, Gerardo", "Martínez, Yanina"]
+  },
+  {
+    "careerId": "historia",
+    "anio": 3,
+    "fecha": "2026-07-31",
+    "hora": "19:00",
+    "materia": "P.S.P.E. y C. Contemporáneos I",
+    "instancia": "llamado_2",
+    "docentes": ["Frigo, Flavia", "Dri, Gabriela", "Segovia, Paola"]
+  },
+  {
+    "careerId": "historia",
+    "anio": 3,
+    "fecha": "2026-07-31",
+    "hora": "19:00",
+    "materia": "Sociología de la Educación",
+    "instancia": "llamado_2",
+    "docentes": ["Fernández, María", "Ruiz Díaz, Carlos", "Villa, Claudio"]
+  },
+  {
+    "careerId": "geografia",
+    "anio": 3,
+    "fecha": "2026-07-30",
+    "hora": "19:00",
+    "materia": "Organización del Espacio Geográfico Argentino",
+    "instancia": "llamado_2",
+    "docentes": ["Coduri, Emilia", "Palavicini, Patricia", "Carrera, Franklin"]
+  },
+  {
+    "careerId": "geografia",
+    "anio": 3,
+    "fecha": "2026-07-31",
+    "hora": "19:00",
+    "materia": "Sociología de la Educación",
+    "instancia": "llamado_2",
+    "docentes": ["Fernández, María", "Ruiz Díaz, Carlos", "Villa, Claudio"]
+  },
+  {
+    "careerId": "geografia",
+    "anio": 3,
+    "fecha": "2026-07-30",
+    "hora": "19:00",
+    "materia": "Didáctica de la Geografía",
+    "instancia": "llamado_2",
+    "docentes": ["Velazque Pens, Marcelo", "Medina, Jorge", "Díaz, Ignacio"]
+  },
+  {
+    "careerId": "geografia",
+    "anio": 3,
+    "fecha": "2026-07-29",
+    "hora": "19:00",
+    "materia": "Epistemología de la Geografía",
+    "instancia": "llamado_2",
+    "docentes": ["Moser, Sebastián", "Lidebinsky, José Luis", "Carrera, Franklin"]
+  },
+  {
+    "careerId": "geografia",
+    "anio": 3,
+    "fecha": "2026-07-31",
+    "hora": "19:00",
+    "materia": "Naturaleza y Sociedad II",
+    "instancia": "llamado_2",
+    "docentes": ["Urgatamendia, Jorge", "Carrera, Franklin", "Cotto, Rodolfo"]
+  },
+  {
+    "careerId": "geografia",
+    "anio": 3,
+    "fecha": "2026-07-31",
+    "hora": "19:00",
+    "materia": "Historia de la Educación Argentina",
+    "instancia": "llamado_2",
+    "docentes": ["Borche, Javier", "Coduri, Emilia", "Leiva, Carina"]
+  },
+  {
+    "careerId": "politica",
+    "anio": 3,
+    "fecha": "2026-07-31",
+    "hora": "19:00",
+    "materia": "Derecho Administrativo",
+    "instancia": "llamado_2",
+    "docentes": ["Velazque Pens, Marcelo", "Morel, José Luis", "Díaz, Ignacio"]
+  },
+  {
+    "careerId": "politica",
+    "anio": 3,
+    "fecha": "2026-07-31",
+    "hora": "19:00",
+    "materia": "Teoría Política II",
+    "instancia": "llamado_2",
+    "docentes": ["Diaz, Ignacio", "Velazque Pens, Marcelo", "Ozuna, Ana"]
+  },
+  {
+    "careerId": "politica",
+    "anio": 3,
+    "fecha": "2026-07-29",
+    "hora": "19:00",
+    "materia": "Procesos Históricos Contemporáneos",
+    "instancia": "llamado_2",
+    "docentes": ["Velazque Pens, Marcelo", "Robinson, Soledad", "Roda, María Laura"]
+  },
+  {
+    "careerId": "politica",
+    "anio": 3,
+    "fecha": "2026-07-31",
+    "hora": "19:00",
+    "materia": "Historia de la Educación Argentina",
+    "instancia": "llamado_2",
+    "docentes": ["Borche, Javier", "Coduri, Emilia", "Leiva, Carina"]
+  },
+  {
+    "careerId": "politica",
+    "anio": 3,
+    "fecha": "2026-07-31",
+    "hora": "19:00",
+    "materia": "Derechos Humanos, Ética y Ciudadanía",
+    "instancia": "llamado_2",
+    "docentes": ["Carmarán, Rosana", "Moser, Sebastián", "Torales Kling, Lidia"]
+  },
+  {
+    "careerId": "historia",
+    "anio": 4,
+    "fecha": "2026-07-31",
+    "hora": "19:00",
+    "materia": "P.S.P.E. y C. Contemporáneos II",
+    "instancia": "llamado_2",
+    "docentes": ["García, Diego", "Dri, Gabriela", "Almirón, Diego"]
+  },
+  {
+    "careerId": "historia",
+    "anio": 4,
+    "fecha": "2026-07-31",
+    "hora": "19:00",
+    "materia": "P.S.P.E. y C. Americanos III",
+    "instancia": "llamado_2",
+    "docentes": ["Frigo, Flavia", "Olivieri, Alejandro", "Gómez, Jeremías"]
+  },
+  {
+    "careerId": "historia",
+    "anio": 4,
+    "fecha": "2026-07-31",
+    "hora": "19:00",
+    "materia": "Derechos Humanos, Ética y Ciudadanía",
+    "instancia": "llamado_2",
+    "docentes": ["Carmarán, Rosana", "Moser, Sebastián", "Torales Kling, Lidia"]
+  },
+  {
+    "careerId": "geografia",
+    "anio": 4,
+    "fecha": "2026-07-31",
+    "hora": "19:00",
+    "materia": "Geografía Económica",
+    "instancia": "llamado_2",
+    "docentes": ["Velazque Pens, Marcelo", "Lindt, Elizabet", "González, Carlos"]
+  },
+  {
+    "careerId": "geografia",
+    "anio": 4,
+    "fecha": "2026-07-30",
+    "hora": "19:00",
+    "materia": "Geografía Política y Cultural",
+    "instancia": "llamado_2",
+    "docentes": ["Palavicini, Patricia", "Lindt, Elizabet", "Dri, Gabriela"]
+  },
+  {
+    "careerId": "geografia",
+    "anio": 4,
+    "fecha": "2026-07-31",
+    "hora": "19:00",
+    "materia": "Derechos Humanos, Ética y Ciudadanía",
+    "instancia": "llamado_2",
+    "docentes": ["Carmarán, Rosana", "Moser, Sebastián", "Torales Kling, Lidia"]
+  },
+  {
+    "careerId": "politica",
+    "anio": 4,
+    "fecha": "2026-07-29",
+    "hora": "19:00",
+    "materia": "Relaciones Internacionales",
+    "instancia": "llamado_2",
+    "docentes": ["Diaz, Ignacio", "Ozuna, Ana", "Romero, Adrián"]
+  },
+  {
+    "careerId": "politica",
+    "anio": 4,
+    "fecha": "2026-07-30",
+    "hora": "19:00",
+    "materia": "Pensamiento Político Latinoamericano y Argentino",
+    "instancia": "llamado_2",
+    "docentes": ["Díaz, Ignacio", "Ozuna, Ana", "Maidana, Carolina"]
+  },
+  {
+    "careerId": "politica",
+    "anio": 4,
+    "fecha": "2026-07-31",
+    "hora": "19:00",
+    "materia": "Sistemas Políticos Comparados",
+    "instancia": "llamado_2",
+    "docentes": ["Diaz, Ignacio", "Velazque Pens, Marcelo", "Leonardi, Julio"]
+  }
+]

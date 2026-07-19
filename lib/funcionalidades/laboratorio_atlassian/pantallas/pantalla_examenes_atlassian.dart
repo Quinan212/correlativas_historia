@@ -93,11 +93,22 @@ class _PantallaExamenesAtlassianState extends State<PantallaExamenesAtlassian> {
 
   Future<List<EventoExamen>> _load() async {
     final results = await Future.wait<List<EventoExamen>>([
+      _repository.loadJulioLlamado1(),
+      _repository.loadJulioLlamado2(),
+      _repository.loadJulioColoquios(),
       _repository.loadLlamado1(),
       _repository.loadLlamado2(),
       _repository.loadColoquios(),
     ]);
-    final all = <EventoExamen>[...results[0], ...results[1], ...results[2]];
+    final all = <EventoExamen>[
+      ...results[0],
+      ...results[1],
+      ...results[2],
+      ...results[3],
+      ...results[4],
+      ...results[5],
+    ];
+    all.removeWhere((e) => e.legacy);
     all.sort((first, second) {
       final firstDate = first.fechaHora;
       final secondDate = second.fechaHora;

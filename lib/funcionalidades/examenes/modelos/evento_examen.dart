@@ -12,6 +12,7 @@ class EventoExamen {
   final List<String> docentes;
   final String? division;
   final String? actaUrl;
+  final bool legacy;
 
   const EventoExamen({
     required this.careerId,
@@ -23,7 +24,34 @@ class EventoExamen {
     required this.docentes,
     this.division,
     required this.actaUrl,
+    this.legacy = false,
   });
+
+  EventoExamen copyWith({
+    String? careerId,
+    int? anio,
+    DateTime? fecha,
+    String? hora,
+    String? materia,
+    String? instancia,
+    List<String>? docentes,
+    String? division,
+    String? actaUrl,
+    bool? legacy,
+  }) {
+    return EventoExamen(
+      careerId: careerId ?? this.careerId,
+      anio: anio ?? this.anio,
+      fecha: fecha ?? this.fecha,
+      hora: hora ?? this.hora,
+      materia: materia ?? this.materia,
+      instancia: instancia ?? this.instancia,
+      docentes: docentes ?? this.docentes,
+      division: division ?? this.division,
+      actaUrl: actaUrl ?? this.actaUrl,
+      legacy: legacy ?? this.legacy,
+    );
+  }
 
   DateTime? get fechaHora {
     if (fecha == null) return null;
@@ -112,6 +140,13 @@ class EventoExamen {
       return _normalizeHora(text);
     }
 
+    bool optLegacy() {
+      final value = rawValue(['legacy']);
+      if (value is bool) return value;
+      if (value is num) return value != 0;
+      return false;
+    }
+
     String? optActaUrl() {
       final value = rawValue(['actaUrl', 'acta_url']);
       if (value == null) return null;
@@ -144,6 +179,7 @@ class EventoExamen {
       docentes: optDocentes(),
       division: optString('division', ''),
       actaUrl: optActaUrl(),
+      legacy: optLegacy(),
     );
   }
 

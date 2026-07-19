@@ -9,9 +9,7 @@ import 'package:correlativas_historia/funcionalidades/calculadora/calculadora_pa
 import 'package:correlativas_historia/funcionalidades/preguntas_frecuentes/preguntas_frecuentes_pantalla.dart';
 import 'package:correlativas_historia/funcionalidades/administrador/pantallas/acceso_administrador_pantalla.dart';
 import 'package:correlativas_historia/funcionalidades/administrador/proveedores/proveedores_acceso_administrador.dart';
-import 'package:correlativas_historia/funcionalidades/acceso_estudiante/pantallas/acceso_estudiante_pantalla.dart';
-import 'package:correlativas_historia/funcionalidades/busqueda_global/busqueda_global.dart';
-import 'package:correlativas_historia/funcionalidades/busqueda_global/pantalla/busqueda_global_pantalla.dart';
+import 'package:correlativas_historia/funcionalidades/laboratorio_atlassian/pantallas/pantalla_laboratorio_atlassian.dart';
 import 'package:correlativas_historia/compartido/firebase/app_firebase.dart';
 import 'package:correlativas_historia/compartido/navegacion/navegador_app.dart';
 import 'package:correlativas_historia/compartido/proveedores/estado_app.dart';
@@ -89,8 +87,7 @@ class MainScreen extends ConsumerStatefulWidget {
 
 class _MainScreenState extends ConsumerState<MainScreen> {
   bool _checkedWhatsNew = false;
-  final _trayectoriasNavKey = GlobalKey<NavigatorState>();
-
+  Offset _fabPosition = const Offset(16, 16);
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -99,12 +96,6 @@ class _MainScreenState extends ConsumerState<MainScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
     });
-  }
-
-  Future<void> _openGlobalSearch() async {
-    await Navigator.of(context).push<void>(
-      MaterialPageRoute<void>(builder: (_) => const GlobalSearchPage()),
-    );
   }
 
   @override
@@ -131,20 +122,13 @@ class _MainScreenState extends ConsumerState<MainScreen> {
 
         ref.read(proveedorSeccionNav.notifier).state = 0;
         ref.read(proveedorIndiceRouter.notifier).state = 0;
-
-        _trayectoriasNavKey.currentState?.popUntil((route) => route.isFirst);
       });
     });
 
-    final adminFabBottom = isDesktop ? 20.0 : (routerIndex == 1 ? 92.0 : 10.0);
-
     final tabs = [
-      _TabNavigator(
-        navigatorKey: _trayectoriasNavKey,
-        child: AccesoEstudiantePantalla(
-          key: const ValueKey('trayectorias'),
-          onOpenSearch: _openGlobalSearch,
-        ),
+      const _TabNavigator(
+        navigatorKey: null,
+        child: PantallaLaboratorioAtlassian(hideExit: true),
       ),
       const PantallaInicioMapa(key: ValueKey('inicio_mapa')),
       const PantallaMapaCorrelatividades(key: ValueKey('cascada')),
@@ -242,34 +226,53 @@ class _MainScreenState extends ConsumerState<MainScreen> {
 
     return PopScope(
       canPop: false,
-      onPopInvokedWithResult: (didPop, _) {
-        if (didPop) return;
-        if (_trayectoriasNavKey.currentState?.canPop() ?? false) {
-          _trayectoriasNavKey.currentState!.pop();
-        }
-      },
+      onPopInvokedWithResult: (didPop, _) {},
       child: Scaffold(
-        body: content,
-        floatingActionButton: Padding(
-          padding: EdgeInsets.only(bottom: adminFabBottom),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              if (showAdminFab)
-                FloatingActionButton.small(
-                  heroTag: 'admin_access_fab',
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (_) => const AccesoAdministradorPantalla(),
-                      ),
-                    );
+        body: Stack(
+          children: [
+            content,
+            if (showAdminFab)
+              Positioned(
+                right: _fabPosition.dx,
+                bottom: _fabPosition.dy,
+                child: GestureDetector(
+                  onPanUpdate: (details) {
+                    setState(() {
+                      _fabPosition = Offset(
+                        _fabPosition.dx - details.delta.dx,
+                        _fabPosition.dy - details.delta.dy,
+                      );
+                    });
                   },
-                  child: const Icon(Icons.admin_panel_settings_rounded),
+                  child: FloatingActionButton.extended(
+                    heroTag: 'admin_access_fab',
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const AccesoAdministradorPantalla(),
+                        ),
+                      );
+                    },
+                    backgroundColor: const Color(0xFF0C66E4),
+                    foregroundColor: Colors.white,
+                    elevation: 2,
+                    highlightElevation: 3,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(6.0),
+                    ),
+                    icon: const Icon(Icons.admin_panel_settings_rounded, size: 18),
+                    label: const Text(
+                      'Admin',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.1,
+                      ),
+                    ),
+                  ),
                 ),
-            ],
-          ),
+              ),
+          ],
         ),
         bottomNavigationBar: showNavBar
             ? NavegacionInferiorApp(
@@ -305,10 +308,10 @@ class _MainScreenState extends ConsumerState<MainScreen> {
 /// Las rutas empujadas desde dentro quedan dentro del body de [MainScreen],
 /// por lo que la [NavegacionInferiorApp] siempre permanece visible.
 class _TabNavigator extends StatelessWidget {
-  final GlobalKey<NavigatorState> navigatorKey;
+  final GlobalKey<NavigatorState>? navigatorKey;
   final Widget child;
 
-  const _TabNavigator({required this.navigatorKey, required this.child});
+  const _TabNavigator({this.navigatorKey, required this.child});
 
   @override
   Widget build(BuildContext context) {

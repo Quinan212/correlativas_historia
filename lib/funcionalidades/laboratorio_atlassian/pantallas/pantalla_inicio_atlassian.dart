@@ -29,7 +29,7 @@ class PantallaInicioAtlassian extends StatefulWidget {
     required this.onTrajectoryChanged,
     required this.onNavigate,
     required this.onSearch,
-    required this.onExit,
+    this.onExit,
   });
 
   final ValueNotifier<TrayectoriaSageLaboratorio?> trajectoryListenable;
@@ -40,7 +40,7 @@ class PantallaInicioAtlassian extends StatefulWidget {
   final ValueChanged<TrayectoriaSageLaboratorio?> onTrajectoryChanged;
   final ValueChanged<int> onNavigate;
   final VoidCallback onSearch;
-  final VoidCallback onExit;
+  final VoidCallback? onExit;
 
   @override
   State<PantallaInicioAtlassian> createState() =>

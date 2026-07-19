@@ -13,14 +13,35 @@ class RepositorioExamenes {
 
   static final Map<String, Future<List<EventoExamen>>> _eventCache = {};
 
-  Future<List<EventoExamen>> loadLlamado1() => _loadSupabaseOrAsset(
+  Future<List<EventoExamen>> loadLlamado1() async {
+    final list = await _loadSupabaseOrAsset(
       instancia: 'llamado_1', assetPath: 'assets/examenes_mayo_2026.json');
+    return list.map((e) => e.copyWith(legacy: true)).toList();
+  }
 
-  Future<List<EventoExamen>> loadLlamado2() => _loadSupabaseOrAsset(
+  Future<List<EventoExamen>> loadLlamado2() async {
+    final list = await _loadSupabaseOrAsset(
       instancia: 'llamado_2', assetPath: 'assets/examenes_llamado2.json');
+    return list.map((e) => e.copyWith(legacy: true)).toList();
+  }
 
-  Future<List<EventoExamen>> loadColoquios() => _loadSupabaseOrAsset(
+  Future<List<EventoExamen>> loadColoquios() async {
+    final list = await _loadSupabaseOrAsset(
       instancia: 'coloquio', assetPath: 'assets/coloquios_mayo_2026.json');
+    return list.map((e) => e.copyWith(legacy: true)).toList();
+  }
+
+  Future<List<EventoExamen>> loadJulioLlamado1() => _loadSupabaseOrAsset(
+      instancia: 'llamado_1',
+      assetPath: 'assets/examenes_julio_llamado1.json');
+
+  Future<List<EventoExamen>> loadJulioLlamado2() => _loadSupabaseOrAsset(
+      instancia: 'llamado_2',
+      assetPath: 'assets/examenes_julio_llamado2.json');
+
+  Future<List<EventoExamen>> loadJulioColoquios() => _loadSupabaseOrAsset(
+      instancia: 'coloquio',
+      assetPath: 'assets/coloquios_julio_2026.json');
 
   Future<List<EventoExamen>> _loadSupabaseOrAsset({
     required String instancia,
@@ -39,7 +60,7 @@ class RepositorioExamenes {
       final rows = await client
           .from('exam_events')
           .select(
-            'career_id, anio, fecha, hora, materia, instancia, docentes, acta_url, division',
+            'career_id, anio, fecha, hora, materia, instancia, docentes, acta_url, division, legacy',
           )
           .eq('instancia', instancia)
           .order('fecha')

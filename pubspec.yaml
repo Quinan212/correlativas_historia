@@ -1,7 +1,7 @@
 name: correlativas_historia
 description: "correlativas"
 publish_to: "none"
-version: 1.3.150726+760
+version: 1.3.150726+763
 environment:
   sdk: ">=3.12.0 <4.0.0"
 
@@ -74,6 +74,9 @@ flutter:
     - assets/coloquios_feb_mar_2026.json
     - assets/examenes_mayo_2026.json
     - assets/coloquios_mayo_2026.json
+    - assets/examenes_julio_llamado1.json
+    - assets/examenes_julio_llamado2.json
+    - assets/coloquios_julio_2026.json
     - assets/banners/historia/1/pedagogia_ancho.png
     - assets/banners/historia/2/didactica_ciencias_sociales_ancho.png
     - assets/banners/historia/3/procesos_argentina_i.png

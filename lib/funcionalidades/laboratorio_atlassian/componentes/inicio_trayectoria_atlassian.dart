@@ -11,13 +11,13 @@ class EncabezadoTrayectoriaAtlassian extends StatefulWidget {
     super.key,
     required this.scrollController,
     required this.onSearch,
-    required this.onExit,
+    this.onExit,
     this.nombreEstudiante,
   });
 
   final ScrollController scrollController;
   final VoidCallback onSearch;
-  final VoidCallback onExit;
+  final VoidCallback? onExit;
   final String? nombreEstudiante;
 
   @override
@@ -74,7 +74,7 @@ class _EncabezadoTrayectoriaAtlassianState
         bottom: false,
         child: Container(
           height: 72,
-          padding: const EdgeInsets.fromLTRB(16, 10, 12, 10),
+          padding: const EdgeInsets.fromLTRB(16, 8, 12, 8),
           decoration: BoxDecoration(
             border: Border(bottom: BorderSide(color: scheme.outlineVariant)),
           ),
@@ -125,12 +125,14 @@ class _EncabezadoTrayectoriaAtlassianState
                                   tooltip: 'Buscar materias',
                                   onPressed: widget.onSearch,
                                 ),
-                                const SizedBox(width: 4),
-                                BotonIconoAtlassian(
-                                  icon: Icons.close_rounded,
-                                  tooltip: 'Cerrar laboratorio',
-                                  onPressed: widget.onExit,
-                                ),
+                                if (widget.onExit != null) ...[
+                                  const SizedBox(width: 4),
+                                  BotonIconoAtlassian(
+                                    icon: Icons.close_rounded,
+                                    tooltip: 'Cerrar laboratorio',
+                                    onPressed: widget.onExit!,
+                                  ),
+                                ],
                               ],
                             ),
                           ),

@@ -411,7 +411,7 @@ class _PaginaHojaExamenesState extends ConsumerState<PaginaHojaExamenes>
       if (widget.llamado1Eventos.isNotEmpty)
         DatosTabInstancia.fromEventos(
           id: 'llamado_1',
-          label: 'Mesa Tribunal',
+          label: 'Llamado 1',
           materia: widget.materia,
           eventos: widget.llamado1Eventos,
         ),

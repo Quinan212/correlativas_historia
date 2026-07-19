@@ -36,16 +36,24 @@ final proveedorTodosLosExamenes =
   final repo = ref.watch(proveedorRepositorioExamenes);
 
   final results = await Future.wait<List<EventoExamen>>([
+    repo.loadJulioLlamado1(),
+    repo.loadJulioLlamado2(),
+    repo.loadJulioColoquios(),
     repo.loadLlamado1(),
     repo.loadLlamado2(),
     repo.loadColoquios(),
   ]);
 
-  final l1 = results[0];
-  final l2 = results[1];
-  final col = results[2];
+  final jul1 = results[0];
+  final jul2 = results[1];
+  final jcol = results[2];
+  final l1 = results[3];
+  final l2 = results[4];
+  final col = results[5];
 
-  final all = <EventoExamen>[...l1, ...l2, ...col]..sort((a, b) {
+  final all = <EventoExamen>[...jul1, ...jul2, ...jcol, ...l1, ...l2, ...col]
+    ..removeWhere((e) => e.legacy)
+    ..sort((a, b) {
       final da = a.fechaHora;
       final db = b.fechaHora;
 
@@ -69,6 +77,7 @@ final proveedorExamenesFiltrados =
   final list = await ref.watch(proveedorTodosLosExamenes.future);
 
   var out = list.where((e) => e.careerId == careerId).toList(growable: false);
+  out = out.where((e) => !e.legacy).toList(growable: false);
   if (instancia != 'todos') {
     out = out.where((e) => e.instancia == instancia).toList(growable: false);
   }

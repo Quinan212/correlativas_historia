@@ -1,0 +1,101 @@
+[
+  {
+    "careerId": "historia",
+    "anio": 2,
+    "fecha": "2026-07-21",
+    "hora": "19:00",
+    "materia": "Historia de las Ideas II",
+    "instancia": "coloquio",
+    "docentes": ["Carmarán, Rosana"]
+  },
+  {
+    "careerId": "historia",
+    "anio": null,
+    "fecha": null,
+    "hora": null,
+    "materia": "Historia de las ideas II",
+    "instancia": "coloquio",
+    "docentes": []
+  },
+  {
+    "careerId": "historia",
+    "anio": null,
+    "fecha": "2026-07-29",
+    "hora": "19:00",
+    "materia": "práctica II (Historia)",
+    "instancia": "coloquio",
+    "docentes": []
+  },
+  {
+    "careerId": "historia",
+    "anio": null,
+    "fecha": null,
+    "hora": null,
+    "materia": "Epistemologia de la Historia",
+    "instancia": "coloquio",
+    "docentes": []
+  },
+  {
+    "careerId": "historia",
+    "anio": 2,
+    "fecha": "2026-07-27",
+    "hora": "19:30",
+    "materia": "ESI",
+    "instancia": "coloquio",
+    "docentes": []
+  },
+  {
+    "careerId": "historia",
+    "anio": null,
+    "fecha": null,
+    "hora": null,
+    "materia": "Argentinos II",
+    "instancia": "coloquio",
+    "docentes": []
+  },
+  {
+    "careerId": "politica",
+    "anio": null,
+    "fecha": null,
+    "hora": null,
+    "materia": "practica docente II C.P",
+    "instancia": "coloquio",
+    "docentes": []
+  },
+  {
+    "careerId": "politica",
+    "anio": null,
+    "fecha": "2026-07-24",
+    "hora": "18:30",
+    "materia": "Taller de Oralidad, Lectura, Escritura y TIC",
+    "instancia": "coloquio",
+    "docentes": []
+  },
+  {
+    "careerId": "geografia",
+    "anio": null,
+    "fecha": "2026-07-24",
+    "hora": "18:30",
+    "materia": "Taller de Oralidad, Lectura, Escritura y TIC",
+    "instancia": "coloquio",
+    "docentes": []
+  },
+  {
+    "careerId": "geografia",
+    "anio": null,
+    "fecha": null,
+    "hora": null,
+    "materia": "tecnicas de representacion",
+    "instancia": "coloquio",
+    "docentes": []
+  },
+  {
+    "careerId": "geografia",
+    "anio": null,
+    "fecha": null,
+    "hora": null,
+    "materia": "Practica docente II",
+    "instancia": "coloquio",
+    "docentes": []
+  }
+]

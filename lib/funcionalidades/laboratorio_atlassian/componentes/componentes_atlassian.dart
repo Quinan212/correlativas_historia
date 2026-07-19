@@ -244,7 +244,7 @@ class _EncabezadoSeccionAtlassianColapsableState
         bottom: false,
         child: Container(
           height: 72,
-          padding: const EdgeInsets.fromLTRB(16, 10, 12, 10),
+          padding: const EdgeInsets.fromLTRB(16, 8, 12, 8),
           decoration: BoxDecoration(
             border: Border(bottom: BorderSide(color: scheme.outlineVariant)),
           ),
@@ -1250,13 +1250,13 @@ class NavegacionLateralAtlassian extends StatelessWidget {
     super.key,
     required this.selectedIndex,
     required this.onSelected,
-    required this.onExit,
+    this.onExit,
     this.nombreEstudiante,
   });
 
   final int selectedIndex;
   final ValueChanged<int> onSelected;
-  final VoidCallback onExit;
+  final VoidCallback? onExit;
   final String? nombreEstudiante;
 
   @override
@@ -1331,14 +1331,16 @@ class NavegacionLateralAtlassian extends StatelessWidget {
                   const SizedBox(height: 4),
                 ],
                 const Spacer(),
-                const Divider(),
-                const SizedBox(height: 4),
-                _DestinoLateralAtlassian(
-                  icon: Icons.close_rounded,
-                  label: 'Cerrar laboratorio',
-                  selected: false,
-                  onTap: onExit,
-                ),
+                if (onExit != null) ...[
+                  const Divider(),
+                  const SizedBox(height: 4),
+                  _DestinoLateralAtlassian(
+                    icon: Icons.close_rounded,
+                    label: 'Cerrar laboratorio',
+                    selected: false,
+                    onTap: onExit!,
+                  ),
+                ],
               ],
             ),
           ),
