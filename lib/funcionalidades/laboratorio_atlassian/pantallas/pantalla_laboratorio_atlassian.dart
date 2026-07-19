@@ -360,7 +360,8 @@ class _PantallaLaboratorioAtlassianState
   Widget build(BuildContext context) {
     final theme = temaLaboratorioAtlassian(context);
     final dark = theme.brightness == Brightness.dark;
-    final desktop = MediaQuery.sizeOf(context).width >= 980;
+    final size = MediaQuery.sizeOf(context);
+    final desktop = size.width >= 720 || size.width > size.height;
 
     final sectionChildren = <Widget>[
       PantallaInicioAtlassian(

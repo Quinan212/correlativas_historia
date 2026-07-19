@@ -1272,76 +1272,89 @@ class NavegacionLateralAtlassian extends StatelessWidget {
         child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(12, 12, 12, 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(8, 4, 8, 16),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: scheme.primary,
-                          borderRadius: BorderRadius.circular(
-                            RadioAtlassian.medium,
-                          ),
-                        ),
-                        child: const Icon(
-                          Icons.school_rounded,
-                          color: Colors.white,
-                          size: 21,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Correlativas',
-                              style: Theme.of(context).textTheme.titleSmall,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return SingleChildScrollView(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minHeight: constraints.maxHeight,
+                    ),
+                    child: IntrinsicHeight(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(8, 4, 8, 16),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 36,
+                                  height: 36,
+                                  decoration: BoxDecoration(
+                                    color: scheme.primary,
+                                    borderRadius: BorderRadius.circular(
+                                      RadioAtlassian.medium,
+                                    ),
+                                  ),
+                                  child: const Icon(
+                                    Icons.school_rounded,
+                                    color: Colors.white,
+                                    size: 21,
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Correlativas',
+                                        style: Theme.of(context).textTheme.titleSmall,
+                                      ),
+                                      Text(
+                                        saludoAtlassian(nombreEstudiante),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: Theme.of(context).textTheme.labelSmall,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
-                            Text(
-                              saludoAtlassian(nombreEstudiante),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: Theme.of(context).textTheme.labelSmall,
+                          ),
+                          for (
+                            var index = 0;
+                            index < BarraNavegacionAtlassian.destinations.length;
+                            index++
+                          ) ...[
+                            _DestinoLateralAtlassian(
+                              icon: selectedIndex == index
+                                  ? BarraNavegacionAtlassian.destinations[index].$2
+                                  : BarraNavegacionAtlassian.destinations[index].$1,
+                              label: BarraNavegacionAtlassian.destinations[index].$3,
+                              selected: selectedIndex == index,
+                              onTap: () => onSelected(index),
+                            ),
+                            const SizedBox(height: 4),
+                          ],
+                          const Spacer(),
+                          if (onExit != null) ...[
+                            const Divider(),
+                            const SizedBox(height: 4),
+                            _DestinoLateralAtlassian(
+                              icon: Icons.close_rounded,
+                              label: 'Cerrar laboratorio',
+                              selected: false,
+                              onTap: onExit!,
                             ),
                           ],
-                        ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
-                ),
-                for (
-                  var index = 0;
-                  index < BarraNavegacionAtlassian.destinations.length;
-                  index++
-                ) ...[
-                  _DestinoLateralAtlassian(
-                    icon: selectedIndex == index
-                        ? BarraNavegacionAtlassian.destinations[index].$2
-                        : BarraNavegacionAtlassian.destinations[index].$1,
-                    label: BarraNavegacionAtlassian.destinations[index].$3,
-                    selected: selectedIndex == index,
-                    onTap: () => onSelected(index),
-                  ),
-                  const SizedBox(height: 4),
-                ],
-                const Spacer(),
-                if (onExit != null) ...[
-                  const Divider(),
-                  const SizedBox(height: 4),
-                  _DestinoLateralAtlassian(
-                    icon: Icons.close_rounded,
-                    label: 'Cerrar laboratorio',
-                    selected: false,
-                    onTap: onExit!,
-                  ),
-                ],
-              ],
+                );
+              }
             ),
           ),
         ),
