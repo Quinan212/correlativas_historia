@@ -9,6 +9,7 @@ import 'package:correlativas_historia/funcionalidades/examenes/modelos/evento_ex
 import 'package:correlativas_historia/funcionalidades/examenes/proveedores/proveedores_examenes.dart';
 import 'package:correlativas_historia/funcionalidades/laboratorio_atlassian/componentes/componentes_atlassian.dart';
 import 'package:correlativas_historia/funcionalidades/laboratorio_atlassian/pantallas/utilidades_atlassian.dart';
+import 'package:correlativas_historia/funcionalidades/laboratorio_atlassian/tema/tema_atlassian.dart';
 import 'package:correlativas_historia/funcionalidades/trayectoria_sage_laboratorio/modelos/modelos_trayectoria_sage_laboratorio.dart';
 import 'package:correlativas_historia/modelos/contenido_curricular.dart';
 import 'package:correlativas_historia/modelos/materia.dart';
@@ -217,7 +218,7 @@ class _PantallaBusquedaGlobalAtlassianState
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
       children: [
-        Text('Accesos directos', style: theme.textTheme.titleLarge),
+        const SeparadorTituloAtlassian(title: 'Accesos directos'),
         const SizedBox(height: 10),
         _QuickActionsGrid(
           actions: navigation,
@@ -1119,19 +1120,19 @@ class _SearchHeaderAtlassian extends StatelessWidget {
                       fillColor: theme.colorScheme.surfaceContainerLowest,
                       contentPadding: const EdgeInsets.symmetric(vertical: 13),
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(24),
+                        borderRadius: BorderRadius.circular(RadioAtlassian.small),
                         borderSide: BorderSide(
                           color: theme.colorScheme.outlineVariant,
                         ),
                       ),
                       enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(24),
+                        borderRadius: BorderRadius.circular(RadioAtlassian.small),
                         borderSide: BorderSide(
                           color: theme.colorScheme.outlineVariant,
                         ),
                       ),
                       focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(24),
+                        borderRadius: BorderRadius.circular(RadioAtlassian.small),
                         borderSide: BorderSide(
                           color: theme.colorScheme.primary,
                           width: 1.5,
@@ -1194,26 +1195,67 @@ class _QuickActionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
+    Color containerColor;
+    Color iconColor;
+    switch (action.group) {
+      case _ActionGroup.navigation:
+        containerColor = const Color(0xFF0C66E4).withOpacity(isDark ? 0.25 : 0.08);
+        iconColor = isDark ? const Color(0xFF579DFF) : const Color(0xFF0C66E4);
+        break;
+      case _ActionGroup.tools:
+        containerColor = const Color(0xFF22C55E).withOpacity(isDark ? 0.25 : 0.08);
+        iconColor = isDark ? const Color(0xFF4ADE80) : const Color(0xFF16A34A);
+        break;
+      case _ActionGroup.sage:
+        containerColor = const Color(0xFF8B5CF6).withOpacity(isDark ? 0.25 : 0.08);
+        iconColor = isDark ? const Color(0xFFA78BFA) : const Color(0xFF7C3AED);
+        break;
+      case _ActionGroup.dynamic:
+        containerColor = scheme.primary.withOpacity(isDark ? 0.25 : 0.08);
+        iconColor = scheme.primary;
+        break;
+    }
+
     return PanelAtlassian(
       onTap: action.enabled ? onTap : null,
       padding: const EdgeInsets.all(14),
+      radius: RadioAtlassian.medium,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            action.icon,
-            color: action.enabled
-                ? theme.colorScheme.primary
-                : theme.colorScheme.onSurfaceVariant,
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: containerColor,
+              borderRadius: BorderRadius.circular(RadioAtlassian.small),
+            ),
+            child: Icon(
+              action.icon,
+              color: action.enabled ? iconColor : scheme.onSurfaceVariant.withOpacity(0.5),
+              size: 20,
+            ),
           ),
           const SizedBox(height: 12),
-          Text(action.title, style: theme.textTheme.titleSmall),
-          const SizedBox(height: 3),
+          Text(
+            action.title, 
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.1,
+            ),
+          ),
+          const SizedBox(height: 4),
           Text(
             action.subtitle,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.bodySmall,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: scheme.onSurfaceVariant.withOpacity(0.8),
+              height: 1.25,
+            ),
           ),
         ],
       ),
