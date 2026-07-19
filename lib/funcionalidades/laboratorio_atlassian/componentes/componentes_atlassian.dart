@@ -1263,7 +1263,7 @@ class NavegacionLateralAtlassian extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return SizedBox(
-      width: 236,
+      width: 180,
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: scheme.surface,
