@@ -28,7 +28,10 @@ class EnviarVerificacionPantalla extends StatelessWidget {
     final isDesktop = width >= 900;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Enviar verificación')),
+      appBar: AppBar(
+        title: const Text('Enviar verificación'),
+        centerTitle: true,
+      ),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(

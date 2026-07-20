@@ -37,6 +37,7 @@ releases/
 exports/
 entregas/
 backups/
+.backup/
 *.apk
 *.aab
 *.msix

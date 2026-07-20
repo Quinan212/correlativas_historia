@@ -19,6 +19,7 @@ class EventosExamenAdministradorPantalla extends StatelessWidget {
           return Scaffold(
             appBar: AppBar(
               title: const Text('Gestion de mesas y coloquios'),
+              centerTitle: true,
               backgroundColor: const Color(0xFF0E5E86),
               foregroundColor: Colors.white,
               elevation: 0,
@@ -29,7 +30,10 @@ class EventosExamenAdministradorPantalla extends StatelessWidget {
         }
 
         return Scaffold(
-          appBar: AppBar(title: const Text('Mesas y coloquios')),
+          appBar: AppBar(
+            title: const Text('Mesas y coloquios'),
+            centerTitle: true,
+          ),
           body: SafeArea(
             child: ListView(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),

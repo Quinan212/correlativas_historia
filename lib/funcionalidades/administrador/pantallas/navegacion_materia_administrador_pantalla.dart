@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../laboratorio_atlassian/tema/tema_atlassian.dart';
 import '../proveedores/proveedores_navegacion_materia_administrador.dart';
 import 'navegacion_materia_usuario_administrador_pantalla.dart';
 
@@ -21,6 +22,7 @@ class NavegacionMateriaAdministradorPantalla extends ConsumerWidget {
           isDark ? const Color(0xFF030712) : const Color(0xFFF9FAFB),
       appBar: AppBar(
         title: const Text('Recorrido de materias'),
+        centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
@@ -165,9 +167,12 @@ class NavegacionMateriaAdministradorPantalla extends ConsumerWidget {
       ResumenDispositivoNavegacionMateriaAdministrador device) {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => NavegacionMateriaUsuarioAdministradorPantalla(
-          deviceId: device.deviceId,
-          deviceLabel: device.label,
+        builder: (_) => Theme(
+          data: temaLaboratorioAtlassian(context),
+          child: NavegacionMateriaUsuarioAdministradorPantalla(
+            deviceId: device.deviceId,
+            deviceLabel: device.label,
+          ),
         ),
       ),
     );

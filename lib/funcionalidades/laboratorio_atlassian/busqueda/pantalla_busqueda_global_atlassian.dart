@@ -50,6 +50,9 @@ class _PantallaBusquedaGlobalAtlassianState
   String _query = '';
   Timer? _debounce;
 
+  _SearchModel? _cachedModel;
+  String? _lastQueryKey;
+
   List<CareerInfo> get _visibleCareers =>
       kCareers.where((career) => !career.hidden).toList(growable: false);
 
@@ -57,7 +60,7 @@ class _PantallaBusquedaGlobalAtlassianState
   void initState() {
     super.initState();
     unawaited(_loadPlans());
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    Future.delayed(const Duration(milliseconds: 220), () {
       if (mounted) _focusNode.requestFocus();
     });
   }
@@ -96,7 +99,7 @@ class _PantallaBusquedaGlobalAtlassianState
 
   void _onChanged(String value) {
     _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 70), () {
+    _debounce = Timer(const Duration(milliseconds: 150), () {
       if (!mounted) return;
       setState(() => _query = value);
       if (_scrollController.hasClients) {
@@ -153,31 +156,53 @@ class _PantallaBusquedaGlobalAtlassianState
       valueListenable: widget.trajectoryListenable,
       builder: (context, trajectory, _) {
         final query = normalizarBusquedaAtlassian(_query);
-        final model = _buildSearchModel(
-          query: query,
-          trajectory: trajectory,
-          exams: exams,
-          curricular: curricular,
-        );
+        final queryKey =
+            '$query|${trajectory?.carreras.length}|${exams.length}|${curricular.length}|${_planes.length}';
+        if (_cachedModel == null || _lastQueryKey != queryKey) {
+          _lastQueryKey = queryKey;
+          _cachedModel = _buildSearchModel(
+            query: query,
+            trajectory: trajectory,
+            exams: exams,
+            curricular: curricular,
+          );
+        }
+        final model = _cachedModel!;
 
-        return Scaffold(
-          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-          body: SafeArea(
-            child: Column(
+        final atlassianTheme = temaLaboratorioAtlassian(context);
+        return Theme(
+          data: atlassianTheme,
+          child: Scaffold(
+            backgroundColor: atlassianTheme.scaffoldBackgroundColor,
+            resizeToAvoidBottomInset: false,
+            body: Stack(
               children: [
-                _SearchHeaderAtlassian(
-                  controller: _controller,
-                  focusNode: _focusNode,
-                  loading: loading,
-                  onChanged: _onChanged,
-                  onSubmitted: (_) => _rememberQuery(),
-                  onClear: _clearQuery,
-                  onBack: () => Navigator.of(context).maybePop(),
+                Positioned.fill(
+                  child: Column(
+                    children: [
+                      _TopBarAtlassian(
+                        loading: loading,
+                        onBack: () => Navigator.of(context).maybePop(),
+                      ),
+                      Expanded(
+                        child: query.isEmpty
+                            ? _buildLanding(context, trajectory)
+                            : _buildResults(context, model, trajectory),
+                      ),
+                    ],
+                  ),
                 ),
-                Expanded(
-                  child: query.isEmpty
-                      ? _buildLanding(context, trajectory)
-                      : _buildResults(context, model, trajectory),
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: MediaQuery.of(context).viewInsets.bottom,
+                  child: _FloatingSearchBarAtlassian(
+                    controller: _controller,
+                    focusNode: _focusNode,
+                    onChanged: _onChanged,
+                    onSubmitted: (_) => _rememberQuery(),
+                    onClear: _clearQuery,
+                  ),
                 ),
               ],
             ),
@@ -216,7 +241,7 @@ class _PantallaBusquedaGlobalAtlassianState
     return ListView(
       controller: _scrollController,
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
       children: [
         const SeparadorTituloAtlassian(title: 'Accesos directos'),
         const SizedBox(height: 10),
@@ -1062,23 +1087,13 @@ class _PantallaBusquedaGlobalAtlassianState
   }
 }
 
-class _SearchHeaderAtlassian extends StatelessWidget {
-  const _SearchHeaderAtlassian({
-    required this.controller,
-    required this.focusNode,
+class _TopBarAtlassian extends StatelessWidget {
+  const _TopBarAtlassian({
     required this.loading,
-    required this.onChanged,
-    required this.onSubmitted,
-    required this.onClear,
     required this.onBack,
   });
 
-  final TextEditingController controller;
-  final FocusNode focusNode;
   final bool loading;
-  final ValueChanged<String> onChanged;
-  final ValueChanged<String> onSubmitted;
-  final VoidCallback onClear;
   final VoidCallback onBack;
 
   @override
@@ -1087,66 +1102,82 @@ class _SearchHeaderAtlassian extends StatelessWidget {
     return Material(
       color: theme.colorScheme.surface,
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(8, 10, 12, 10),
-            child: Row(
-              children: [
-                BotonIconoAtlassian(
-                  icon: Icons.arrow_back_rounded,
-                  tooltip: 'Volver',
-                  onPressed: onBack,
-                ),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: TextField(
-                    controller: controller,
-                    focusNode: focusNode,
-                    autofocus: true,
-                    onChanged: onChanged,
-                    onSubmitted: onSubmitted,
-                    textInputAction: TextInputAction.search,
-                    decoration: InputDecoration(
-                      hintText: 'Buscar en toda la aplicación…',
-                      prefixIcon: const Icon(Icons.search_rounded),
-                      suffixIcon: controller.text.isEmpty
-                          ? null
-                          : IconButton(
-                              tooltip: 'Borrar búsqueda',
-                              onPressed: onClear,
-                              icon: const Icon(Icons.close_rounded),
-                            ),
-                      filled: true,
-                      fillColor: theme.colorScheme.surfaceContainerLowest,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 13),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(RadioAtlassian.small),
-                        borderSide: BorderSide(
-                          color: theme.colorScheme.outlineVariant,
-                        ),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(RadioAtlassian.small),
-                        borderSide: BorderSide(
-                          color: theme.colorScheme.outlineVariant,
-                        ),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(RadioAtlassian.small),
-                        borderSide: BorderSide(
-                          color: theme.colorScheme.primary,
-                          width: 1.5,
-                        ),
-                      ),
+          SafeArea(
+            bottom: false,
+            child: Container(
+              height: 56,
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Row(
+                children: [
+                  BotonIconoAtlassian(
+                    icon: Icons.arrow_back_rounded,
+                    tooltip: 'Volver',
+                    onPressed: onBack,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Búsqueda y accesos',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           if (loading) const LinearProgressIndicator(minHeight: 2),
           Divider(height: 1, color: theme.colorScheme.outlineVariant),
         ],
+      ),
+    );
+  }
+}
+
+class _FloatingSearchBarAtlassian extends StatelessWidget {
+  const _FloatingSearchBarAtlassian({
+    required this.controller,
+    required this.focusNode,
+    required this.onChanged,
+    required this.onSubmitted,
+    required this.onClear,
+  });
+
+  final TextEditingController controller;
+  final FocusNode focusNode;
+  final ValueChanged<String> onChanged;
+  final ValueChanged<String> onSubmitted;
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(RadioAtlassian.pill),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.16),
+                blurRadius: 16,
+                spreadRadius: 2,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: CampoBusquedaAtlassian(
+            controller: controller,
+            focusNode: focusNode,
+            hintText: 'Buscar en toda la aplicación…',
+            pill: true,
+            onChanged: onChanged,
+            onSubmitted: onSubmitted,
+            onClear: onClear,
+          ),
+        ),
       ),
     );
   }
@@ -2097,12 +2128,19 @@ String readableProfileLabelAtlassian(String key) {
   }
   if (normalized.contains('nacimiento')) return 'Fecha de nacimiento';
   if (normalized.contains('localidad')) return 'Localidad';
-  return key
+  final cleanKey = key
       .replaceAll(RegExp(r'^[^.]+\.'), '')
       .replaceAll('_', ' ')
+      .trim();
+  if (cleanKey.isEmpty) return key;
+  return cleanKey
       .split(' ')
-      .where((item) => item.isNotEmpty)
-      .map((item) => '${item[0].toUpperCase()}${item.substring(1)}')
+      .where((item) => item.trim().isNotEmpty)
+      .map(
+        (item) => item.isEmpty
+            ? item
+            : '${item[0].toUpperCase()}${item.length > 1 ? item.substring(1) : ''}',
+      )
       .join(' ');
 }
 

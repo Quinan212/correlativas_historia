@@ -108,30 +108,34 @@ class _PantallaSincronizacionSageAutomaticaState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Container(
-                width: 52,
-                height: 52,
-                decoration: BoxDecoration(
-                  color: scheme.primaryContainer,
-                  borderRadius: BorderRadius.circular(14),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Text(
+                  state.codigoError == CodigoErrorSincronizacionSage.sesionVencida
+                      ? 'Volver a conectar '
+                      : 'Conectar con ',
+                  style: Theme.of(context)
+                      .textTheme
+                      .headlineSmall
+                      ?.copyWith(fontWeight: FontWeight.w700),
                 ),
-                child: Icon(
-                  Icons.school_rounded,
-                  color: scheme.primary,
-                  size: 28,
+                Padding(
+                  padding: const EdgeInsets.only(top: 2),
+                  child: Image.asset(
+                    'assets/sage_banner.png',
+                    height: 28,
+                    fit: BoxFit.contain,
+                    errorBuilder: (_, _, _) => Text(
+                      'SAGE',
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: scheme.primary,
+                      ),
+                    ),
+                  ),
                 ),
-              ),
-            ),
-            const SizedBox(height: 22),
-            Text(
-              state.codigoError == CodigoErrorSincronizacionSage.sesionVencida
-                  ? 'Volver a conectar SAGE'
-                  : 'Conectar con SAGE',
-              style: Theme.of(
-                context,
-              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
+              ],
             ),
             if (state.detalle?.trim().isNotEmpty == true) ...[
               const SizedBox(height: 12),

@@ -312,37 +312,56 @@ class _PantallaMateriasAtlassianState extends State<PantallaMateriasAtlassian> {
               valueListenable: widget.selectedCareerListenable,
               builder: (context, selectedIndex, _) {
                 final career = _currentCareer(trajectory, selectedIndex);
+                final years =
+                    career == null
+                        ? const <int>[]
+                        : (List<int>.from(
+                              career.materias
+                                  .map((s) => s.anio)
+                                  .whereType<int>()
+                                  .toSet(),
+                            )..sort());
+                final headerHeight = MediaQuery.paddingOf(context).top + 72;
+                final header = EncabezadoSeccionAtlassianColapsable(
+                  scrollController: _scrollController,
+                  title: 'Materias',
+                  subtitle: career == null
+                      ? 'Trayectoria académica'
+                      : nombreCarreraAtlassian(career.nombre),
+                  actions: [
+                    if ((trajectory?.carreras.length ?? 0) > 1)
+                      BotonIconoAtlassian(
+                        icon: Icons.swap_horiz_rounded,
+                        tooltip: 'Cambiar carrera',
+                        onPressed: () => _chooseCareer(trajectory!),
+                      ),
+                  ],
+                );
+
                 return Scaffold(
                   backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-                  body: Column(
+                  body: Stack(
                     children: [
-                      EncabezadoSeccionAtlassianColapsable(
-                        scrollController: _scrollController,
-                        title: 'Materias',
-                        subtitle: career == null
-                            ? 'Trayectoria académica'
-                            : nombreCarreraAtlassian(career.nombre),
-                        onSearch: _focusSearch,
-                        actions: [
-                          if ((trajectory?.carreras.length ?? 0) > 1)
-                            BotonIconoAtlassian(
-                              icon: Icons.swap_horiz_rounded,
-                              tooltip: 'Cambiar carrera',
-                              onPressed: () => _chooseCareer(trajectory!),
-                            ),
-                        ],
-                      ),
-                      Expanded(
+                      Positioned.fill(
                         child: !loaded
                             ? const Center(child: CircularProgressIndicator())
                             : career == null
-                            ? const EstadoVacioAtlassian(
-                                icon: Icons.menu_book_outlined,
-                                title: 'Sin trayectoria',
-                                message:
-                                    'Sincronizá SAGE desde la pantalla Inicio.',
+                            ? Center(
+                                child: Padding(
+                                  padding: EdgeInsets.only(top: headerHeight),
+                                  child: const EstadoVacioAtlassian(
+                                    icon: Icons.menu_book_outlined,
+                                    title: 'Sin trayectoria',
+                                    message:
+                                        'Sincronizá SAGE desde la pantalla Inicio.',
+                                  ),
+                                ),
                               )
-                            : _buildContent(context, career),
+                            : _buildContent(context, career, years),
+                      ),
+                      Align(
+                        alignment: Alignment.topCenter,
+                        child: header,
                       ),
                     ],
                   ),
@@ -358,37 +377,31 @@ class _PantallaMateriasAtlassianState extends State<PantallaMateriasAtlassian> {
   Widget _buildContent(
     BuildContext context,
     CarreraTrayectoriaSageLaboratorio career,
+    List<int> years,
   ) {
     final filtered = _filter(career);
-    final years =
-        career.materias
-            .map((subject) => subject.anio)
-            .whereType<int>()
-            .toSet()
-            .toList()
-          ..sort();
     final groups = <int?, List<MateriaTrayectoriaSageLaboratorio>>{};
     for (final subject in filtered) {
       groups.putIfAbsent(subject.anio, () => []).add(subject);
     }
     final keys = groups.keys.toList()
       ..sort((first, second) => (first ?? 99).compareTo(second ?? 99));
+    final headerHeight = MediaQuery.paddingOf(context).top + 72;
 
     return ListView(
       controller: _scrollController,
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
+      padding: EdgeInsets.fromLTRB(
+        16,
+        headerHeight + 16,
+        16,
+        140 + MediaQuery.paddingOf(context).bottom,
+      ),
       children: [
         _FiltrosMateriasAtlassian(
           searchController: _searchController,
-          searchFocusNode: _searchFocusNode,
           status: _status,
           year: _year,
           years: years,
-          onSearchChanged: (value) => setState(() => _query = value),
-          onClearSearch: () {
-            _searchController.clear();
-            setState(() => _query = '');
-          },
           onChooseStatus: _chooseStatus,
           onChooseYear: () => _chooseYear(years),
           onResetFilters: _resetFilters,
@@ -400,15 +413,15 @@ class _PantallaMateriasAtlassianState extends State<PantallaMateriasAtlassian> {
           const EstadoVacioAtlassian(
             icon: Icons.search_off_rounded,
             title: 'Sin resultados',
-            message: 'Revisá la búsqueda y los filtros.',
+            message: 'Revisá la búsqueda o los filtros.',
           )
         else
           for (final yearKey in keys) ...[
             SeparadorTituloAtlassian(
-              title: yearKey == null ? 'Sin año' : '$yearKey° año',
+              title: yearKey == null ? 'Otros' : '$yearKey° año',
               subtitle: '${groups[yearKey]!.length} materias',
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             PanelAtlassian(
               padding: EdgeInsets.zero,
               child: Column(
@@ -430,6 +443,7 @@ class _PantallaMateriasAtlassianState extends State<PantallaMateriasAtlassian> {
             ),
             const SizedBox(height: 20),
           ],
+        const SizedBox(height: 48),
       ],
     );
   }
@@ -438,24 +452,18 @@ class _PantallaMateriasAtlassianState extends State<PantallaMateriasAtlassian> {
 class _FiltrosMateriasAtlassian extends StatelessWidget {
   const _FiltrosMateriasAtlassian({
     required this.searchController,
-    required this.searchFocusNode,
     required this.status,
     required this.year,
     required this.years,
-    required this.onSearchChanged,
-    required this.onClearSearch,
     required this.onChooseStatus,
     required this.onChooseYear,
     required this.onResetFilters,
   });
 
   final TextEditingController searchController;
-  final FocusNode searchFocusNode;
   final EstadoMateriaSageLaboratorio? status;
   final int? year;
   final List<int> years;
-  final ValueChanged<String> onSearchChanged;
-  final VoidCallback onClearSearch;
   final VoidCallback onChooseStatus;
   final VoidCallback onChooseYear;
   final VoidCallback onResetFilters;
@@ -485,14 +493,6 @@ class _FiltrosMateriasAtlassian extends StatelessWidget {
                   label: Text('Limpiar ($active)'),
                 ),
             ],
-          ),
-          const SizedBox(height: 10),
-          CampoBusquedaAtlassian(
-            controller: searchController,
-            focusNode: searchFocusNode,
-            hintText: 'Buscar materia',
-            onChanged: onSearchChanged,
-            onClear: onClearSearch,
           ),
           const SizedBox(height: 10),
           LayoutBuilder(
@@ -667,6 +667,7 @@ class PantallaDetalleMateriaAtlassian extends StatelessWidget {
           EncabezadoPaginaAtlassian(
             title: 'Detalle de materia',
             subtitle: nombreCarreraAtlassian(career.nombre),
+            centerTitle: true,
             leading: BotonIconoAtlassian(
               icon: Icons.arrow_back_rounded,
               tooltip: 'Volver',
@@ -675,20 +676,29 @@ class PantallaDetalleMateriaAtlassian extends StatelessWidget {
           ),
           Expanded(
             child: ListView(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.fromLTRB(
+                16,
+                16,
+                16,
+                120 + MediaQuery.paddingOf(context).bottom,
+              ),
               children: [
                 PanelAtlassian(
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       LozengeAtlassian(
                         label: subject.estado.etiqueta,
                         appearance: aparienciaEstadoAtlassian(subject.estado),
                       ),
                       const SizedBox(height: 12),
-                      Text(
-                        subject.nombre,
-                        style: Theme.of(context).textTheme.headlineSmall,
+                      SizedBox(
+                        width: double.infinity,
+                        child: Text(
+                          subject.nombre,
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.headlineSmall,
+                        ),
                       ),
                     ],
                   ),
@@ -774,6 +784,7 @@ class PantallaDetalleMateriaAtlassian extends StatelessWidget {
                     ),
                   ),
                 ],
+                const SizedBox(height: 48),
               ],
             ),
           ),

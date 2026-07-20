@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../laboratorio_atlassian/tema/tema_atlassian.dart';
 import '../../verificacion/pantallas/dispositivo_verificacion_pantalla.dart';
 import '../../verificacion/pantallas/enviar_verificacion_pantalla.dart';
 import '../../verificacion/pantallas/solicitudes_verificacion_pantalla.dart';
@@ -47,126 +48,134 @@ class _AccesoAdministradorPantallaState
         title: 'Enviar verificación',
         subtitle:
             'Subí una captura, elegí materia y mandá la solicitud desde su pantalla dedicada.',
-        onTap: () {
-          Navigator.of(context).push(
-            MaterialPageRoute<void>(
-              builder: (_) => EnviarVerificacionPantalla(
-                initialCareerId: widget.initialCareerId,
-                initialMatterId: widget.initialMatterId,
-                lockMatterSelection: widget.lockMatterSelection,
-              ),
-            ),
-          );
-        },
+        onTap: () => _pushRutaAdminConTema(
+          context,
+          EnviarVerificacionPantalla(
+            initialCareerId: widget.initialCareerId,
+            initialMatterId: widget.initialMatterId,
+            lockMatterSelection: widget.lockMatterSelection,
+          ),
+        ),
       ),
       _DatosEntradaPanel(
         icon: Icons.assignment_rounded,
         title: 'Tus solicitudes',
         subtitle:
             'Revisá el estado de lo que enviaste, las aprobaciones y los rechazos.',
-        onTap: () {
-          Navigator.of(context).push(
-            MaterialPageRoute<void>(
-              builder: (_) => const SolicitudesVerificacionPantalla(),
-            ),
-          );
-        },
+        onTap: () => _pushRutaAdminConTema(
+          context,
+          const SolicitudesVerificacionPantalla(),
+        ),
       ),
       _DatosEntradaPanel(
         icon: Icons.badge_rounded,
         title: 'Este dispositivo',
         subtitle:
             'Editá el perfil del equipo y revisá si este dispositivo tiene acceso admin.',
-        onTap: () {
-          Navigator.of(context).push(
-            MaterialPageRoute<void>(
-              builder: (_) => const DispositivoVerificacionPantalla(),
-            ),
-          );
-        },
+        onTap: () => _pushRutaAdminConTema(
+          context,
+          const DispositivoVerificacionPantalla(),
+        ),
       ),
     ];
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF6F8FC),
-      appBar: AppBar(
-        title: const Text('Administración'),
-        backgroundColor:
-            isDesktop ? const Color(0xFF0E5E86) : Colors.transparent,
-        foregroundColor: isDesktop ? Colors.white : null,
-        elevation: 0,
-        actions: isDesktop
-            ? const [
-                Padding(
-                  padding: EdgeInsets.only(right: 18),
-                  child: Center(child: _MarcadorInstitucionAdmin()),
-                ),
-              ]
-            : null,
-      ),
-      body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1400),
-            child: adminAsync.when(
-              loading: () => _DisposicionPanelAdmin(
-                isDesktop: isDesktop,
-                sidebarCollapsed: _sidebarCollapsed,
-                onToggleSidebar: () {
-                  setState(() => _sidebarCollapsed = !_sidebarCollapsed);
-                },
-                verificationEntries: verificationEntries,
-                featuredEntries: const [],
-                sideEntries: const [],
-                infoMessage:
-                    'Estamos comprobando si este dispositivo tiene permisos administrativos.',
-              ),
-              error: (error, _) => _DisposicionPanelAdmin(
-                isDesktop: isDesktop,
-                sidebarCollapsed: _sidebarCollapsed,
-                onToggleSidebar: () {
-                  setState(() => _sidebarCollapsed = !_sidebarCollapsed);
-                },
-                verificationEntries: verificationEntries,
-                featuredEntries: const [],
-                sideEntries: const [],
-                infoMessage: 'No se pudo comprobar el acceso admin: $error',
-              ),
-              data: (status) {
-                final adminEntries = status.isAdmin
-                    ? _adminEntries(context, status.deviceId)
-                    : const <_DatosEntradaPanel>[];
-                final featuredEntries = adminEntries
-                    .where(
-                      (entry) =>
-                          entry.title == 'Mesas y coloquios' ||
-                          entry.title == 'Alumnos',
-                    )
-                    .toList(growable: false);
-                final sideEntries = adminEntries
-                    .where(
-                      (entry) =>
-                          entry.title != 'Mesas y coloquios' &&
-                          entry.title != 'Alumnos',
-                    )
-                    .toList(growable: false);
-
-                return _DisposicionPanelAdmin(
+    final atlassianTheme = temaLaboratorioAtlassian(context);
+    return Theme(
+      data: atlassianTheme,
+      child: Scaffold(
+        backgroundColor: atlassianTheme.scaffoldBackgroundColor,
+        appBar: AppBar(
+          title: const Text('Administración'),
+          centerTitle: true,
+          backgroundColor:
+              isDesktop ? const Color(0xFF0E5E86) : Colors.transparent,
+          foregroundColor: isDesktop ? Colors.white : null,
+          elevation: 0,
+          actions: isDesktop
+              ? const [
+                  Padding(
+                    padding: EdgeInsets.only(right: 18),
+                    child: Center(child: _MarcadorInstitucionAdmin()),
+                  ),
+                ]
+              : null,
+        ),
+        body: SafeArea(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1400),
+              child: adminAsync.when(
+                loading: () => _DisposicionPanelAdmin(
                   isDesktop: isDesktop,
                   sidebarCollapsed: _sidebarCollapsed,
                   onToggleSidebar: () {
                     setState(() => _sidebarCollapsed = !_sidebarCollapsed);
                   },
                   verificationEntries: verificationEntries,
-                  featuredEntries: featuredEntries,
-                  sideEntries: sideEntries,
-                  infoMessage: status.isAdmin
-                      ? null
-                      : 'Cuando este equipo reciba permisos de administración, las herramientas institucionales van a aparecer acá mismo.',
-                );
-              },
+                  featuredEntries: const [],
+                  sideEntries: const [],
+                  infoMessage:
+                      'Estamos comprobando si este dispositivo tiene permisos administrativos.',
+                ),
+                error: (error, _) => _DisposicionPanelAdmin(
+                  isDesktop: isDesktop,
+                  sidebarCollapsed: _sidebarCollapsed,
+                  onToggleSidebar: () {
+                    setState(() => _sidebarCollapsed = !_sidebarCollapsed);
+                  },
+                  verificationEntries: verificationEntries,
+                  featuredEntries: const [],
+                  sideEntries: const [],
+                  infoMessage: 'No se pudo comprobar el acceso admin: $error',
+                ),
+                data: (status) {
+                  final adminEntries = status.isAdmin
+                      ? _adminEntries(context, status.deviceId)
+                      : const <_DatosEntradaPanel>[];
+                  final featuredEntries = adminEntries
+                      .where(
+                        (entry) =>
+                            entry.title == 'Mesas y coloquios' ||
+                            entry.title == 'Alumnos',
+                      )
+                      .toList(growable: false);
+                  final sideEntries = adminEntries
+                      .where(
+                        (entry) =>
+                            entry.title != 'Mesas y coloquios' &&
+                            entry.title != 'Alumnos',
+                      )
+                      .toList(growable: false);
+
+                  return _DisposicionPanelAdmin(
+                    isDesktop: isDesktop,
+                    sidebarCollapsed: _sidebarCollapsed,
+                    onToggleSidebar: () {
+                      setState(() => _sidebarCollapsed = !_sidebarCollapsed);
+                    },
+                    verificationEntries: verificationEntries,
+                    featuredEntries: featuredEntries,
+                    sideEntries: sideEntries,
+                    infoMessage: status.isAdmin
+                        ? null
+                        : 'Cuando este equipo reciba permisos de administración, las herramientas institucionales van a aparecer acá mismo.',
+                  );
+                },
+              ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  void _pushRutaAdminConTema(BuildContext context, Widget child) {
+    final theme = temaLaboratorioAtlassian(context);
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => Theme(
+          data: theme,
+          child: child,
         ),
       ),
     );
@@ -179,83 +188,72 @@ class _AccesoAdministradorPantallaState
         icon: Icons.bolt_rounded,
         title: 'Actividad reciente',
         subtitle: 'Ver dispositivos activos y revisar su detalle.',
-        onTap: () => Navigator.of(context).push(
-          MaterialPageRoute<void>(
-              builder: (_) => const ActividadAdministradorPantalla()),
+        onTap: () => _pushRutaAdminConTema(
+          context,
+          const ActividadAdministradorPantalla(),
         ),
       ),
       _DatosEntradaPanel(
         icon: Icons.cleaning_services_rounded,
         title: 'Limpieza y reinicio',
         subtitle: 'Ejecutar acciones de limpieza o reinicio global.',
-        onTap: () => Navigator.of(context).push(
-          MaterialPageRoute<void>(
-            builder: (_) =>
-                LimpiezaAdministradorPantalla(adminDeviceId: deviceId),
-          ),
+        onTap: () => _pushRutaAdminConTema(
+          context,
+          LimpiezaAdministradorPantalla(adminDeviceId: deviceId),
         ),
       ),
       _DatosEntradaPanel(
         icon: Icons.inbox_rounded,
         title: 'Solicitudes pendientes',
         subtitle: 'Aprobar o rechazar verificaciones en revisión.',
-        onTap: () => Navigator.of(context).push(
-          MaterialPageRoute<void>(
-            builder: (_) => SolicitudesPendientesAdministradorPantalla(
-                adminDeviceId: deviceId),
-          ),
+        onTap: () => _pushRutaAdminConTema(
+          context,
+          SolicitudesPendientesAdministradorPantalla(adminDeviceId: deviceId),
         ),
       ),
       _DatosEntradaPanel(
         icon: Icons.photo_library_outlined,
         title: 'Fotos por carrera',
         subtitle: 'Ver fotos por carrera, año y materia.',
-        onTap: () => Navigator.of(context).push(
-          MaterialPageRoute<void>(
-            builder: (_) => const FotosMateriasAdministradorPantalla(),
-          ),
+        onTap: () => _pushRutaAdminConTema(
+          context,
+          const FotosMateriasAdministradorPantalla(),
         ),
       ),
       _DatosEntradaPanel(
         icon: Icons.timeline_rounded,
         title: 'Navegación general',
         subtitle: 'Historial de uso por día, mes y usuario.',
-        onTap: () => Navigator.of(context).push(
-          MaterialPageRoute<void>(
-            builder: (_) => const NavegacionMateriaAdministradorPantalla(),
-          ),
+        onTap: () => _pushRutaAdminConTema(
+          context,
+          const NavegacionMateriaAdministradorPantalla(),
         ),
       ),
       _DatosEntradaPanel(
         icon: Icons.school_rounded,
         title: 'Recorrido de exámenes',
         subtitle: 'Historial de aperturas y cambios en exámenes.',
-        onTap: () => Navigator.of(context).push(
-          MaterialPageRoute<void>(
-            builder: (_) => const NavegacionExamenAdministradorPantalla(),
-          ),
+        onTap: () => _pushRutaAdminConTema(
+          context,
+          const NavegacionExamenAdministradorPantalla(),
         ),
       ),
       _DatosEntradaPanel(
         icon: Icons.event_note_rounded,
         title: 'Mesas y coloquios',
         subtitle: 'Administrar el calendario de exámenes.',
-        onTap: () => Navigator.of(context).push(
-          MaterialPageRoute<void>(
-            builder: (_) =>
-                EventosExamenAdministradorPantalla(adminDeviceId: deviceId),
-          ),
+        onTap: () => _pushRutaAdminConTema(
+          context,
+          EventosExamenAdministradorPantalla(adminDeviceId: deviceId),
         ),
       ),
       _DatosEntradaPanel(
         icon: Icons.groups_rounded,
         title: 'Alumnos',
         subtitle: 'Crear usuarios y cargar alumnos por DNI.',
-        onTap: () => Navigator.of(context).push(
-          MaterialPageRoute<void>(
-            builder: (_) =>
-                EstudiantesAdministradorPantalla(adminDeviceId: deviceId),
-          ),
+        onTap: () => _pushRutaAdminConTema(
+          context,
+          EstudiantesAdministradorPantalla(adminDeviceId: deviceId),
         ),
       ),
     ];
@@ -448,7 +446,7 @@ class _TarjetaEntradaDestacadaAdmin extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Material(
-      color: Colors.white,
+      color: theme.colorScheme.surface,
       borderRadius: BorderRadius.circular(26),
       child: InkWell(
         borderRadius: BorderRadius.circular(26),
@@ -457,8 +455,9 @@ class _TarjetaEntradaDestacadaAdmin extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
             borderRadius: BorderRadius.circular(26),
-            border: Border.all(color: const Color(0xFFDCE6F0)),
+            border: Border.all(color: theme.colorScheme.outlineVariant),
             boxShadow: [
               BoxShadow(
                 blurRadius: 24,
@@ -537,9 +536,9 @@ class _PanelLateralAdmin extends StatelessWidget {
       padding:
           EdgeInsets.fromLTRB(collapsed ? 10 : 18, 18, collapsed ? 10 : 18, 18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(26),
-        border: Border.all(color: const Color(0xFFDCE6F0)),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment:
@@ -628,8 +627,11 @@ class _TarjetaEntradaCompactaAdmin extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     return Material(
-      color: const Color(0xFFF8FBFF),
+      color: isDark
+          ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5)
+          : const Color(0xFFF8FBFF),
       borderRadius: BorderRadius.circular(collapsed ? 16 : 18),
       child: InkWell(
         borderRadius: BorderRadius.circular(collapsed ? 16 : 18),
@@ -641,7 +643,7 @@ class _TarjetaEntradaCompactaAdmin extends StatelessWidget {
           ),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(collapsed ? 16 : 18),
-            border: Border.all(color: const Color(0xFFDCE6F0)),
+            border: Border.all(color: theme.colorScheme.outlineVariant),
           ),
           child: Row(
             mainAxisAlignment:
@@ -771,9 +773,9 @@ class _PanelInfoAdmin extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFDCE6F0)),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

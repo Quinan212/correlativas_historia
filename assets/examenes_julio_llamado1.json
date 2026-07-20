@@ -6,7 +6,8 @@
     "hora": "19:00",
     "materia": "Problemática del Conocimiento Histórico",
     "instancia": "llamado_1",
-    "docentes": ["Carmarán, Rosana", "Borche, Javier", "Medina, Jorge"]
+    "docentes": ["Carmarán, Rosana", "Borche, Javier", "Medina, Jorge"],
+    "suspendido": true
   },
   {
     "careerId": "historia",
@@ -15,7 +16,8 @@
     "hora": "19:00",
     "materia": "Pedagogía",
     "instancia": "llamado_1",
-    "docentes": ["Barrios, Eugenia", "Salud, Diana", "Leiva, Carina", "Díaz, Romina"]
+    "docentes": ["Barrios, Eugenia", "Salud, Diana", "Leiva, Carina", "Díaz, Romina"],
+    "suspendido": true
   },
   {
     "careerId": "historia",
@@ -33,7 +35,8 @@
     "hora": "19:00",
     "materia": "P.S.P.E. y C. de la Antigüedad",
     "instancia": "llamado_1",
-    "docentes": ["Carmarán, Rosana", "Borche, Javier", "Medina, Jorge"]
+    "docentes": ["Carmarán, Rosana", "Borche, Javier", "Medina, Jorge"],
+    "suspendido": true
   },
   {
     "careerId": "historia",
@@ -51,7 +54,8 @@
     "hora": "19:00",
     "materia": "Naturaleza y Sociedad I",
     "instancia": "llamado_1",
-    "docentes": ["Carrera, Franklin", "Lindt, Elizabet", "Moser, Sebastián"]
+    "docentes": ["Carrera, Franklin", "Lindt, Elizabet", "Moser, Sebastián"],
+    "suspendido": true
   },
   {
     "careerId": "geografia",
@@ -60,7 +64,8 @@
     "hora": "19:00",
     "materia": "Geografía de Entre Ríos",
     "instancia": "llamado_1",
-    "docentes": ["Lugrín, Patricia", "Carrera, Franklin", "Lindt, Elizabet"]
+    "docentes": ["Lugrín, Patricia", "Carrera, Franklin", "Lindt, Elizabet"],
+    "suspendido": true
   },
   {
     "careerId": "geografia",
@@ -87,7 +92,8 @@
     "hora": "19:00",
     "materia": "Pedagogía",
     "instancia": "llamado_1",
-    "docentes": ["Barrios, Eugenia", "Salud, Diana", "Leiva, Carina", "Díaz, Romina"]
+    "docentes": ["Barrios, Eugenia", "Salud, Diana", "Leiva, Carina", "Díaz, Romina"],
+    "suspendido": true
   },
   {
     "careerId": "geografia",
@@ -105,7 +111,8 @@
     "hora": "19:00",
     "materia": "Problemática de la Ciencia Política I",
     "instancia": "llamado_1",
-    "docentes": ["Velazque Pens, Marcelo", "Diaz, Ignacio", "Piedrabuena, Aldo"]
+    "docentes": ["Velazque Pens, Marcelo", "Diaz, Ignacio", "Piedrabuena, Aldo"],
+    "suspendido": true
   },
   {
     "careerId": "politica",
@@ -114,7 +121,8 @@
     "hora": "19:00",
     "materia": "Procesos Históricos Modernos",
     "instancia": "llamado_1",
-    "docentes": ["Velazque Pens, Marcelo", "Robinson, Soledad", "Alanis, Araceli"]
+    "docentes": ["Velazque Pens, Marcelo", "Robinson, Soledad", "Alanis, Araceli"],
+    "suspendido": true
   },
   {
     "careerId": "politica",
@@ -132,7 +140,8 @@
     "hora": "19:00",
     "materia": "Pedagogía",
     "instancia": "llamado_1",
-    "docentes": ["Barrios, Eugenia", "Salud, Diana", "Leiva, Carina", "Díaz, Romina"]
+    "docentes": ["Barrios, Eugenia", "Salud, Diana", "Leiva, Carina", "Díaz, Romina"],
+    "suspendido": true
   },
   {
     "careerId": "politica",
@@ -294,7 +303,8 @@
     "hora": "19:00",
     "materia": "Teoría Política",
     "instancia": "llamado_1",
-    "docentes": ["Diaz, Ignacio", "Ozuna, Ana", "Espíndola, Estéfano"]
+    "docentes": ["Diaz, Ignacio", "Ozuna, Ana", "Espíndola, Estéfano"],
+    "suspendido": true
   },
   {
     "careerId": "politica",

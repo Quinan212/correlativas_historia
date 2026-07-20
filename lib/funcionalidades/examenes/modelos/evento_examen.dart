@@ -13,6 +13,7 @@ class EventoExamen {
   final String? division;
   final String? actaUrl;
   final bool legacy;
+  final bool suspendido;
 
   const EventoExamen({
     required this.careerId,
@@ -25,6 +26,7 @@ class EventoExamen {
     this.division,
     required this.actaUrl,
     this.legacy = false,
+    this.suspendido = false,
   });
 
   EventoExamen copyWith({
@@ -38,6 +40,7 @@ class EventoExamen {
     String? division,
     String? actaUrl,
     bool? legacy,
+    bool? suspendido,
   }) {
     return EventoExamen(
       careerId: careerId ?? this.careerId,
@@ -50,6 +53,7 @@ class EventoExamen {
       division: division ?? this.division,
       actaUrl: actaUrl ?? this.actaUrl,
       legacy: legacy ?? this.legacy,
+      suspendido: suspendido ?? this.suspendido,
     );
   }
 
@@ -169,6 +173,19 @@ class EventoExamen {
       return [text];
     }
 
+    bool optSuspendido() {
+      final value = rawValue(['suspendido', 'suspendida', 'is_suspended', 'estado']);
+      if (value is bool) return value;
+      if (value is num) return value != 0;
+      if (value is String) {
+        final text = value.trim().toLowerCase();
+        if (text == 'suspendido' || text == 'suspendida' || text == 'true') return true;
+      }
+      final mat = (j['materia'] ?? '').toString().toUpperCase();
+      if (mat.contains('SUSPENDIDA') || mat.contains('SUSPENDIDO')) return true;
+      return false;
+    }
+
     return EventoExamen(
       careerId: reqString('careerId'),
       anio: optInt('anio'),
@@ -180,6 +197,7 @@ class EventoExamen {
       division: optString('division', ''),
       actaUrl: optActaUrl(),
       legacy: optLegacy(),
+      suspendido: optSuspendido(),
     );
   }
 

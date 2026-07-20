@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../laboratorio_atlassian/tema/tema_atlassian.dart';
 import '../proveedores/proveedores_fotos_materias_administrador.dart';
 import 'fotos_materias_carrera_administrador_pantalla.dart';
 
@@ -20,6 +21,7 @@ class FotosMateriasAdministradorPantalla extends ConsumerWidget {
           isDark ? const Color(0xFF030712) : const Color(0xFFF9FAFB),
       appBar: AppBar(
         title: const Text('Fotos por carrera'),
+        centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
@@ -77,9 +79,11 @@ class FotosMateriasAdministradorPantalla extends ConsumerWidget {
                             onTap: () {
                               Navigator.of(context).push(
                                 MaterialPageRoute<void>(
-                                  builder: (_) =>
-                                      FotosMateriasCarreraAdministradorPantalla(
-                                    careerId: items[index].career.id,
+                                  builder: (_) => Theme(
+                                    data: temaLaboratorioAtlassian(context),
+                                    child: FotosMateriasCarreraAdministradorPantalla(
+                                      careerId: items[index].career.id,
+                                    ),
                                   ),
                                 ),
                               );
@@ -98,9 +102,11 @@ class FotosMateriasAdministradorPantalla extends ConsumerWidget {
                                   onTap: () {
                                     Navigator.of(context).push(
                                       MaterialPageRoute<void>(
-                                        builder: (_) =>
-                                            FotosMateriasCarreraAdministradorPantalla(
-                                          careerId: item.career.id,
+                                        builder: (_) => Theme(
+                                          data: temaLaboratorioAtlassian(context),
+                                          child: FotosMateriasCarreraAdministradorPantalla(
+                                            careerId: item.career.id,
+                                          ),
                                         ),
                                       ),
                                     );

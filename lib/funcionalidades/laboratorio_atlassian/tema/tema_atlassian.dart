@@ -18,15 +18,15 @@ abstract final class PaletaAtlassian {
   static const textSubtleLight = Color(0xFF44546F);
   static const textSubtlestLight = Color(0xFF626F86);
 
-  static const canvasDark = Color(0xFF101214);
-  static const surfaceDark = Color(0xFF1D2125);
-  static const surfaceRaisedDark = Color(0xFF22272B);
-  static const surfaceSunkenDark = Color(0xFF161A1D);
-  static const borderDark = Color(0xFF3B444D);
-  static const borderStrongDark = Color(0xFF596773);
-  static const textDark = Color(0xFFDEE4EA);
+  static const canvasDark = Color(0xFF000000);
+  static const surfaceDark = Color(0xFF121214);
+  static const surfaceRaisedDark = Color(0xFF1C1C1E);
+  static const surfaceSunkenDark = Color(0xFF0B0B0C);
+  static const borderDark = Color(0xFF242428);
+  static const borderStrongDark = Color(0xFF3A3A40);
+  static const textDark = Color(0xFFF2F4F7);
   static const textSubtleDark = Color(0xFFB6C2CF);
-  static const textSubtlestDark = Color(0xFF9FADBC);
+  static const textSubtlestDark = Color(0xFF8A99A8);
 
   static const success = Color(0xFF1F845A);
   static const successSubtle = Color(0xFFDCFFF1);
@@ -60,9 +60,11 @@ abstract final class RadioAtlassian {
   static const pill = 999.0;
 }
 
-ThemeData temaLaboratorioAtlassian(BuildContext context) {
+ThemeData temaLaboratorioAtlassian(BuildContext context, {bool forceDark = false}) {
   final parent = Theme.of(context);
-  final dark = MediaQuery.platformBrightnessOf(context) == Brightness.dark;
+  final dark = forceDark ||
+      parent.brightness == Brightness.dark ||
+      MediaQuery.platformBrightnessOf(context) == Brightness.dark;
   final canvas = dark
       ? PaletaAtlassian.canvasDark
       : PaletaAtlassian.canvasLight;

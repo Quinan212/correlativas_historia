@@ -586,125 +586,255 @@ class _PantallaInicioAtlassianState extends State<PantallaInicioAtlassian> {
 
                 final mainContent = Padding(
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      _PanelPerfilAtlassian(
-                        trajectory: trajectory,
-                        career: career,
-                        onChooseCareer: trajectory == null
-                            ? null
-                            : () => _chooseCareer(trajectory),
-                        onOpenMaterias: trajectory == null
-                            ? null
-                            : () => widget.onNavigate(3),
-                        onOpenProgress: trajectory == null
-                            ? null
-                            : _openProgress,
-                        onOpenExams: () => widget.onNavigate(1),
-                        ultimaSincronizacion: trajectory?.sincronizadaEn,
-                        syncAvailable: !_saving && !_sageFlowOpen,
-                        syncing: _saving || _sageFlowOpen,
-                        onSync: _sync,
-                      ),
-                      const SizedBox(height: 16),
-                      if (trajectory == null || career == null)
-                        _PanelConexionAtlassian(
-                          draft: _draft,
-                          preparation: _preparation,
-                          saving: _saving || _sageFlowOpen,
-                          onSync: _sync,
-                        )
-                      else ...[
-                        _ResumenProgresoAtlassian(career: career),
-                        const SizedBox(height: 12),
-                        _AtajoExamenesAtlassian(
-                          onTap: () => widget.onNavigate(1),
-                        ),
-                        const SizedBox(height: 10),
-                        _AtajoSageAtlassian(onTap: _openSagePortal),
-                        const SizedBox(height: 20),
-                        SeparadorTituloAtlassian(
-                          title: 'Herramientas',
-                          subtitle: nombreCarreraAtlassian(career.nombre),
-                        ),
-                        const SizedBox(height: 10),
-                        _GrillaAccionesAtlassian(
-                          onOpenRecord: () => widget.onNavigate(3),
-                          onOpenPlan: () => widget.onNavigate(2),
-                          onOpenScenarios: _openScenarios,
-                          onOpenHelp: _openHelp,
-                          onOpenNextSteps: _openNextSteps,
-                          onOpenProgress: _openProgress,
-                          onOpenCalendar: _openCalendar,
-                          onOpenDesigns: _openDesigns,
-                        ),
-                        const SizedBox(height: 22),
-                        _MateriasRecientesAtlassian(
-                          career: career,
-                          onOpenAll: () => widget.onNavigate(3),
-                        ),
-                        if (trajectory
-                            .documentosDeCarrera(career)
-                            .isNotEmpty) ...[
-                          const SizedBox(height: 22),
-                          _DocumentosAcademicosAtlassian(
-                            documentos: trajectory.documentosDeCarrera(career),
-                            busy: _sageFlowOpen || _saving,
-                            onOpen: _openAcademicDocument,
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final isWide = constraints.maxWidth >= 600;
+
+                      if (trajectory == null || career == null) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            _PanelPerfilAtlassian(
+                              trajectory: trajectory,
+                              career: career,
+                              onChooseCareer: trajectory == null
+                                  ? null
+                                  : () => _chooseCareer(trajectory),
+                              onOpenMaterias: () => widget.onNavigate(3),
+                              onOpenPlan: () => widget.onNavigate(2),
+                              onOpenExams: () => widget.onNavigate(1),
+                              ultimaSincronizacion: trajectory?.sincronizadaEn,
+                              syncAvailable: !_saving && !_sageFlowOpen,
+                              syncing: _saving || _sageFlowOpen,
+                              onSync: _sync,
+                            ),
+                            const SizedBox(height: 16),
+                            _PanelConexionAtlassian(
+                              draft: _draft,
+                              preparation: _preparation,
+                              saving: _saving || _sageFlowOpen,
+                              onSync: _sync,
+                            ),
+                            const SizedBox(height: 20),
+                            const SeparadorTituloAtlassian(
+                              title: 'Herramientas',
+                              subtitle: 'Accesos disponibles',
+                            ),
+                            const SizedBox(height: 10),
+                            _GrillaAccionesReducidaAtlassian(
+                              onOpenCalendar: _openCalendar,
+                              onOpenDesigns: _openDesigns,
+                              onOpenScenarios: _openScenarios,
+                              onOpenHelp: _openHelp,
+                            ),
+                            const SizedBox(height: 24),
+                          ],
+                        );
+                      }
+
+                      if (isWide) {
+                        return Center(
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 1000),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Expanded(
+                                      child: _PanelPerfilAtlassian(
+                                        trajectory: trajectory,
+                                        career: career,
+                                        onChooseCareer: () => _chooseCareer(trajectory),
+                                        onOpenMaterias: () => widget.onNavigate(3),
+                                        onOpenPlan: () => widget.onNavigate(2),
+                                        onOpenExams: () => widget.onNavigate(1),
+                                        ultimaSincronizacion: trajectory.sincronizadaEn,
+                                        syncAvailable: !_saving && !_sageFlowOpen,
+                                        syncing: _saving || _sageFlowOpen,
+                                        onSync: _sync,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                                        children: [
+                                          _ResumenProgresoAtlassian(career: career),
+                                          const SizedBox(height: 12),
+                                          Row(
+                                            children: [
+                                              Expanded(
+                                                child: _AtajoExamenesAtlassian(
+                                                  onTap: () => widget.onNavigate(1),
+                                                ),
+                                              ),
+                                              const SizedBox(width: 10),
+                                              Expanded(
+                                                child: _AtajoSageAtlassian(
+                                                  onTap: _openSagePortal,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 24),
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                                        children: [
+                                          SeparadorTituloAtlassian(
+                                            title: 'Herramientas',
+                                            subtitle: nombreCarreraAtlassian(career.nombre),
+                                          ),
+                                          const SizedBox(height: 10),
+                                          _GrillaAccionesAtlassian(
+                                            onOpenRecord: () => widget.onNavigate(3),
+                                            onOpenPlan: () => widget.onNavigate(2),
+                                            onOpenScenarios: _openScenarios,
+                                            onOpenHelp: _openHelp,
+                                            onOpenNextSteps: _openNextSteps,
+                                            onOpenProgress: _openProgress,
+                                            onOpenCalendar: _openCalendar,
+                                            onOpenDesigns: _openDesigns,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(width: 24),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                                        children: [
+                                          _MateriasRecientesAtlassian(
+                                            career: career,
+                                            onOpenAll: () => widget.onNavigate(3),
+                                          ),
+                                          if (trajectory
+                                              .documentosDeCarrera(career)
+                                              .isNotEmpty) ...[
+                                            const SizedBox(height: 22),
+                                            _DocumentosAcademicosAtlassian(
+                                              documentos: trajectory.documentosDeCarrera(career),
+                                              busy: _sageFlowOpen || _saving,
+                                              onOpen: _openAcademicDocument,
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
+                        );
+                      }
+
+                      // Mobile (narrow) layout
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _PanelPerfilAtlassian(
+                            trajectory: trajectory,
+                            career: career,
+                            onChooseCareer: () => _chooseCareer(trajectory),
+                            onOpenMaterias: () => widget.onNavigate(3),
+                            onOpenPlan: () => widget.onNavigate(2),
+                            onOpenExams: () => widget.onNavigate(1),
+                            ultimaSincronizacion: trajectory.sincronizadaEn,
+                            syncAvailable: !_saving && !_sageFlowOpen,
+                            syncing: _saving || _sageFlowOpen,
+                            onSync: _sync,
+                          ),
+                          const SizedBox(height: 16),
+                          _ResumenProgresoAtlassian(career: career),
+                          const SizedBox(height: 12),
+                          _AtajoExamenesAtlassian(
+                            onTap: () => widget.onNavigate(1),
+                          ),
+                          const SizedBox(height: 10),
+                          _AtajoSageAtlassian(onTap: _openSagePortal),
+                          const SizedBox(height: 20),
+                          SeparadorTituloAtlassian(
+                            title: 'Herramientas',
+                            subtitle: nombreCarreraAtlassian(career.nombre),
+                          ),
+                          const SizedBox(height: 10),
+                          _GrillaAccionesAtlassian(
+                            onOpenRecord: () => widget.onNavigate(3),
+                            onOpenPlan: () => widget.onNavigate(2),
+                            onOpenScenarios: _openScenarios,
+                            onOpenHelp: _openHelp,
+                            onOpenNextSteps: _openNextSteps,
+                            onOpenProgress: _openProgress,
+                            onOpenCalendar: _openCalendar,
+                            onOpenDesigns: _openDesigns,
+                          ),
+                          const SizedBox(height: 22),
+                          _MateriasRecientesAtlassian(
+                            career: career,
+                            onOpenAll: () => widget.onNavigate(3),
+                          ),
+                          if (trajectory
+                              .documentosDeCarrera(career)
+                              .isNotEmpty) ...[
+                            const SizedBox(height: 22),
+                            _DocumentosAcademicosAtlassian(
+                              documentos: trajectory.documentosDeCarrera(career),
+                              busy: _sageFlowOpen || _saving,
+                              onOpen: _openAcademicDocument,
+                            ),
+                          ],
                         ],
-                      ],
-                    ],
+                      );
+                    },
                   ),
                 );
 
                 return Scaffold(
                   backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-                  body: Stack(
-                    children: [
-                      Padding(
-                        padding: EdgeInsets.only(top: headerHeight),
-                        child: RefreshIndicator(
-                          onRefresh: _sync,
-                          child: CustomScrollView(
-                            controller: _scrollController,
-                            physics: const AlwaysScrollableScrollPhysics(),
-                            slivers: [
-                              SliverToBoxAdapter(child: mainContent),
-                              if (trajectory != null && career != null)
-                                SliverPersistentHeader(
-                                  pinned: true,
-                                  delegate:
-                                      SugerenciasApiladasAtlassianDelegate(
-                                        viewportHeight:
-                                            MediaQuery.sizeOf(context).height -
-                                            headerHeight,
-                                        onOpenExams: () => widget.onNavigate(1),
-                                        onOpenScenarios: _openScenarios,
-                                        onOpenSubjects: () =>
-                                            widget.onNavigate(3),
-                                        onOpenCalendar: _openCalendar,
-                                      ),
-                                ),
-                              const SliverToBoxAdapter(
-                                child: SizedBox(height: 144),
-                              ),
-                            ],
+                  body: CustomScrollView(
+                    controller: _scrollController,
+                    physics: const AlwaysScrollableScrollPhysics(),
+                      slivers: [
+                        SliverToBoxAdapter(
+                          child: EncabezadoTrayectoriaAtlassian(
+                            scrollController: _scrollController,
+                            onSearch: widget.onSearch,
+                            onExit: widget.onExit,
+                            nombreEstudiante: trajectory?.perfil.nombre,
                           ),
                         ),
-                      ),
-                      Align(
-                        alignment: Alignment.topCenter,
-                        child: EncabezadoTrayectoriaAtlassian(
-                          scrollController: _scrollController,
-                          onSearch: widget.onSearch,
-                          onExit: widget.onExit,
-                          nombreEstudiante: trajectory?.perfil.nombre,
+                        SliverToBoxAdapter(child: mainContent),
+                        if (trajectory != null && career != null)
+                          SliverPersistentHeader(
+                            pinned: true,
+                            delegate:
+                                SugerenciasApiladasAtlassianDelegate(
+                                  viewportHeight:
+                                      MediaQuery.sizeOf(context).height -
+                                      headerHeight,
+                                  onOpenExams: () => widget.onNavigate(1),
+                                  onOpenScenarios: _openScenarios,
+                                  onOpenSubjects: () =>
+                                      widget.onNavigate(3),
+                                  onOpenCalendar: _openCalendar,
+                                ),
+                          ),
+                        const SliverToBoxAdapter(
+                          child: SizedBox(height: 144),
                         ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
                 );
               },
             );
@@ -721,7 +851,7 @@ class _PanelPerfilAtlassian extends StatelessWidget {
     required this.career,
     required this.onChooseCareer,
     required this.onOpenMaterias,
-    required this.onOpenProgress,
+    required this.onOpenPlan,
     required this.onOpenExams,
     required this.ultimaSincronizacion,
     required this.syncAvailable,
@@ -733,7 +863,7 @@ class _PanelPerfilAtlassian extends StatelessWidget {
   final CarreraTrayectoriaSageLaboratorio? career;
   final VoidCallback? onChooseCareer;
   final VoidCallback? onOpenMaterias;
-  final VoidCallback? onOpenProgress;
+  final VoidCallback? onOpenPlan;
   final VoidCallback onOpenExams;
   final DateTime? ultimaSincronizacion;
   final bool syncAvailable;
@@ -842,9 +972,9 @@ class _PanelPerfilAtlassian extends StatelessWidget {
                   onTap: onOpenMaterias,
                 ),
                 _AccionPerfilAtlassian(
-                  label: 'Historial',
-                  icon: Icons.history_rounded,
-                  onTap: onOpenProgress,
+                  label: 'Plan',
+                  icon: Icons.assignment_outlined,
+                  onTap: onOpenPlan,
                 ),
                 _AccionPerfilAtlassian(
                   label: 'Mesas',
@@ -949,7 +1079,9 @@ class _AccionPerfilAtlassian extends StatelessWidget {
                 size: 21,
                 color: onTap == null
                     ? scheme.onSurfaceVariant.withValues(alpha: 0.45)
-                    : scheme.primary,
+                    : (Theme.of(context).brightness == Brightness.dark
+                        ? Colors.white
+                        : scheme.primary),
               ),
             ),
             const SizedBox(height: 6),
@@ -1166,6 +1298,75 @@ class _GrillaAccionesAtlassian extends StatelessWidget {
   }
 }
 
+class _GrillaAccionesReducidaAtlassian extends StatelessWidget {
+  const _GrillaAccionesReducidaAtlassian({
+    required this.onOpenCalendar,
+    required this.onOpenDesigns,
+    required this.onOpenScenarios,
+    required this.onOpenHelp,
+  });
+
+  final VoidCallback onOpenCalendar;
+  final VoidCallback onOpenDesigns;
+  final VoidCallback onOpenScenarios;
+  final VoidCallback onOpenHelp;
+
+  @override
+  Widget build(BuildContext context) {
+    final actions = <_AccionAtlassian>[
+      _AccionAtlassian(
+        label: 'Calendario',
+        description: 'Fechas y eventos',
+        icon: Icons.calendar_month_outlined,
+        onTap: onOpenCalendar,
+      ),
+      _AccionAtlassian(
+        label: 'Diseños',
+        description: 'Contenidos curriculares',
+        icon: Icons.menu_book_rounded,
+        onTap: onOpenDesigns,
+      ),
+      _AccionAtlassian(
+        label: 'Escenarios',
+        description: 'Qué podés cursar',
+        icon: Icons.auto_graph_rounded,
+        onTap: onOpenScenarios,
+      ),
+      _AccionAtlassian(
+        label: 'Ayuda',
+        description: 'Normativa y consultas',
+        icon: Icons.help_outline_rounded,
+        onTap: onOpenHelp,
+      ),
+    ];
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns = constraints.maxWidth >= 620 ? 4 : 2;
+        const gap = 10.0;
+        final width = (constraints.maxWidth - gap * (columns - 1)) / columns;
+        return Wrap(
+          spacing: gap,
+          runSpacing: gap,
+          children: [
+            for (final action in actions)
+              SizedBox(
+                width: width,
+                child: TarjetaAccionAtlassian(
+                  label: action.label,
+                  description: action.description,
+                  icon: action.icon,
+                  onTap: action.onTap,
+                  compact: true,
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+}
+
 class _AccionAtlassian {
   const _AccionAtlassian({
     required this.label,
@@ -1195,7 +1396,13 @@ class _AtajoExamenesAtlassian extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
       child: Row(
         children: [
-          Icon(Icons.event_available_outlined, color: scheme.primary, size: 22),
+          Icon(
+            Icons.event_available_outlined,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.white
+                : scheme.primary,
+            size: 22,
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
@@ -1205,7 +1412,9 @@ class _AtajoExamenesAtlassian extends StatelessWidget {
           ),
           Icon(
             Icons.arrow_forward_rounded,
-            color: scheme.onPrimaryContainer,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.white
+                : scheme.onPrimaryContainer,
             size: 20,
           ),
         ],
@@ -1372,20 +1581,23 @@ class _DocumentosAcademicosAtlassian extends StatelessWidget {
           child: Column(
             children: [
               for (var index = 0; index < ordered.length; index++) ...[
-                ListTile(
-                  enabled: !busy,
-                  leading: Icon(
-                    _documentIcon(ordered[index].tipo),
-                    color: Theme.of(context).colorScheme.primary,
+                Material(
+                  color: Colors.transparent,
+                  child: ListTile(
+                    enabled: !busy,
+                    leading: Icon(
+                      _documentIcon(ordered[index].tipo),
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    title: Text(ordered[index].tipo.etiqueta),
+                    trailing: busy
+                        ? const SizedBox.square(
+                            dimension: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.download_rounded),
+                    onTap: busy ? null : () => onOpen(ordered[index]),
                   ),
-                  title: Text(ordered[index].tipo.etiqueta),
-                  trailing: busy
-                      ? const SizedBox.square(
-                          dimension: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.download_rounded),
-                  onTap: busy ? null : () => onOpen(ordered[index]),
                 ),
                 if (index != ordered.length - 1) const Divider(height: 1),
               ],
@@ -1435,7 +1647,9 @@ class _PanelConexionAtlassian extends StatelessWidget {
                 ),
                 child: Icon(
                   Icons.sync_rounded,
-                  color: Theme.of(context).colorScheme.primary,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.white
+                      : Theme.of(context).colorScheme.primary,
                 ),
               ),
               const SizedBox(width: 12),

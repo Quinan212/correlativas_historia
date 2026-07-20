@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 
 import '../tema/tema_atlassian.dart';
+import '../../administrador/pantallas/acceso_administrador_pantalla.dart';
 
 String primerNombreAtlassian(String? nombreCompleto) {
   final normalizado = nombreCompleto?.trim() ?? '';
@@ -46,37 +48,35 @@ class PanelAtlassian extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final decoration = BoxDecoration(
-      color: backgroundColor ?? scheme.surface,
+    final bg = backgroundColor ?? scheme.surface;
+    final borderSide = BorderSide(
+      color: borderColor ?? (selected ? scheme.primary : scheme.outlineVariant),
+      width: selected ? 2 : 1,
+    );
+    final shape = RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(radius),
-      border: Border.all(
-        color:
-            borderColor ?? (selected ? scheme.primary : scheme.outlineVariant),
-        width: selected ? 2 : 1,
-      ),
-      boxShadow: [
-        if (Theme.of(context).brightness == Brightness.light)
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.035),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-      ],
+      side: borderSide,
     );
 
     if (onTap == null) {
-      return Container(padding: padding, decoration: decoration, child: child);
+      return Material(
+        color: bg,
+        shape: shape,
+        clipBehavior: Clip.antiAlias,
+        child: Padding(padding: padding, child: child),
+      );
     }
 
     return Material(
-      color: Colors.transparent,
+      color: bg,
+      shape: shape,
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: () {
           HapticFeedback.selectionClick();
           onTap!();
         },
-        borderRadius: BorderRadius.circular(radius),
-        child: Ink(padding: padding, decoration: decoration, child: child),
+        child: Padding(padding: padding, child: child),
       ),
     );
   }
@@ -91,6 +91,7 @@ class EncabezadoPaginaAtlassian extends StatelessWidget {
     this.actions = const <Widget>[],
     this.bottom,
     this.compact = false,
+    this.centerTitle = false,
   });
 
   final String title;
@@ -99,6 +100,7 @@ class EncabezadoPaginaAtlassian extends StatelessWidget {
   final List<Widget> actions;
   final Widget? bottom;
   final bool compact;
+  final bool centerTitle;
 
   @override
   Widget build(BuildContext context) {
@@ -119,46 +121,65 @@ class EncabezadoPaginaAtlassian extends StatelessWidget {
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
+            children: [              Stack(
+                alignment: Alignment.center,
                 children: [
-                  if (leading != null) ...[leading!, const SizedBox(width: 8)],
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style:
-                              (compact
-                                      ? Theme.of(context).textTheme.titleLarge
-                                      : Theme.of(
-                                          context,
-                                        ).textTheme.headlineSmall)
-                                  ?.copyWith(fontWeight: FontWeight.w700),
-                        ),
-                        if (subtitle != null &&
-                            subtitle!.trim().isNotEmpty) ...[
-                          const SizedBox(height: 2),
+                  IgnorePointer(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: (leading != null || actions.isNotEmpty) ? 56 : 0,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: centerTitle
+                            ? CrossAxisAlignment.center
+                            : CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
                           Text(
-                            subtitle!,
+                            title,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(color: scheme.onSurfaceVariant),
+                            textAlign:
+                                centerTitle ? TextAlign.center : TextAlign.start,
+                            style:
+                                (compact
+                                        ? Theme.of(context).textTheme.titleLarge
+                                        : Theme.of(
+                                            context,
+                                          ).textTheme.headlineSmall)
+                                    ?.copyWith(fontWeight: FontWeight.w700),
                           ),
+                          if (subtitle != null &&
+                              subtitle!.trim().isNotEmpty) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              subtitle!,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: centerTitle
+                                  ? TextAlign.center
+                                  : TextAlign.start,
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(color: scheme.onSurfaceVariant),
+                            ),
+                          ],
                         ],
-                      ],
+                      ),
                     ),
                   ),
-                  if (actions.isNotEmpty) ...[
-                    const SizedBox(width: 8),
-                    ..._separate(actions, const SizedBox(width: 4)),
-                  ],
+                  if (leading != null)
+                    Positioned(
+                      left: 0,
+                      child: leading!,
+                    ),
+                  if (actions.isNotEmpty)
+                    Positioned(
+                      right: 0,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: _separate(actions, const SizedBox(width: 4)),
+                      ),
+                    ),
                 ],
               ),
               if (bottom != null) ...[const SizedBox(height: 12), bottom!],
@@ -175,11 +196,9 @@ class EncabezadoSeccionAtlassianColapsable extends StatefulWidget {
     super.key,
     required this.scrollController,
     required this.title,
-    required this.onSearch,
     this.subtitle,
     this.leading,
     this.actions = const <Widget>[],
-    this.hintText = 'Buscar materias y carreras…',
   });
 
   final ScrollController scrollController;
@@ -187,8 +206,6 @@ class EncabezadoSeccionAtlassianColapsable extends StatefulWidget {
   final String? subtitle;
   final Widget? leading;
   final List<Widget> actions;
-  final VoidCallback onSearch;
-  final String hintText;
 
   @override
   State<EncabezadoSeccionAtlassianColapsable> createState() =>
@@ -223,12 +240,18 @@ class _EncabezadoSeccionAtlassianColapsableState
   }
 
   void _handleScroll() {
+    if (!mounted) return;
     final offset = widget.scrollController.hasClients
         ? widget.scrollController.offset
         : 0.0;
     final next = (offset / 72).clamp(0.0, 1.0).toDouble();
-    if ((next - _progress).abs() < 0.01 || !mounted) return;
-    setState(() => _progress = next);
+    if ((next - _progress).abs() < 0.01) return;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && (_progress - next).abs() >= 0.01) {
+        setState(() => _progress = next);
+      }
+    });
   }
 
   @override
@@ -236,98 +259,109 @@ class _EncabezadoSeccionAtlassianColapsableState
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final progress = Curves.easeOutCubic.transform(_progress);
-    final contentOpacity = (1 - progress * 1.25).clamp(0.0, 1.0).toDouble();
+    final contentOpacity = (1 - progress * 1.35).clamp(0.0, 1.0).toDouble();
+    final backgroundAlpha = (1 - progress).clamp(0.0, 1.0).toDouble();
 
-    return Material(
-      color: theme.scaffoldBackgroundColor,
-      child: SafeArea(
-        bottom: false,
-        child: Container(
-          height: 72,
-          padding: const EdgeInsets.fromLTRB(16, 8, 12, 8),
-          decoration: BoxDecoration(
-            border: Border(bottom: BorderSide(color: scheme.outlineVariant)),
-          ),
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              Positioned.fill(
-                child: IgnorePointer(
-                  ignoring: contentOpacity < 0.35,
-                  child: Opacity(
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          color: theme.scaffoldBackgroundColor.withValues(alpha: backgroundAlpha),
+          child: SafeArea(
+            bottom: false,
+            child: Container(
+              height: 72,
+              padding: const EdgeInsets.fromLTRB(16, 8, 12, 8),
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(
+                    color: scheme.outlineVariant.withValues(alpha: backgroundAlpha),
+                  ),
+                ),
+              ),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Opacity(
                     opacity: contentOpacity,
                     child: Transform.translate(
                       offset: Offset(-18 * progress, 0),
-                      child: Row(
-                        children: [
-                          if (widget.leading != null) ...[
-                            widget.leading!,
-                            const SizedBox(width: 8),
-                          ],
-                          Expanded(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
+                      child: Center(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 56),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                widget.title,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.center,
+                                style: theme.textTheme.headlineSmall
+                                    ?.copyWith(fontWeight: FontWeight.w700),
+                              ),
+                              if (widget.subtitle != null &&
+                                  widget.subtitle!.trim().isNotEmpty) ...[
+                                const SizedBox(height: 1),
                                 Text(
-                                  widget.title,
+                                  widget.subtitle!,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: theme.textTheme.headlineSmall
-                                      ?.copyWith(fontWeight: FontWeight.w700),
-                                ),
-                                if (widget.subtitle != null &&
-                                    widget.subtitle!.trim().isNotEmpty) ...[
-                                  const SizedBox(height: 1),
-                                  Text(
-                                    widget.subtitle!,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: theme.textTheme.bodySmall?.copyWith(
-                                      color: scheme.onSurfaceVariant,
-                                    ),
+                                  textAlign: TextAlign.center,
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: scheme.onSurfaceVariant,
                                   ),
-                                ],
+                                ),
                               ],
-                            ),
+                            ],
                           ),
-                          if (widget.actions.isNotEmpty) ...[
-                            const SizedBox(width: 8),
-                            ..._separate(
+                        ),
+                      ),
+                    ),
+                  ),
+                  if (widget.leading != null)
+                    Positioned(
+                      left: 0,
+                      child: IgnorePointer(
+                        ignoring: contentOpacity <= 0.1,
+                        child: Opacity(
+                          opacity: contentOpacity,
+                          child: widget.leading!,
+                        ),
+                      ),
+                    ),
+                  if (widget.actions.isNotEmpty)
+                    Positioned(
+                      right: 0,
+                      child: IgnorePointer(
+                        ignoring: contentOpacity <= 0.1,
+                        child: Opacity(
+                          opacity: contentOpacity,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: _separate(
                               widget.actions,
                               const SizedBox(width: 4),
-                            ),
-                          ],
-                        ],
+                            ).toList(),
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                ),
+                ],
               ),
-              Positioned(
-                left: 0,
-                right: 0,
-                child: IgnorePointer(
-                  ignoring: progress < 0.12,
-                  child: Opacity(
-                    opacity: progress,
-                    child: Transform.translate(
-                      offset: Offset(0, 8 * (1 - progress)),
-                      child: AccesoBusquedaAtlassian(
-                        onTap: widget.onSearch,
-                        hintText: widget.hintText,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
         ),
-      ),
+      ],
     );
   }
 }
+
+
+
+
 
 class AccesoBusquedaAtlassian extends StatelessWidget {
   const AccesoBusquedaAtlassian({
@@ -342,36 +376,49 @@ class AccesoBusquedaAtlassian extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final searchBg = isDark
+        ? const Color(0xFF282C34)
+        : scheme.surface;
+    final searchBorder = isDark
+        ? const Color(0xFF3B404A)
+        : scheme.outlineVariant;
+
     return Material(
-      color: scheme.surface,
+      color: searchBg,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(RadioAtlassian.pill),
-        side: BorderSide(color: scheme.outlineVariant),
+        side: BorderSide(color: searchBorder),
       ),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(RadioAtlassian.pill),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
           child: Row(
             children: [
-              Icon(Icons.search_rounded, size: 21, color: scheme.primary),
-              const SizedBox(width: 11),
+              Icon(
+                Icons.search_rounded,
+                size: 24,
+                color: isDark ? const Color(0xFF1E88E5) : const Color(0xFF0E5E86),
+              ),
+              const SizedBox(width: 13),
               Expanded(
                 child: Text(
                   hintText,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     color: scheme.onSurfaceVariant,
                     fontWeight: FontWeight.w600,
+                    fontSize: 16,
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 10),
               Icon(
                 Icons.arrow_forward_rounded,
-                size: 18,
+                size: 21,
                 color: scheme.onSurfaceVariant,
               ),
             ],
@@ -485,9 +532,10 @@ class BotonIconoAtlassian extends StatelessWidget {
         style: IconButton.styleFrom(
           foregroundColor: foreground,
           backgroundColor: background,
+          minimumSize: const Size(45, 45),
           side: selected ? BorderSide(color: scheme.primary) : null,
         ),
-        icon: Icon(icon, size: 21),
+        icon: Icon(icon, size: 26),
       ),
     );
   }
@@ -575,8 +623,9 @@ class CampoBusquedaAtlassian extends StatelessWidget {
   const CampoBusquedaAtlassian({
     super.key,
     required this.controller,
-    required this.hintText,
+    this.hintText = 'Buscar…',
     required this.onChanged,
+    this.onSubmitted,
     this.onClear,
     this.autofocus = false,
     this.focusNode,
@@ -587,6 +636,7 @@ class CampoBusquedaAtlassian extends StatelessWidget {
   final TextEditingController controller;
   final String hintText;
   final ValueChanged<String> onChanged;
+  final ValueChanged<String>? onSubmitted;
   final VoidCallback? onClear;
   final bool autofocus;
   final FocusNode? focusNode;
@@ -596,12 +646,20 @@ class CampoBusquedaAtlassian extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final defaultBg = isDark
+        ? const Color(0xFF282C34)
+        : scheme.surface;
+    final borderColor = isDark
+        ? const Color(0xFF3B404A)
+        : scheme.outlineVariant;
+
     final radius = BorderRadius.circular(
       pill ? RadioAtlassian.pill : RadioAtlassian.medium,
     );
     final border = OutlineInputBorder(
       borderRadius: radius,
-      borderSide: BorderSide(color: scheme.outlineVariant),
+      borderSide: BorderSide(color: borderColor),
     );
     return Semantics(
       textField: true,
@@ -611,18 +669,19 @@ class CampoBusquedaAtlassian extends StatelessWidget {
         focusNode: focusNode,
         autofocus: autofocus,
         onChanged: onChanged,
+        onSubmitted: onSubmitted,
         textInputAction: TextInputAction.search,
         decoration: InputDecoration(
           hintText: hintText,
           filled: true,
-          fillColor: backgroundColor ?? scheme.surface,
+          fillColor: backgroundColor ?? defaultBg,
           contentPadding: EdgeInsets.symmetric(
             horizontal: pill ? 18 : 12,
             vertical: pill ? 14 : 12,
           ),
           prefixIcon: Icon(
             Icons.search_rounded,
-            color: scheme.primary,
+            color: isDark ? const Color(0xFF1E88E5) : const Color(0xFF0E5E86),
             size: 21,
           ),
           suffixIcon: controller.text.isEmpty
@@ -868,54 +927,61 @@ class TarjetaAccionAtlassian extends StatelessWidget {
     return Semantics(
       button: true,
       label: description == null ? label : '$label. $description',
-      child: PanelAtlassian(
-        onTap: onTap,
-        padding: EdgeInsets.all(compact ? 12 : 14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: compact ? 36 : 40,
-                  height: compact ? 36 : 40,
-                  decoration: BoxDecoration(
-                    color: scheme.primaryContainer,
-                    borderRadius: BorderRadius.circular(RadioAtlassian.medium),
+      child: SizedBox(
+        height: compact ? 126.0 : 154.0,
+        child: PanelAtlassian(
+          onTap: onTap,
+          padding: EdgeInsets.all(compact ? 12 : 14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: compact ? 36 : 40,
+                    height: compact ? 36 : 40,
+                    decoration: BoxDecoration(
+                      color: scheme.primaryContainer,
+                      borderRadius: BorderRadius.circular(RadioAtlassian.medium),
+                    ),
+                    child: Icon(
+                      icon,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white
+                          : scheme.primary,
+                      size: compact ? 19 : 21,
+                    ),
                   ),
-                  child: Icon(
-                    icon,
-                    color: scheme.primary,
-                    size: compact ? 19 : 21,
+                  const Spacer(),
+                  if (badge != null)
+                    LozengeAtlassian(
+                      label: badge!,
+                      appearance: AparienciaLozengeAtlassian.brand,
+                    )
+                  else
+                    Icon(
+                      Icons.arrow_forward_rounded,
+                      size: 18,
+                      color: scheme.onSurfaceVariant,
+                    ),
+                ],
+              ),
+              SizedBox(height: compact ? 10 : 12),
+              Text(label, style: Theme.of(context).textTheme.titleSmall),
+              if (description != null && description!.trim().isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Expanded(
+                  child: Text(
+                    description!,
+                    maxLines: compact ? 2 : 3,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ),
-                const Spacer(),
-                if (badge != null)
-                  LozengeAtlassian(
-                    label: badge!,
-                    appearance: AparienciaLozengeAtlassian.brand,
-                  )
-                else
-                  Icon(
-                    Icons.arrow_forward_rounded,
-                    size: 18,
-                    color: scheme.onSurfaceVariant,
-                  ),
               ],
-            ),
-            SizedBox(height: compact ? 10 : 12),
-            Text(label, style: Theme.of(context).textTheme.titleSmall),
-            if (description != null && description!.trim().isNotEmpty) ...[
-              const SizedBox(height: 4),
-              Text(
-                description!,
-                maxLines: compact ? 2 : 3,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
             ],
-          ],
+          ),
         ),
       ),
     );
@@ -1250,111 +1316,188 @@ class NavegacionLateralAtlassian extends StatelessWidget {
     super.key,
     required this.selectedIndex,
     required this.onSelected,
+    required this.hidden,
     this.onExit,
     this.nombreEstudiante,
   });
 
   final int selectedIndex;
   final ValueChanged<int> onSelected;
+  final bool hidden;
   final VoidCallback? onExit;
   final String? nombreEstudiante;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return SizedBox(
-      width: 180,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: scheme.surface,
-          border: Border(right: BorderSide(color: scheme.outlineVariant)),
-        ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 16),
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                return SingleChildScrollView(
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      minHeight: constraints.maxHeight,
-                    ),
-                    child: IntrinsicHeight(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(8, 4, 8, 16),
-                            child: Row(
+    final width = hidden ? 0.0 : 180.0;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeInOut,
+      width: width,
+      child: ClipRect(
+        child: OverflowBox(
+          alignment: Alignment.topLeft,
+          minWidth: 180.0,
+          maxWidth: 180.0,
+          child: SizedBox(
+            width: 180.0,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: scheme.surface,
+                border: Border(right: BorderSide(color: scheme.outlineVariant)),
+              ),
+              child: SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 16),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      return SingleChildScrollView(
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            minHeight: constraints.maxHeight,
+                          ),
+                          child: IntrinsicHeight(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
-                                Container(
-                                  width: 36,
-                                  height: 36,
-                                  decoration: BoxDecoration(
-                                    color: scheme.primary,
-                                    borderRadius: BorderRadius.circular(
-                                      RadioAtlassian.medium,
-                                    ),
-                                  ),
-                                  child: const Icon(
-                                    Icons.school_rounded,
-                                    color: Colors.white,
-                                    size: 21,
-                                  ),
-                                ),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                const SizedBox(height: 56), // Espacio para el botón de menú flotante
+                                Padding(
+                                  padding: const EdgeInsets.fromLTRB(8, 4, 8, 16),
+                                  child: Row(
                                     children: [
-                                      Text(
-                                        'Correlativas',
-                                        style: Theme.of(context).textTheme.titleSmall,
+                                      Container(
+                                        width: 36,
+                                        height: 36,
+                                        decoration: BoxDecoration(
+                                          color: scheme.primary,
+                                          borderRadius: BorderRadius.circular(
+                                            RadioAtlassian.medium,
+                                          ),
+                                        ),
+                                        child: const Icon(
+                                          Icons.school_rounded,
+                                          color: Colors.white,
+                                          size: 21,
+                                        ),
                                       ),
-                                      Text(
-                                        saludoAtlassian(nombreEstudiante),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: Theme.of(context).textTheme.labelSmall,
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.center,
+                                          children: [
+                                            Text(
+                                              'Correlativas',
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              textAlign: TextAlign.center,
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .titleSmall,
+                                            ),
+                                            Text(
+                                              saludoAtlassian(nombreEstudiante),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              textAlign: TextAlign.center,
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .labelSmall,
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                     ],
                                   ),
                                 ),
+                                for (
+                                  var index = 0;
+                                  index < BarraNavegacionAtlassian.destinations.length;
+                                  index++
+                                ) ...[
+                                  if (index == 4)
+                                    Row(
+                                      children: [
+                                        Semantics(
+                                          button: true,
+                                          label: 'Acceso Admin',
+                                          child: Tooltip(
+                                            message: 'Acceso Administrador',
+                                            child: InkWell(
+                                              borderRadius: BorderRadius.circular(RadioAtlassian.medium),
+                                              onTap: () {
+                                                HapticFeedback.selectionClick();
+                                                Navigator.of(context).push(
+                                                  MaterialPageRoute<void>(
+                                                    builder: (_) => const AccesoAdministradorPantalla(),
+                                                  ),
+                                                );
+                                              },
+                                              child: Container(
+                                                width: 32,
+                                                height: 36,
+                                                alignment: Alignment.center,
+                                                decoration: BoxDecoration(
+                                                  color: scheme.primary.withValues(alpha: 0.12),
+                                                  borderRadius: BorderRadius.circular(RadioAtlassian.medium),
+                                                ),
+                                                child: Icon(
+                                                  Icons.admin_panel_settings_rounded,
+                                                  size: 18,
+                                                  color: scheme.primary,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Expanded(
+                                          child: _DestinoLateralAtlassian(
+                                            icon: selectedIndex == index
+                                                ? BarraNavegacionAtlassian.destinations[index].$2
+                                                : BarraNavegacionAtlassian.destinations[index].$1,
+                                            label: BarraNavegacionAtlassian.destinations[index].$3,
+                                            selected: selectedIndex == index,
+                                            onTap: () => onSelected(index),
+                                            collapsed: false,
+                                          ),
+                                        ),
+                                      ],
+                                    )
+                                  else
+                                    _DestinoLateralAtlassian(
+                                      icon: selectedIndex == index
+                                          ? BarraNavegacionAtlassian.destinations[index].$2
+                                          : BarraNavegacionAtlassian.destinations[index].$1,
+                                      label: BarraNavegacionAtlassian.destinations[index].$3,
+                                      selected: selectedIndex == index,
+                                      onTap: () => onSelected(index),
+                                      collapsed: false,
+                                    ),
+                                  const SizedBox(height: 4),
+                                ],
+                                const Spacer(),
+                                if (onExit != null) ...[
+                                  const Divider(),
+                                  const SizedBox(height: 4),
+                                  _DestinoLateralAtlassian(
+                                    icon: Icons.close_rounded,
+                                    label: 'Cerrar laboratorio',
+                                    selected: false,
+                                    onTap: onExit!,
+                                    collapsed: false,
+                                  ),
+                                ],
                               ],
                             ),
                           ),
-                          for (
-                            var index = 0;
-                            index < BarraNavegacionAtlassian.destinations.length;
-                            index++
-                          ) ...[
-                            _DestinoLateralAtlassian(
-                              icon: selectedIndex == index
-                                  ? BarraNavegacionAtlassian.destinations[index].$2
-                                  : BarraNavegacionAtlassian.destinations[index].$1,
-                              label: BarraNavegacionAtlassian.destinations[index].$3,
-                              selected: selectedIndex == index,
-                              onTap: () => onSelected(index),
-                            ),
-                            const SizedBox(height: 4),
-                          ],
-                          const Spacer(),
-                          if (onExit != null) ...[
-                            const Divider(),
-                            const SizedBox(height: 4),
-                            _DestinoLateralAtlassian(
-                              icon: Icons.close_rounded,
-                              label: 'Cerrar laboratorio',
-                              selected: false,
-                              onTap: onExit!,
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
+                        ),
+                      );
+                    },
                   ),
-                );
-              }
+                ),
+              ),
             ),
           ),
         ),
@@ -1369,12 +1512,14 @@ class _DestinoLateralAtlassian extends StatelessWidget {
     required this.label,
     required this.selected,
     required this.onTap,
+    this.collapsed = false,
   });
 
   final IconData icon;
   final String label;
   final bool selected;
   final VoidCallback onTap;
+  final bool collapsed;
 
   @override
   Widget build(BuildContext context) {
@@ -1386,28 +1531,38 @@ class _DestinoLateralAtlassian extends StatelessWidget {
         borderRadius: BorderRadius.circular(RadioAtlassian.medium),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 160),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          padding: EdgeInsets.symmetric(
+            horizontal: collapsed ? 0 : 12,
+            vertical: 10,
+          ),
           decoration: BoxDecoration(
             color: selected ? scheme.primaryContainer : Colors.transparent,
             borderRadius: BorderRadius.circular(RadioAtlassian.medium),
           ),
           child: Row(
+            mainAxisAlignment: collapsed
+                ? MainAxisAlignment.center
+                : MainAxisAlignment.start,
             children: [
               Icon(
                 icon,
                 size: 20,
                 color: selected ? scheme.primary : scheme.onSurfaceVariant,
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  label,
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    color: selected ? scheme.primary : scheme.onSurface,
-                    fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+              if (!collapsed) ...[
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: selected ? scheme.primary : scheme.onSurface,
+                      fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+                    ),
                   ),
                 ),
-              ),
+              ],
             ],
           ),
         ),

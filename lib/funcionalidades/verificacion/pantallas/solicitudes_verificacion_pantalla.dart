@@ -21,6 +21,7 @@ class SolicitudesVerificacionPantalla extends ConsumerWidget {
           isDark ? const Color(0xFF030712) : const Color(0xFFF9FAFB),
       appBar: AppBar(
         title: const Text('Tus solicitudes'),
+        centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [

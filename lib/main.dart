@@ -102,10 +102,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
   Widget build(BuildContext context) {
     final routerIndex = ref.watch(proveedorIndiceRouter).clamp(0, 4);
     final seccionNav = ref.watch(proveedorSeccionNav);
-    final adminStatus = ref
-        .watch(proveedorEstadoDispositivoAdministrador)
-        .value;
-    final showAdminFab = adminStatus?.isAdmin == true;
+    final showAdminFab = false;
     final width = MediaQuery.of(context).size.width;
     final isDesktop = width >= 900;
     // final theme = Theme.of(context);

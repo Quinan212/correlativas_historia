@@ -423,24 +423,25 @@ class _PantallaPlanAtlassianState extends State<PantallaPlanAtlassian> {
 
   @override
   Widget build(BuildContext context) {
+    final headerHeight = MediaQuery.paddingOf(context).top + 72;
+    final header = EncabezadoSeccionAtlassianColapsable(
+      scrollController: _scrollController,
+      title: 'Plan completo',
+      subtitle: _career.nombre,
+      actions: [
+        BotonIconoAtlassian(
+          icon: Icons.refresh_rounded,
+          tooltip: 'Recargar plan',
+          onPressed: () => unawaited(_refresh()),
+        ),
+      ],
+    );
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: Column(
+      body: Stack(
         children: [
-          EncabezadoSeccionAtlassianColapsable(
-            scrollController: _scrollController,
-            title: 'Plan completo',
-            subtitle: _career.nombre,
-            onSearch: widget.onSearch,
-            actions: [
-              BotonIconoAtlassian(
-                icon: Icons.refresh_rounded,
-                tooltip: 'Recargar plan',
-                onPressed: () => unawaited(_refresh()),
-              ),
-            ],
-          ),
-          Expanded(
+          Positioned.fill(
             child: FutureBuilder<DatosPlan>(
               future: _future,
               builder: (context, snapshot) {
@@ -448,15 +449,20 @@ class _PantallaPlanAtlassianState extends State<PantallaPlanAtlassian> {
                   return const Center(child: CircularProgressIndicator());
                 }
                 if (snapshot.hasError) {
-                  return EstadoVacioAtlassian(
-                    icon: Icons.error_outline_rounded,
-                    title: 'No se pudo cargar el plan',
-                    message: snapshot.error.toString(),
-                    action: BotonAtlassian(
-                      label: 'Reintentar',
-                      icon: Icons.refresh_rounded,
-                      primary: true,
-                      onPressed: () => unawaited(_refresh()),
+                  return Center(
+                    child: Padding(
+                      padding: EdgeInsets.only(top: headerHeight),
+                      child: EstadoVacioAtlassian(
+                        icon: Icons.error_outline_rounded,
+                        title: 'No se pudo cargar el plan',
+                        message: snapshot.error.toString(),
+                        action: BotonAtlassian(
+                          label: 'Reintentar',
+                          icon: Icons.refresh_rounded,
+                          primary: true,
+                          onPressed: () => unawaited(_refresh()),
+                        ),
+                      ),
                     ),
                   );
                 }
@@ -478,7 +484,7 @@ class _PantallaPlanAtlassianState extends State<PantallaPlanAtlassian> {
                   child: ListView(
                     controller: _scrollController,
                     physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 36),
+                    padding: EdgeInsets.fromLTRB(16, headerHeight + 16, 16, 96),
                     children: [
                       _FiltrosPlanAtlassian(
                         selectedCareer: _career,
@@ -536,6 +542,10 @@ class _PantallaPlanAtlassianState extends State<PantallaPlanAtlassian> {
                 );
               },
             ),
+          ),
+          Align(
+            alignment: Alignment.topCenter,
+            child: header,
           ),
         ],
       ),
@@ -836,7 +846,13 @@ class _LogoPlanAtlassian extends StatelessWidget {
     final fallback = Container(
       color: scheme.primaryContainer,
       alignment: Alignment.center,
-      child: Icon(fallbackIcon, color: scheme.primary, size: size * 0.52),
+      child: Icon(
+        fallbackIcon,
+        color: Theme.of(context).brightness == Brightness.dark
+            ? Colors.white
+            : scheme.primary,
+        size: size * 0.52,
+      ),
     );
     return Container(
       width: size,
@@ -1127,7 +1143,9 @@ class _TarjetaMateriaPlanAtlassian extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: scheme.primary,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white
+                          : scheme.primary,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -1202,6 +1220,7 @@ class PantallaDetallePlanAtlassian extends StatelessWidget {
           EncabezadoPaginaAtlassian(
             title: 'Detalle de materia',
             subtitle: careerName,
+            centerTitle: true,
             leading: BotonIconoAtlassian(
               icon: Icons.arrow_back_rounded,
               tooltip: 'Volver',
@@ -1210,13 +1229,19 @@ class PantallaDetallePlanAtlassian extends StatelessWidget {
           ),
           Expanded(
             child: ListView(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.fromLTRB(
+                16,
+                16,
+                16,
+                120 + MediaQuery.paddingOf(context).bottom,
+              ),
               children: [
                 PanelAtlassian(
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Wrap(
+                        alignment: WrapAlignment.center,
                         spacing: 6,
                         runSpacing: 6,
                         children: [
@@ -1230,9 +1255,13 @@ class PantallaDetallePlanAtlassian extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 12),
-                      Text(
-                        subject.displayNombre,
-                        style: Theme.of(context).textTheme.headlineSmall,
+                      SizedBox(
+                        width: double.infinity,
+                        child: Text(
+                          subject.displayNombre,
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.headlineSmall,
+                        ),
                       ),
                       if (subject.codigo.trim().isNotEmpty) ...[
                         const SizedBox(height: 5),
@@ -1303,6 +1332,7 @@ class PantallaDetallePlanAtlassian extends StatelessWidget {
                   )
                 else
                   _ListaRelacionMateriasAtlassian(subjects: dependents),
+                const SizedBox(height: 48),
               ],
             ),
           ),

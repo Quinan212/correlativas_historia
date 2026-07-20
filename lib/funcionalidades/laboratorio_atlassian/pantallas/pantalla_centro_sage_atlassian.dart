@@ -19,10 +19,11 @@ class PantallaCentroSageAtlassian extends StatelessWidget {
       child: Scaffold(
         appBar: AppBar(
           title: const Text('SAGE'),
-          leading: IconButton(
-            tooltip: 'Cerrar',
+          centerTitle: true,
+          leading: BotonIconoAtlassian(
+            icon: Icons.arrow_back_rounded,
+            tooltip: 'Volver',
             onPressed: () => Navigator.of(context).pop(),
-            icon: const Icon(Icons.close_rounded),
           ),
         ),
         body: SafeArea(
@@ -66,17 +67,22 @@ class PantallaCentroSageAtlassian extends StatelessWidget {
                               children: [
                                 Text(
                                   'Sesión activa',
-                                  style: Theme.of(
-                                    context,
-                                  ).textTheme.titleMedium,
+                                  style: theme.textTheme.titleMedium?.copyWith(
+                                    color: theme.brightness == Brightness.dark
+                                        ? Colors.white
+                                        : scheme.onSurface,
+                                    fontWeight: FontWeight.w700,
+                                  ),
                                 ),
                                 if (ultimaSincronizacion != null) ...[
                                   const SizedBox(height: 4),
                                   Text(
                                     'Actualizado ${_formatDate(ultimaSincronizacion!)}',
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.bodySmall,
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: theme.brightness == Brightness.dark
+                                          ? Colors.white.withValues(alpha: 0.85)
+                                          : scheme.onSurfaceVariant,
+                                    ),
                                   ),
                                 ],
                               ],

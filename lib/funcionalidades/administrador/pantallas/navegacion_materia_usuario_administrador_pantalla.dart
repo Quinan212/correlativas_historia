@@ -21,6 +21,7 @@ class NavegacionMateriaUsuarioAdministradorPantalla extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(deviceLabel),
+        centerTitle: true,
         actions: [
           IconButton(
             onPressed: () =>

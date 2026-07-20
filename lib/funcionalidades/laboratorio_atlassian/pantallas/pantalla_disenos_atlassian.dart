@@ -242,7 +242,12 @@ class _PantallaDisenosAtlassianState
                 }
 
                 return ListView(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
+                  padding: EdgeInsets.fromLTRB(
+                    16,
+                    16,
+                    16,
+                    120 + MediaQuery.paddingOf(context).bottom,
+                  ),
                   children: [
                     PanelAtlassian(
                       child: Column(
@@ -342,6 +347,7 @@ class _PantallaDisenosAtlassianState
                         ),
                         const SizedBox(height: 18),
                       ],
+                    const SizedBox(height: 48),
                   ],
                 );
               },
@@ -439,6 +445,7 @@ class PantallaDetalleDisenoAtlassian extends StatelessWidget {
           EncabezadoPaginaAtlassian(
             title: subject.displayNombre,
             subtitle: '$careerName · ${subject.anio}° año',
+            centerTitle: true,
             leading: BotonIconoAtlassian(
               icon: Icons.arrow_back_rounded,
               tooltip: 'Volver',
@@ -454,7 +461,12 @@ class PantallaDetalleDisenoAtlassian extends StatelessWidget {
                         'La materia está incluida en el plan, pero su desarrollo curricular todavía no fue cargado.',
                   )
                 : ListView(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
+                    padding: EdgeInsets.fromLTRB(
+                      16,
+                      16,
+                      16,
+                      120 + MediaQuery.paddingOf(context).bottom,
+                    ),
                     children: [
                       _ResumenDisenoAtlassian(item: item),
                       const SizedBox(height: 12),
@@ -546,6 +558,7 @@ class PantallaDetalleDisenoAtlassian extends StatelessWidget {
                           ],
                         ),
                       ),
+                      const SizedBox(height: 48),
                     ],
                   ),
           ),
@@ -634,7 +647,13 @@ class _DatoCabeceraDisenoAtlassian extends StatelessWidget {
               color: scheme.primaryContainer,
               borderRadius: BorderRadius.circular(RadioAtlassian.medium),
             ),
-            child: Icon(icon, color: scheme.primary, size: 19),
+            child: Icon(
+              icon,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? Colors.white
+                  : scheme.primary,
+              size: 19,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(

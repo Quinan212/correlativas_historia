@@ -38,6 +38,13 @@ class _PantallaDatosAtlassianState extends State<PantallaDatosAtlassian> {
 
   @override
   Widget build(BuildContext context) {
+    final headerHeight = MediaQuery.paddingOf(context).top + 72;
+    final header = EncabezadoSeccionAtlassianColapsable(
+      scrollController: _scrollController,
+      title: 'Datos',
+      subtitle: 'Perfil y sincronización',
+    );
+
     return ValueListenableBuilder<bool>(
       valueListenable: widget.localLoadedListenable,
       builder: (context, loaded, _) {
@@ -46,28 +53,27 @@ class _PantallaDatosAtlassianState extends State<PantallaDatosAtlassian> {
           builder: (context, trajectory, _) {
             return Scaffold(
               backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-              body: Column(
+              body: Stack(
                 children: [
-                  EncabezadoSeccionAtlassianColapsable(
-                    scrollController: _scrollController,
-                    title: 'Datos',
-                    subtitle: 'Perfil y sincronización',
-                    onSearch: widget.onSearch,
-                  ),
-                  Expanded(
+                  Positioned.fill(
                     child: !loaded
                         ? const Center(child: CircularProgressIndicator())
                         : trajectory == null
-                        ? EstadoVacioAtlassian(
-                            icon: Icons.person_off_outlined,
-                            title: 'Sin datos sincronizados',
-                            message:
-                                'Conectá SAGE desde Inicio para cargar el perfil.',
-                            action: BotonAtlassian(
-                              label: 'Ir a Inicio',
-                              icon: Icons.home_rounded,
-                              primary: true,
-                              onPressed: () => widget.onNavigate(0),
+                        ? Center(
+                            child: Padding(
+                              padding: EdgeInsets.only(top: headerHeight),
+                              child: EstadoVacioAtlassian(
+                                icon: Icons.person_off_outlined,
+                                title: 'Sin datos sincronizados',
+                                message:
+                                    'Conectá SAGE desde Inicio para cargar el perfil.',
+                                action: BotonAtlassian(
+                                  label: 'Ir a Inicio',
+                                  icon: Icons.home_rounded,
+                                  primary: true,
+                                  onPressed: () => widget.onNavigate(0),
+                                ),
+                              ),
                             ),
                           )
                         : _ContenidoDatosAtlassian(
@@ -77,6 +83,10 @@ class _PantallaDatosAtlassianState extends State<PantallaDatosAtlassian> {
                             onDesynchronize: widget.onDesynchronize,
                             scrollController: _scrollController,
                           ),
+                  ),
+                  Align(
+                    alignment: Alignment.topCenter,
+                    child: header,
                   ),
                 ],
               ),
@@ -117,10 +127,16 @@ class _ContenidoDatosAtlassian extends StatelessWidget {
     final profile = trajectory.perfil;
     final name = nombrePerfilAtlassian(profile);
     final fields = _camposPerfilPresentables(profile);
+    final headerHeight = MediaQuery.paddingOf(context).top + 72;
 
     return ListView(
       controller: scrollController,
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
+      padding: EdgeInsets.fromLTRB(
+        16,
+        headerHeight + 16,
+        16,
+        140 + MediaQuery.paddingOf(context).bottom,
+      ),
       children: [
         PanelAtlassian(
           child: Row(
@@ -228,7 +244,9 @@ class _ContenidoDatosAtlassian extends StatelessWidget {
                           ),
                           child: Icon(
                             Icons.school_outlined,
-                            color: Theme.of(context).colorScheme.primary,
+                            color: Theme.of(context).brightness == Brightness.dark
+                                ? Colors.white
+                                : Theme.of(context).colorScheme.primary,
                             size: 21,
                           ),
                         ),
@@ -281,6 +299,7 @@ class _ContenidoDatosAtlassian extends StatelessWidget {
             onPressed: onDesynchronize,
           ),
         ),
+        const SizedBox(height: 48),
       ],
     );
   }
@@ -383,7 +402,12 @@ class PantallaDetalleCarreraAtlassian extends StatelessWidget {
           ),
           Expanded(
             child: ListView(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.fromLTRB(
+                16,
+                16,
+                16,
+                120 + MediaQuery.paddingOf(context).bottom,
+              ),
               children: [
                 PanelAtlassian(
                   child: Column(
@@ -396,6 +420,7 @@ class PantallaDetalleCarreraAtlassian extends StatelessWidget {
                       const SizedBox(height: 12),
                       Text(
                         nombreCarreraAtlassian(career.nombre),
+                        textAlign: TextAlign.center,
                         style: Theme.of(context).textTheme.headlineSmall,
                       ),
                       if (career.institucion.trim().isNotEmpty) ...[
@@ -456,6 +481,7 @@ class PantallaDetalleCarreraAtlassian extends StatelessWidget {
                     ],
                   ),
                 ),
+                const SizedBox(height: 48),
               ],
             ),
           ),

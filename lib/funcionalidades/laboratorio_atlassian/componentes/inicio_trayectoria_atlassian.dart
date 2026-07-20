@@ -51,12 +51,18 @@ class _EncabezadoTrayectoriaAtlassianState
   }
 
   void _handleScroll() {
+    if (!mounted) return;
     final offset = widget.scrollController.hasClients
         ? widget.scrollController.offset
         : 0.0;
     final next = (offset / 72).clamp(0.0, 1.0).toDouble();
-    if ((next - _progress).abs() < 0.01 || !mounted) return;
-    setState(() => _progress = next);
+    if ((next - _progress).abs() < 0.01) return;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && (_progress - next).abs() >= 0.01) {
+        setState(() => _progress = next);
+      }
+    });
   }
 
   @override
@@ -86,21 +92,20 @@ class _EncabezadoTrayectoriaAtlassianState
                   opacity: titleOpacity,
                   child: Transform.translate(
                     offset: Offset(-18 * progress, 0),
-                    child: Row(
+                    child: Stack(
+                      alignment: Alignment.center,
                       children: [
-                        if (!sincronizada) ...[
-                          const _MascotaBienvenidaAtlassian(),
-                          const SizedBox(width: 10),
-                        ],
-                        Expanded(
+                        // Título absolutamente centrado
+                        Center(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               Text(
                                 saludoAtlassian(widget.nombreEstudiante),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.center,
                                 style: Theme.of(context).textTheme.headlineSmall
                                     ?.copyWith(fontWeight: FontWeight.w700),
                               ),
@@ -109,49 +114,37 @@ class _EncabezadoTrayectoriaAtlassianState
                                 'Trayectoria',
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.center,
                                 style: Theme.of(context).textTheme.bodySmall,
                               ),
                             ],
                           ),
                         ),
-                        IgnorePointer(
-                          ignoring: actionsOpacity < 0.4,
-                          child: Opacity(
-                            opacity: actionsOpacity,
-                            child: Row(
-                              children: [
-                                BotonIconoAtlassian(
-                                  icon: Icons.search_rounded,
-                                  tooltip: 'Buscar materias',
-                                  onPressed: widget.onSearch,
-                                ),
-                                if (widget.onExit != null) ...[
-                                  const SizedBox(width: 4),
-                                  BotonIconoAtlassian(
-                                    icon: Icons.close_rounded,
-                                    tooltip: 'Cerrar laboratorio',
-                                    onPressed: widget.onExit!,
+                        // Acciones y mascota ancladas a la derecha
+                        Positioned(
+                          right: 0,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const _MascotaBienvenidaAtlassian(),
+                              if (widget.onExit != null) ...[
+                                const SizedBox(width: 8),
+                                IgnorePointer(
+                                  ignoring: actionsOpacity < 0.4,
+                                  child: Opacity(
+                                    opacity: actionsOpacity,
+                                    child: BotonIconoAtlassian(
+                                      icon: Icons.close_rounded,
+                                      tooltip: 'Cerrar laboratorio',
+                                      onPressed: widget.onExit!,
+                                    ),
                                   ),
-                                ],
+                                ),
                               ],
-                            ),
+                            ],
                           ),
                         ),
                       ],
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 0,
-                right: 0,
-                child: IgnorePointer(
-                  ignoring: progress < 0.12,
-                  child: Opacity(
-                    opacity: progress,
-                    child: Transform.translate(
-                      offset: Offset(0, 8 * (1 - progress)),
-                      child: AccesoBusquedaAtlassian(onTap: widget.onSearch),
                     ),
                   ),
                 ),
@@ -371,7 +364,7 @@ class SugerenciasApiladasAtlassianDelegate
 
     final ThemeData theme = Theme.of(context);
 
-    return Stack(
+    final Widget content = Stack(
       clipBehavior: Clip.none,
       children: <Widget>[
         Positioned.fill(
@@ -403,6 +396,17 @@ class SugerenciasApiladasAtlassianDelegate
         ),
       ],
     );
+
+    final double screenWidth = MediaQuery.sizeOf(context).width;
+    if (screenWidth >= 600) {
+      return Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1000),
+          child: content,
+        ),
+      );
+    }
+    return content;
   }
 
   @override

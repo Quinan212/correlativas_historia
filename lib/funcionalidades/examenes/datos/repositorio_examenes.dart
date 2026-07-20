@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -47,11 +48,43 @@ class RepositorioExamenes {
     required String instancia,
     required String assetPath,
   }) async {
+    final localEvents = await _loadJson(assetPath);
     final supabaseEvents = await _loadSupabase(instancia: instancia);
-    if (supabaseEvents != null) {
-      return supabaseEvents;
+    if (supabaseEvents != null && supabaseEvents.isNotEmpty) {
+      final localMap = <String, EventoExamen>{
+        for (final e in localEvents)
+          '${e.careerId}_${e.anio}_${_cleanSubjectKey(e.materia)}_${e.fecha?.toIso8601String().split('T').first}': e
+      };
+
+      return supabaseEvents.map((e) {
+        final key =
+            '${e.careerId}_${e.anio}_${_cleanSubjectKey(e.materia)}_${e.fecha?.toIso8601String().split('T').first}';
+        final localMatch = localMap[key];
+        final isLocallySuspended = localMatch?.suspendido ?? false;
+        final localActaUrl = localMatch?.actaUrl;
+
+        final finalActaUrl = (e.actaUrl != null && e.actaUrl!.trim().isNotEmpty)
+            ? e.actaUrl
+            : localActaUrl;
+
+        return e.copyWith(
+          suspendido: e.suspendido || isLocallySuspended,
+          actaUrl: finalActaUrl,
+        );
+      }).toList();
     }
-    return _loadJson(assetPath);
+    return localEvents;
+  }
+
+  static String _cleanSubjectKey(String subject) {
+    var s = subject.toUpperCase();
+    if (s.startsWith('[SUSPENDIDA]')) {
+      s = s.replaceAll('[SUSPENDIDA]', '');
+    }
+    if (s.startsWith('[SUSPENDIDO]')) {
+      s = s.replaceAll('[SUSPENDIDO]', '');
+    }
+    return s.toLowerCase().trim();
   }
 
   Future<List<EventoExamen>?> _loadSupabase({required String instancia}) async {
@@ -60,7 +93,7 @@ class RepositorioExamenes {
       final rows = await client
           .from('exam_events')
           .select(
-            'career_id, anio, fecha, hora, materia, instancia, docentes, acta_url, division, legacy',
+            'career_id, anio, fecha, hora, materia, instancia, docentes, acta_url, division, legacy, suspendido',
           )
           .eq('instancia', instancia)
           .order('fecha')
@@ -71,11 +104,21 @@ class RepositorioExamenes {
 
       final list = rows.cast<Map<String, dynamic>>();
       return List<EventoExamen>.unmodifiable(
-        list.map((row) => EventoExamen.fromJson(row)),
+        list.map((row) {
+          final item = EventoExamen.fromJson(row);
+          final isSuspendedInTitle =
+              item.materia.toUpperCase().contains('[SUSPENDIDA]') ||
+              item.materia.toUpperCase().contains('[SUSPENDIDO]');
+          if (isSuspendedInTitle && !item.suspendido) {
+            return item.copyWith(suspendido: true);
+          }
+          return item;
+        }),
       );
     } on TimeoutException {
       return null;
-    } catch (_) {
+    } catch (e) {
+      debugPrint('Error cargando exam_events de Supabase: $e');
       return null;
     }
   }

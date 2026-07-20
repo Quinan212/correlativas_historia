@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../modelos/evento_navegacion_examen_administrador.dart';
+import '../../laboratorio_atlassian/tema/tema_atlassian.dart';
 import '../proveedores/proveedores_navegacion_examen_administrador.dart';
 import 'navegacion_examen_usuario_administrador_pantalla.dart';
 
@@ -22,6 +23,7 @@ class NavegacionExamenAdministradorPantalla extends ConsumerWidget {
           isDark ? const Color(0xFF030712) : const Color(0xFFF9FAFB),
       appBar: AppBar(
         title: const Text('Recorrido de exámenes'),
+        centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
@@ -141,9 +143,12 @@ class NavegacionExamenAdministradorPantalla extends ConsumerWidget {
       ResumenDispositivoNavegacionExamenAdministrador device) {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => NavegacionExamenUsuarioAdministradorPantalla(
-          deviceId: device.deviceId,
-          deviceLabel: device.label,
+        builder: (_) => Theme(
+          data: temaLaboratorioAtlassian(context),
+          child: NavegacionExamenUsuarioAdministradorPantalla(
+            deviceId: device.deviceId,
+            deviceLabel: device.label,
+          ),
         ),
       ),
     );

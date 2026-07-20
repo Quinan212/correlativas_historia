@@ -66,6 +66,7 @@ class _LimpiezaAdministradorPantallaState
           isDark ? const Color(0xFF030712) : const Color(0xFFF9FAFB),
       appBar: AppBar(
         title: const Text('Limpieza y reinicio'),
+        centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [

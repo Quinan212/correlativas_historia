@@ -87,6 +87,7 @@ class _EstudiantesAdministradorPantallaState
     return Scaffold(
       appBar: AppBar(
         title: const Text('Alumnos y trayectorias'),
+        centerTitle: true,
         actions: [
           IconButton(
             onPressed: _busy
