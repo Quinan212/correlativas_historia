@@ -31,7 +31,11 @@ class RepositorioTrayectoriaSageLaboratorio {
   Future<TrayectoriaSageLaboratorio> guardarIdempotente(
     TrayectoriaSageLaboratorio draft,
   ) async {
-    final normalized = _normalizarTrayectoria(draft);
+    final previous = await cargar();
+    final normalizedDraft = _normalizarTrayectoria(draft);
+    final normalized = previous == null
+        ? normalizedDraft
+        : _conservarDatosAcademicosPrevios(normalizedDraft, previous);
     if (!normalized.listaParaSincronizar) {
       throw StateError('La trayectoria no contiene materias válidas.');
     }
@@ -75,12 +79,83 @@ class RepositorioTrayectoriaSageLaboratorio {
     }
 
     return TrayectoriaSageLaboratorio(
-      versionEsquema: draft.versionEsquema,
+      versionEsquema: draft.versionEsquema < 3 ? 3 : draft.versionEsquema,
       perfil: draft.perfil,
       carreras: List<CarreraTrayectoriaSageLaboratorio>.unmodifiable(careers),
       documentos: _normalizarDocumentos(draft.documentos),
       capturadaEn: draft.capturadaEn,
       sincronizadaEn: draft.sincronizadaEn,
+    );
+  }
+
+  TrayectoriaSageLaboratorio _conservarDatosAcademicosPrevios(
+    TrayectoriaSageLaboratorio current,
+    TrayectoriaSageLaboratorio previous,
+  ) {
+    final previousCareers = <String, CarreraTrayectoriaSageLaboratorio>{
+      for (final career in previous.carreras) _careerIdentity(career): career,
+    };
+    final careers = <CarreraTrayectoriaSageLaboratorio>[];
+
+    for (final career in current.carreras) {
+      final previousCareer = previousCareers[_careerIdentity(career)];
+      if (previousCareer == null) {
+        careers.add(career);
+        continue;
+      }
+      final previousSubjects = <String, MateriaTrayectoriaSageLaboratorio>{
+        for (final subject in previousCareer.materias)
+          _subjectIdentity(subject): subject,
+      };
+      final subjects = <MateriaTrayectoriaSageLaboratorio>[];
+      for (final subject in career.materias) {
+        final previousSubject = previousSubjects[_subjectIdentity(subject)];
+        if (previousSubject == null) {
+          subjects.add(subject);
+          continue;
+        }
+        final preserveApprovedData =
+            subject.estado == EstadoMateriaSageLaboratorio.aprobada;
+        subjects.add(
+          subject.copyWith(
+            anio: subject.anio ?? previousSubject.anio,
+            fecha: preserveApprovedData
+                ? _preferirFecha(subject.fecha, previousSubject.fecha)
+                : subject.fecha,
+            nota: preserveApprovedData
+                ? _preferirTexto(subject.nota, previousSubject.nota)
+                : subject.nota,
+          ),
+        );
+      }
+      careers.add(
+        CarreraTrayectoriaSageLaboratorio(
+          gridRowId: career.gridRowId,
+          internalId: career.internalId,
+          careerContextId: career.careerContextId,
+          careerKey: career.careerKey,
+          nombre: career.nombre,
+          institucion: career.institucion,
+          anioInicio: career.anioInicio,
+          estado: career.estado,
+          estadoInscripcion: career.estadoInscripcion,
+          aprobadasInformadas: career.aprobadasInformadas,
+          regularesInformadas: career.regularesInformadas,
+          cursandoInformadas: career.cursandoInformadas,
+          materias: List<MateriaTrayectoriaSageLaboratorio>.unmodifiable(
+            subjects,
+          ),
+        ),
+      );
+    }
+
+    return TrayectoriaSageLaboratorio(
+      versionEsquema: current.versionEsquema,
+      perfil: current.perfil,
+      carreras: List<CarreraTrayectoriaSageLaboratorio>.unmodifiable(careers),
+      documentos: current.documentos,
+      capturadaEn: current.capturadaEn,
+      sincronizadaEn: current.sincronizadaEn,
     );
   }
 
@@ -179,13 +254,49 @@ class RepositorioTrayectoriaSageLaboratorio {
   ) {
     final firstRank = _statusRank(first.estado);
     final secondRank = _statusRank(second.estado);
-    if (secondRank > firstRank) return second;
-    if (secondRank < firstRank) return first;
-    if (second.estadoOriginal.trim().length >
-        first.estadoOriginal.trim().length) {
-      return second;
-    }
-    return first;
+    final preferred = secondRank > firstRank
+        ? second
+        : secondRank < firstRank
+        ? first
+        : second.estadoOriginal.trim().length > first.estadoOriginal.trim().length
+        ? second
+        : first;
+    final alternate = identical(preferred, first) ? second : first;
+
+    return MateriaTrayectoriaSageLaboratorio(
+      idSage: preferred.idSage.trim().isNotEmpty
+          ? preferred.idSage
+          : alternate.idSage,
+      nombre: preferred.nombre.trim().isNotEmpty
+          ? preferred.nombre
+          : alternate.nombre,
+      estadoOriginal: preferred.estadoOriginal.trim().isNotEmpty
+          ? preferred.estadoOriginal
+          : alternate.estadoOriginal,
+      estado: preferred.estado,
+      anio: preferred.anio ?? alternate.anio,
+      fecha: _preferirFecha(preferred.fecha, alternate.fecha),
+      nota: _preferirTexto(preferred.nota, alternate.nota),
+    );
+  }
+
+  String? _preferirTexto(String? primary, String? alternate) {
+    final first = primary?.trim() ?? '';
+    if (first.isNotEmpty) return first;
+    final second = alternate?.trim() ?? '';
+    return second.isEmpty ? null : second;
+  }
+
+  String? _preferirFecha(String? primary, String? alternate) {
+    final first = primary?.trim() ?? '';
+    final second = alternate?.trim() ?? '';
+    if (first.isEmpty) return second.isEmpty ? null : second;
+    if (second.isEmpty) return first;
+    final firstDate = parsearFechaAcademicaSage(first);
+    final secondDate = parsearFechaAcademicaSage(second);
+    if (firstDate == null) return secondDate == null ? first : second;
+    if (secondDate == null) return first;
+    return secondDate.isAfter(firstDate) ? second : first;
   }
 
   int _statusRank(EstadoMateriaSageLaboratorio status) => switch (status) {

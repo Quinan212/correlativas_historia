@@ -76,8 +76,9 @@ class _DialogoEditorMateriaState extends State<DialogoEditorMateria> {
                   padding: const EdgeInsets.all(10),
                   margin: const EdgeInsets.only(bottom: 12),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.errorContainer
-                        .withValues(alpha: 0.45),
+                    color: theme.colorScheme.errorContainer.withValues(
+                      alpha: 0.45,
+                    ),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Text(
@@ -215,7 +216,8 @@ class _DialogoEditorMateriaState extends State<DialogoEditorMateria> {
                 minLines: 2,
                 maxLines: 3,
                 decoration: const InputDecoration(
-                    labelText: 'Aclaración administrativa'),
+                  labelText: 'Aclaración administrativa',
+                ),
               ),
             ],
           ),
@@ -226,10 +228,7 @@ class _DialogoEditorMateriaState extends State<DialogoEditorMateria> {
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('Cancelar'),
         ),
-        FilledButton(
-          onPressed: _save,
-          child: const Text('Guardar'),
-        ),
+        FilledButton(onPressed: _save, child: const Text('Guardar')),
       ],
     );
   }

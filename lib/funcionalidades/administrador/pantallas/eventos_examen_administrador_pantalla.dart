@@ -17,30 +17,20 @@ class EventosExamenAdministradorPantalla extends StatelessWidget {
       builder: (context, constraints) {
         if (constraints.maxWidth >= 900) {
           return Scaffold(
-            appBar: AppBar(
-              title: const Text('Gestion de mesas y coloquios'),
-              centerTitle: true,
-              backgroundColor: const Color(0xFF0E5E86),
-              foregroundColor: Colors.white,
-              elevation: 0,
-            ),
+            appBar: AppBar(title: const Text('Gestión de mesas y coloquios')),
             body: EventosExamenAdministradorEscritorio(
-                adminDeviceId: adminDeviceId),
+              adminDeviceId: adminDeviceId,
+            ),
           );
         }
 
         return Scaffold(
-          appBar: AppBar(
-            title: const Text('Mesas y coloquios'),
-            centerTitle: true,
-          ),
+          appBar: AppBar(title: const Text('Mesas y coloquios')),
           body: SafeArea(
             child: ListView(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
               children: [
-                SeccionEventosExamenAdministrador(
-                  adminDeviceId: adminDeviceId,
-                ),
+                SeccionEventosExamenAdministrador(adminDeviceId: adminDeviceId),
               ],
             ),
           ),

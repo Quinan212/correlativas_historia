@@ -138,10 +138,7 @@ class _PantallaPortadaAgenteSageState extends State<PantallaPortadaAgenteSage> {
                     ItemListaOpcionSage(
                       titulo: option.etiqueta,
                       subtitulo: option.sigla,
-                      icono: IconData(
-                        option.icono,
-                        fontFamily: 'MaterialIcons',
-                      ),
+                      icono: iconoMaterialSage(option.icono),
                       enabled: !widget.busy,
                       available: _isImplemented(option),
                       highlighted: _isImplemented(option),

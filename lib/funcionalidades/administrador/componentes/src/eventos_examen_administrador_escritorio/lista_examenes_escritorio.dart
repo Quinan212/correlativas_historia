@@ -162,7 +162,8 @@ class _ListaExamenesEscritorioState extends State<_ListaExamenesEscritorio> {
                       event: event,
                       widths: _widths,
                       busy: widget.busy,
-                      selected: widget.selectedEventId != null &&
+                      selected:
+                          widget.selectedEventId != null &&
                           event.id == widget.selectedEventId,
                       onEdit: () => widget.onEdit(event),
                       onCloseEditor: widget.onCloseEditor,
@@ -302,14 +303,11 @@ class _FilaListaExamenes extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return Material(
       color: selected
           ? theme.colorScheme.primary.withValues(alpha: 0.08)
-          : isDark
-              ? const Color(0xFF0B1220)
-              : Colors.white,
+          : theme.colorScheme.surface,
       borderRadius: BorderRadius.circular(8),
       child: InkWell(
         onTap: busy ? null : onEdit,
@@ -341,15 +339,21 @@ class _FilaListaExamenes extends StatelessWidget {
                 ),
               ),
               SizedBox(
-                  width: widths['anio'],
-                  child: Text(_etiquetaAnio(event.anio))),
+                width: widths['anio'],
+                child: Text(_etiquetaAnio(event.anio)),
+              ),
               SizedBox(
                 width: widths['fecha'],
-                child: Text(event.fecha == null
-                    ? 'Sin fecha'
-                    : _formatDate(event.fecha!)),
+                child: Text(
+                  event.fechaVigente == null
+                      ? 'Sin fecha'
+                      : _formatDate(event.fechaVigente!),
+                ),
               ),
-              SizedBox(width: widths['hora'], child: Text(event.hora ?? '-')),
+              SizedBox(
+                width: widths['hora'],
+                child: Text(event.horaVigente ?? '-'),
+              ),
               SizedBox(
                 width: widths['docentes'],
                 child: Text(
@@ -436,9 +440,14 @@ class _CeldaMateria extends StatelessWidget {
         ),
         const SizedBox(height: 3),
         Text(
-          event.isColoquio ? 'Coloquio' : _etiquetaInstancia(event.instancia),
+          [
+            event.isColoquio ? 'Coloquio' : _etiquetaInstancia(event.instancia),
+            if (event.mostrarAvisoEstado) event.estadoEtiqueta,
+            if (!event.visible) 'OCULTA',
+          ].join(' · '),
           style: theme.textTheme.bodySmall?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
+            fontWeight: event.mostrarAvisoEstado ? FontWeight.w800 : null,
           ),
         ),
       ],

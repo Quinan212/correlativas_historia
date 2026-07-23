@@ -12,7 +12,8 @@ class EntradaHistorialEstudianteAdministrador {
   final DateTime? createdAt;
 
   factory EntradaHistorialEstudianteAdministrador.fromRow(
-      Map<String, dynamic> row) {
+    Map<String, dynamic> row,
+  ) {
     DateTime? parseDate(dynamic value) {
       final text = value?.toString().trim() ?? '';
       if (text.isEmpty) return null;
@@ -22,7 +23,8 @@ class EntradaHistorialEstudianteAdministrador {
     return EntradaHistorialEstudianteAdministrador(
       id: (row['id'] ?? '').toString(),
       eventType: (row['event_type'] ?? '').toString(),
-      payload: (row['payload'] as Map?)?.cast<String, dynamic>() ??
+      payload:
+          (row['payload'] as Map?)?.cast<String, dynamic>() ??
           const <String, dynamic>{},
       createdAt: parseDate(row['created_at']),
     );

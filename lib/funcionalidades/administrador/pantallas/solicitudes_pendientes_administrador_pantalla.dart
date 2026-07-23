@@ -5,6 +5,7 @@ import '../../../compartido/identidad_dispositivo/identidad_dispositivo.dart';
 import '../../../compartido/supabase/supabase.dart';
 import '../../verificacion/componentes/tarjeta_solicitud_verificacion.dart';
 import '../../verificacion/modelos/solicitud_verificacion.dart';
+import '../../laboratorio_atlassian/tema/tema_atlassian.dart';
 import '../../verificacion/proveedores/proveedores_verificacion.dart';
 
 class SolicitudesPendientesAdministradorPantalla extends ConsumerWidget {
@@ -19,12 +20,11 @@ class SolicitudesPendientesAdministradorPantalla extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final pendingAsync = ref.watch(proveedorSolicitudesVerificacionPendientes);
-    final pendingIds = pendingAsync.value?.map((e) => e.deviceId) ??
+    final pendingIds =
+        pendingAsync.value?.map((e) => e.deviceId) ??
         const Iterable<String>.empty();
     final profileMapAsync = ref.watch(
-      proveedorPerfilesDispositivoPorIds(
-        serializeDeviceIds([...pendingIds]),
-      ),
+      proveedorPerfilesDispositivoPorIds(serializeDeviceIds([...pendingIds])),
     );
     final profileMap =
         profileMapAsync.value ?? const <String, PerfilDispositivo>{};
@@ -134,22 +134,22 @@ class _SolicitudesPendientesAdminEscritorioState
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor:
-          isDark ? const Color(0xFF030712) : const Color(0xFFF9FAFB),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Gestión de Solicitudes'),
-        centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
-          Consumer(builder: (context, ref, _) {
-            return IconButton(
-              onPressed: () =>
-                  ref.invalidate(proveedorSolicitudesVerificacionPendientes),
-              icon: const Icon(Icons.refresh_rounded),
-              tooltip: 'Refrescar',
-            );
-          }),
+          Consumer(
+            builder: (context, ref, _) {
+              return IconButton(
+                onPressed: () =>
+                    ref.invalidate(proveedorSolicitudesVerificacionPendientes),
+                icon: const Icon(Icons.refresh_rounded),
+                tooltip: 'Refrescar',
+              );
+            },
+          ),
         ],
       ),
       body: widget.pendingAsync.when(
@@ -174,22 +174,16 @@ class _SolicitudesPendientesAdminEscritorioState
               Container(
                 width: 380,
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF0B1220) : Colors.white,
+                  color: theme.colorScheme.surface,
                   border: Border(
-                    right: BorderSide(
-                      color: isDark
-                          ? const Color(0xFF243041)
-                          : const Color(0xFFE5E7EB),
-                    ),
+                    right: BorderSide(color: theme.colorScheme.outlineVariant),
                   ),
                 ),
                 child: ListView.separated(
                   itemCount: items.length,
                   separatorBuilder: (_, _) => Divider(
                     height: 1,
-                    color: isDark
-                        ? const Color(0xFF243041)
-                        : const Color(0xFFE5E7EB),
+                    color: theme.colorScheme.outlineVariant,
                   ),
                   itemBuilder: (context, index) {
                     final item = items[index];
@@ -198,21 +192,27 @@ class _SolicitudesPendientesAdminEscritorioState
 
                     return ListTile(
                       contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 12),
+                        horizontal: 20,
+                        vertical: 12,
+                      ),
                       selected: isSelected,
-                      selectedTileColor:
-                          theme.colorScheme.primary.withValues(alpha: 0.08),
+                      selectedTileColor: theme.colorScheme.primary.withValues(
+                        alpha: 0.08,
+                      ),
                       leading: Container(
                         width: 44,
                         height: 44,
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                          color: theme.colorScheme.primary.withValues(
+                            alpha: 0.1,
+                          ),
                           shape: BoxShape.circle,
                         ),
                         alignment: Alignment.center,
                         child: Text(
                           _buildInitials(
-                              profile?.adminDisplayLabel ?? 'Usuario'),
+                            profile?.adminDisplayLabel ?? 'Usuario',
+                          ),
                           style: TextStyle(
                             fontWeight: FontWeight.w900,
                             color: theme.colorScheme.primary,
@@ -306,11 +306,9 @@ class _VistaDetalleSolicitudPendienteState
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF0B1220) : Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: isDark ? const Color(0xFF243041) : const Color(0xFFE5E7EB),
-        ),
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
         boxShadow: isDark
             ? const []
             : [
@@ -318,7 +316,7 @@ class _VistaDetalleSolicitudPendienteState
                   color: Colors.black.withValues(alpha: 0.03),
                   blurRadius: 20,
                   offset: const Offset(0, 8),
-                )
+                ),
               ],
       ),
       clipBehavior: Clip.antiAlias,
@@ -347,11 +345,7 @@ class _VistaDetalleSolicitudPendienteState
               ),
             ),
           ),
-          _BarraAcciones(
-            busy: _busy,
-            onApprove: _approve,
-            onReject: _reject,
-          ),
+          _BarraAcciones(busy: _busy, onApprove: _approve, onReject: _reject),
         ],
       ),
     );
@@ -395,8 +389,10 @@ class _VistaDetalleSolicitudPendienteState
 }
 
 class _EncabezadoDetalle extends StatelessWidget {
-  const _EncabezadoDetalle(
-      {required this.deviceProfile, required this.request});
+  const _EncabezadoDetalle({
+    required this.deviceProfile,
+    required this.request,
+  });
   final PerfilDispositivo? deviceProfile;
   final SolicitudVerificacion request;
 
@@ -407,14 +403,17 @@ class _EncabezadoDetalle extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.all(24),
-      color: isDark ? const Color(0xFF161E2C) : const Color(0xFFF8FAFC),
+      color: theme.colorScheme.surfaceContainerLow,
       child: Row(
         children: [
           CircleAvatar(
             radius: 28,
             backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
-            child: Icon(Icons.person_outline_rounded,
-                color: theme.colorScheme.primary, size: 30),
+            child: Icon(
+              Icons.person_outline_rounded,
+              color: theme.colorScheme.primary,
+              size: 30,
+            ),
           ),
           const SizedBox(width: 20),
           Expanded(
@@ -435,17 +434,21 @@ class _EncabezadoDetalle extends StatelessWidget {
             ),
           ),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: const Color(0xFFFEF3C7),
-              borderRadius: BorderRadius.circular(99),
+              color: theme.brightness == Brightness.dark
+                  ? PaletaAtlassian.warningSubtleDark
+                  : PaletaAtlassian.warningSubtle,
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: PaletaAtlassian.warning),
             ),
-            child: const Text(
+            child: Text(
               'PENDIENTE',
-              style: TextStyle(
-                color: Color(0xFF92400E),
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.brightness == Brightness.dark
+                    ? const Color(0xFFFFF0B3)
+                    : const Color(0xFF7F5F01),
                 fontWeight: FontWeight.w800,
-                fontSize: 12,
               ),
             ),
           ),
@@ -479,20 +482,23 @@ class _GrillaInfoDetalle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(builder: (context, constraints) {
-      return Wrap(
-        spacing: 24,
-        runSpacing: 20,
-        children: [
-          _InfoItem(label: 'Materia', value: request.matterName, width: 200),
-          _InfoItem(label: 'Carrera', value: request.careerId, width: 150),
-          _InfoItem(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return Wrap(
+          spacing: 24,
+          runSpacing: 20,
+          children: [
+            _InfoItem(label: 'Materia', value: request.matterName, width: 200),
+            _InfoItem(label: 'Carrera', value: request.careerId, width: 150),
+            _InfoItem(
               label: 'Fecha de envío',
               value: _formatDateTime(request.createdAt),
-              width: 180),
-        ],
-      );
-    });
+              width: 180,
+            ),
+          ],
+        );
+      },
+    );
   }
 
   String _formatDateTime(DateTime dt) {
@@ -506,8 +512,11 @@ class _GrillaInfoDetalle extends StatelessWidget {
 }
 
 class _InfoItem extends StatelessWidget {
-  const _InfoItem(
-      {required this.label, required this.value, required this.width});
+  const _InfoItem({
+    required this.label,
+    required this.value,
+    required this.width,
+  });
   final String label;
   final String value;
   final double width;
@@ -520,13 +529,17 @@ class _InfoItem extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label,
-              style:
-                  theme.textTheme.labelSmall?.copyWith(color: theme.hintColor)),
+          Text(
+            label,
+            style: theme.textTheme.labelSmall?.copyWith(color: theme.hintColor),
+          ),
           const SizedBox(height: 4),
-          Text(value,
-              style: theme.textTheme.bodyLarge
-                  ?.copyWith(fontWeight: FontWeight.w700)),
+          Text(
+            value,
+            style: theme.textTheme.bodyLarge?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
         ],
       ),
     );
@@ -556,8 +569,11 @@ class _ImagePreview extends StatelessWidget {
           return const Center(child: CircularProgressIndicator());
         },
         errorBuilder: (_, _, _) => const Center(
-          child:
-              Icon(Icons.broken_image_outlined, size: 48, color: Colors.grey),
+          child: Icon(
+            Icons.broken_image_outlined,
+            size: 48,
+            color: Colors.grey,
+          ),
         ),
       ),
     );
@@ -565,8 +581,11 @@ class _ImagePreview extends StatelessWidget {
 }
 
 class _BarraAcciones extends StatelessWidget {
-  const _BarraAcciones(
-      {required this.busy, required this.onApprove, required this.onReject});
+  const _BarraAcciones({
+    required this.busy,
+    required this.onApprove,
+    required this.onReject,
+  });
   final bool busy;
   final VoidCallback onApprove;
   final VoidCallback onReject;
@@ -579,11 +598,9 @@ class _BarraAcciones extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF161E2C) : const Color(0xFFF8FAFC),
+        color: theme.colorScheme.surfaceContainerLow,
         border: Border(
-          top: BorderSide(
-            color: isDark ? const Color(0xFF243041) : const Color(0xFFE5E7EB),
-          ),
+          top: BorderSide(color: theme.colorScheme.outlineVariant),
         ),
       ),
       child: Row(
@@ -594,10 +611,14 @@ class _BarraAcciones extends StatelessWidget {
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
               foregroundColor: theme.colorScheme.error,
-              side: BorderSide(color: theme.colorScheme.error.withValues(alpha: 0.5)),
+              side: BorderSide(
+                color: theme.colorScheme.error.withValues(alpha: 0.5),
+              ),
             ),
-            child: const Text('RECHAZAR SOLICITUD',
-                style: TextStyle(fontWeight: FontWeight.w800)),
+            child: const Text(
+              'RECHAZAR SOLICITUD',
+              style: TextStyle(fontWeight: FontWeight.w800),
+            ),
           ),
           const SizedBox(width: 16),
           FilledButton(
@@ -605,8 +626,10 @@ class _BarraAcciones extends StatelessWidget {
             style: FilledButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 18),
             ),
-            child: Text(busy ? 'PROCESANDO...' : 'APROBAR VERIFICACIÓN',
-                style: const TextStyle(fontWeight: FontWeight.w800)),
+            child: Text(
+              busy ? 'PROCESANDO...' : 'APROBAR VERIFICACIÓN',
+              style: const TextStyle(fontWeight: FontWeight.w800),
+            ),
           ),
         ],
       ),
@@ -691,18 +714,19 @@ class _TarjetaSeccion extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF0B1220) : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isDark ? const Color(0xFF243041) : const Color(0xFFE5E7EB),
-        ),
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title,
-              style: theme.textTheme.titleLarge
-                  ?.copyWith(fontWeight: FontWeight.w900)),
+          Text(
+            title,
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w900,
+            ),
+          ),
           const SizedBox(height: 16),
           child,
         ],
@@ -730,9 +754,12 @@ class _EstadoVacio extends StatelessWidget {
         children: [
           Icon(icon, size: 64, color: theme.hintColor.withValues(alpha: 0.5)),
           const SizedBox(height: 16),
-          Text(title,
-              style: theme.textTheme.titleLarge
-                  ?.copyWith(fontWeight: FontWeight.w900)),
+          Text(
+            title,
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w900,
+            ),
+          ),
           const SizedBox(height: 8),
           Text(subtitle, style: theme.textTheme.bodyMedium),
         ],

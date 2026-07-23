@@ -32,17 +32,14 @@ class _EncabezadoEscritorio extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     final scopeLabel = scope == 'mesas' ? 'mesas' : 'coloquios';
 
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 18, 24, 14),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF0B1220) : Colors.white,
+        color: theme.colorScheme.surface,
         border: Border(
-          bottom: BorderSide(
-            color: isDark ? const Color(0xFF243041) : const Color(0xFFE5E7EB),
-          ),
+          bottom: BorderSide(color: theme.colorScheme.outlineVariant),
         ),
       ),
       child: Column(
@@ -164,10 +161,7 @@ class _FiltroAnio extends StatelessWidget {
       width: 150,
       child: DropdownButtonFormField<int?>(
         initialValue: value,
-        decoration: const InputDecoration(
-          labelText: 'Año',
-          isDense: true,
-        ),
+        decoration: const InputDecoration(labelText: 'Año', isDense: true),
         items: const [
           DropdownMenuItem<int?>(child: Text('Todos')),
           DropdownMenuItem<int?>(value: 1, child: Text('1er año')),
@@ -230,8 +224,9 @@ class _TarjetaMetrica extends StatelessWidget {
         height: 58,
         padding: const EdgeInsets.symmetric(horizontal: 12),
         decoration: BoxDecoration(
-          color:
-              theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.36),
+          color: theme.colorScheme.surfaceContainerHighest.withValues(
+            alpha: 0.36,
+          ),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: theme.colorScheme.outlineVariant.withValues(alpha: 0.7),

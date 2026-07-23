@@ -84,8 +84,9 @@ class _PanelAcademicoEstudianteState
         studentId: widget.student.id ?? '',
       )),
     );
-    final planAsync =
-        ref.watch(proveedorPlanCarreraAdministrador(widget.student.careerId));
+    final planAsync = ref.watch(
+      proveedorPlanCarreraAdministrador(widget.student.careerId),
+    );
 
     return planAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -106,16 +107,20 @@ class _PanelAcademicoEstudianteState
                 studentId: widget.student.id ?? '',
               )),
             );
-            final massSubjects = materias
-                .where((materia) => materia.anio == _selectedMassYear)
-                .toList()
-              ..sort((a, b) => a.displayNombre.compareTo(b.displayNombre));
-            final effectiveMassSubjectId = _selectedMassSubjectId ??
+            final massSubjects =
+                materias
+                    .where((materia) => materia.anio == _selectedMassYear)
+                    .toList()
+                  ..sort((a, b) => a.displayNombre.compareTo(b.displayNombre));
+            final effectiveMassSubjectId =
+                _selectedMassSubjectId ??
                 (massSubjects.isEmpty ? '' : massSubjects.first.id);
             final selectedMassMateria = massSubjects
                 .where((materia) => materia.id == effectiveMassSubjectId)
                 .fold<Materia?>(
-                    null, (selected, materia) => selected ?? materia);
+                  null,
+                  (selected, materia) => selected ?? materia,
+                );
             final rosterAsync = ref.watch(
               proveedorNominaMateriaAdministrador((
                 adminDeviceId: widget.adminDeviceId,
@@ -162,35 +167,47 @@ class _PanelAcademicoEstudianteState
                                 ),
                                 items: const [
                                   DropdownMenuItem<int?>(
-                                      value: 1, child: Text('1er año')),
+                                    value: 1,
+                                    child: Text('1er año'),
+                                  ),
                                   DropdownMenuItem<int?>(
-                                      value: 2, child: Text('2do año')),
+                                    value: 2,
+                                    child: Text('2do año'),
+                                  ),
                                   DropdownMenuItem<int?>(
-                                      value: 3, child: Text('3er año')),
+                                    value: 3,
+                                    child: Text('3er año'),
+                                  ),
                                   DropdownMenuItem<int?>(
-                                      value: 4, child: Text('4to año')),
+                                    value: 4,
+                                    child: Text('4to año'),
+                                  ),
                                 ],
                                 onChanged: _savingStudentYear
                                     ? null
                                     : (value) => setState(() {
-                                          _editableStudentYear = value ?? 1;
-                                        }),
+                                        _editableStudentYear = value ?? 1;
+                                      }),
                               ),
                             ),
                             FilledButton.tonalIcon(
-                              onPressed:
-                                  _savingStudentYear ? null : _saveStudentYear,
+                              onPressed: _savingStudentYear
+                                  ? null
+                                  : _saveStudentYear,
                               icon: _savingStudentYear
                                   ? const SizedBox(
                                       width: 16,
                                       height: 16,
                                       child: CircularProgressIndicator(
-                                          strokeWidth: 2),
+                                        strokeWidth: 2,
+                                      ),
                                     )
                                   : const Icon(Icons.school_rounded),
-                              label: Text(_savingStudentYear
-                                  ? 'Guardando...'
-                                  : 'Guardar año'),
+                              label: Text(
+                                _savingStudentYear
+                                    ? 'Guardando...'
+                                    : 'Guardar año',
+                              ),
                             ),
                           ],
                         ),
@@ -217,11 +234,15 @@ class _PanelAcademicoEstudianteState
                           onClearSelection: _selectedForEnrollment.isEmpty
                               ? null
                               : () => setState(_selectedForEnrollment.clear),
-                          onSaveSelection: _selectedForEnrollment.isEmpty ||
+                          onSaveSelection:
+                              _selectedForEnrollment.isEmpty ||
                                   _savingEnrollment
                               ? null
                               : () => _saveEnrollmentSelection(
-                                  context, materias, subjects),
+                                  context,
+                                  materias,
+                                  subjects,
+                                ),
                           onToggleEnrollment: _toggleEnrollment,
                           onSelectYear: _selectYear,
                           onClearYear: _clearYear,
@@ -268,17 +289,25 @@ class _PanelAcademicoEstudianteState
                           onSelectAllRoster: _selectAllRoster,
                           onClearRoster: _clearRoster,
                           onApplyApproved: () => _applyMassSubjectAction(
-                              context, rosterAsync,
-                              status: 'aprobada'),
+                            context,
+                            rosterAsync,
+                            status: 'aprobada',
+                          ),
                           onApplyFailed: () => _applyMassSubjectAction(
-                              context, rosterAsync,
-                              status: 'no_regularizada'),
+                            context,
+                            rosterAsync,
+                            status: 'no_regularizada',
+                          ),
                           onApplyRegular: () => _applyMassSubjectAction(
-                              context, rosterAsync,
-                              status: 'regular'),
+                            context,
+                            rosterAsync,
+                            status: 'regular',
+                          ),
                           onApplyCursando: () => _applyMassSubjectAction(
-                              context, rosterAsync,
-                              status: 'cursando'),
+                            context,
+                            rosterAsync,
+                            status: 'cursando',
+                          ),
                         ),
                         TabHistorial(historyAsync: historyAsync),
                       ],
@@ -359,7 +388,8 @@ class _PanelAcademicoEstudianteState
           cohortYear: widget.student.cohortYear,
           currentYear: _editableStudentYear,
           division: widget.student.division,
-          isNewStudent: _editableStudentYear == 1 &&
+          isNewStudent:
+              _editableStudentYear == 1 &&
               !_studentHasAcademicProgress &&
               !widget.student.isRepeating,
           isRepeating: widget.student.isRepeating,
@@ -419,15 +449,16 @@ class _PanelAcademicoEstudianteState
     final savedBySubjectId = {
       for (final subject in allSaved) subject.subjectId: subject,
     };
-    final selected = materias
-        .where((materia) => _selectedForEnrollment.contains(materia.id))
-        .where((materia) => !savedBySubjectId.containsKey(materia.id))
-        .toList()
-      ..sort((a, b) {
-        final year = a.anio.compareTo(b.anio);
-        if (year != 0) return year;
-        return a.displayNombre.compareTo(b.displayNombre);
-      });
+    final selected =
+        materias
+            .where((materia) => _selectedForEnrollment.contains(materia.id))
+            .where((materia) => !savedBySubjectId.containsKey(materia.id))
+            .toList()
+          ..sort((a, b) {
+            final year = a.anio.compareTo(b.anio);
+            if (year != 0) return year;
+            return a.displayNombre.compareTo(b.displayNombre);
+          });
 
     if (selected.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -475,9 +506,9 @@ class _PanelAcademicoEstudianteState
       setState(() {
         _selectedForEnrollment.removeAll(selected.map((materia) => materia.id));
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$count materias inscriptas.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('$count materias inscriptas.')));
     } catch (error) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -527,40 +558,42 @@ class _PanelAcademicoEstudianteState
     setState(() => _savingMassAction = true);
     final repo = ref.read(proveedorRepositorioEstudiantesAdministrador);
     try {
-      final drafts = selected.map((item) {
-        final current = item.subject;
-        return BorradorMateriaEstudianteAdministrador(
-          id: current.id,
-          studentId: current.studentId,
-          careerId: current.careerId,
-          subjectId: current.subjectId,
-          subjectName: current.subjectName,
-          subjectYear: current.subjectYear,
-          status: status,
-          conditionStatus: status == 'no_regularizada'
-              ? current.conditionStatus
-              : 'habilitada',
-          detailStatus: switch (status) {
-            'aprobada' => _massCreditType,
-            'no_regularizada' => _massFailureDetail,
-            _ => null,
-          },
-          creditType: status == 'aprobada' ? _massCreditType : null,
-          academicPeriod: _massPeriod,
-          sourceDate: _massDate,
-          grade: status == 'aprobada' || status == 'no_regularizada'
-              ? _massGrade?.toDouble()
-              : null,
-          notes: current.notes,
-          adminNote: switch (status) {
-            'aprobada' => 'Actualizacion masiva por materia',
-            'regular' => 'Regularizacion masiva',
-            'cursando' => 'Reapertura de cursada',
-            'no_regularizada' => 'Resultado masivo de mesa/instancia',
-            _ => current.adminNote,
-          },
-        );
-      }).toList(growable: false);
+      final drafts = selected
+          .map((item) {
+            final current = item.subject;
+            return BorradorMateriaEstudianteAdministrador(
+              id: current.id,
+              studentId: current.studentId,
+              careerId: current.careerId,
+              subjectId: current.subjectId,
+              subjectName: current.subjectName,
+              subjectYear: current.subjectYear,
+              status: status,
+              conditionStatus: status == 'no_regularizada'
+                  ? current.conditionStatus
+                  : 'habilitada',
+              detailStatus: switch (status) {
+                'aprobada' => _massCreditType,
+                'no_regularizada' => _massFailureDetail,
+                _ => null,
+              },
+              creditType: status == 'aprobada' ? _massCreditType : null,
+              academicPeriod: _massPeriod,
+              sourceDate: _massDate,
+              grade: status == 'aprobada' || status == 'no_regularizada'
+                  ? _massGrade?.toDouble()
+                  : null,
+              notes: current.notes,
+              adminNote: switch (status) {
+                'aprobada' => 'Actualizacion masiva por materia',
+                'regular' => 'Regularizacion masiva',
+                'cursando' => 'Reapertura de cursada',
+                'no_regularizada' => 'Resultado masivo de mesa/instancia',
+                _ => current.adminNote,
+              },
+            );
+          })
+          .toList(growable: false);
 
       final count = await repo.bulkUpsertSubjects(
         client: client,
@@ -590,9 +623,9 @@ class _PanelAcademicoEstudianteState
       );
       if (!context.mounted) return;
       setState(_selectedRosterStudentIds.clear);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$count registros actualizados.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('$count registros actualizados.')));
     } catch (error) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -625,11 +658,3 @@ class _PanelAcademicoEstudianteState
     return hasMissing ? 'condicional' : 'habilitada';
   }
 }
-
-
-
-
-
-
-
-

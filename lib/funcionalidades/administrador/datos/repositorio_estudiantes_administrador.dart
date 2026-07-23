@@ -29,13 +29,15 @@ class RepositorioEstudiantesAdministrador {
     final data = response.data as Map?;
     if (data?['ok'] != true) {
       throw StateError(
-          data?['error']?.toString() ?? 'No se pudo listar alumnos');
+        data?['error']?.toString() ?? 'No se pudo listar alumnos',
+      );
     }
 
     final rows = (data?['students'] as List? ?? const [])
         .whereType<Map>()
-        .map((row) =>
-            EstudianteAdministrador.fromRow(row.cast<String, dynamic>()))
+        .map(
+          (row) => EstudianteAdministrador.fromRow(row.cast<String, dynamic>()),
+        )
         .toList(growable: false);
 
     return rows;
@@ -66,7 +68,8 @@ class RepositorioEstudiantesAdministrador {
     final data = response.data as Map?;
     if (data?['ok'] != true) {
       throw StateError(
-          data?['error']?.toString() ?? 'No se pudo guardar alumno');
+        data?['error']?.toString() ?? 'No se pudo guardar alumno',
+      );
     }
 
     return EstudianteAdministrador.fromRow(
@@ -129,8 +132,11 @@ class RepositorioEstudiantesAdministrador {
 
     return (data?['subjects'] as List? ?? const [])
         .whereType<Map>()
-        .map((row) =>
-            MateriaEstudianteAdministrador.fromRow(row.cast<String, dynamic>()))
+        .map(
+          (row) => MateriaEstudianteAdministrador.fromRow(
+            row.cast<String, dynamic>(),
+          ),
+        )
         .toList(growable: false);
   }
 
@@ -210,8 +216,11 @@ class RepositorioEstudiantesAdministrador {
 
     return (data?['roster'] as List? ?? const [])
         .whereType<Map>()
-        .map((row) =>
-            ItemNominaMateriaAdministrador.fromRow(row.cast<String, dynamic>()))
+        .map(
+          (row) => ItemNominaMateriaAdministrador.fromRow(
+            row.cast<String, dynamic>(),
+          ),
+        )
         .toList(growable: false);
   }
 
@@ -238,8 +247,11 @@ class RepositorioEstudiantesAdministrador {
 
     return (data?['history'] as List? ?? const [])
         .whereType<Map>()
-        .map((row) => EntradaHistorialEstudianteAdministrador.fromRow(
-            row.cast<String, dynamic>()))
+        .map(
+          (row) => EntradaHistorialEstudianteAdministrador.fromRow(
+            row.cast<String, dynamic>(),
+          ),
+        )
         .toList(growable: false);
   }
 }

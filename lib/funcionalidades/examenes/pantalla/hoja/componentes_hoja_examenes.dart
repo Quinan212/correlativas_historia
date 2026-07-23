@@ -316,6 +316,13 @@ class PanelExamenMateria extends StatelessWidget {
   }
 
   Future<void> _openActa(BuildContext context) async {
+    if (_activeOption?.evento.puedeAbrirActa != true) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Acta no habilitada para esta mesa')),
+      );
+      return;
+    }
     final raw = _activeOption?.evento.actaUrl;
     final uri = raw == null || raw.trim().isEmpty ? null : Uri.tryParse(raw);
     if (uri == null) {
@@ -337,6 +344,7 @@ class PanelExamenMateria extends StatelessWidget {
     final activeTab = _activeTab;
     final activeOption = _activeOption;
     final multipleDivisions = activeTab.options.length > 1;
+    final canOpenActa = activeOption?.evento.puedeAbrirActa == true;
 
     final borderColor = isDark ? cs.outlineVariant : const Color(0xFFD1D5DB);
     final colorBlanco = isDark ? cs.surface : Colors.white;
@@ -443,9 +451,7 @@ class PanelExamenMateria extends StatelessWidget {
 
         // Grid con borde exterior completo
         Container(
-          decoration: BoxDecoration(
-            border: Border.all(color: borderColor),
-          ),
+          decoration: BoxDecoration(border: Border.all(color: borderColor)),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -459,15 +465,19 @@ class PanelExamenMateria extends StatelessWidget {
                         bgColor: colorBlanco,
                         child: Text(
                           () {
-                            final int? realAnio = activeOption?.evento.anio ??
+                            final int? realAnio =
+                                activeOption?.evento.anio ??
                                 (activeOption?.evento != null
                                     ? anioPlanParaEvento(
-                                        activeOption!.evento, mapaPlan)
+                                        activeOption!.evento,
+                                        mapaPlan,
+                                      )
                                     : null);
                             return realAnio != null ? '$realAnio°' : '-';
                           }(),
-                          style: theme.textTheme.labelSmall
-                              ?.copyWith(fontWeight: FontWeight.w900),
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            fontWeight: FontWeight.w900,
+                          ),
                         ),
                       ),
                     ),
@@ -481,8 +491,9 @@ class PanelExamenMateria extends StatelessWidget {
                                     activeOption!.evento.division!.isNotEmpty)
                                 ? activeOption.evento.division!.toUpperCase()
                                 : '-',
-                            style: theme.textTheme.labelSmall
-                                ?.copyWith(fontWeight: FontWeight.w900),
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              fontWeight: FontWeight.w900,
+                            ),
                           ),
                         ),
                       ),
@@ -494,8 +505,9 @@ class PanelExamenMateria extends StatelessWidget {
                           activeOption?.evento.fechaHora == null
                               ? 'A CONF'
                               : _fmtFecha(activeOption!.evento.fechaHora!),
-                          style: theme.textTheme.labelSmall
-                              ?.copyWith(fontWeight: FontWeight.w900),
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            fontWeight: FontWeight.w900,
+                          ),
                         ),
                       ),
                     ),
@@ -508,11 +520,13 @@ class PanelExamenMateria extends StatelessWidget {
                               ? '-'
                               : _etiquetaHora(
                                   activeOption?.evento.fechaHora,
-                                  esColoquio: activeOption?.evento.instancia ==
+                                  esColoquio:
+                                      activeOption?.evento.instancia ==
                                       'coloquio',
                                 ),
-                          style: theme.textTheme.labelSmall
-                              ?.copyWith(fontWeight: FontWeight.w900),
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            fontWeight: FontWeight.w900,
+                          ),
                         ),
                       ),
                     ),
@@ -522,8 +536,9 @@ class PanelExamenMateria extends StatelessWidget {
                         isLast: true,
                         bgColor: const Color(0xFF047857),
                         child: Text(
-                          _etiquetaDias(activeOption?.evento.fechaHora)
-                              .toUpperCase(),
+                          _etiquetaDias(
+                            activeOption?.evento.fechaHora,
+                          ).toUpperCase(),
                           style: theme.textTheme.labelSmall?.copyWith(
                             fontWeight: FontWeight.w900,
                             color: Colors.white,
@@ -569,8 +584,9 @@ class PanelExamenMateria extends StatelessWidget {
                             isLast: true,
                             child: Text(
                               'NO ASIGNADO',
-                              style: theme.textTheme.labelSmall
-                                  ?.copyWith(fontWeight: FontWeight.w900),
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                fontWeight: FontWeight.w900,
+                              ),
                             ),
                           ),
                         ),
@@ -612,8 +628,11 @@ class PanelExamenMateria extends StatelessWidget {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.copy_all_rounded,
-                                size: 16, color: cs.primary),
+                            Icon(
+                              Icons.copy_all_rounded,
+                              size: 16,
+                              color: cs.primary,
+                            ),
                             const SizedBox(width: 8),
                             Text(
                               'COPIAR',
@@ -629,21 +648,30 @@ class PanelExamenMateria extends StatelessWidget {
                   ),
                   Expanded(
                     child: InkWell(
-                      onTap: () => _openActa(context),
+                      onTap: canOpenActa ? () => _openActa(context) : null,
                       child: Container(
                         height: 48,
                         color: colorGris,
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.description_outlined,
-                                size: 16, color: cs.primary),
+                            Icon(
+                              canOpenActa
+                                  ? Icons.description_outlined
+                                  : Icons.block_rounded,
+                              size: 16,
+                              color: canOpenActa
+                                  ? cs.primary
+                                  : cs.onSurfaceVariant,
+                            ),
                             const SizedBox(width: 8),
                             Text(
-                              'VER ACTA',
+                              canOpenActa ? 'VER ACTA' : 'ACTA BLOQUEADA',
                               style: theme.textTheme.labelSmall?.copyWith(
                                 fontWeight: FontWeight.w900,
-                                color: cs.primary,
+                                color: canOpenActa
+                                    ? cs.primary
+                                    : cs.onSurfaceVariant,
                               ),
                             ),
                           ],

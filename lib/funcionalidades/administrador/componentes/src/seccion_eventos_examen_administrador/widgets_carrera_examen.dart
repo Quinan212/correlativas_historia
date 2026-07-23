@@ -1,10 +1,7 @@
 part of '../../seccion_eventos_examen_administrador.dart';
 
 class _SelectorAlcance extends StatelessWidget {
-  const _SelectorAlcance({
-    required this.scope,
-    required this.onChanged,
-  });
+  const _SelectorAlcance({required this.scope, required this.onChanged});
 
   final String scope;
   final ValueChanged<String> onChanged;
@@ -47,26 +44,32 @@ class _CareerScopeView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scoped = careerEvents
-        .where((event) =>
-            scope == 'coloquios' ? event.isColoquio : !event.isColoquio)
-        .toList(growable: false)
-      ..sort((a, b) {
-        final byYear = _yearSortValue(_resolvedYear(a))
-            .compareTo(_yearSortValue(_resolvedYear(b)));
-        if (byYear != 0) return byYear;
-        final byFecha = _compareDate(a.fecha, b.fecha);
-        if (byFecha != 0) return byFecha;
-        final byMateria = a.materia.compareTo(b.materia);
-        if (byMateria != 0) return byMateria;
-        return (a.hora ?? '').compareTo(b.hora ?? '');
-      });
+    final scoped =
+        careerEvents
+            .where(
+              (event) =>
+                  scope == 'coloquios' ? event.isColoquio : !event.isColoquio,
+            )
+            .toList(growable: false)
+          ..sort((a, b) {
+            final byYear = _yearSortValue(
+              _resolvedYear(a),
+            ).compareTo(_yearSortValue(_resolvedYear(b)));
+            if (byYear != 0) return byYear;
+            final byFecha = _compareDate(a.fecha, b.fecha);
+            if (byFecha != 0) return byFecha;
+            final byMateria = a.materia.compareTo(b.materia);
+            if (byMateria != 0) return byMateria;
+            return (a.hora ?? '').compareTo(b.hora ?? '');
+          });
 
     final grouped = <int?, List<EventoExamenAdministrador>>{};
     for (final event in scoped) {
       grouped
           .putIfAbsent(
-              _resolvedYear(event), () => <EventoExamenAdministrador>[])
+            _resolvedYear(event),
+            () => <EventoExamenAdministrador>[],
+          )
           .add(event);
     }
 
@@ -118,21 +121,22 @@ class _TarjetaGrupoAnio extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final mesas =
-        events.where((event) => !event.isColoquio).toList(growable: false);
-    final coloquios =
-        events.where((event) => event.isColoquio).toList(growable: false);
+    final mesas = events
+        .where((event) => !event.isColoquio)
+        .toList(growable: false);
+    final coloquios = events
+        .where((event) => event.isColoquio)
+        .toList(growable: false);
 
     return Container(
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: theme.colorScheme.outlineVariant),
       ),
       child: Theme(
         data: theme.copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
-
           tilePadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
           childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
           title: Row(
@@ -225,8 +229,10 @@ class _TarjetaEventoExamen extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.22),
-        borderRadius: BorderRadius.circular(18),
+        color: theme.colorScheme.surfaceContainerHighest.withValues(
+          alpha: 0.22,
+        ),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: theme.colorScheme.outlineVariant.withValues(alpha: 0.55),
         ),
@@ -239,11 +245,13 @@ class _TarjetaEventoExamen extends StatelessWidget {
             runSpacing: 8,
             children: [
               _Insignia(label: careerLabel),
-              _Insignia(
-                label: event.isColoquio ? 'Coloquio' : 'Mesa',
-              ),
+              _Insignia(label: event.isColoquio ? 'Coloquio' : 'Mesa'),
               if (displayYear != null) _Insignia(label: '$displayYear° año'),
-              if (event.hora != null) _Insignia(label: event.hora!),
+              if (event.mostrarAvisoEstado)
+                _Insignia(label: event.estadoEtiqueta),
+              if (!event.visible) const _Insignia(label: 'OCULTA'),
+              if (event.horaVigente != null)
+                _Insignia(label: event.horaVigente!),
             ],
           ),
           const SizedBox(height: 10),
@@ -253,16 +261,26 @@ class _TarjetaEventoExamen extends StatelessWidget {
               fontWeight: FontWeight.w900,
             ),
           ),
-          if (event.fecha != null) ...[
+          if (event.fechaVigente != null) ...[
             const SizedBox(height: 4),
-            Text(_formatDate(event.fecha!), style: theme.textTheme.bodyMedium),
+            Text(
+              _formatDate(event.fechaVigente!),
+              style: theme.textTheme.bodyMedium,
+            ),
+          ],
+          if (event.mostrarAvisoEstado &&
+              event.mensajeEstadoEfectivo.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Text(
+              event.mensajeEstadoEfectivo,
+              style: theme.textTheme.bodySmall?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ],
           if (event.docentes.isNotEmpty) ...[
             const SizedBox(height: 8),
-            Text(
-              event.docentes.join(' / '),
-              style: theme.textTheme.bodySmall,
-            ),
+            Text(event.docentes.join(' / '), style: theme.textTheme.bodySmall),
           ],
           const SizedBox(height: 10),
           Wrap(

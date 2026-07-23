@@ -41,114 +41,122 @@ class EstadisticasFotosCarreraAdministrador {
 }
 
 final proveedorResumenFotosMateriasAdministrador =
-    FutureProvider<List<EstadisticasFotosCarreraAdministrador>>(
-        (ref) async {
-  final bootstrap = ref.watch(proveedorArranqueSupabase);
-  final client = ref.watch(proveedorClienteSupabase);
+    FutureProvider<List<EstadisticasFotosCarreraAdministrador>>((ref) async {
+      final bootstrap = ref.watch(proveedorArranqueSupabase);
+      final client = ref.watch(proveedorClienteSupabase);
 
-  if (!bootstrap.isReady || client == null) {
-    return const <EstadisticasFotosCarreraAdministrador>[];
-  }
+      if (!bootstrap.isReady || client == null) {
+        return const <EstadisticasFotosCarreraAdministrador>[];
+      }
 
-  final rows = await client.from('matter_photo_posts').select(
-        'id, device_id, matter_id, career_id, image_path, image_url, caption, created_at, updated_at, enabled',
+      final rows = await client
+          .from('matter_photo_posts')
+          .select(
+            'id, device_id, matter_id, career_id, image_path, image_url, caption, created_at, updated_at, enabled',
+          );
+
+      final posts = rows
+          .cast<Map<String, dynamic>>()
+          .map(PublicacionFotoMateria.fromMap)
+          .where((post) => post.enabled)
+          .toList(growable: false);
+
+      if (posts.isEmpty) {
+        return const <EstadisticasFotosCarreraAdministrador>[];
+      }
+
+      final photoCountByCareer = <String, int>{};
+      final photoCountByMatter = <String, int>{};
+      for (final post in posts) {
+        photoCountByCareer[post.careerId] =
+            (photoCountByCareer[post.careerId] ?? 0) + 1;
+        photoCountByMatter[post.matterId] =
+            (photoCountByMatter[post.matterId] ?? 0) + 1;
+      }
+
+      final careers = kCareers
+          .where((career) => !career.hidden)
+          .toList(growable: false);
+      final plans = await Future.wait(
+        careers.map((career) async {
+          final basePlan = await cargarPlanDesdeAssetHtml(career.assetHtml);
+          final institution = kInstitutions.where(
+            (i) => i.careerId == career.id,
+          );
+          final overrides = institution.isEmpty
+              ? const <MateriaOverride>[]
+              : institution.first.overrides;
+          return (
+            career: career,
+            materias: _applyInstitutionOverrides(basePlan.materias, overrides),
+          );
+        }),
       );
 
-  final posts = rows
-      .cast<Map<String, dynamic>>()
-      .map(PublicacionFotoMateria.fromMap)
-      .where((post) => post.enabled)
-      .toList(growable: false);
+      final result = <EstadisticasFotosCarreraAdministrador>[];
+      for (final plan in plans) {
+        final careerPhotoCount = photoCountByCareer[plan.career.id] ?? 0;
+        if (careerPhotoCount <= 0) continue;
 
-  if (posts.isEmpty) {
-    return const <EstadisticasFotosCarreraAdministrador>[];
-  }
+        final byYear = <int, List<EstadisticasFotosMateriaAdministrador>>{};
+        for (final matter in plan.materias) {
+          final count = photoCountByMatter[matter.id] ?? 0;
+          if (count <= 0) continue;
+          byYear
+              .putIfAbsent(
+                matter.anio,
+                () => <EstadisticasFotosMateriaAdministrador>[],
+              )
+              .add(
+                EstadisticasFotosMateriaAdministrador(
+                  matter: matter,
+                  photoCount: count,
+                ),
+              );
+        }
 
-  final photoCountByCareer = <String, int>{};
-  final photoCountByMatter = <String, int>{};
-  for (final post in posts) {
-    photoCountByCareer[post.careerId] =
-        (photoCountByCareer[post.careerId] ?? 0) + 1;
-    photoCountByMatter[post.matterId] =
-        (photoCountByMatter[post.matterId] ?? 0) + 1;
-  }
+        final years = byYear.entries.toList(growable: false)
+          ..sort((a, b) => a.key.compareTo(b.key));
 
-  final careers =
-      kCareers.where((career) => !career.hidden).toList(growable: false);
-  final plans = await Future.wait(
-    careers.map(
-      (career) async {
-        final basePlan = await cargarPlanDesdeAssetHtml(career.assetHtml);
-        final institution = kInstitutions.where((i) => i.careerId == career.id);
-        final overrides = institution.isEmpty
-            ? const <MateriaOverride>[]
-            : institution.first.overrides;
-        return (
-          career: career,
-          materias: _applyInstitutionOverrides(basePlan.materias, overrides),
-        );
-      },
-    ),
-  );
-
-  final result = <EstadisticasFotosCarreraAdministrador>[];
-  for (final plan in plans) {
-    final careerPhotoCount = photoCountByCareer[plan.career.id] ?? 0;
-    if (careerPhotoCount <= 0) continue;
-
-    final byYear = <int, List<EstadisticasFotosMateriaAdministrador>>{};
-    for (final matter in plan.materias) {
-      final count = photoCountByMatter[matter.id] ?? 0;
-      if (count <= 0) continue;
-      byYear
-          .putIfAbsent(
-              matter.anio, () => <EstadisticasFotosMateriaAdministrador>[])
-          .add(
-            EstadisticasFotosMateriaAdministrador(
-              matter: matter,
-              photoCount: count,
+        final yearStats = <EstadisticasFotosAnioAdministrador>[];
+        for (final entry in years) {
+          final maters = entry.value.toList(growable: false)
+            ..sort(
+              (a, b) =>
+                  a.matter.displayNombre.compareTo(b.matter.displayNombre),
+            );
+          final yearCount = maters.fold<int>(
+            0,
+            (sum, item) => sum + item.photoCount,
+          );
+          if (yearCount <= 0) continue;
+          yearStats.add(
+            EstadisticasFotosAnioAdministrador(
+              year: entry.key,
+              photoCount: yearCount,
+              matters: maters,
             ),
           );
-    }
+        }
 
-    final years = byYear.entries.toList(growable: false)
-      ..sort((a, b) => a.key.compareTo(b.key));
+        if (yearStats.isEmpty) continue;
 
-    final yearStats = <EstadisticasFotosAnioAdministrador>[];
-    for (final entry in years) {
-      final maters = entry.value.toList(growable: false)
-        ..sort(
-            (a, b) => a.matter.displayNombre.compareTo(b.matter.displayNombre));
-      final yearCount =
-          maters.fold<int>(0, (sum, item) => sum + item.photoCount);
-      if (yearCount <= 0) continue;
-      yearStats.add(
-        EstadisticasFotosAnioAdministrador(
-          year: entry.key,
-          photoCount: yearCount,
-          matters: maters,
-        ),
-      );
-    }
+        result.add(
+          EstadisticasFotosCarreraAdministrador(
+            career: plan.career,
+            photoCount: careerPhotoCount,
+            years: yearStats,
+          ),
+        );
+      }
 
-    if (yearStats.isEmpty) continue;
-
-    result.add(
-      EstadisticasFotosCarreraAdministrador(
-        career: plan.career,
-        photoCount: careerPhotoCount,
-        years: yearStats,
-      ),
-    );
-  }
-
-  result.sort((a, b) {
-    final byCount = b.photoCount.compareTo(a.photoCount);
-    if (byCount != 0) return byCount;
-    return a.career.nombre.compareTo(b.career.nombre);
-  });
-  return result;
-}, isAutoDispose: true);
+      result.sort((a, b) {
+        final byCount = b.photoCount.compareTo(a.photoCount);
+        if (byCount != 0) return byCount;
+        return a.career.nombre.compareTo(b.career.nombre);
+      });
+      return result;
+    }, isAutoDispose: true);
 
 List<Materia> _applyInstitutionOverrides(
   List<Materia> materias,
@@ -160,20 +168,22 @@ List<Materia> _applyInstitutionOverrides(
     for (final override in overrides) override.materiaId: override,
   };
 
-  return materias.map((m) {
-    final override = byId[m.id];
-    if (override == null) return m;
-    return Materia(
-      id: m.id,
-      codigo: override.codigo ?? m.codigo,
-      nombre: override.nombre ?? m.nombre,
-      anio: override.anio ?? m.anio,
-      cuatri: override.cuatri ?? m.cuatri,
-      tipo: override.tipo ?? m.tipo,
-      formato: override.formato ?? m.formato,
-      correlativas: m.correlativas,
-      horas: override.horas ?? m.horas,
-      correlativasDetalladas: m.correlativasDetalladas,
-    );
-  }).toList(growable: false);
+  return materias
+      .map((m) {
+        final override = byId[m.id];
+        if (override == null) return m;
+        return Materia(
+          id: m.id,
+          codigo: override.codigo ?? m.codigo,
+          nombre: override.nombre ?? m.nombre,
+          anio: override.anio ?? m.anio,
+          cuatri: override.cuatri ?? m.cuatri,
+          tipo: override.tipo ?? m.tipo,
+          formato: override.formato ?? m.formato,
+          correlativas: m.correlativas,
+          horas: override.horas ?? m.horas,
+          correlativasDetalladas: m.correlativasDetalladas,
+        );
+      })
+      .toList(growable: false);
 }

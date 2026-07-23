@@ -31,7 +31,8 @@ class EventoNavegacionMateriaAdministrador {
   final DateTime createdAt;
 
   factory EventoNavegacionMateriaAdministrador.fromMap(
-      Map<String, dynamic> map) {
+    Map<String, dynamic> map,
+  ) {
     DateTime parseDate(String key) {
       final raw = map[key]?.toString();
       if (raw == null || raw.isEmpty) {
@@ -92,129 +93,135 @@ class ResumenNavegacionMateriaAdministrador {
 }
 
 final proveedorResumenNavegacionMateriaAdministrador =
-    FutureProvider<ResumenNavegacionMateriaAdministrador>(
-        (ref) async {
-  final client = ref.watch(proveedorClienteSupabase);
-  if (client == null) {
-    return const ResumenNavegacionMateriaAdministrador(
-      events: <EventoNavegacionMateriaAdministrador>[],
-      deviceSummaries: <ResumenDispositivoNavegacionMateriaAdministrador>[],
-    );
-  }
-
-  final eventRows = await client
-      .from('matter_navigation_events')
-      .select()
-      .order('created_at', ascending: false);
-  final events = eventRows
-      .cast<Map<String, dynamic>>()
-      .map(EventoNavegacionMateriaAdministrador.fromMap)
-      .toList(growable: false);
-
-  if (events.isEmpty) {
-    return const ResumenNavegacionMateriaAdministrador(
-      events: <EventoNavegacionMateriaAdministrador>[],
-      deviceSummaries: <ResumenDispositivoNavegacionMateriaAdministrador>[],
-    );
-  }
-
-  final deviceIds = events
-      .map((event) => event.deviceId.trim())
-      .where((value) => value.isNotEmpty)
-      .toSet()
-      .toList(growable: false);
-
-  final registryMap = deviceIds.isEmpty
-      ? const <String, EntradaRegistroDispositivo>{}
-      : await ref.read(
-          proveedorEntradasRegistroDispositivoPorIds(
-                  serializeDeviceIds(deviceIds))
-              .future,
+    FutureProvider<ResumenNavegacionMateriaAdministrador>((ref) async {
+      final client = ref.watch(proveedorClienteSupabase);
+      if (client == null) {
+        return const ResumenNavegacionMateriaAdministrador(
+          events: <EventoNavegacionMateriaAdministrador>[],
+          deviceSummaries: <ResumenDispositivoNavegacionMateriaAdministrador>[],
         );
-  final profileMap = deviceIds.isEmpty
-      ? const <String, PerfilDispositivo>{}
-      : await ref.read(
-          proveedorPerfilesDispositivoPorIds(serializeDeviceIds(deviceIds))
-              .future,
+      }
+
+      final eventRows = await client
+          .from('matter_navigation_events')
+          .select()
+          .order('created_at', ascending: false);
+      final events = eventRows
+          .cast<Map<String, dynamic>>()
+          .map(EventoNavegacionMateriaAdministrador.fromMap)
+          .toList(growable: false);
+
+      if (events.isEmpty) {
+        return const ResumenNavegacionMateriaAdministrador(
+          events: <EventoNavegacionMateriaAdministrador>[],
+          deviceSummaries: <ResumenDispositivoNavegacionMateriaAdministrador>[],
         );
+      }
 
-  final perDevice = <String, _DeviceCounters>{};
-  for (final event in events) {
-    final registry = registryMap[event.deviceId];
-    if (registry == null ||
-        !registry.isVisibleInHistories ||
-        !registry.isVisibleInAdminPanels) {
-      continue;
-    }
-    final counters = perDevice.putIfAbsent(
-      event.deviceId,
-      _DeviceCounters.new,
-    );
-    counters.total += 1;
-    if (event.eventType == 'view') {
-      counters.views += 1;
-    } else {
-      counters.transitions += 1;
-    }
-    if (counters.lastSeenAt == null ||
-        event.createdAt.isAfter(counters.lastSeenAt!)) {
-      counters.lastSeenAt = event.createdAt;
-    }
-  }
+      final deviceIds = events
+          .map((event) => event.deviceId.trim())
+          .where((value) => value.isNotEmpty)
+          .toSet()
+          .toList(growable: false);
 
-  final summaries = perDevice.entries.map((entry) {
-    final deviceId = entry.key;
-    final counters = entry.value;
-    final profile = profileMap[deviceId];
-    final resolvedLabel = _etiquetaDispositivoResuelta(
-      deviceId: deviceId,
-      profile: profile,
-    );
-    return ResumenDispositivoNavegacionMateriaAdministrador(
-      deviceId: deviceId,
-      label: resolvedLabel,
-      views: counters.views,
-      transitions: counters.transitions,
-      lastSeenAt: counters.lastSeenAt,
-    );
-  }).toList(growable: false)
-    ..sort((a, b) {
-      final aSeen = a.lastSeenAt;
-      final bSeen = b.lastSeenAt;
-      if (aSeen == null && bSeen == null) return a.label.compareTo(b.label);
-      if (aSeen == null) return 1;
-      if (bSeen == null) return -1;
-      return bSeen.compareTo(aSeen);
-    });
+      final registryMap = deviceIds.isEmpty
+          ? const <String, EntradaRegistroDispositivo>{}
+          : await ref.read(
+              proveedorEntradasRegistroDispositivoPorIds(
+                serializeDeviceIds(deviceIds),
+              ).future,
+            );
+      final profileMap = deviceIds.isEmpty
+          ? const <String, PerfilDispositivo>{}
+          : await ref.read(
+              proveedorPerfilesDispositivoPorIds(
+                serializeDeviceIds(deviceIds),
+              ).future,
+            );
 
-  return ResumenNavegacionMateriaAdministrador(
-    events: events,
-    deviceSummaries: summaries,
-  );
-}, isAutoDispose: true);
+      final perDevice = <String, _DeviceCounters>{};
+      for (final event in events) {
+        final registry = registryMap[event.deviceId];
+        if (registry == null ||
+            !registry.isVisibleInHistories ||
+            !registry.isVisibleInAdminPanels) {
+          continue;
+        }
+        final counters = perDevice.putIfAbsent(
+          event.deviceId,
+          _DeviceCounters.new,
+        );
+        counters.total += 1;
+        if (event.eventType == 'view') {
+          counters.views += 1;
+        } else {
+          counters.transitions += 1;
+        }
+        if (counters.lastSeenAt == null ||
+            event.createdAt.isAfter(counters.lastSeenAt!)) {
+          counters.lastSeenAt = event.createdAt;
+        }
+      }
 
-final proveedorEventosNavegacionMateriaPorDispositivoAdministrador = Provider
-    .family<List<EventoNavegacionMateriaAdministrador>, String>(
-  (ref, deviceId) {
-    final events = ref
-            .watch(proveedorResumenNavegacionMateriaAdministrador)
-            .value
-            ?.events ??
-        const <EventoNavegacionMateriaAdministrador>[];
-    final visibleDeviceIds = ref
-            .watch(proveedorResumenNavegacionMateriaAdministrador)
-            .value
-            ?.deviceSummaries
-            .map((summary) => summary.deviceId)
-            .toSet() ??
-        const <String>{};
-    return events
-        .where((event) => visibleDeviceIds.contains(event.deviceId))
-        .where((event) => event.deviceId == deviceId)
-        .toList(growable: false);
-  },
-  isAutoDispose: true,
-);
+      final summaries =
+          perDevice.entries
+              .map((entry) {
+                final deviceId = entry.key;
+                final counters = entry.value;
+                final profile = profileMap[deviceId];
+                final resolvedLabel = _etiquetaDispositivoResuelta(
+                  deviceId: deviceId,
+                  profile: profile,
+                );
+                return ResumenDispositivoNavegacionMateriaAdministrador(
+                  deviceId: deviceId,
+                  label: resolvedLabel,
+                  views: counters.views,
+                  transitions: counters.transitions,
+                  lastSeenAt: counters.lastSeenAt,
+                );
+              })
+              .toList(growable: false)
+            ..sort((a, b) {
+              final aSeen = a.lastSeenAt;
+              final bSeen = b.lastSeenAt;
+              if (aSeen == null && bSeen == null)
+                return a.label.compareTo(b.label);
+              if (aSeen == null) return 1;
+              if (bSeen == null) return -1;
+              return bSeen.compareTo(aSeen);
+            });
+
+      return ResumenNavegacionMateriaAdministrador(
+        events: events,
+        deviceSummaries: summaries,
+      );
+    }, isAutoDispose: true);
+
+final proveedorEventosNavegacionMateriaPorDispositivoAdministrador =
+    Provider.family<List<EventoNavegacionMateriaAdministrador>, String>((
+      ref,
+      deviceId,
+    ) {
+      final events =
+          ref
+              .watch(proveedorResumenNavegacionMateriaAdministrador)
+              .value
+              ?.events ??
+          const <EventoNavegacionMateriaAdministrador>[];
+      final visibleDeviceIds =
+          ref
+              .watch(proveedorResumenNavegacionMateriaAdministrador)
+              .value
+              ?.deviceSummaries
+              .map((summary) => summary.deviceId)
+              .toSet() ??
+          const <String>{};
+      return events
+          .where((event) => visibleDeviceIds.contains(event.deviceId))
+          .where((event) => event.deviceId == deviceId)
+          .toList(growable: false);
+    }, isAutoDispose: true);
 
 class _DeviceCounters {
   int total = 0;

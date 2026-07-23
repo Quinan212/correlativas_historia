@@ -17,12 +17,12 @@ class NavegacionExamenUsuarioAdministradorPantalla extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final events = ref.watch(
-        proveedorEventosNavegacionExamenPorDispositivoAdministrador(deviceId));
+      proveedorEventosNavegacionExamenPorDispositivoAdministrador(deviceId),
+    );
 
     return Scaffold(
       appBar: AppBar(
         title: Text(deviceLabel),
-        centerTitle: true,
         actions: [
           IconButton(
             onPressed: () =>
@@ -75,15 +75,18 @@ class _TarjetaResumen extends StatelessWidget {
     final theme = Theme.of(context);
     final views = events.where((e) => e.isView).length;
     final transitions = events.where((e) => !e.isView).length;
-    final distinctMatters =
-        events.where((e) => e.isView).map((e) => e.matterName).toSet().length;
+    final distinctMatters = events
+        .where((e) => e.isView)
+        .map((e) => e.matterName)
+        .toSet()
+        .length;
 
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: theme.colorScheme.outlineVariant),
       ),
       child: Wrap(
@@ -143,8 +146,9 @@ class _TimelineTile extends StatelessWidget {
     final isView = event.isView;
     final icon = isView ? Icons.visibility_outlined : Icons.alt_route_rounded;
     final title = isView ? 'Abrio' : 'Salto a';
-    final divText =
-        event.divisionLabel == null ? '' : ' - ${event.divisionLabel}';
+    final divText = event.divisionLabel == null
+        ? ''
+        : ' - ${event.divisionLabel}';
     final sourceText = event.sourceTabLabel == null
         ? ''
         : ' desde ${event.sourceTabLabel}${event.sourceDivisionLabel == null ? '' : ' - ${event.sourceDivisionLabel}'}';
@@ -206,16 +210,13 @@ class _TarjetaSeccion extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF0B1220) : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isDark ? const Color(0xFF243041) : const Color(0xFFE5E7EB),
-        ),
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

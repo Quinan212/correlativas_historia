@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../laboratorio_atlassian/tema/tema_atlassian.dart';
 import '../pantallas/panel_administrador_pantalla.dart';
 import '../proveedores/proveedores_acceso_administrador.dart';
+import '../tema/tema_administrador_atlassian.dart';
 
 class BannerAccesoAdministrador extends ConsumerWidget {
   const BannerAccesoAdministrador({super.key});
@@ -13,13 +15,16 @@ class BannerAccesoAdministrador extends ConsumerWidget {
 
     return statusAsync.when(
       data: (status) {
-        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final theme = Theme.of(context);
+        final isDark = theme.brightness == Brightness.dark;
         final bg = status.isAdmin
-            ? (isDark ? const Color(0xFF052E16) : const Color(0xFFDCFCE7))
-            : (isDark ? const Color(0xFF172033) : const Color(0xFFF8FAFC));
+            ? (isDark
+                  ? PaletaAtlassian.successSubtleDark
+                  : PaletaAtlassian.successSubtle)
+            : theme.colorScheme.surfaceContainerLow;
         final border = status.isAdmin
-            ? (isDark ? const Color(0xFF166534) : const Color(0xFF86EFAC))
-            : (isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0));
+            ? PaletaAtlassian.success
+            : theme.colorScheme.outlineVariant;
 
         return Container(
           width: double.infinity,
@@ -27,7 +32,7 @@ class BannerAccesoAdministrador extends ConsumerWidget {
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: bg,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(14),
             border: Border.all(color: border),
           ),
           child: Column(
@@ -35,9 +40,9 @@ class BannerAccesoAdministrador extends ConsumerWidget {
             children: [
               Text(
                 status.isAdmin ? 'Dispositivo admin' : 'Acceso admin',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
               ),
               const SizedBox(height: 8),
               Text(
@@ -59,12 +64,11 @@ class BannerAccesoAdministrador extends ConsumerWidget {
                   if (status.isAdmin)
                     FilledButton.icon(
                       onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute<void>(
-                            builder: (_) => PanelAdministradorPantalla(
-                              deviceId: status.deviceId,
-                              adminLabel: status.adminLabel,
-                            ),
+                        abrirPantallaAdministradorAtlassian<void>(
+                          context,
+                          PanelAdministradorPantalla(
+                            deviceId: status.deviceId,
+                            adminLabel: status.adminLabel,
                           ),
                         );
                       },
@@ -81,17 +85,22 @@ class BannerAccesoAdministrador extends ConsumerWidget {
         padding: EdgeInsets.fromLTRB(12, 10, 12, 0),
         child: LinearProgressIndicator(minHeight: 3),
       ),
-      error: (error, _) => Container(
-        width: double.infinity,
-        margin: const EdgeInsets.fromLTRB(12, 10, 12, 0),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: const Color(0xFFFEE2E2),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFFCA5A5)),
-        ),
-        child: Text('No se pudo resolver acceso admin: $error'),
-      ),
+      error: (error, _) {
+        final theme = Theme.of(context);
+        return Container(
+          width: double.infinity,
+          margin: const EdgeInsets.fromLTRB(12, 10, 12, 0),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: theme.brightness == Brightness.dark
+                ? PaletaAtlassian.dangerSubtleDark
+                : PaletaAtlassian.dangerSubtle,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: PaletaAtlassian.danger),
+          ),
+          child: Text('No se pudo resolver acceso admin: $error'),
+        );
+      },
     );
   }
 }

@@ -3,7 +3,6 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../../compartido/media/widgets_media_remota.dart';
-import '../tema/tema_atlassian.dart';
 import 'componentes_atlassian.dart';
 
 class EncabezadoTrayectoriaAtlassian extends StatefulWidget {
@@ -72,7 +71,6 @@ class _EncabezadoTrayectoriaAtlassianState
     final actionsOpacity = (1 - progress * 1.2).clamp(0.0, 1.0).toDouble();
     final titleOpacity = (1 - progress * 1.35).clamp(0.0, 1.0).toDouble();
     final nombre = primerNombreAtlassian(widget.nombreEstudiante);
-    final sincronizada = nombre.isNotEmpty;
 
     return Material(
       color: Theme.of(context).scaffoldBackgroundColor,
@@ -282,10 +280,17 @@ class SugerenciasApiladasAtlassianDelegate
   static const double _cardGap = 28.0;
   static const double _stackedSpread = 5.0;
   static const double _horizontalPadding = 16.0;
+  static const double _mobileStackMaxWidth = 420.0;
   static const double _sectionTopPadding = 16.0;
   static const double _sectionHeaderHeight = 72.0;
   static const double _sectionHeaderGap = 24.0;
   static const double _bottomPadding = 16.0;
+
+  // El botón flotante móvil vive en el shell Atlassian con SafeArea, top 16
+  // y 45 px de alto. Al quedar fijada la sección, alineamos el centro del
+  // título con ese botón sin alterar la separación natural entre secciones.
+  static const double _mobileMenuTop = 16.0;
+  static const double _mobileMenuSize = 45.0;
   static const double _pinTravel = 24.0;
 
   static const double _fullSpread = _cardHeight + _cardGap;
@@ -339,6 +344,32 @@ class SugerenciasApiladasAtlassianDelegate
     return ((currentTop - stackedTop) / travel).clamp(0.0, 1.0);
   }
 
+  double _mobileAlignmentOffset(BuildContext context) {
+    final double screenWidth = MediaQuery.sizeOf(context).width;
+    if (screenWidth >= 600) return 0;
+
+    final double safeTop = MediaQuery.paddingOf(context).top;
+    final double menuCenter = safeTop + _mobileMenuTop + (_mobileMenuSize / 2);
+    final double headerCenterAtBase =
+        _sectionTopPadding + (_sectionHeaderHeight / 2);
+    return math.max(menuCenter - headerCenterAtBase, 0.0);
+  }
+
+  double _cardsPinnedAlignmentOffset(
+    BuildContext context,
+    double shrinkOffset,
+  ) {
+    final double targetOffset = _mobileAlignmentOffset(context);
+    if (targetOffset == 0) return 0;
+
+    final double collapseRange = math.max(maxExtent - minExtent, 1.0);
+    final double collapseProgress = (shrinkOffset / collapseRange)
+        .clamp(0.0, 1.0)
+        .toDouble();
+
+    return targetOffset * Curves.easeOutCubic.transform(collapseProgress);
+  }
+
   VoidCallback _callbackFor(AccionSugerenciaAtlassian action) {
     switch (action) {
       case AccionSugerenciaAtlassian.examenes:
@@ -363,6 +394,11 @@ class SugerenciasApiladasAtlassianDelegate
         .clamp(0.0, _stackScrollExtent);
 
     final ThemeData theme = Theme.of(context);
+    final double cardsPinnedAlignmentOffset = _cardsPinnedAlignmentOffset(
+      context,
+      shrinkOffset,
+    );
+    final double fixedHeaderAlignmentOffset = _mobileAlignmentOffset(context);
 
     final Widget content = Stack(
       clipBehavior: Clip.none,
@@ -372,7 +408,8 @@ class SugerenciasApiladasAtlassianDelegate
         ),
         ...List<Widget>.generate(_items.length, (int index) {
           final _SugerenciaApiladaData item = _items[index];
-          final double top = _topFor(index, scroll);
+          final double top =
+              _topFor(index, scroll) + cardsPinnedAlignmentOffset;
           return Positioned(
             left: _horizontalPadding,
             right: _horizontalPadding,
@@ -389,7 +426,7 @@ class SugerenciasApiladasAtlassianDelegate
         Positioned(
           left: _horizontalPadding,
           right: _horizontalPadding,
-          top: _headerTop,
+          top: _headerTop + fixedHeaderAlignmentOffset,
           child: const _InicioSugerenciasAtlassian(
             height: _sectionHeaderHeight,
           ),
@@ -398,15 +435,13 @@ class SugerenciasApiladasAtlassianDelegate
     );
 
     final double screenWidth = MediaQuery.sizeOf(context).width;
-    if (screenWidth >= 600) {
-      return Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1000),
-          child: content,
-        ),
-      );
-    }
-    return content;
+    final double centeredWidth = screenWidth >= 600
+        ? math.min(screenWidth, 1000.0)
+        : math.min(screenWidth - 32.0, _mobileStackMaxWidth);
+
+    return Center(
+      child: SizedBox(width: math.max(centeredWidth, 0.0), child: content),
+    );
   }
 
   @override
@@ -441,20 +476,17 @@ class _InicioSugerenciasAtlassian extends StatelessWidget {
           borderRadius: BorderRadius.circular(24),
           border: Border.all(color: scheme.outline.withValues(alpha: 0.10)),
         ),
-        child: Row(
-          children: <Widget>[
-            Expanded(
-              child: Text(
-                'Sugerencias',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w900,
-                  color: scheme.onSurface,
-                ),
-              ),
+        child: Center(
+          child: Text(
+            'Sugerencias',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w900,
+              color: scheme.onSurface,
             ),
-          ],
+          ),
         ),
       ),
     );

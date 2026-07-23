@@ -44,7 +44,7 @@ class PantallaLegajoAlumnoAgenteSage extends StatelessWidget {
             ItemListaOpcionSage(
               titulo: option.etiqueta,
               subtitulo: option.sigla,
-              icono: IconData(option.icono, fontFamily: 'MaterialIcons'),
+              icono: iconoMaterialSage(option.icono),
               enabled: !busy,
               available: _isImplemented(option),
               highlighted: _isImplemented(option),

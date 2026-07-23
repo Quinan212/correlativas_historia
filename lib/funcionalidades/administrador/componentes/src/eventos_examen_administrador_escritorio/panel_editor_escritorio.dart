@@ -18,16 +18,13 @@ class _PanelEditor extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return Container(
       width: 460,
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF0B1220) : Colors.white,
+        color: theme.colorScheme.surface,
         border: Border(
-          left: BorderSide(
-            color: isDark ? const Color(0xFF243041) : const Color(0xFFE5E7EB),
-          ),
+          left: BorderSide(color: theme.colorScheme.outlineVariant),
         ),
         boxShadow: [
           BoxShadow(
@@ -47,11 +44,11 @@ class _PanelEditor extends StatelessWidget {
           ),
           title: editingEvent == null
               ? scope == 'mesas'
-                  ? 'Nueva mesa'
-                  : 'Nuevo coloquio'
+                    ? 'Nueva mesa'
+                    : 'Nuevo coloquio'
               : editingEvent!.isColoquio
-                  ? 'Editar coloquio'
-                  : 'Editar mesa',
+              ? 'Editar coloquio'
+              : 'Editar mesa',
           coloquioMode: editingEvent?.isColoquio ?? scope == 'coloquios',
           initialEvent: editingEvent,
           busy: busy,
@@ -82,8 +79,9 @@ class _EstadoVacio extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final typeLabel = scope == 'mesas' ? 'mesas' : 'coloquios';
-    final yearText =
-        year == null ? '' : ' de ${_etiquetaAnio(year).toLowerCase()}';
+    final yearText = year == null
+        ? ''
+        : ' de ${_etiquetaAnio(year).toLowerCase()}';
 
     return Center(
       child: ConstrainedBox(

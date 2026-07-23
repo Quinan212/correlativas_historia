@@ -2,7 +2,67 @@ import 'dart:convert';
 
 import '../../../compartido/utilidades/sanitizar_texto.dart';
 
+enum EstadoEventoExamen { activa, suspendida, cancelada, reprogramada }
+
+extension EstadoEventoExamenX on EstadoEventoExamen {
+  String get valorBaseDatos => name;
+
+  String get etiqueta => switch (this) {
+    EstadoEventoExamen.activa => 'ACTIVA',
+    EstadoEventoExamen.suspendida => 'SUSPENDIDA',
+    EstadoEventoExamen.cancelada => 'CANCELADA',
+    EstadoEventoExamen.reprogramada => 'REPROGRAMADA',
+  };
+
+  String get tituloPredeterminado => switch (this) {
+    EstadoEventoExamen.activa => '',
+    EstadoEventoExamen.suspendida => 'MESA SUSPENDIDA',
+    EstadoEventoExamen.cancelada => 'MESA CANCELADA',
+    EstadoEventoExamen.reprogramada => 'MESA REPROGRAMADA',
+  };
+
+  String get mensajePredeterminado => switch (this) {
+    EstadoEventoExamen.activa => '',
+    EstadoEventoExamen.suspendida =>
+      'Pendiente de reprogramación por la institución.',
+    EstadoEventoExamen.cancelada => 'La mesa fue cancelada por la institución.',
+    EstadoEventoExamen.reprogramada =>
+      'La mesa tiene una nueva fecha y horario.',
+  };
+}
+
+EstadoEventoExamen estadoEventoExamenDesdeValor(
+  dynamic raw, {
+  bool suspendido = false,
+  String materia = '',
+}) {
+  final text = raw?.toString().trim().toLowerCase() ?? '';
+  switch (text) {
+    case 'suspendida':
+    case 'suspendido':
+      return EstadoEventoExamen.suspendida;
+    case 'cancelada':
+    case 'cancelado':
+      return EstadoEventoExamen.cancelada;
+    case 'reprogramada':
+    case 'reprogramado':
+      return EstadoEventoExamen.reprogramada;
+    case 'activa':
+    case 'activo':
+      return EstadoEventoExamen.activa;
+  }
+
+  final upperMateria = materia.toUpperCase();
+  if (suspendido ||
+      upperMateria.contains('[SUSPENDIDA]') ||
+      upperMateria.contains('[SUSPENDIDO]')) {
+    return EstadoEventoExamen.suspendida;
+  }
+  return EstadoEventoExamen.activa;
+}
+
 class EventoExamen {
+  final String? id;
   final String careerId;
   final int? anio;
   final DateTime? fecha;
@@ -13,9 +73,16 @@ class EventoExamen {
   final String? division;
   final String? actaUrl;
   final bool legacy;
-  final bool suspendido;
+  final EstadoEventoExamen estado;
+  final String? tituloEstado;
+  final String? mensajeEstado;
+  final DateTime? fechaReprogramada;
+  final String? horaReprogramada;
+  final bool actaHabilitada;
+  final bool visible;
 
   const EventoExamen({
+    this.id,
     required this.careerId,
     required this.anio,
     required this.fecha,
@@ -26,10 +93,67 @@ class EventoExamen {
     this.division,
     required this.actaUrl,
     this.legacy = false,
-    this.suspendido = false,
-  });
+    EstadoEventoExamen estado = EstadoEventoExamen.activa,
+    bool suspendido = false,
+    this.tituloEstado,
+    this.mensajeEstado,
+    this.fechaReprogramada,
+    this.horaReprogramada,
+    this.actaHabilitada = true,
+    this.visible = true,
+  }) : estado = suspendido && estado == EstadoEventoExamen.activa
+           ? EstadoEventoExamen.suspendida
+           : estado;
+
+  bool get suspendido =>
+      estado == EstadoEventoExamen.suspendida ||
+      estado == EstadoEventoExamen.cancelada;
+
+  bool get mostrarAvisoEstado => estado != EstadoEventoExamen.activa;
+
+  String get tituloEstadoEfectivo {
+    final custom = tituloEstado?.trim() ?? '';
+    return custom.isEmpty ? estado.tituloPredeterminado : custom;
+  }
+
+  String get mensajeEstadoEfectivo {
+    final custom = mensajeEstado?.trim() ?? '';
+    return custom.isEmpty ? estado.mensajePredeterminado : custom;
+  }
+
+  DateTime? get fechaVigente {
+    if (estado == EstadoEventoExamen.reprogramada &&
+        fechaReprogramada != null) {
+      return fechaReprogramada;
+    }
+    return fecha;
+  }
+
+  String? get horaVigente {
+    if (estado == EstadoEventoExamen.reprogramada &&
+        (horaReprogramada?.trim().isNotEmpty ?? false)) {
+      return horaReprogramada;
+    }
+    return hora;
+  }
+
+  bool get tieneFechaOriginalDistinta {
+    if (estado != EstadoEventoExamen.reprogramada ||
+        fecha == null ||
+        fechaReprogramada == null) {
+      return false;
+    }
+    return fecha!.year != fechaReprogramada!.year ||
+        fecha!.month != fechaReprogramada!.month ||
+        fecha!.day != fechaReprogramada!.day ||
+        (hora ?? '') != (horaReprogramada ?? '');
+  }
+
+  bool get puedeAbrirActa =>
+      actaHabilitada && (actaUrl?.trim().isNotEmpty ?? false);
 
   EventoExamen copyWith({
+    String? id,
     String? careerId,
     int? anio,
     DateTime? fecha,
@@ -40,9 +164,25 @@ class EventoExamen {
     String? division,
     String? actaUrl,
     bool? legacy,
+    EstadoEventoExamen? estado,
     bool? suspendido,
+    String? tituloEstado,
+    String? mensajeEstado,
+    DateTime? fechaReprogramada,
+    String? horaReprogramada,
+    bool? actaHabilitada,
+    bool? visible,
   }) {
+    var nextEstado = estado ?? this.estado;
+    if (suspendido == true && nextEstado == EstadoEventoExamen.activa) {
+      nextEstado = EstadoEventoExamen.suspendida;
+    } else if (suspendido == false &&
+        nextEstado == EstadoEventoExamen.suspendida) {
+      nextEstado = EstadoEventoExamen.activa;
+    }
+
     return EventoExamen(
+      id: id ?? this.id,
       careerId: careerId ?? this.careerId,
       anio: anio ?? this.anio,
       fecha: fecha ?? this.fecha,
@@ -53,17 +193,37 @@ class EventoExamen {
       division: division ?? this.division,
       actaUrl: actaUrl ?? this.actaUrl,
       legacy: legacy ?? this.legacy,
-      suspendido: suspendido ?? this.suspendido,
+      estado: nextEstado,
+      tituloEstado: tituloEstado ?? this.tituloEstado,
+      mensajeEstado: mensajeEstado ?? this.mensajeEstado,
+      fechaReprogramada: fechaReprogramada ?? this.fechaReprogramada,
+      horaReprogramada: horaReprogramada ?? this.horaReprogramada,
+      actaHabilitada: actaHabilitada ?? this.actaHabilitada,
+      visible: visible ?? this.visible,
     );
   }
 
   DateTime? get fechaHora {
-    if (fecha == null) return null;
-    if (hora == null) return DateTime(fecha!.year, fecha!.month, fecha!.day);
-    final parts = hora!.split(':');
+    final effectiveDate = fechaVigente;
+    final effectiveTime = horaVigente;
+    if (effectiveDate == null) return null;
+    if (effectiveTime == null) {
+      return DateTime(
+        effectiveDate.year,
+        effectiveDate.month,
+        effectiveDate.day,
+      );
+    }
+    final parts = effectiveTime.split(':');
     final hours = int.parse(parts[0]);
     final minutes = int.parse(parts[1]);
-    return DateTime(fecha!.year, fecha!.month, fecha!.day, hours, minutes);
+    return DateTime(
+      effectiveDate.year,
+      effectiveDate.month,
+      effectiveDate.day,
+      hours,
+      minutes,
+    );
   }
 
   static DateTime _parseFechaIso(String iso) {
@@ -119,6 +279,13 @@ class EventoExamen {
       return text.isEmpty ? fallback : text;
     }
 
+    String? nullableString(List<String> keys) {
+      final value = rawValue(keys);
+      if (value == null) return null;
+      final text = sanitizarTexto(value.toString()).trim();
+      return text.isEmpty ? null : text;
+    }
+
     int? optInt(String key) {
       final value = rawValue([key, _snakeCase(key)]);
       if (value == null) return null;
@@ -144,19 +311,23 @@ class EventoExamen {
       return _normalizeHora(text);
     }
 
-    bool optLegacy() {
-      final value = rawValue(['legacy']);
+    bool optBool(List<String> keys, {required bool fallback}) {
+      final value = rawValue(keys);
       if (value is bool) return value;
       if (value is num) return value != 0;
-      return false;
+      if (value is String) {
+        final text = value.trim().toLowerCase();
+        if (text == 'true' || text == '1' || text == 'si' || text == 'sí') {
+          return true;
+        }
+        if (text == 'false' || text == '0' || text == 'no') return false;
+      }
+      return fallback;
     }
 
-    String? optActaUrl() {
-      final value = rawValue(['actaUrl', 'acta_url']);
-      if (value == null) return null;
-      final text = sanitizarTexto(value.toString()).trim();
-      return text.isEmpty ? null : text;
-    }
+    bool optLegacy() => optBool(['legacy'], fallback: false);
+
+    String? optActaUrl() => nullableString(['actaUrl', 'acta_url']);
 
     List<String> optDocentes() {
       final value = j['docentes'];
@@ -173,31 +344,40 @@ class EventoExamen {
       return [text];
     }
 
-    bool optSuspendido() {
-      final value = rawValue(['suspendido', 'suspendida', 'is_suspended', 'estado']);
-      if (value is bool) return value;
-      if (value is num) return value != 0;
-      if (value is String) {
-        final text = value.trim().toLowerCase();
-        if (text == 'suspendido' || text == 'suspendida' || text == 'true') return true;
-      }
-      final mat = (j['materia'] ?? '').toString().toUpperCase();
-      if (mat.contains('SUSPENDIDA') || mat.contains('SUSPENDIDO')) return true;
-      return false;
-    }
+    final materia = reqString('materia');
+    final legacySuspended = optBool([
+      'suspendido',
+      'suspendida',
+      'is_suspended',
+    ], fallback: false);
+    final estado = estadoEventoExamenDesdeValor(
+      rawValue(['estado']),
+      suspendido: legacySuspended,
+      materia: materia,
+    );
 
     return EventoExamen(
+      id: nullableString(['id']),
       careerId: reqString('careerId'),
       anio: optInt('anio'),
       fecha: optFecha('fecha'),
       hora: optHora('hora'),
-      materia: reqString('materia'),
+      materia: materia,
       instancia: optString('instancia', 'llamado_1'),
       docentes: optDocentes(),
-      division: optString('division', ''),
+      division: nullableString(['division']),
       actaUrl: optActaUrl(),
       legacy: optLegacy(),
-      suspendido: optSuspendido(),
+      estado: estado,
+      tituloEstado: nullableString(['tituloEstado', 'titulo_estado']),
+      mensajeEstado: nullableString(['mensajeEstado', 'mensaje_estado']),
+      fechaReprogramada: optFecha('fechaReprogramada'),
+      horaReprogramada: optHora('horaReprogramada'),
+      actaHabilitada: optBool([
+        'actaHabilitada',
+        'acta_habilitada',
+      ], fallback: true),
+      visible: optBool(['visible'], fallback: true),
     );
   }
 

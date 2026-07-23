@@ -1,9 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ResultadoLimpiezaMasivaAdministrador {
-  const ResultadoLimpiezaMasivaAdministrador({
-    required this.summary,
-  });
+  const ResultadoLimpiezaMasivaAdministrador({required this.summary});
 
   final Map<String, dynamic> summary;
 }
@@ -18,10 +16,7 @@ class RepositorioLimpiezaMasivaAdministrador {
   }) async {
     final response = await client.functions.invoke(
       'admin-bulk-cleanup',
-      body: {
-        'device_id': adminDeviceId,
-        'action': action,
-      },
+      body: {'device_id': adminDeviceId, 'action': action},
     );
 
     final data = response.data;
@@ -31,7 +26,8 @@ class RepositorioLimpiezaMasivaAdministrador {
 
     if (data['ok'] != true) {
       throw Exception(
-          (data['error'] ?? 'No se pudo completar la limpieza').toString());
+        (data['error'] ?? 'No se pudo completar la limpieza').toString(),
+      );
     }
 
     final summary = data['summary'];

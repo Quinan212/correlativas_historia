@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../laboratorio_atlassian/tema/tema_atlassian.dart';
 import '../proveedores/proveedores_acceso_administrador.dart';
 
 class ActividadAdministradorPantalla extends ConsumerWidget {
@@ -10,17 +11,16 @@ class ActividadAdministradorPantalla extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final observedDevicesAsync =
-        ref.watch(proveedorDispositivosObservadosAdministrador);
+    final observedDevicesAsync = ref.watch(
+      proveedorDispositivosObservadosAdministrador,
+    );
     final width = MediaQuery.of(context).size.width;
     final isDesktop = width >= 900;
 
     return Scaffold(
-      backgroundColor:
-          isDark ? const Color(0xFF030712) : const Color(0xFFF9FAFB),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Actividad reciente'),
-        centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
@@ -60,25 +60,29 @@ class ActividadAdministradorPantalla extends ConsumerWidget {
                         physics: const NeverScrollableScrollPhysics(),
                         gridDelegate:
                             const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 4,
-                          crossAxisSpacing: 16,
-                          mainAxisSpacing: 16,
-                          childAspectRatio: 0.85,
-                        ),
+                              crossAxisCount: 4,
+                              crossAxisSpacing: 16,
+                              mainAxisSpacing: 16,
+                              childAspectRatio: 0.85,
+                            ),
                         itemCount: items.length,
                         itemBuilder: (context, index) {
                           return _TarjetaDispositivoObservado(
-                              device: items[index]);
+                            device: items[index],
+                          );
                         },
                       )
                     else
                       Column(
                         children: items
-                            .map((item) => Padding(
-                                  padding: const EdgeInsets.only(bottom: 12),
-                                  child: _TarjetaDispositivoObservado(
-                                      device: item),
-                                ))
+                            .map(
+                              (item) => Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: _TarjetaDispositivoObservado(
+                                  device: item,
+                                ),
+                              ),
+                            )
                             .toList(),
                       ),
                   ],
@@ -111,11 +115,9 @@ class _EstadisticasEncabezado extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF0B1220) : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isDark ? const Color(0xFF243041) : const Color(0xFFE5E7EB),
-        ),
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -130,7 +132,7 @@ class _EstadisticasEncabezado extends StatelessWidget {
           Text(
             'Se detectaron $totalDevices dispositivos con actividad en las últimas 24 horas.',
             style: theme.textTheme.bodyLarge?.copyWith(
-              color: isDark ? Colors.white70 : Colors.black87,
+              color: theme.colorScheme.onSurface,
             ),
           ),
         ],
@@ -152,18 +154,16 @@ class _TarjetaDispositivoObservado extends StatelessWidget {
     final initials = _buildInitials(displayLabel);
 
     return Material(
-      color: isDark ? const Color(0xFF0B1220) : Colors.white,
-      borderRadius: BorderRadius.circular(20),
+      color: theme.colorScheme.surface,
+      borderRadius: BorderRadius.circular(14),
       child: InkWell(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(14),
         onTap: () => _openDetails(context),
         child: Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: isDark ? const Color(0xFF243041) : const Color(0xFFE5E7EB),
-            ),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: theme.colorScheme.outlineVariant),
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -177,8 +177,9 @@ class _TarjetaDispositivoObservado extends StatelessWidget {
                       shape: BoxShape.circle,
                       color: theme.colorScheme.primary.withValues(alpha: 0.12),
                       border: Border.all(
-                        color:
-                            theme.colorScheme.primary.withValues(alpha: 0.25),
+                        color: theme.colorScheme.primary.withValues(
+                          alpha: 0.25,
+                        ),
                         width: 2,
                       ),
                     ),
@@ -200,11 +201,10 @@ class _TarjetaDispositivoObservado extends StatelessWidget {
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: online
-                            ? const Color(0xFF22C55E)
-                            : const Color(0xFF94A3B8),
+                            ? PaletaAtlassian.success
+                            : theme.colorScheme.onSurfaceVariant,
                         border: Border.all(
-                          color:
-                              isDark ? const Color(0xFF0B1220) : Colors.white,
+                          color: theme.colorScheme.surface,
                           width: 3,
                         ),
                       ),
@@ -226,7 +226,7 @@ class _TarjetaDispositivoObservado extends StatelessWidget {
               Text(
                 online ? 'En línea' : _formatRelativeSeen(device.lastSeenAt),
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: online ? const Color(0xFF16A34A) : theme.hintColor,
+                  color: online ? PaletaAtlassian.success : theme.hintColor,
                   fontWeight: online ? FontWeight.bold : FontWeight.normal,
                 ),
               ),
@@ -245,10 +245,12 @@ class _TarjetaDispositivoObservado extends StatelessWidget {
     showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: isDark ? const Color(0xFF0B1220) : Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: Text(displayLabel,
-            style: const TextStyle(fontWeight: FontWeight.w900)),
+        backgroundColor: theme.colorScheme.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        title: Text(
+          displayLabel,
+          style: const TextStyle(fontWeight: FontWeight.w900),
+        ),
         content: SizedBox(
           width: 400,
           child: Column(
@@ -258,8 +260,9 @@ class _TarjetaDispositivoObservado extends StatelessWidget {
               _FilaDetalle(label: 'ID Dispositivo', value: device.deviceId),
               const SizedBox(height: 12),
               _FilaDetalle(
-                  label: 'Última conexión',
-                  value: _formatFullDate(device.lastSeenAt)),
+                label: 'Última conexión',
+                value: _formatFullDate(device.lastSeenAt),
+              ),
               if (device.notes != null && device.notes!.isNotEmpty) ...[
                 const SizedBox(height: 12),
                 _FilaDetalle(label: 'Notas', value: device.notes!),
@@ -289,9 +292,13 @@ class _FilaDetalle extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label,
-            style: theme.textTheme.labelSmall?.copyWith(
-                fontWeight: FontWeight.bold, color: theme.hintColor)),
+        Text(
+          label,
+          style: theme.textTheme.labelSmall?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: theme.hintColor,
+          ),
+        ),
         const SizedBox(height: 2),
         Text(value, style: theme.textTheme.bodyMedium),
       ],
@@ -318,9 +325,12 @@ class _EstadoVacio extends StatelessWidget {
         children: [
           Icon(icon, size: 64, color: theme.hintColor.withValues(alpha: 0.5)),
           const SizedBox(height: 16),
-          Text(title,
-              style: theme.textTheme.titleLarge
-                  ?.copyWith(fontWeight: FontWeight.w900)),
+          Text(
+            title,
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w900,
+            ),
+          ),
           const SizedBox(height: 8),
           Text(subtitle, style: theme.textTheme.bodyMedium),
         ],

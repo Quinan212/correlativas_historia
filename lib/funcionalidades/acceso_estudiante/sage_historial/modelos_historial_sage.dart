@@ -141,12 +141,22 @@ class MateriaHistorialSage {
     required this.nombre,
     required this.estado,
     required this.anio,
+    this.fecha,
+    this.nota,
   });
 
   final String id;
   final String nombre;
   final String estado;
   final int? anio;
+
+  /// Campo de compatibilidad. El Historial web no lo completa.
+  /// La fecha académica se obtiene desde la Libreta de Calificaciones.
+  final String? fecha;
+
+  /// Campo de compatibilidad. El Historial web no lo completa.
+  /// La calificación se obtiene desde la Libreta de Calificaciones.
+  final String? nota;
 }
 
 class ResultadoMateriasSage {

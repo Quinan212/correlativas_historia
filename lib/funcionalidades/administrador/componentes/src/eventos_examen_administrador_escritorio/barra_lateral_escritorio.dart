@@ -18,11 +18,9 @@ class _BarraLateralEscritorio extends StatelessWidget {
     return Container(
       width: 280,
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF0B1220) : Colors.white,
+        color: theme.colorScheme.surface,
         border: Border(
-          right: BorderSide(
-            color: isDark ? const Color(0xFF243041) : const Color(0xFFE5E7EB),
-          ),
+          right: BorderSide(color: theme.colorScheme.outlineVariant),
         ),
       ),
       child: Column(
@@ -136,8 +134,9 @@ class _ItemBarraLateral extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          fontWeight:
-                              selected ? FontWeight.w900 : FontWeight.w700,
+                          fontWeight: selected
+                              ? FontWeight.w900
+                              : FontWeight.w700,
                           color: selected ? theme.colorScheme.primary : null,
                         ),
                       ),
@@ -173,11 +172,9 @@ class _NotaOperador extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF111827) : const Color(0xFFF9FAFB),
+        color: theme.colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: isDark ? const Color(0xFF243041) : const Color(0xFFE5E7EB),
-        ),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,

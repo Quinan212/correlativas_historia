@@ -345,31 +345,83 @@ class ExtractorHistorialSage {
     if (subgridLoaderVisible && subjectRowCount === 0) {
       return JSON.stringify({state:'loading', subjects:[], subgridLoaderVisible, subjectRowCount, dynamicTableId:'table[id\$="_t"]', requestedGridRow:true, masterRowFound:true, subgridContainerFound:true, dynamicTableFound:true});
     }
+    const normalizeKey = (value) => String(value ?? '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '_')
+      .replace(/^_+|_+\$/g, '');
+    const cleanValue = (value) => {
+      const raw = String(value ?? '').trim();
+      if (!raw.includes('<')) return raw;
+      const holder = frame.createElement('div');
+      holder.innerHTML = raw;
+      return String(holder.textContent ?? holder.innerText ?? raw).trim();
+    };
+    const valueByCandidates = (record, exact, contains) => {
+      const entries = Object.entries(record || {});
+      for (const candidate of exact) {
+        const match = entries.find(([key]) => normalizeKey(key) === candidate);
+        if (match) {
+          const value = cleanValue(match[1]);
+          if (value) return value;
+        }
+      }
+      for (const candidate of contains) {
+        const match = entries.find(([key]) => normalizeKey(key).includes(candidate));
+        if (match) {
+          const value = cleanValue(match[1]);
+          if (value) return value;
+        }
+      }
+      return '';
+    };
+    const normalizeSubject = (record, fallbackId) => ({
+      id: String(record?.id ?? fallbackId ?? ''),
+      asignatura: valueByCandidates(
+        record,
+        ['asignatura', 'materia'],
+        ['asignatura', 'materia'],
+      ),
+      estado_materia: valueByCandidates(
+        record,
+        ['estado_materia', 'estado'],
+        ['estado_materia', 'estado'],
+      ),
+      anio_materia: valueByCandidates(
+        record,
+        ['anio_materia', 'ano_materia', 'anio'],
+        ['anio_materia', 'ano_materia'],
+      ),
+    });
     let subjects = [];
     if (dataIds.length > 0) {
       subjects = dataIds.map(subjectRowId => {
         let row = {};
         try { row = tableApi.jqGrid('getRowData', subjectRowId) || {}; } catch (_) {}
-        return {
-          id: String(row.id ?? subjectRowId ?? ''),
-          asignatura: String(row.asignatura ?? ''),
-          estado_materia: String(row.estado_materia ?? ''),
-          anio_materia: String(row.anio_materia ?? ''),
-        };
+        return normalizeSubject(row, subjectRowId);
       });
     }
     if (!Array.isArray(subjects) || subjects.length === 0) {
-      const text = (row, name) =>
-        row?.querySelector('td[aria-describedby="' + dynamicTable.id + '_' + name + '"]')?.textContent?.trim() ?? '';
-      subjects = domRows.map(row => ({
-        id: String(row.id ?? ''),
-        asignatura: text(row, 'asignatura'),
-        estado_materia: text(row, 'estado_materia'),
-        anio_materia: text(row, 'anio_materia'),
-      }));
+      subjects = domRows.map(row => {
+        const record = {};
+        for (const cell of Array.from(row.querySelectorAll('td[aria-describedby]'))) {
+          const describedBy = String(cell.getAttribute('aria-describedby') ?? '');
+          const prefix = dynamicTable.id + '_';
+          const key = describedBy.startsWith(prefix)
+            ? describedBy.slice(prefix.length)
+            : describedBy;
+          record[key] = cell.textContent?.trim() ?? '';
+        }
+        record.id = String(row.id ?? '');
+        return normalizeSubject(record, row.id);
+      });
     }
     return JSON.stringify({state:subjects.length > 0 ? 'ready' : 'empty', subjects:subjects.map(item => ({
-      id:String(item.id ?? ''), name:String(item.asignatura ?? ''), status:String(item.estado_materia ?? ''), year:String(item.anio_materia ?? '')
+      id:String(item.id ?? ''),
+      name:String(item.asignatura ?? ''),
+      status:String(item.estado_materia ?? ''),
+      year:String(item.anio_materia ?? '')
     })), subgridLoaderVisible, subjectRowCount, dynamicTableId:'table[id\$="_t"]', requestedGridRow:true, masterRowFound:true, subgridContainerFound:true, dynamicTableFound:true});
   })()''';
 }

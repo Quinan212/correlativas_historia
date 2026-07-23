@@ -31,129 +31,135 @@ class ResumenNavegacionExamenAdministrador {
 }
 
 final proveedorResumenNavegacionExamenAdministrador =
-    FutureProvider<ResumenNavegacionExamenAdministrador>(
-        (ref) async {
-  final client = ref.watch(proveedorClienteSupabase);
-  if (client == null) {
-    return const ResumenNavegacionExamenAdministrador(
-      events: <EventoNavegacionExamenAdministrador>[],
-      deviceSummaries: <ResumenDispositivoNavegacionExamenAdministrador>[],
-    );
-  }
-
-  final eventRows = await client
-      .from('exam_navigation_events')
-      .select()
-      .order('created_at', ascending: false);
-  final events = eventRows
-      .cast<Map<String, dynamic>>()
-      .map(EventoNavegacionExamenAdministrador.fromMap)
-      .toList(growable: false);
-
-  if (events.isEmpty) {
-    return const ResumenNavegacionExamenAdministrador(
-      events: <EventoNavegacionExamenAdministrador>[],
-      deviceSummaries: <ResumenDispositivoNavegacionExamenAdministrador>[],
-    );
-  }
-
-  final deviceIds = events
-      .map((event) => event.deviceId.trim())
-      .where((value) => value.isNotEmpty)
-      .toSet()
-      .toList(growable: false);
-
-  final registryMap = deviceIds.isEmpty
-      ? const <String, EntradaRegistroDispositivo>{}
-      : await ref.read(
-          proveedorEntradasRegistroDispositivoPorIds(
-                  serializeDeviceIds(deviceIds))
-              .future,
+    FutureProvider<ResumenNavegacionExamenAdministrador>((ref) async {
+      final client = ref.watch(proveedorClienteSupabase);
+      if (client == null) {
+        return const ResumenNavegacionExamenAdministrador(
+          events: <EventoNavegacionExamenAdministrador>[],
+          deviceSummaries: <ResumenDispositivoNavegacionExamenAdministrador>[],
         );
-  final profileMap = deviceIds.isEmpty
-      ? const <String, PerfilDispositivo>{}
-      : await ref.read(
-          proveedorPerfilesDispositivoPorIds(serializeDeviceIds(deviceIds))
-              .future,
+      }
+
+      final eventRows = await client
+          .from('exam_navigation_events')
+          .select()
+          .order('created_at', ascending: false);
+      final events = eventRows
+          .cast<Map<String, dynamic>>()
+          .map(EventoNavegacionExamenAdministrador.fromMap)
+          .toList(growable: false);
+
+      if (events.isEmpty) {
+        return const ResumenNavegacionExamenAdministrador(
+          events: <EventoNavegacionExamenAdministrador>[],
+          deviceSummaries: <ResumenDispositivoNavegacionExamenAdministrador>[],
         );
+      }
 
-  final perDevice = <String, _DeviceCounters>{};
-  for (final event in events) {
-    final registry = registryMap[event.deviceId];
-    if (registry == null ||
-        !registry.isVisibleInHistories ||
-        !registry.isVisibleInAdminPanels) {
-      continue;
-    }
-    final counters = perDevice.putIfAbsent(
-      event.deviceId,
-      _DeviceCounters.new,
-    );
-    counters.total += 1;
-    if (event.isView) {
-      counters.views += 1;
-    } else {
-      counters.transitions += 1;
-    }
-    if (counters.lastSeenAt == null ||
-        event.createdAt.isAfter(counters.lastSeenAt!)) {
-      counters.lastSeenAt = event.createdAt;
-    }
-  }
+      final deviceIds = events
+          .map((event) => event.deviceId.trim())
+          .where((value) => value.isNotEmpty)
+          .toSet()
+          .toList(growable: false);
 
-  final summaries = perDevice.entries.map((entry) {
-    final deviceId = entry.key;
-    final counters = entry.value;
-    final profile = profileMap[deviceId];
-    final resolvedLabel = _etiquetaDispositivoResuelta(
-      deviceId: deviceId,
-      profile: profile,
-    );
-    return ResumenDispositivoNavegacionExamenAdministrador(
-      deviceId: deviceId,
-      label: resolvedLabel,
-      views: counters.views,
-      transitions: counters.transitions,
-      lastSeenAt: counters.lastSeenAt,
-    );
-  }).toList(growable: false)
-    ..sort((a, b) {
-      final aSeen = a.lastSeenAt;
-      final bSeen = b.lastSeenAt;
-      if (aSeen == null && bSeen == null) return a.label.compareTo(b.label);
-      if (aSeen == null) return 1;
-      if (bSeen == null) return -1;
-      return bSeen.compareTo(aSeen);
-    });
+      final registryMap = deviceIds.isEmpty
+          ? const <String, EntradaRegistroDispositivo>{}
+          : await ref.read(
+              proveedorEntradasRegistroDispositivoPorIds(
+                serializeDeviceIds(deviceIds),
+              ).future,
+            );
+      final profileMap = deviceIds.isEmpty
+          ? const <String, PerfilDispositivo>{}
+          : await ref.read(
+              proveedorPerfilesDispositivoPorIds(
+                serializeDeviceIds(deviceIds),
+              ).future,
+            );
 
-  return ResumenNavegacionExamenAdministrador(
-    events: events,
-    deviceSummaries: summaries,
-  );
-}, isAutoDispose: true);
+      final perDevice = <String, _DeviceCounters>{};
+      for (final event in events) {
+        final registry = registryMap[event.deviceId];
+        if (registry == null ||
+            !registry.isVisibleInHistories ||
+            !registry.isVisibleInAdminPanels) {
+          continue;
+        }
+        final counters = perDevice.putIfAbsent(
+          event.deviceId,
+          _DeviceCounters.new,
+        );
+        counters.total += 1;
+        if (event.isView) {
+          counters.views += 1;
+        } else {
+          counters.transitions += 1;
+        }
+        if (counters.lastSeenAt == null ||
+            event.createdAt.isAfter(counters.lastSeenAt!)) {
+          counters.lastSeenAt = event.createdAt;
+        }
+      }
 
-final proveedorEventosNavegacionExamenPorDispositivoAdministrador = Provider
-    .family<List<EventoNavegacionExamenAdministrador>, String>(
-  (ref, deviceId) {
-    final events = ref
-            .watch(proveedorResumenNavegacionExamenAdministrador)
-            .value
-            ?.events ??
-        const <EventoNavegacionExamenAdministrador>[];
-    final visibleDeviceIds = ref
-            .watch(proveedorResumenNavegacionExamenAdministrador)
-            .value
-            ?.deviceSummaries
-            .map((summary) => summary.deviceId)
-            .toSet() ??
-        const <String>{};
-    return events
-        .where((event) => visibleDeviceIds.contains(event.deviceId))
-        .where((event) => event.deviceId == deviceId)
-        .toList(growable: false);
-  },
-  isAutoDispose: true,
-);
+      final summaries =
+          perDevice.entries
+              .map((entry) {
+                final deviceId = entry.key;
+                final counters = entry.value;
+                final profile = profileMap[deviceId];
+                final resolvedLabel = _etiquetaDispositivoResuelta(
+                  deviceId: deviceId,
+                  profile: profile,
+                );
+                return ResumenDispositivoNavegacionExamenAdministrador(
+                  deviceId: deviceId,
+                  label: resolvedLabel,
+                  views: counters.views,
+                  transitions: counters.transitions,
+                  lastSeenAt: counters.lastSeenAt,
+                );
+              })
+              .toList(growable: false)
+            ..sort((a, b) {
+              final aSeen = a.lastSeenAt;
+              final bSeen = b.lastSeenAt;
+              if (aSeen == null && bSeen == null)
+                return a.label.compareTo(b.label);
+              if (aSeen == null) return 1;
+              if (bSeen == null) return -1;
+              return bSeen.compareTo(aSeen);
+            });
+
+      return ResumenNavegacionExamenAdministrador(
+        events: events,
+        deviceSummaries: summaries,
+      );
+    }, isAutoDispose: true);
+
+final proveedorEventosNavegacionExamenPorDispositivoAdministrador =
+    Provider.family<List<EventoNavegacionExamenAdministrador>, String>((
+      ref,
+      deviceId,
+    ) {
+      final events =
+          ref
+              .watch(proveedorResumenNavegacionExamenAdministrador)
+              .value
+              ?.events ??
+          const <EventoNavegacionExamenAdministrador>[];
+      final visibleDeviceIds =
+          ref
+              .watch(proveedorResumenNavegacionExamenAdministrador)
+              .value
+              ?.deviceSummaries
+              .map((summary) => summary.deviceId)
+              .toSet() ??
+          const <String>{};
+      return events
+          .where((event) => visibleDeviceIds.contains(event.deviceId))
+          .where((event) => event.deviceId == deviceId)
+          .toList(growable: false);
+    }, isAutoDispose: true);
 
 class _DeviceCounters {
   int total = 0;

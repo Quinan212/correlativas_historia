@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../laboratorio_atlassian/tema/tema_atlassian.dart';
 import '../modelos/solicitud_verificacion.dart';
 import '../proveedores/proveedores_verificacion.dart';
 import '../componentes/tarjeta_solicitud_verificacion.dart';
@@ -17,11 +18,9 @@ class SolicitudesVerificacionPantalla extends ConsumerWidget {
     final isDesktop = width >= 900;
 
     return Scaffold(
-      backgroundColor:
-          isDark ? const Color(0xFF030712) : const Color(0xFFF9FAFB),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Tus solicitudes'),
-        centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
@@ -66,8 +65,9 @@ class SolicitudesVerificacionPantalla extends ConsumerWidget {
                           ...items.map(
                             (item) => Padding(
                               padding: const EdgeInsets.only(bottom: 12),
-                              child:
-                                  TarjetaSolicitudVerificacion(request: item),
+                              child: TarjetaSolicitudVerificacion(
+                                request: item,
+                              ),
                             ),
                           ),
                         ],
@@ -96,7 +96,8 @@ class SolicitudesVerificacionPantalla extends ConsumerWidget {
 }
 
 SolicitudVerificacion? _latestReviewedRequest(
-    List<SolicitudVerificacion> items) {
+  List<SolicitudVerificacion> items,
+) {
   final reviewed = items
       .where((item) => item.status != EstadoSolicitudVerificacion.pending)
       .toList(growable: false);
@@ -134,12 +135,20 @@ class _BannerVerificacionLista extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final approved = request.status == EstadoSolicitudVerificacion.approved;
-    final background =
-        approved ? const Color(0xFFE6F5F1) : const Color(0xFFF7ECE6);
-    final foreground =
-        approved ? const Color(0xFF195F56) : const Color(0xFF8A4D3A);
-    final icon =
-        approved ? Icons.mark_email_read_rounded : Icons.info_outline_rounded;
+    final dark = theme.brightness == Brightness.dark;
+    final background = approved
+        ? (dark
+              ? PaletaAtlassian.successSubtleDark
+              : PaletaAtlassian.successSubtle)
+        : (dark
+              ? PaletaAtlassian.warningSubtleDark
+              : PaletaAtlassian.warningSubtle);
+    final foreground = approved
+        ? (dark ? const Color(0xFFBAF3DB) : const Color(0xFF164B35))
+        : (dark ? const Color(0xFFFFF0B3) : const Color(0xFF7F5F01));
+    final icon = approved
+        ? Icons.mark_email_read_rounded
+        : Icons.info_outline_rounded;
 
     return Container(
       width: double.infinity,
@@ -185,11 +194,9 @@ class _TarjetaSeccion extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF0B1220) : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isDark ? const Color(0xFF243041) : const Color(0xFFE5E7EB),
-        ),
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

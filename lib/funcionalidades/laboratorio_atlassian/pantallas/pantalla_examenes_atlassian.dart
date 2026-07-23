@@ -2,9 +2,14 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:skeletonizer/skeletonizer.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../administrador/datos/repositorio_eventos_examen_administrador.dart';
+import '../../administrador/proveedores/proveedores_acceso_administrador.dart';
 import '../../examenes/datos/repositorio_examenes.dart';
 import '../../examenes/modelos/evento_examen.dart';
 import '../busqueda/modelos_busqueda_atlassian.dart';
@@ -12,7 +17,7 @@ import '../componentes/componentes_atlassian.dart';
 import '../tema/tema_atlassian.dart';
 import 'utilidades_atlassian.dart';
 
-class PantallaExamenesAtlassian extends StatefulWidget {
+class PantallaExamenesAtlassian extends ConsumerStatefulWidget {
   const PantallaExamenesAtlassian({
     super.key,
     required this.onSearch,
@@ -23,25 +28,31 @@ class PantallaExamenesAtlassian extends StatefulWidget {
   final ValueListenable<SolicitudExamenesAtlassian?> requestListenable;
 
   @override
-  State<PantallaExamenesAtlassian> createState() =>
+  ConsumerState<PantallaExamenesAtlassian> createState() =>
       _PantallaExamenesAtlassianState();
 }
 
-class _PantallaExamenesAtlassianState extends State<PantallaExamenesAtlassian> {
+class _PantallaExamenesAtlassianState
+    extends ConsumerState<PantallaExamenesAtlassian> {
   static const _repository = RepositorioExamenes();
+  static const _adminRepository = RepositorioEventosExamenAdministrador();
 
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   late Future<List<EventoExamen>> _future;
+  RealtimeChannel? _realtimeChannel;
+  Timer? _realtimeRefreshDebounce;
   String _careerId = 'historia';
   String _scope = 'todos';
   int? _year;
   String _query = '';
+  bool _savingQuickControl = false;
 
   @override
   void initState() {
     super.initState();
     _future = _load();
+    _subscribeRealtime();
     widget.requestListenable.addListener(_applyExternalRequest);
     WidgetsBinding.instance.addPostFrameCallback(
       (_) => _applyExternalRequest(),
@@ -87,9 +98,35 @@ class _PantallaExamenesAtlassianState extends State<PantallaExamenesAtlassian> {
   @override
   void dispose() {
     widget.requestListenable.removeListener(_applyExternalRequest);
+    _realtimeRefreshDebounce?.cancel();
+    final channel = _realtimeChannel;
+    if (channel != null) {
+      unawaited(
+        Supabase.instance.client.removeChannel(channel).then<void>((_) {}),
+      );
+    }
     _searchController.dispose();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  void _subscribeRealtime() {
+    _realtimeChannel = Supabase.instance.client
+        .channel('exam-events-atlassian-list')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'exam_events',
+          callback: (_) => _scheduleRealtimeRefresh(),
+        )
+        .subscribe();
+  }
+
+  void _scheduleRealtimeRefresh() {
+    _realtimeRefreshDebounce?.cancel();
+    _realtimeRefreshDebounce = Timer(const Duration(milliseconds: 250), () {
+      if (mounted) unawaited(_refresh());
+    });
   }
 
   Future<List<EventoExamen>> _load() async {
@@ -268,8 +305,61 @@ class _PantallaExamenesAtlassianState extends State<PantallaExamenesAtlassian> {
     );
   }
 
+  Future<void> _openQuickControlSheet(EventoExamen event) async {
+    if (_savingQuickControl) return;
+    final id = event.id?.trim() ?? '';
+    if (id.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Esta mesa no admite edición remota.')),
+      );
+      return;
+    }
+
+    final access = await ref.read(
+      proveedorEstadoDispositivoAdministrador.future,
+    );
+    if (!mounted || !access.isAdmin) return;
+
+    final result = await mostrarHojaAtlassian<_ResultadoControlRapidoExamen>(
+      context: context,
+      builder: (sheetContext) =>
+          _HojaControlRapidoExamenAtlassian(event: event),
+    );
+    if (result == null || !mounted) return;
+
+    setState(() => _savingQuickControl = true);
+    try {
+      await _adminRepository.updateQuickControls(
+        client: Supabase.instance.client,
+        adminDeviceId: access.deviceId,
+        id: id,
+        currentStatus: event.estado,
+        status: result.status,
+        actEnabled: result.actEnabled,
+        actUrl: result.actUrl,
+      );
+      await _refresh();
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Cambios guardados.')));
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No se pudieron guardar los cambios: $error')),
+      );
+    } finally {
+      if (mounted) setState(() => _savingQuickControl = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final adminAccess = ref
+        .watch(proveedorEstadoDispositivoAdministrador)
+        .asData
+        ?.value;
+    final isAdmin = adminAccess?.isAdmin == true;
     final headerHeight = MediaQuery.paddingOf(context).top + 72;
     final header = EncabezadoSeccionAtlassianColapsable(
       scrollController: _scrollController,
@@ -413,6 +503,13 @@ class _PantallaExamenesAtlassianState extends State<PantallaExamenesAtlassian> {
                                     event: entry.value[index],
                                     onTap: () =>
                                         _openDetail(entry.value[index]),
+                                    onLongPress: isAdmin && !_savingQuickControl
+                                        ? () => unawaited(
+                                            _openQuickControlSheet(
+                                              entry.value[index],
+                                            ),
+                                          )
+                                        : null,
                                   ),
                                   if (index != entry.value.length - 1)
                                     const Divider(height: 1),
@@ -429,15 +526,11 @@ class _PantallaExamenesAtlassianState extends State<PantallaExamenesAtlassian> {
               },
             ),
           ),
-          Align(
-            alignment: Alignment.topCenter,
-            child: header,
-          ),
+          Align(alignment: Alignment.topCenter, child: header),
         ],
       ),
     );
   }
-
 
   Map<String, List<EventoExamen>> _group(List<EventoExamen> events) {
     final groups = <String, List<EventoExamen>>{};
@@ -581,7 +674,7 @@ class _ResumenExamenesAtlassian extends StatelessWidget {
       final date = event.fechaHora;
       return date != null && date.isAfter(now);
     }).length;
-    final withActa = events.where((event) => event.actaUrl != null).length;
+    final withActa = events.where((event) => event.puedeAbrirActa).length;
     final colloquiums = events
         .where((event) => event.instancia == 'coloquio')
         .length;
@@ -629,23 +722,27 @@ class _ResumenExamenesAtlassian extends StatelessWidget {
 }
 
 class _FilaExamenAtlassian extends StatelessWidget {
-  const _FilaExamenAtlassian({required this.event, required this.onTap});
+  const _FilaExamenAtlassian({
+    required this.event,
+    required this.onTap,
+    this.onLongPress,
+  });
 
   final EventoExamen event;
   final VoidCallback onTap;
+  final VoidCallback? onLongPress;
 
   @override
   Widget build(BuildContext context) {
     final future = event.fechaHora?.isAfter(DateTime.now()) ?? false;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final isSuspended = event.suspendido;
+    final hasStatus = event.mostrarAvisoEstado;
+    final statusColor = _statusForeground(context, event.estado);
 
     return InkWell(
       onTap: onTap,
+      onLongPress: onLongPress,
       child: Container(
-        color: isSuspended
-            ? (isDark ? const Color(0xFF262112) : const Color(0xFFFFFBE6))
-            : null,
+        color: hasStatus ? _statusBackground(context, event.estado) : null,
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -654,26 +751,28 @@ class _FilaExamenAtlassian extends StatelessWidget {
               width: 42,
               height: 42,
               decoration: BoxDecoration(
-                color: isSuspended
-                    ? (isDark ? const Color(0xFF4A3B00) : const Color(0xFFFFF3CD))
+                color: hasStatus
+                    ? _statusIconBackground(context, event.estado)
                     : (future
-                        ? Theme.of(context).colorScheme.primaryContainer
-                        : Theme.of(context).colorScheme.surfaceContainerHighest),
+                          ? Theme.of(context).colorScheme.primaryContainer
+                          : Theme.of(
+                              context,
+                            ).colorScheme.surfaceContainerHighest),
                 borderRadius: BorderRadius.circular(RadioAtlassian.medium),
               ),
               child: Icon(
-                isSuspended
-                    ? Icons.warning_amber_rounded
+                hasStatus
+                    ? _statusIcon(event.estado)
                     : (future
-                        ? Icons.event_available_rounded
-                        : Icons.event_note_rounded),
-                color: isSuspended
-                    ? (isDark ? const Color(0xFFFFD54F) : const Color(0xFFB78103))
+                          ? Icons.event_available_rounded
+                          : Icons.event_note_rounded),
+                color: hasStatus
+                    ? statusColor
                     : (future
-                        ? (isDark
-                            ? Colors.white
-                            : Theme.of(context).colorScheme.primary)
-                        : Theme.of(context).colorScheme.onSurfaceVariant),
+                          ? (Theme.of(context).brightness == Brightness.dark
+                                ? Colors.white
+                                : Theme.of(context).colorScheme.primary)
+                          : Theme.of(context).colorScheme.onSurfaceVariant),
               ),
             ),
             const SizedBox(width: 12),
@@ -688,24 +787,26 @@ class _FilaExamenAtlassian extends StatelessWidget {
                     style: Theme.of(context).textTheme.titleSmall,
                   ),
                   const SizedBox(height: 4),
-                  if (isSuspended) ...[
+                  if (hasStatus) ...[
                     Row(
                       children: [
                         Icon(
                           Icons.info_outline_rounded,
                           size: 14,
-                          color: isDark ? const Color(0xFFFFD54F) : const Color(0xFFB78103),
+                          color: statusColor,
                         ),
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
-                            'Pendiente de reprogramación',
+                            event.mensajeEstadoEfectivo,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: isDark ? const Color(0xFFFFD54F) : const Color(0xFFB78103),
-                              fontWeight: FontWeight.w600,
-                            ),
+                            softWrap: false,
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: statusColor,
+                                  fontWeight: FontWeight.w600,
+                                ),
                           ),
                         ),
                       ],
@@ -713,7 +814,10 @@ class _FilaExamenAtlassian extends StatelessWidget {
                     const SizedBox(height: 2),
                   ],
                   Text(
-                    formatoFechaHoraAtlassian(event.fecha, event.hora),
+                    formatoFechaHoraAtlassian(
+                      event.fechaVigente,
+                      event.horaVigente,
+                    ),
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                   if (event.docentes.isNotEmpty) ...[
@@ -732,10 +836,10 @@ class _FilaExamenAtlassian extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                if (isSuspended)
-                  const LozengeAtlassian(
-                    label: 'SUSPENDIDA',
-                    appearance: AparienciaLozengeAtlassian.warning,
+                if (hasStatus)
+                  LozengeAtlassian(
+                    label: event.estado.etiqueta,
+                    appearance: _statusAppearance(event.estado),
                   )
                 else
                   LozengeAtlassian(
@@ -745,7 +849,7 @@ class _FilaExamenAtlassian extends StatelessWidget {
                         : AparienciaLozengeAtlassian.brand,
                   ),
                 const SizedBox(height: 6),
-                if ((event.actaUrl ?? '').trim().isNotEmpty) ...[
+                if (event.puedeAbrirActa) ...[
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -775,25 +879,155 @@ class _FilaExamenAtlassian extends StatelessWidget {
   }
 }
 
-class PantallaDetalleExamenAtlassian extends StatelessWidget {
+class PantallaDetalleExamenAtlassian extends ConsumerStatefulWidget {
   const PantallaDetalleExamenAtlassian({super.key, required this.event});
 
   final EventoExamen event;
 
-  Future<void> _openAct(BuildContext context) async {
-    final raw = event.actaUrl?.trim() ?? '';
+  @override
+  ConsumerState<PantallaDetalleExamenAtlassian> createState() =>
+      _PantallaDetalleExamenAtlassianState();
+}
+
+class _PantallaDetalleExamenAtlassianState
+    extends ConsumerState<PantallaDetalleExamenAtlassian> {
+  static const _repository = RepositorioExamenes();
+  static const _adminRepository = RepositorioEventosExamenAdministrador();
+
+  late EventoExamen _event;
+  RealtimeChannel? _realtimeChannel;
+  Timer? _reloadDebounce;
+  bool _savingDetails = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _event = widget.event;
+    _subscribeRealtime();
+  }
+
+  @override
+  void dispose() {
+    _reloadDebounce?.cancel();
+    final channel = _realtimeChannel;
+    if (channel != null) {
+      unawaited(
+        Supabase.instance.client.removeChannel(channel).then<void>((_) {}),
+      );
+    }
+    super.dispose();
+  }
+
+  void _subscribeRealtime() {
+    final id = _event.id?.trim() ?? '';
+    if (id.isEmpty) return;
+    _realtimeChannel = Supabase.instance.client
+        .channel('exam-event-detail-$id')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'exam_events',
+          callback: (payload) {
+            final changedId =
+                (payload.newRecord['id'] ?? payload.oldRecord['id'])
+                    ?.toString();
+            if (changedId != id) return;
+            _reloadDebounce?.cancel();
+            _reloadDebounce = Timer(
+              const Duration(milliseconds: 180),
+              () => unawaited(_reloadCurrentEvent()),
+            );
+          },
+        )
+        .subscribe();
+  }
+
+  Future<void> _reloadCurrentEvent() async {
+    final id = _event.id?.trim() ?? '';
+    if (id.isEmpty || !mounted) return;
+    final updated = await _repository.loadById(id);
+    if (!mounted) return;
+    if (updated == null || !updated.visible) {
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('La mesa ya no está disponible.')),
+      );
+      return;
+    }
+    final effective = (updated.actaUrl?.trim().isNotEmpty ?? false)
+        ? updated
+        : updated.copyWith(actaUrl: _event.actaUrl);
+    setState(() => _event = effective);
+  }
+
+  Future<void> _openAct() async {
+    if (!_event.puedeAbrirActa) return;
+    final raw = _event.actaUrl?.trim() ?? '';
     final uri = Uri.tryParse(raw);
     if (uri == null ||
         !await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-      if (!context.mounted) return;
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('No se pudo abrir el acta.')),
       );
     }
   }
 
+  Future<void> _openDetailEditSheet() async {
+    if (_savingDetails) return;
+    final id = _event.id?.trim() ?? '';
+    if (id.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Esta mesa no admite edición remota.')),
+      );
+      return;
+    }
+
+    final access = await ref.read(
+      proveedorEstadoDispositivoAdministrador.future,
+    );
+    if (!mounted || !access.isAdmin) return;
+
+    final result = await mostrarHojaAtlassian<_ResultadoEdicionDetalleExamen>(
+      context: context,
+      builder: (sheetContext) =>
+          _HojaEditarDetalleExamenAtlassian(event: _event),
+    );
+    if (result == null || !mounted) return;
+
+    setState(() => _savingDetails = true);
+    try {
+      await _adminRepository.updateScheduleAndTeachers(
+        client: Supabase.instance.client,
+        adminDeviceId: access.deviceId,
+        event: _event,
+        date: result.date,
+        time: result.time,
+        teachers: result.teachers,
+      );
+      await _reloadCurrentEvent();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Fecha, hora y docentes actualizados.')),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No se pudieron guardar los cambios: $error')),
+      );
+    } finally {
+      if (mounted) setState(() => _savingDetails = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final event = _event;
+    final adminAccess = ref
+        .watch(proveedorEstadoDispositivoAdministrador)
+        .asData
+        ?.value;
+    final isAdmin = adminAccess?.isAdmin == true;
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Column(
@@ -807,6 +1041,17 @@ class PantallaDetalleExamenAtlassian extends StatelessWidget {
               tooltip: 'Volver',
               onPressed: () => Navigator.of(context).pop(),
             ),
+            actions: isAdmin
+                ? [
+                    BotonIconoAtlassian(
+                      icon: Icons.edit_calendar_rounded,
+                      tooltip: 'Editar fecha, hora y docentes',
+                      onPressed: _savingDetails
+                          ? null
+                          : () => unawaited(_openDetailEditSheet()),
+                    ),
+                  ]
+                : const <Widget>[],
           ),
           Expanded(
             child: ListView(
@@ -825,10 +1070,10 @@ class PantallaDetalleExamenAtlassian extends StatelessWidget {
                         spacing: 8,
                         alignment: WrapAlignment.center,
                         children: [
-                          if (event.suspendido)
-                            const LozengeAtlassian(
-                              label: 'SUSPENDIDA',
-                              appearance: AparienciaLozengeAtlassian.warning,
+                          if (event.mostrarAvisoEstado)
+                            LozengeAtlassian(
+                              label: event.estado.etiqueta,
+                              appearance: _statusAppearance(event.estado),
                             ),
                           LozengeAtlassian(
                             label: _shortInstanceLabel(event.instancia),
@@ -850,65 +1095,9 @@ class PantallaDetalleExamenAtlassian extends StatelessWidget {
                     ],
                   ),
                 ),
-                if (event.suspendido) ...[
+                if (event.mostrarAvisoEstado) ...[
                   const SizedBox(height: 12),
-                  Builder(
-                    builder: (context) {
-                      final isDark = Theme.of(context).brightness == Brightness.dark;
-                      return Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF382C00) : const Color(0xFFFFF8E1),
-                          borderRadius: BorderRadius.circular(RadioAtlassian.medium),
-                          border: Border.all(
-                            color: isDark ? const Color(0xFFFFB300) : const Color(0xFFFFC107),
-                            width: 1.5,
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(10),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFFFC107).withOpacity(0.2),
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.warning_amber_rounded,
-                                color: Color(0xFFFFB300),
-                                size: 28,
-                              ),
-                            ),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'MESA SUSPENDIDA',
-                                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                      color: isDark ? const Color(0xFFFFD54F) : const Color(0xFFB78103),
-                                      fontWeight: FontWeight.bold,
-                                      letterSpacing: 0.5,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 3),
-                                  Text(
-                                    'Pendiente de reprogramación por la institución.',
-                                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                      color: isDark ? const Color(0xFFFFECB3) : const Color(0xFF5D4037),
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
+                  _AvisoEstadoExamenAtlassian(event: event),
                 ],
                 const SizedBox(height: 12),
                 PanelAtlassian(
@@ -918,14 +1107,25 @@ class PantallaDetalleExamenAtlassian extends StatelessWidget {
                       _DatoExamenAtlassian(
                         icon: Icons.calendar_today_outlined,
                         label: 'Fecha',
-                        value: formatoFechaAtlassian(event.fecha),
+                        value: formatoFechaAtlassian(event.fechaVigente),
                       ),
                       const Divider(height: 1),
                       _DatoExamenAtlassian(
                         icon: Icons.schedule_rounded,
                         label: 'Hora',
-                        value: event.hora ?? 'Sin horario',
+                        value: event.horaVigente ?? 'Sin horario',
                       ),
+                      if (event.tieneFechaOriginalDistinta) ...[
+                        const Divider(height: 1),
+                        _DatoExamenAtlassian(
+                          icon: Icons.history_rounded,
+                          label: 'Anterior',
+                          value: formatoFechaHoraAtlassian(
+                            event.fecha,
+                            event.hora,
+                          ),
+                        ),
+                      ],
                       const Divider(height: 1),
                       _DatoExamenAtlassian(
                         icon: Icons.school_outlined,
@@ -953,14 +1153,14 @@ class PantallaDetalleExamenAtlassian extends StatelessWidget {
                     ],
                   ),
                 ),
-                if ((event.actaUrl ?? '').trim().isNotEmpty) ...[
+                if (event.puedeAbrirActa) ...[
                   const SizedBox(height: 16),
                   BotonAtlassian(
                     label: 'Abrir acta',
                     icon: Icons.open_in_new_rounded,
                     primary: true,
                     expanded: true,
-                    onPressed: () => unawaited(_openAct(context)),
+                    onPressed: () => unawaited(_openAct()),
                   ),
                 ],
                 const SizedBox(height: 48),
@@ -971,6 +1171,590 @@ class PantallaDetalleExamenAtlassian extends StatelessWidget {
       ),
     );
   }
+}
+
+class _ResultadoEdicionDetalleExamen {
+  const _ResultadoEdicionDetalleExamen({
+    required this.date,
+    required this.time,
+    required this.teachers,
+  });
+
+  final DateTime date;
+  final String time;
+  final List<String> teachers;
+}
+
+class _HojaEditarDetalleExamenAtlassian extends StatefulWidget {
+  const _HojaEditarDetalleExamenAtlassian({required this.event});
+
+  final EventoExamen event;
+
+  @override
+  State<_HojaEditarDetalleExamenAtlassian> createState() =>
+      _HojaEditarDetalleExamenAtlassianState();
+}
+
+class _HojaEditarDetalleExamenAtlassianState
+    extends State<_HojaEditarDetalleExamenAtlassian> {
+  late DateTime _date;
+  late TimeOfDay _time;
+  late final List<TextEditingController> _teacherControllers;
+  late final List<String> _preservedTeachers;
+
+  @override
+  void initState() {
+    super.initState();
+    _date = widget.event.fechaVigente ?? DateTime.now();
+    _time = _timeOfDayFromText(widget.event.horaVigente);
+    _teacherControllers = List<TextEditingController>.generate(
+      3,
+      (index) => TextEditingController(
+        text: index < widget.event.docentes.length
+            ? widget.event.docentes[index]
+            : '',
+      ),
+    );
+    _preservedTeachers = widget.event.docentes.length > 3
+        ? widget.event.docentes.skip(3).toList(growable: false)
+        : const <String>[];
+  }
+
+  @override
+  void dispose() {
+    for (final controller in _teacherControllers) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
+  List<String> get _teachers {
+    return <String>[
+      ..._teacherControllers
+          .map((controller) => controller.text.trim())
+          .where((value) => value.isNotEmpty),
+      ..._preservedTeachers,
+    ];
+  }
+
+  String get _timeText =>
+      '${_time.hour.toString().padLeft(2, '0')}:'
+      '${_time.minute.toString().padLeft(2, '0')}';
+
+  bool get _changed {
+    final currentDate = widget.event.fechaVigente;
+    final sameDate =
+        currentDate != null &&
+        currentDate.year == _date.year &&
+        currentDate.month == _date.month &&
+        currentDate.day == _date.day;
+    final sameTime = (widget.event.horaVigente ?? '') == _timeText;
+    return !sameDate ||
+        !sameTime ||
+        !_sameStringList(widget.event.docentes, _teachers);
+  }
+
+  Future<void> _chooseDate() async {
+    final selected = await showDatePicker(
+      context: context,
+      initialDate: _date,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+    );
+    if (selected == null || !mounted) return;
+    setState(() => _date = selected);
+  }
+
+  Future<void> _chooseTime() async {
+    final selected = await showTimePicker(context: context, initialTime: _time);
+    if (selected == null || !mounted) return;
+    setState(() => _time = selected);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: SingleChildScrollView(
+        padding: EdgeInsets.fromLTRB(
+          16,
+          0,
+          16,
+          16 + MediaQuery.viewInsetsOf(context).bottom,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'Editar examen',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: 16),
+            SelectorAtlassian(
+              label: 'Fecha',
+              value: formatoFechaAtlassian(_date),
+              icon: Icons.calendar_today_outlined,
+              onTap: () => unawaited(_chooseDate()),
+            ),
+            const SizedBox(height: 10),
+            SelectorAtlassian(
+              label: 'Hora',
+              value: _timeText,
+              icon: Icons.schedule_rounded,
+              onTap: () => unawaited(_chooseTime()),
+            ),
+            const SizedBox(height: 16),
+            Text('Docentes', style: Theme.of(context).textTheme.labelLarge),
+            const SizedBox(height: 8),
+            for (
+              var index = 0;
+              index < _teacherControllers.length;
+              index++
+            ) ...[
+              TextField(
+                controller: _teacherControllers[index],
+                textCapitalization: TextCapitalization.words,
+                textInputAction: index == _teacherControllers.length - 1
+                    ? TextInputAction.done
+                    : TextInputAction.next,
+                decoration: InputDecoration(
+                  labelText: 'Docente ${index + 1}',
+                  prefixIcon: const Icon(Icons.person_outline_rounded),
+                ),
+                onChanged: (_) => setState(() {}),
+              ),
+              if (index != _teacherControllers.length - 1)
+                const SizedBox(height: 10),
+            ],
+            const SizedBox(height: 18),
+            Row(
+              children: [
+                Expanded(
+                  child: BotonAtlassian(
+                    label: 'Cancelar',
+                    expanded: true,
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: BotonAtlassian(
+                    label: 'Guardar',
+                    icon: Icons.save_outlined,
+                    primary: true,
+                    expanded: true,
+                    onPressed: _changed
+                        ? () => Navigator.of(context).pop(
+                            _ResultadoEdicionDetalleExamen(
+                              date: _date,
+                              time: _timeText,
+                              teachers: _teachers,
+                            ),
+                          )
+                        : null,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+TimeOfDay _timeOfDayFromText(String? raw) {
+  final parts = (raw ?? '').split(':');
+  final hour = parts.isNotEmpty ? int.tryParse(parts[0]) : null;
+  final minute = parts.length > 1 ? int.tryParse(parts[1]) : null;
+  if (hour == null || minute == null) return TimeOfDay.now();
+  return TimeOfDay(
+    hour: hour.clamp(0, 23).toInt(),
+    minute: minute.clamp(0, 59).toInt(),
+  );
+}
+
+bool _sameStringList(List<String> first, List<String> second) {
+  if (first.length != second.length) return false;
+  for (var index = 0; index < first.length; index++) {
+    if (first[index] != second[index]) return false;
+  }
+  return true;
+}
+
+class _ResultadoControlRapidoExamen {
+  const _ResultadoControlRapidoExamen({
+    required this.status,
+    required this.actEnabled,
+    required this.actUrl,
+  });
+
+  final EstadoEventoExamen status;
+  final bool actEnabled;
+  final String? actUrl;
+}
+
+class _HojaControlRapidoExamenAtlassian extends StatefulWidget {
+  const _HojaControlRapidoExamenAtlassian({required this.event});
+
+  final EventoExamen event;
+
+  @override
+  State<_HojaControlRapidoExamenAtlassian> createState() =>
+      _HojaControlRapidoExamenAtlassianState();
+}
+
+class _HojaControlRapidoExamenAtlassianState
+    extends State<_HojaControlRapidoExamenAtlassian> {
+  late EstadoEventoExamen _status;
+  late bool _actEnabled;
+  late final TextEditingController _actUrlController;
+  String? _actUrlError;
+
+  @override
+  void initState() {
+    super.initState();
+    _status = widget.event.estado;
+    _actEnabled = widget.event.actaHabilitada;
+    _actUrlController = TextEditingController(
+      text: widget.event.actaUrl?.trim() ?? '',
+    );
+  }
+
+  @override
+  void dispose() {
+    _actUrlController.dispose();
+    super.dispose();
+  }
+
+  String get _normalizedActUrl => _actUrlController.text.trim();
+
+  bool get _hadActUrl => widget.event.actaUrl?.trim().isNotEmpty ?? false;
+
+  bool get _hasValidActUrl {
+    final raw = _normalizedActUrl;
+    if (raw.isEmpty) return false;
+    final uri = Uri.tryParse(raw);
+    return uri != null &&
+        (uri.scheme == 'http' || uri.scheme == 'https') &&
+        uri.host.isNotEmpty;
+  }
+
+  List<EstadoEventoExamen> get _availableStatuses {
+    return <EstadoEventoExamen>[
+      EstadoEventoExamen.activa,
+      EstadoEventoExamen.suspendida,
+      EstadoEventoExamen.cancelada,
+      if (widget.event.fechaReprogramada != null &&
+          (widget.event.horaReprogramada?.trim().isNotEmpty ?? false))
+        EstadoEventoExamen.reprogramada,
+    ];
+  }
+
+  void _selectStatus(EstadoEventoExamen status) {
+    setState(() {
+      _status = status;
+      _actUrlError = null;
+      if (!_hadActUrl && _hasValidActUrl) {
+        _actEnabled = true;
+      }
+    });
+  }
+
+  Future<void> _pasteActUrl() async {
+    final data = await Clipboard.getData(Clipboard.kTextPlain);
+    if (!mounted) return;
+    final text = data?.text?.trim() ?? '';
+    if (text.isEmpty) return;
+    setState(() {
+      _actUrlController.text = text;
+      _actUrlController.selection = TextSelection.collapsed(
+        offset: _actUrlController.text.length,
+      );
+      _actUrlError = null;
+      _actEnabled = _hasValidActUrl;
+    });
+  }
+
+  void _submit() {
+    final isAddingActUrl = !_hadActUrl;
+    if (isAddingActUrl && _normalizedActUrl.isNotEmpty && !_hasValidActUrl) {
+      setState(() {
+        _actUrlError =
+            'Ingresá un enlace válido que comience con http:// o https://';
+      });
+      return;
+    }
+
+    final actUrl = isAddingActUrl && _hasValidActUrl
+        ? _normalizedActUrl
+        : widget.event.actaUrl?.trim();
+
+    Navigator.of(context).pop(
+      _ResultadoControlRapidoExamen(
+        status: _status,
+        actEnabled: _actEnabled && (actUrl?.isNotEmpty ?? false),
+        actUrl: actUrl,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isAddingActUrl = !_hadActUrl;
+    final canEnableAct = _hadActUrl || _hasValidActUrl;
+    final effectiveActEnabled = canEnableAct && _actEnabled;
+    final originalUrl = widget.event.actaUrl?.trim() ?? '';
+    final urlChanged =
+        isAddingActUrl &&
+        _normalizedActUrl.isNotEmpty &&
+        _normalizedActUrl != originalUrl;
+    final changed =
+        _status != widget.event.estado ||
+        effectiveActEnabled != widget.event.actaHabilitada ||
+        urlChanged;
+
+    return SafeArea(
+      child: SingleChildScrollView(
+        padding: EdgeInsets.fromLTRB(
+          16,
+          0,
+          16,
+          16 + MediaQuery.viewInsetsOf(context).bottom,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'Control de la mesa',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: 16),
+            Text('Estado', style: Theme.of(context).textTheme.labelLarge),
+            const SizedBox(height: 8),
+            for (final status in _availableStatuses) ...[
+              PanelAtlassian(
+                selected: _status == status,
+                onTap: () => _selectStatus(status),
+                child: Row(
+                  children: [
+                    Icon(
+                      _status == status
+                          ? Icons.radio_button_checked_rounded
+                          : Icons.radio_button_off_rounded,
+                      color: _status == status
+                          ? Theme.of(context).colorScheme.primary
+                          : Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        _statusLabel(status),
+                        style: Theme.of(context).textTheme.titleSmall,
+                      ),
+                    ),
+                    LozengeAtlassian(
+                      label: status.etiqueta,
+                      appearance: _statusAppearance(status),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
+            const SizedBox(height: 4),
+            if (isAddingActUrl)
+              PanelAtlassian(
+                child: TextField(
+                  controller: _actUrlController,
+                  keyboardType: TextInputType.url,
+                  textInputAction: TextInputAction.done,
+                  autocorrect: false,
+                  enableSuggestions: false,
+                  onChanged: (_) {
+                    setState(() {
+                      _actUrlError = null;
+                      _actEnabled = _hasValidActUrl;
+                    });
+                  },
+                  decoration: InputDecoration(
+                    labelText: 'Enlace al acta',
+                    hintText: 'https://...',
+                    errorText: _actUrlError,
+                    prefixIcon: const Icon(Icons.link_rounded),
+                    suffixIcon: IconButton(
+                      tooltip: 'Pegar enlace',
+                      onPressed: _pasteActUrl,
+                      icon: const Icon(Icons.content_paste_rounded),
+                    ),
+                  ),
+                ),
+              )
+            else
+              PanelAtlassian(
+                child: SwitchListTile.adaptive(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('Mostrar acceso al acta'),
+                  secondary: const Icon(Icons.description_outlined),
+                  value: effectiveActEnabled,
+                  onChanged: canEnableAct
+                      ? (value) => setState(() => _actEnabled = value)
+                      : null,
+                ),
+              ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: BotonAtlassian(
+                    label: 'Cancelar',
+                    expanded: true,
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: BotonAtlassian(
+                    label: 'Guardar',
+                    icon: Icons.save_outlined,
+                    primary: true,
+                    expanded: true,
+                    onPressed: changed ? _submit : null,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+String _statusLabel(EstadoEventoExamen status) {
+  return switch (status) {
+    EstadoEventoExamen.activa => 'Activa',
+    EstadoEventoExamen.suspendida => 'Suspendida',
+    EstadoEventoExamen.cancelada => 'Cancelada',
+    EstadoEventoExamen.reprogramada => 'Reprogramada',
+  };
+}
+
+class _AvisoEstadoExamenAtlassian extends StatelessWidget {
+  const _AvisoEstadoExamenAtlassian({required this.event});
+
+  final EventoExamen event;
+
+  @override
+  Widget build(BuildContext context) {
+    final foreground = _statusForeground(context, event.estado);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _statusBackground(context, event.estado),
+        borderRadius: BorderRadius.circular(RadioAtlassian.medium),
+        border: Border.all(
+          color: foreground.withValues(alpha: 0.75),
+          width: 1.5,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: _statusIconBackground(context, event.estado),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(_statusIcon(event.estado), color: foreground, size: 28),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  event.tituloEstadoEfectivo,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    color: foreground,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  event.mensajeEstadoEfectivo,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: foreground,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+AparienciaLozengeAtlassian _statusAppearance(EstadoEventoExamen status) {
+  return switch (status) {
+    EstadoEventoExamen.activa => AparienciaLozengeAtlassian.success,
+    EstadoEventoExamen.suspendida => AparienciaLozengeAtlassian.warning,
+    EstadoEventoExamen.cancelada => AparienciaLozengeAtlassian.danger,
+    EstadoEventoExamen.reprogramada => AparienciaLozengeAtlassian.discovery,
+  };
+}
+
+IconData _statusIcon(EstadoEventoExamen status) {
+  return switch (status) {
+    EstadoEventoExamen.activa => Icons.check_circle_outline_rounded,
+    EstadoEventoExamen.suspendida => Icons.warning_amber_rounded,
+    EstadoEventoExamen.cancelada => Icons.cancel_outlined,
+    EstadoEventoExamen.reprogramada => Icons.event_repeat_rounded,
+  };
+}
+
+Color _statusBackground(BuildContext context, EstadoEventoExamen status) {
+  final dark = Theme.of(context).brightness == Brightness.dark;
+  return switch (status) {
+    EstadoEventoExamen.activa => Colors.transparent,
+    EstadoEventoExamen.suspendida =>
+      dark ? const Color(0xFF262112) : const Color(0xFFFFFBE6),
+    EstadoEventoExamen.cancelada =>
+      dark ? const Color(0xFF321A1A) : const Color(0xFFFFEBE6),
+    EstadoEventoExamen.reprogramada =>
+      dark ? const Color(0xFF16233A) : const Color(0xFFE9F2FF),
+  };
+}
+
+Color _statusIconBackground(BuildContext context, EstadoEventoExamen status) {
+  final dark = Theme.of(context).brightness == Brightness.dark;
+  return switch (status) {
+    EstadoEventoExamen.activa => Theme.of(context).colorScheme.primaryContainer,
+    EstadoEventoExamen.suspendida =>
+      dark ? const Color(0xFF4A3B00) : const Color(0xFFFFF3CD),
+    EstadoEventoExamen.cancelada =>
+      dark ? const Color(0xFF5A2020) : const Color(0xFFFFD5D2),
+    EstadoEventoExamen.reprogramada =>
+      dark ? const Color(0xFF173A66) : const Color(0xFFD6E8FF),
+  };
+}
+
+Color _statusForeground(BuildContext context, EstadoEventoExamen status) {
+  final dark = Theme.of(context).brightness == Brightness.dark;
+  return switch (status) {
+    EstadoEventoExamen.activa => Theme.of(context).colorScheme.primary,
+    EstadoEventoExamen.suspendida =>
+      dark ? const Color(0xFFFFD54F) : const Color(0xFF8A5D00),
+    EstadoEventoExamen.cancelada =>
+      dark ? const Color(0xFFFF8F85) : const Color(0xFFAE2A19),
+    EstadoEventoExamen.reprogramada =>
+      dark ? const Color(0xFF85B8FF) : const Color(0xFF0052CC),
+  };
 }
 
 class _DatoExamenAtlassian extends StatelessWidget {

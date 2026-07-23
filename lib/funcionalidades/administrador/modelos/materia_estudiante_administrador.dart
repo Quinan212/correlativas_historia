@@ -68,7 +68,8 @@ class MateriaEstudianteAdministrador {
       conditionStatus: (row['condition_status'] ?? 'habilitada').toString(),
       detailStatus: _emptyToNull(row['detail_status']),
       creditType: _emptyToNull(row['credit_type']),
-      academicPeriod: _emptyToNull(row['academic_period']) ??
+      academicPeriod:
+          _emptyToNull(row['academic_period']) ??
           _emptyToNull(row['source_period']),
       sourceDate: parseDate(row['source_date']),
       grade: parseDouble(row['grade']),

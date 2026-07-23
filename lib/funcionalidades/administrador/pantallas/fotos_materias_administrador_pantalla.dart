@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../laboratorio_atlassian/tema/tema_atlassian.dart';
+import '../tema/tema_administrador_atlassian.dart';
 import '../proveedores/proveedores_fotos_materias_administrador.dart';
 import 'fotos_materias_carrera_administrador_pantalla.dart';
 
@@ -17,11 +17,9 @@ class FotosMateriasAdministradorPantalla extends ConsumerWidget {
     final isDesktop = width >= 900;
 
     return Scaffold(
-      backgroundColor:
-          isDark ? const Color(0xFF030712) : const Color(0xFFF9FAFB),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Fotos por carrera'),
-        centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
@@ -48,8 +46,10 @@ class FotosMateriasAdministradorPantalla extends ConsumerWidget {
                   );
                 }
 
-                final totalPhotos =
-                    items.fold<int>(0, (sum, item) => sum + item.photoCount);
+                final totalPhotos = items.fold<int>(
+                  0,
+                  (sum, item) => sum + item.photoCount,
+                );
 
                 return ListView(
                   padding: isDesktop
@@ -67,24 +67,20 @@ class FotosMateriasAdministradorPantalla extends ConsumerWidget {
                         physics: const NeverScrollableScrollPhysics(),
                         gridDelegate:
                             const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 3,
-                          crossAxisSpacing: 16,
-                          mainAxisSpacing: 16,
-                          childAspectRatio: 2.5,
-                        ),
+                              crossAxisCount: 3,
+                              crossAxisSpacing: 16,
+                              mainAxisSpacing: 16,
+                              childAspectRatio: 2.5,
+                            ),
                         itemCount: items.length,
                         itemBuilder: (context, index) {
                           return _TarjetaCarrera(
                             stats: items[index],
                             onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute<void>(
-                                  builder: (_) => Theme(
-                                    data: temaLaboratorioAtlassian(context),
-                                    child: FotosMateriasCarreraAdministradorPantalla(
-                                      careerId: items[index].career.id,
-                                    ),
-                                  ),
+                              abrirPantallaAdministradorAtlassian<void>(
+                                context,
+                                FotosMateriasCarreraAdministradorPantalla(
+                                  careerId: items[index].career.id,
                                 ),
                               );
                             },
@@ -100,14 +96,10 @@ class FotosMateriasAdministradorPantalla extends ConsumerWidget {
                                 child: _TarjetaCarrera(
                                   stats: item,
                                   onTap: () {
-                                    Navigator.of(context).push(
-                                      MaterialPageRoute<void>(
-                                        builder: (_) => Theme(
-                                          data: temaLaboratorioAtlassian(context),
-                                          child: FotosMateriasCarreraAdministradorPantalla(
-                                            careerId: item.career.id,
-                                          ),
-                                        ),
+                                    abrirPantallaAdministradorAtlassian<void>(
+                                      context,
+                                      FotosMateriasCarreraAdministradorPantalla(
+                                        careerId: item.career.id,
                                       ),
                                     );
                                   },
@@ -151,11 +143,9 @@ class _TarjetaResumen extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF0B1220) : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isDark ? const Color(0xFF243041) : const Color(0xFFE5E7EB),
-        ),
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -170,7 +160,7 @@ class _TarjetaResumen extends StatelessWidget {
           Text(
             'Se detectaron $totalPhotos fotos distribuidas en $totalCareers carreras con contenido activo.',
             style: theme.textTheme.bodyLarge?.copyWith(
-              color: isDark ? Colors.white70 : Colors.black87,
+              color: theme.colorScheme.onSurface,
             ),
           ),
         ],
@@ -180,10 +170,7 @@ class _TarjetaResumen extends StatelessWidget {
 }
 
 class _TarjetaCarrera extends StatelessWidget {
-  const _TarjetaCarrera({
-    required this.stats,
-    required this.onTap,
-  });
+  const _TarjetaCarrera({required this.stats, required this.onTap});
 
   final EstadisticasFotosCarreraAdministrador stats;
   final VoidCallback onTap;
@@ -194,18 +181,16 @@ class _TarjetaCarrera extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     return Material(
-      color: isDark ? const Color(0xFF0B1220) : Colors.white,
-      borderRadius: BorderRadius.circular(20),
+      color: theme.colorScheme.surface,
+      borderRadius: BorderRadius.circular(14),
       child: InkWell(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(14),
         onTap: onTap,
         child: Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: isDark ? const Color(0xFF243041) : const Color(0xFFE5E7EB),
-            ),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: theme.colorScheme.outlineVariant),
           ),
           child: Row(
             children: [

@@ -25,6 +25,20 @@ class ItemListaOpcionSage {
   final String unavailableMessage;
 }
 
+IconData iconoMaterialSage(int codePoint) => switch (codePoint) {
+  0xe7fd => Icons.people_outline_rounded,
+  0xe151 => Icons.school_outlined,
+  0xe873 => Icons.description_outlined,
+  0xe150 => Icons.add_box_outlined,
+  0xe8f9 => Icons.assignment_outlined,
+  0xe878 => Icons.app_registration_rounded,
+  0xe7ef => Icons.supervisor_account_outlined,
+  0xe8d0 => Icons.grade_outlined,
+  0xe8a1 => Icons.badge_outlined,
+  0xe8d2 => Icons.list_alt_outlined,
+  _ => Icons.search_rounded,
+};
+
 class ListaOpcionesSage extends StatefulWidget {
   const ListaOpcionesSage({
     super.key,

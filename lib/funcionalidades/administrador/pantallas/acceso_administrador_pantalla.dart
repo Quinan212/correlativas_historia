@@ -6,6 +6,7 @@ import '../../verificacion/pantallas/dispositivo_verificacion_pantalla.dart';
 import '../../verificacion/pantallas/enviar_verificacion_pantalla.dart';
 import '../../verificacion/pantallas/solicitudes_verificacion_pantalla.dart';
 import '../proveedores/proveedores_acceso_administrador.dart';
+import '../tema/tema_administrador_atlassian.dart';
 import 'actividad_administrador_pantalla.dart';
 import 'estudiantes_administrador_pantalla.dart';
 import 'eventos_examen_administrador_pantalla.dart';
@@ -79,16 +80,16 @@ class _AccesoAdministradorPantallaState
       ),
     ];
 
-    final atlassianTheme = temaLaboratorioAtlassian(context);
+    final atlassianTheme = temaAdministradorAtlassian(context);
     return Theme(
       data: atlassianTheme,
       child: Scaffold(
         backgroundColor: atlassianTheme.scaffoldBackgroundColor,
         appBar: AppBar(
           title: const Text('Administración'),
-          centerTitle: true,
-          backgroundColor:
-              isDesktop ? const Color(0xFF0E5E86) : Colors.transparent,
+          backgroundColor: isDesktop
+              ? PaletaAtlassian.brand
+              : Colors.transparent,
           foregroundColor: isDesktop ? Colors.white : null,
           elevation: 0,
           actions: isDesktop
@@ -170,19 +171,13 @@ class _AccesoAdministradorPantallaState
   }
 
   void _pushRutaAdminConTema(BuildContext context, Widget child) {
-    final theme = temaLaboratorioAtlassian(context);
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => Theme(
-          data: theme,
-          child: child,
-        ),
-      ),
-    );
+    abrirPantallaAdministradorAtlassian<void>(context, child);
   }
 
   List<_DatosEntradaPanel> _adminEntries(
-      BuildContext context, String deviceId) {
+    BuildContext context,
+    String deviceId,
+  ) {
     return [
       _DatosEntradaPanel(
         icon: Icons.bolt_rounded,
@@ -275,7 +270,7 @@ class _MarcadorInstitucionAdmin extends StatelessWidget {
             height: 40,
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(RadioAtlassian.medium),
             ),
             padding: const EdgeInsets.all(4),
             child: ClipRRect(
@@ -366,7 +361,8 @@ class _DisposicionPanelAdmin extends StatelessWidget {
                 child: featuredEntries.isEmpty
                     ? _PanelInfoAdmin(
                         title: 'Herramientas institucionales',
-                        subtitle: infoMessage ??
+                        subtitle:
+                            infoMessage ??
                             'No hay herramientas institucionales disponibles para este equipo.',
                       )
                     : _SeccionDestacadaAdmin(featuredEntries: featuredEntries),
@@ -402,9 +398,7 @@ class _DisposicionPanelAdmin extends StatelessWidget {
 }
 
 class _SeccionDestacadaAdmin extends StatelessWidget {
-  const _SeccionDestacadaAdmin({
-    required this.featuredEntries,
-  });
+  const _SeccionDestacadaAdmin({required this.featuredEntries});
 
   final List<_DatosEntradaPanel> featuredEntries;
 
@@ -418,13 +412,6 @@ class _SeccionDestacadaAdmin extends StatelessWidget {
           'Herramientas institucionales',
           style: theme.textTheme.headlineSmall?.copyWith(
             fontWeight: FontWeight.w900,
-          ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          'Mesas y coloquios y alumnos quedan al frente como accesos principales del panel.',
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
           ),
         ),
         const SizedBox(height: 14),
@@ -447,56 +434,39 @@ class _TarjetaEntradaDestacadaAdmin extends StatelessWidget {
     final theme = Theme.of(context);
     return Material(
       color: theme.colorScheme.surface,
-      borderRadius: BorderRadius.circular(26),
+      borderRadius: BorderRadius.circular(RadioAtlassian.large),
       child: InkWell(
-        borderRadius: BorderRadius.circular(26),
+        borderRadius: BorderRadius.circular(RadioAtlassian.large),
         onTap: entry.onTap,
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             color: theme.colorScheme.surface,
-            borderRadius: BorderRadius.circular(26),
+            borderRadius: BorderRadius.circular(RadioAtlassian.large),
             border: Border.all(color: theme.colorScheme.outlineVariant),
-            boxShadow: [
-              BoxShadow(
-                blurRadius: 24,
-                offset: const Offset(0, 10),
-                color: Colors.black.withValues(alpha: 0.045),
-              ),
-            ],
           ),
           child: Row(
             children: [
               Container(
-                width: 72,
-                height: 72,
+                width: 56,
+                height: 56,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF0E5E86).withValues(alpha: 0.10),
-                  borderRadius: BorderRadius.circular(22),
+                  color: PaletaAtlassian.brand.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(RadioAtlassian.medium),
                 ),
-                child: Icon(
-                  entry.icon,
-                  color: const Color(0xFF0E5E86),
-                  size: 34,
-                ),
+                child: Icon(entry.icon, color: PaletaAtlassian.brand, size: 28),
               ),
               const SizedBox(width: 18),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      entry.title,
-                      style: theme.textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w900,
-                        height: 1.05,
-                      ),
-                    ),
+                    Text(entry.title, style: theme.textTheme.titleLarge),
                     const SizedBox(height: 8),
                     Text(
                       entry.subtitle,
-                      style: theme.textTheme.bodyLarge?.copyWith(
+                      style: theme.textTheme.bodyMedium?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                         height: 1.35,
                       ),
@@ -533,16 +503,21 @@ class _PanelLateralAdmin extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding:
-          EdgeInsets.fromLTRB(collapsed ? 10 : 18, 18, collapsed ? 10 : 18, 18),
+      padding: EdgeInsets.fromLTRB(
+        collapsed ? 10 : 18,
+        18,
+        collapsed ? 10 : 18,
+        18,
+      ),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(26),
+        borderRadius: BorderRadius.circular(RadioAtlassian.large),
         border: Border.all(color: theme.colorScheme.outlineVariant),
       ),
       child: Column(
-        crossAxisAlignment:
-            collapsed ? CrossAxisAlignment.center : CrossAxisAlignment.start,
+        crossAxisAlignment: collapsed
+            ? CrossAxisAlignment.center
+            : CrossAxisAlignment.start,
         children: [
           Row(
             children: [
@@ -551,12 +526,12 @@ class _PanelLateralAdmin extends StatelessWidget {
                   width: 54,
                   height: 54,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF0E5E86).withValues(alpha: 0.10),
-                    borderRadius: BorderRadius.circular(18),
+                    color: PaletaAtlassian.brand.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(RadioAtlassian.large),
                   ),
                   padding: const EdgeInsets.all(8),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(RadioAtlassian.medium),
                     child: Image.asset(
                       'assets/career_icons/logo_artes.png',
                       fit: BoxFit.cover,
@@ -631,10 +606,10 @@ class _TarjetaEntradaCompactaAdmin extends StatelessWidget {
     return Material(
       color: isDark
           ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5)
-          : const Color(0xFFF8FBFF),
-      borderRadius: BorderRadius.circular(collapsed ? 16 : 18),
+          : theme.colorScheme.surfaceContainerLow,
+      borderRadius: BorderRadius.circular(RadioAtlassian.medium),
       child: InkWell(
-        borderRadius: BorderRadius.circular(collapsed ? 16 : 18),
+        borderRadius: BorderRadius.circular(RadioAtlassian.medium),
         onTap: entry.onTap,
         child: Container(
           padding: EdgeInsets.symmetric(
@@ -642,25 +617,22 @@ class _TarjetaEntradaCompactaAdmin extends StatelessWidget {
             vertical: 12,
           ),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(collapsed ? 16 : 18),
+            borderRadius: BorderRadius.circular(RadioAtlassian.medium),
             border: Border.all(color: theme.colorScheme.outlineVariant),
           ),
           child: Row(
-            mainAxisAlignment:
-                collapsed ? MainAxisAlignment.center : MainAxisAlignment.start,
+            mainAxisAlignment: collapsed
+                ? MainAxisAlignment.center
+                : MainAxisAlignment.start,
             children: [
               Container(
                 width: 38,
                 height: 38,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF0E5E86).withValues(alpha: 0.10),
-                  borderRadius: BorderRadius.circular(12),
+                  color: PaletaAtlassian.brand.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(RadioAtlassian.medium),
                 ),
-                child: Icon(
-                  entry.icon,
-                  color: const Color(0xFF0E5E86),
-                  size: 20,
-                ),
+                child: Icon(entry.icon, color: PaletaAtlassian.brand, size: 20),
               ),
               if (!collapsed) ...[
                 const SizedBox(width: 12),
@@ -717,16 +689,16 @@ class _SeccionAdmin extends StatelessWidget {
       children: [
         Text(
           title,
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w900,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900),
         ),
         const SizedBox(height: 6),
         Text(
           subtitle,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
         ),
         const SizedBox(height: 14),
         if (desktopColumns > 1)
@@ -758,10 +730,7 @@ class _SeccionAdmin extends StatelessWidget {
 }
 
 class _PanelInfoAdmin extends StatelessWidget {
-  const _PanelInfoAdmin({
-    required this.title,
-    required this.subtitle,
-  });
+  const _PanelInfoAdmin({required this.title, required this.subtitle});
 
   final String title;
   final String subtitle;
@@ -774,7 +743,7 @@ class _PanelInfoAdmin extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: theme.colorScheme.outlineVariant),
       ),
       child: Column(

@@ -748,6 +748,7 @@ class _AccesoEstudiantePantallaState
 
   /// Abre la pantalla de Exámenes dentro del navigator anidado
   /// (la barra de navegación sigue visible).
+  // ignore: unused_element - navegación histórica preservada para reutilización.
   void _openExamenesNavBar() {
     final sessionId = _navSession;
     final careerId = _payload?.student.careerId;
@@ -760,6 +761,7 @@ class _AccesoEstudiantePantallaState
   }
 
   /// Abre la pantalla de Materias dentro del navigator anidado.
+  // ignore: unused_element - navegación histórica preservada para reutilización.
   void _abrirMateriasNavBar() {
     final payload = _payload;
     if (payload == null) {
@@ -785,6 +787,7 @@ class _AccesoEstudiantePantallaState
   }
 
   /// Abre la pantalla de Datos del estudiante dentro del navigator anidado.
+  // ignore: unused_element - navegación histórica preservada para reutilización.
   void _abrirDatosNavBar() {
     final student = _payload?.student;
     if (student == null) {

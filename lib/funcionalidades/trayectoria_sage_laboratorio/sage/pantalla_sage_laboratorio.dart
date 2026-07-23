@@ -40,6 +40,8 @@ import '../../acceso_estudiante/sage_perfiles/pantalla_selector_perfil_sage.dart
 import '../componentes/tema_mensajes_laboratorio_sage.dart';
 import '../datos/repositorio_estado_sincronizacion_sage.dart';
 import '../dominio/constructor_trayectoria_sage_laboratorio.dart';
+import '../libreta_pdf/extractor_libreta_calificaciones_pdf.dart';
+import '../libreta_pdf/fusionador_libreta_trayectoria.dart';
 import '../modelos/modelos_trayectoria_sage_laboratorio.dart';
 import 'estilo_visual_sage.dart';
 import 'modelos_sincronizacion_sage_automatica.dart';
@@ -493,6 +495,10 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
       EtapaSincronizacionSageAutomatica.leyendoTrayectoria =>
         PasoSincronizacionSageAutomatica.carreras,
       EtapaSincronizacionSageAutomatica.preparandoDocumentos ||
+      EtapaSincronizacionSageAutomatica.generandoLibreta ||
+      EtapaSincronizacionSageAutomatica.leyendoLibreta ||
+      EtapaSincronizacionSageAutomatica.relacionandoCalificaciones ||
+      EtapaSincronizacionSageAutomatica.actualizandoCalendario ||
       EtapaSincronizacionSageAutomatica.descargandoDocumento =>
         PasoSincronizacionSageAutomatica.documentos,
       EtapaSincronizacionSageAutomatica.guardando ||
@@ -1531,8 +1537,9 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
   }
 
   Future<void> _completeAutomaticSync(
-    TrayectoriaSageLaboratorio trajectory,
-  ) async {
+    TrayectoriaSageLaboratorio trajectory, {
+    String? detalleCompletado,
+  }) async {
     if (!_automaticMode || _documentDownloadMode || _automaticCompleting)
       return;
     _automaticCompleting = true;
@@ -1542,7 +1549,7 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
       EtapaSincronizacionSageAutomatica.guardando,
       'Guardando trayectoria',
       detalle: 'Actualizando la copia local…',
-      progreso: 0.97,
+      progreso: 0.998,
     );
     try {
       final stored = widget.onGuardarTrayectoriaAutomatica == null
@@ -1563,7 +1570,8 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
       _setAutomaticState(
         EtapaSincronizacionSageAutomatica.completada,
         'Sincronización completa',
-        detalle: '${stored.totalMaterias} materias actualizadas.',
+        detalle:
+            detalleCompletado ?? '${stored.totalMaterias} materias actualizadas.',
         progreso: 1,
         paso: PasoSincronizacionSageAutomatica.guardado,
       );
@@ -4971,10 +4979,148 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
       final documents = history == null
           ? const <DocumentoAcademicoSage>[]
           : await _detectAcademicDocuments(history);
-      await _completeAutomaticSync(trajectory.conDocumentos(documents));
+      var enriched = trajectory.conDocumentos(documents);
+      var updatedSubjects = 0;
+      var failedBooklets = 0;
+
+      if (history != null && history.carreras.isNotEmpty) {
+        final result = await _syncAutomaticGradeBooks(
+          trajectory: enriched,
+          history: history,
+        );
+        enriched = result.trayectoria;
+        updatedSubjects = result.materiasActualizadas;
+        failedBooklets = result.libretasFallidas;
+      }
+
+      final detail = failedBooklets > 0
+          ? '${enriched.totalMaterias} materias actualizadas. '
+                'Notas y fechas: $updatedSubjects; '
+                '$failedBooklets libreta${failedBooklets == 1 ? '' : 's'} '
+                'pendiente${failedBooklets == 1 ? '' : 's'}.'
+          : updatedSubjects > 0
+          ? '${enriched.totalMaterias} materias actualizadas. '
+                '$updatedSubjects con nota y fecha.'
+          : '${enriched.totalMaterias} materias actualizadas.';
+      await _completeAutomaticSync(enriched, detalleCompletado: detail);
     } finally {
       _automaticDocumentsPreparing = false;
     }
+  }
+
+  Future<_ResultadoSincronizacionLibretas> _syncAutomaticGradeBooks({
+    required TrayectoriaSageLaboratorio trajectory,
+    required HistorialNivelSuperiorSage history,
+  }) async {
+    var current = trajectory;
+    var updatedSubjects = 0;
+    var failedBooklets = 0;
+    final extractor = const ExtractorLibretaCalificacionesPdf();
+    final merger = const FusionadorLibretaTrayectoria();
+    late final Directory tempDirectory;
+    try {
+      tempDirectory = await getTemporaryDirectory();
+    } catch (_) {
+      return _ResultadoSincronizacionLibretas(
+        trayectoria: current,
+        materiasActualizadas: 0,
+        libretasFallidas: history.carreras.length,
+      );
+    }
+
+    for (var index = 0; index < history.carreras.length; index++) {
+      if (!mounted || _isClosing) break;
+      final career = history.carreras[index];
+
+      File? file;
+      try {
+        _setAutomaticState(
+          EtapaSincronizacionSageAutomatica.generandoLibreta,
+          'Sincronizando notas y fechas',
+          detalle:
+              'Generando la Libreta de ${career.nombre} (${index + 1}/${history.carreras.length})…',
+          progreso: 0.965 + ((index + 0.15) / history.carreras.length) * 0.02,
+          paso: PasoSincronizacionSageAutomatica.documentos,
+        );
+
+        for (var attempt = 0; attempt < 2 && file == null; attempt++) {
+          file = await _openHistoryReport(
+            career,
+            TipoDocumentoAcademicoSage.libreta.tituloReporte,
+            silent: true,
+            abrirAlCompletar: false,
+            directorioDestino: tempDirectory,
+            timeoutEnlace: const Duration(seconds: 20),
+          );
+          if (file == null && attempt == 0) {
+            await Future<void>.delayed(const Duration(milliseconds: 650));
+          }
+        }
+        if (file == null) {
+          failedBooklets++;
+          continue;
+        }
+
+        _setAutomaticState(
+          EtapaSincronizacionSageAutomatica.leyendoLibreta,
+          'Leyendo libreta',
+          detalle: 'Extrayendo materias, notas y fechas…',
+          progreso: 0.972 + ((index + 0.45) / history.carreras.length) * 0.02,
+          paso: PasoSincronizacionSageAutomatica.documentos,
+        );
+        final extraction = extractor.extraer(await file.readAsBytes());
+
+        _setAutomaticState(
+          EtapaSincronizacionSageAutomatica.relacionandoCalificaciones,
+          'Relacionando materias',
+          detalle: 'Coordinando la Libreta con tu trayectoria…',
+          progreso: 0.978 + ((index + 0.72) / history.carreras.length) * 0.018,
+          paso: PasoSincronizacionSageAutomatica.documentos,
+        );
+        final merged = merger.aplicar(
+          trayectoria: current,
+          gridRowId: career.gridRowId,
+          libreta: extraction,
+        );
+        current = merged.trayectoria;
+        updatedSubjects += merged.coincidencias;
+        if (merged.coincidencias == 0) failedBooklets++;
+
+        if (kDebugMode) {
+          debugPrint(
+            '[SAGE libreta] rows=${extraction.materias.length}; '
+            'matched=${merged.coincidencias}; '
+            'unmatched=${merged.sinCoincidencia}; ambiguous=${merged.ambiguas}',
+          );
+        }
+      } catch (_) {
+        failedBooklets++;
+        if (kDebugMode) {
+          debugPrint('[SAGE libreta] extraction_failed=true');
+        }
+      } finally {
+        if (file != null) {
+          try {
+            if (await file.exists()) await file.delete();
+          } catch (_) {}
+        }
+      }
+    }
+
+    if (updatedSubjects > 0) {
+      _setAutomaticState(
+        EtapaSincronizacionSageAutomatica.actualizandoCalendario,
+        'Actualizando calendario',
+        detalle: 'Incorporando las fechas de aprobación…',
+        progreso: 0.995,
+        paso: PasoSincronizacionSageAutomatica.documentos,
+      );
+    }
+    return _ResultadoSincronizacionLibretas(
+      trayectoria: current,
+      materiasActualizadas: updatedSubjects,
+      libretasFallidas: failedBooklets,
+    );
   }
 
   CarreraHistorialSage? _requestedDocumentCareer() {
@@ -5106,7 +5252,7 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
           (career) => <String>[
             career.gridRowId,
             for (final subject in career.materias)
-              '${subject.idSage}|${subject.nombre}|${subject.estadoOriginal}|${subject.anio ?? ''}',
+              '${subject.idSage}|${subject.nombre}|${subject.estadoOriginal}|${subject.anio ?? ''}|${subject.fecha ?? ''}|${subject.nota ?? ''}',
           ].join('::'),
         )
         .join('||');
@@ -5269,6 +5415,9 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
     CarreraHistorialSage career,
     String title, {
     bool silent = false,
+    bool abrirAlCompletar = true,
+    Directory? directorioDestino,
+    Duration timeoutEnlace = const Duration(seconds: 8),
   }) async {
     if (_reportInFlight) return null;
     if (_historyState == EstadoHistorialSage.cargandoCarreras) {
@@ -5309,10 +5458,12 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
       }
       if (report.estado == EstadoReporteSage.iniciado) {
         try {
-          final uri = await pending.future.timeout(const Duration(seconds: 8));
+          final uri = await pending.future.timeout(timeoutEnlace);
           final file = await _procesarDescargaWeb(
             uri: uri,
-            abrirAlCompletar: true,
+            abrirAlCompletar: abrirAlCompletar,
+            directorioDestino: directorioDestino,
+            notificarError: !silent,
           );
           if (kDebugMode && file != null) {
             debugPrint('[SAGE report V3] download_started=true');
@@ -5955,6 +6106,8 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
     String? mimeType,
     int? contentLength,
     bool abrirAlCompletar = true,
+    Directory? directorioDestino,
+    bool notificarError = true,
   }) async {
     if (!_canStayInWebView(uri) || !_isPdfDownloadUri(uri)) return null;
     final now = DateTime.now();
@@ -5977,6 +6130,8 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
         mimeTypeHint: mimeType,
         contentLengthHint: contentLength,
         abrirAlCompletar: abrirAlCompletar,
+        directorioDestino: directorioDestino,
+        notificarError: notificarError,
       );
     } finally {
       _activeDownloadUri = null;
@@ -5991,6 +6146,8 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
     String? mimeTypeHint,
     int? contentLengthHint,
     bool abrirAlCompletar = true,
+    Directory? directorioDestino,
+    bool notificarError = true,
   }) async {
     _downloadState.value = const _DownloadState.downloading();
     try {
@@ -6021,7 +6178,8 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
         throw StateError('La respuesta no fue un PDF directo.');
       }
 
-      final directory = await _downloadDirectory();
+      final directory = directorioDestino ?? await _downloadDirectory();
+      await directory.create(recursive: true);
       final fileName = _safeFileName(
         _filenameFromContentDisposition(contentDisposition) ??
             _filenameFromUri(initialUri),
@@ -6059,9 +6217,11 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
       }
       return savedFile;
     } catch (_) {
-      _showDownloadFailure(
-        'No se pudo descargar el documento. Verificá la sesión de SAGE e intentá nuevamente.',
-      );
+      if (notificarError) {
+        _showDownloadFailure(
+          'No se pudo descargar el documento. Verificá la sesión de SAGE e intentá nuevamente.',
+        );
+      }
       return null;
     }
   }
@@ -6518,6 +6678,18 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
 }
 
 enum _DownloadPhase { idle, downloading, completed, failed }
+
+class _ResultadoSincronizacionLibretas {
+  const _ResultadoSincronizacionLibretas({
+    required this.trayectoria,
+    required this.materiasActualizadas,
+    required this.libretasFallidas,
+  });
+
+  final TrayectoriaSageLaboratorio trayectoria;
+  final int materiasActualizadas;
+  final int libretasFallidas;
+}
 
 class _DownloadState {
   const _DownloadState({

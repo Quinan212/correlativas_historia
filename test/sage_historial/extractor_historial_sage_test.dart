@@ -24,19 +24,26 @@ void main() {
     expect(result.historial!.carreras.last.estado, isNull);
   });
 
-  test('lee materias sanitizadas sin depender de filas DOM', () async {
-    final subjects = await extractor.leerMaterias(
-      (_) async => '''{"state":"ready","subjects":[
-        {"id":"m-1","name":"Historia","status":"Aprobada","year":"1"},
-        {"id":"m-2","name":"Lengua","status":"Regular","year":null}
-      ]}''',
-      'carrera-a',
-    );
+  test(
+    'el Historial web ignora Nota y Fecha aunque aparezcan en un payload',
+    () async {
+      final subjects = await extractor.leerMaterias(
+        (_) async => '''{"state":"ready","subjects":[
+          {"id":"m-1","name":"Historia","status":"Aprobada","year":"1","date":"14/07/2026","grade":"9"},
+          {"id":"m-2","name":"Lengua","status":"Regular","year":null}
+        ]}''',
+        'carrera-a',
+      );
 
-    expect(subjects, hasLength(2));
-    expect(subjects.first.anio, 1);
-    expect(subjects.last.anio, isNull);
-  });
+      expect(subjects, hasLength(2));
+      expect(subjects.first.anio, 1);
+      expect(subjects.first.fecha, isNull);
+      expect(subjects.first.nota, isNull);
+      expect(subjects.last.anio, isNull);
+      expect(subjects.last.fecha, isNull);
+      expect(subjects.last.nota, isNull);
+    },
+  );
 
   test(
     'un esquema incompatible no se presenta como historial disponible',

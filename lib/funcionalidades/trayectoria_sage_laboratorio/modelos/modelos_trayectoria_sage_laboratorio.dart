@@ -156,6 +156,8 @@ class MateriaTrayectoriaSageLaboratorio {
     required this.estadoOriginal,
     required this.estado,
     this.anio,
+    this.fecha,
+    this.nota,
   });
 
   final String idSage;
@@ -164,12 +166,44 @@ class MateriaTrayectoriaSageLaboratorio {
   final EstadoMateriaSageLaboratorio estado;
   final int? anio;
 
+  /// Fecha académica extraída de la Libreta de Calificaciones de SAGE.
+  final String? fecha;
+
+  /// Nota final extraída de la Libreta de Calificaciones de SAGE.
+  final String? nota;
+
+  DateTime? get fechaAprobacion => parsearFechaAcademicaSage(fecha);
+  bool get tieneFecha => _nullableText(fecha) != null;
+  bool get tieneNota => _nullableText(nota) != null;
+
+  MateriaTrayectoriaSageLaboratorio copyWith({
+    String? idSage,
+    String? nombre,
+    String? estadoOriginal,
+    EstadoMateriaSageLaboratorio? estado,
+    int? anio,
+    String? fecha,
+    String? nota,
+  }) {
+    return MateriaTrayectoriaSageLaboratorio(
+      idSage: idSage ?? this.idSage,
+      nombre: nombre ?? this.nombre,
+      estadoOriginal: estadoOriginal ?? this.estadoOriginal,
+      estado: estado ?? this.estado,
+      anio: anio ?? this.anio,
+      fecha: fecha ?? this.fecha,
+      nota: nota ?? this.nota,
+    );
+  }
+
   Map<String, dynamic> toJson() => <String, dynamic>{
     'id_sage': idSage,
     'nombre': nombre,
     'estado_original': estadoOriginal,
     'estado': estado.clave,
     'anio': anio,
+    'fecha': fecha,
+    'nota': nota,
   };
 
   factory MateriaTrayectoriaSageLaboratorio.fromJson(
@@ -183,6 +217,8 @@ class MateriaTrayectoriaSageLaboratorio {
         (json['estado'] ?? '').toString(),
       ),
       anio: _nullableInt(json['anio']),
+      fecha: _nullableText(json['fecha']),
+      nota: _nullableText(json['nota']),
     );
   }
 }
@@ -288,7 +324,7 @@ class TrayectoriaSageLaboratorio {
     required this.capturadaEn,
     this.sincronizadaEn,
     this.documentos = const <DocumentoAcademicoSage>[],
-    this.versionEsquema = 2,
+    this.versionEsquema = 3,
   });
 
   final int versionEsquema;
@@ -320,7 +356,7 @@ class TrayectoriaSageLaboratorio {
     List<DocumentoAcademicoSage> nuevosDocumentos,
   ) {
     return TrayectoriaSageLaboratorio(
-      versionEsquema: versionEsquema < 2 ? 2 : versionEsquema,
+      versionEsquema: versionEsquema < 3 ? 3 : versionEsquema,
       perfil: perfil,
       carreras: carreras,
       documentos: List<DocumentoAcademicoSage>.unmodifiable(nuevosDocumentos),
@@ -415,6 +451,48 @@ class EstadoPreparacionSageLaboratorio {
   final String mensaje;
   final double? progreso;
   final bool bloqueado;
+}
+
+DateTime? parsearFechaAcademicaSage(String? raw) {
+  final text = raw?.trim() ?? '';
+  if (text.isEmpty) return null;
+
+  final iso = DateTime.tryParse(text);
+  if (iso != null) return DateTime(iso.year, iso.month, iso.day);
+
+  final match = RegExp(
+    r'^(\d{1,4})[\/-](\d{1,2})[\/-](\d{1,4})',
+  ).firstMatch(text);
+  if (match == null) return null;
+  final first = int.tryParse(match.group(1) ?? '');
+  final second = int.tryParse(match.group(2) ?? '');
+  final third = int.tryParse(match.group(3) ?? '');
+  if (first == null || second == null || third == null) return null;
+
+  final yearFirst = (match.group(1)?.length ?? 0) == 4;
+  final year = yearFirst ? first : third;
+  final month = second;
+  final day = yearFirst ? third : first;
+  if (year < 1900 || year > 2200 || month < 1 || month > 12 || day < 1) {
+    return null;
+  }
+  final candidate = DateTime(year, month, day);
+  if (candidate.year != year ||
+      candidate.month != month ||
+      candidate.day != day) {
+    return null;
+  }
+  return candidate;
+}
+
+String formatearFechaAcademicaSage(
+  String? raw, {
+  String fallback = 'Sin fecha',
+}) {
+  final parsed = parsearFechaAcademicaSage(raw);
+  if (parsed == null) return _nullableText(raw) ?? fallback;
+  String two(int value) => value.toString().padLeft(2, '0');
+  return '${two(parsed.day)}/${two(parsed.month)}/${parsed.year}';
 }
 
 String? _nullableText(Object? value) {

@@ -35,8 +35,9 @@ class _EstudiantesAdministradorPantallaState
   final _dniCtrl = TextEditingController();
   final _firstNameCtrl = TextEditingController();
   final _lastNameCtrl = TextEditingController();
-  final _cohortCtrl =
-      TextEditingController(text: DateTime.now().year.toString());
+  final _cohortCtrl = TextEditingController(
+    text: DateTime.now().year.toString(),
+  );
   final _divisionCtrl = TextEditingController();
   final _notesCtrl = TextEditingController();
   final _bulkCtrl = TextEditingController();
@@ -71,29 +72,32 @@ class _EstudiantesAdministradorPantallaState
       _middlePaneWidth = _minMiddlePaneWidth;
       return;
     }
-    _leftPaneWidth =
-        _leftPaneWidth.clamp(_minLeftPaneWidth, maxLeft).toDouble();
-    _middlePaneWidth =
-        _middlePaneWidth.clamp(_minMiddlePaneWidth, maxMiddle).toDouble();
+    _leftPaneWidth = _leftPaneWidth
+        .clamp(_minLeftPaneWidth, maxLeft)
+        .toDouble();
+    _middlePaneWidth = _middlePaneWidth
+        .clamp(_minMiddlePaneWidth, maxMiddle)
+        .toDouble();
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDesktop = MediaQuery.sizeOf(context).width >= 1000;
-    final studentsAsync =
-        ref.watch(proveedorEstudiantesAdministrador(widget.adminDeviceId));
+    final studentsAsync = ref.watch(
+      proveedorEstudiantesAdministrador(widget.adminDeviceId),
+    );
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Alumnos y trayectorias'),
-        centerTitle: true,
         actions: [
           IconButton(
             onPressed: _busy
                 ? null
                 : () => ref.invalidate(
-                    proveedorEstudiantesAdministrador(widget.adminDeviceId)),
+                    proveedorEstudiantesAdministrador(widget.adminDeviceId),
+                  ),
             icon: const Icon(Icons.refresh_rounded),
             tooltip: 'Actualizar',
           ),
@@ -137,10 +141,12 @@ class _EstudiantesAdministradorPantallaState
                                     }
                                   });
                                   ref
-                                      .read(
-                                          proveedorFiltroCarreraEstudiantesAdministrador
-                                              .notifier)
-                                      .state = value;
+                                          .read(
+                                            proveedorFiltroCarreraEstudiantesAdministrador
+                                                .notifier,
+                                          )
+                                          .state =
+                                      value;
                                 },
                         ),
                         const SizedBox(height: 12),
@@ -220,10 +226,12 @@ class _EstudiantesAdministradorPantallaState
                                   }
                                 });
                                 ref
-                                    .read(
-                                        proveedorFiltroCarreraEstudiantesAdministrador
-                                            .notifier)
-                                    .state = value;
+                                        .read(
+                                          proveedorFiltroCarreraEstudiantesAdministrador
+                                              .notifier,
+                                        )
+                                        .state =
+                                    value;
                               },
                       ),
                       const SizedBox(height: 12),
@@ -479,13 +487,15 @@ class _EstudiantesAdministradorPantallaState
   }
 
   void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   EstudianteAdministrador? _findStudentById(
-      List<EstudianteAdministrador> students, String id) {
+    List<EstudianteAdministrador> students,
+    String id,
+  ) {
     for (final student in students) {
       if (student.id == id) return student;
     }

@@ -25,11 +25,9 @@ class FotosMateriasCarreraAdministradorPantalla extends ConsumerWidget {
     final isDesktop = width >= 900;
 
     return Scaffold(
-      backgroundColor:
-          isDark ? const Color(0xFF030712) : const Color(0xFFF9FAFB),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(career.nombre),
-        centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
@@ -47,10 +45,9 @@ class FotosMateriasCarreraAdministradorPantalla extends ConsumerWidget {
             constraints: const BoxConstraints(maxWidth: 1200),
             child: overviewAsync.when(
               data: (items) {
-                final stats =
-                    items.where((item) => item.career.id == careerId).toList(
-                          growable: false,
-                        );
+                final stats = items
+                    .where((item) => item.career.id == careerId)
+                    .toList(growable: false);
                 if (stats.isEmpty) {
                   return const _EstadoVacio(
                     title: 'No hay fotos para esta carrera',
@@ -79,24 +76,27 @@ class FotosMateriasCarreraAdministradorPantalla extends ConsumerWidget {
                         physics: const NeverScrollableScrollPhysics(),
                         gridDelegate:
                             const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          crossAxisSpacing: 16,
-                          mainAxisSpacing: 16,
-                          childAspectRatio: 1.4,
-                        ),
+                              crossAxisCount: 2,
+                              crossAxisSpacing: 16,
+                              mainAxisSpacing: 16,
+                              childAspectRatio: 1.4,
+                            ),
                         itemCount: careerStats.years.length,
                         itemBuilder: (context, index) {
                           return _TarjetaAnio(
-                              yearStats: careerStats.years[index]);
+                            yearStats: careerStats.years[index],
+                          );
                         },
                       )
                     else
                       Column(
                         children: careerStats.years
-                            .map((yearStats) => Padding(
-                                  padding: const EdgeInsets.only(bottom: 12),
-                                  child: _TarjetaAnio(yearStats: yearStats),
-                                ))
+                            .map(
+                              (yearStats) => Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: _TarjetaAnio(yearStats: yearStats),
+                              ),
+                            )
                             .toList(),
                       ),
                   ],
@@ -134,11 +134,9 @@ class _TarjetaEncabezado extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF0B1220) : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isDark ? const Color(0xFF243041) : const Color(0xFFE5E7EB),
-        ),
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -153,7 +151,7 @@ class _TarjetaEncabezado extends StatelessWidget {
           Text(
             'Se han detectado $totalPhotos fotos cargadas en esta carrera.',
             style: theme.textTheme.bodyLarge?.copyWith(
-              color: isDark ? Colors.white70 : Colors.black87,
+              color: theme.colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 6),
@@ -179,11 +177,9 @@ class _TarjetaAnio extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF0B1220) : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isDark ? const Color(0xFF243041) : const Color(0xFFE5E7EB),
-        ),
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -191,8 +187,10 @@ class _TarjetaAnio extends StatelessWidget {
           Row(
             children: [
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: theme.colorScheme.primary.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(10),
@@ -232,10 +230,7 @@ class _TarjetaAnio extends StatelessWidget {
 }
 
 class _BaldosaMateria extends StatelessWidget {
-  const _BaldosaMateria({
-    required this.matterName,
-    required this.photoCount,
-  });
+  const _BaldosaMateria({required this.matterName, required this.photoCount});
 
   final String matterName;
   final int photoCount;
@@ -248,7 +243,7 @@ class _BaldosaMateria extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF161E2C) : const Color(0xFFF8FAFC),
+        color: theme.colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(14),
       ),
       child: Row(
@@ -318,12 +313,18 @@ class _EstadoVacio extends StatelessWidget {
         children: [
           Icon(icon, size: 64, color: theme.hintColor.withValues(alpha: 0.5)),
           const SizedBox(height: 16),
-          Text(title,
-              style: theme.textTheme.titleLarge
-                  ?.copyWith(fontWeight: FontWeight.w900)),
+          Text(
+            title,
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w900,
+            ),
+          ),
           const SizedBox(height: 8),
-          Text(subtitle,
-              textAlign: TextAlign.center, style: theme.textTheme.bodyMedium),
+          Text(
+            subtitle,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodyMedium,
+          ),
         ],
       ),
     );

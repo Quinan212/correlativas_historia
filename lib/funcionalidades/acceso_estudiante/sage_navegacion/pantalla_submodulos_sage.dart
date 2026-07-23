@@ -38,7 +38,7 @@ class PantallaSubmodulosSage extends StatelessWidget {
             for (final option in opcionesSubmodulosSage)
               ItemListaOpcionSage(
                 titulo: option.titulo,
-                icono: IconData(option.icono, fontFamily: 'MaterialIcons'),
+                icono: iconoMaterialSage(option.icono),
                 enabled: !busy,
                 available: option.titulo == 'Legajo Alumnos',
                 highlighted: option.titulo == 'Legajo Alumnos',

@@ -2911,7 +2911,9 @@ class _ChipDesincronizarLaboratorio extends StatelessWidget {
   }
 }
 
+// ignore: unused_element - insignia histórica preservada.
 class _BadgePruebas extends StatelessWidget {
+  // ignore: unused_element_parameter - variante histórica preservada.
   const _BadgePruebas({this.inverted = false});
 
   final bool inverted;
@@ -3070,13 +3072,11 @@ class _EstadoVacioSeccionLaboratorio extends StatelessWidget {
   const _EstadoVacioSeccionLaboratorio({
     required this.icon,
     required this.title,
-    this.message,
     this.compact = false,
   });
 
   final IconData icon;
   final String title;
-  final String? message;
   final bool compact;
 
   @override
@@ -3106,17 +3106,6 @@ class _EstadoVacioSeccionLaboratorio extends StatelessWidget {
                   fontWeight: FontWeight.w900,
                 ),
               ),
-              if (message != null && message!.trim().isNotEmpty) ...[
-                const SizedBox(height: 7),
-                Text(
-                  message!,
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                    height: 1.35,
-                  ),
-                ),
-              ],
             ],
           ),
         ),
@@ -3250,6 +3239,8 @@ _SyncStats _calculateSyncStats(
     if (old.estadoOriginal != current.estadoOriginal ||
         old.estado != current.estado ||
         old.anio != current.anio ||
+        old.fecha != current.fecha ||
+        old.nota != current.nota ||
         old.nombre != current.nombre) {
       updated++;
     } else {

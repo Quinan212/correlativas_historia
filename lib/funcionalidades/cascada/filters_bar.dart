@@ -81,21 +81,20 @@ class FilaEtiquetasFiltros extends ConsumerWidget {
     final plan = planAsync.value;
     final materias = plan == null ? const <Materia>[] : plan.materias;
 
-    final tiposDisponibles = materias
-        .map((m) => m.tipo.trim())
-        .where((t) => t.isNotEmpty)
-        .toSet()
-        .toList()
-      ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+    final tiposDisponibles =
+        materias
+            .map((m) => m.tipo.trim())
+            .where((t) => t.isNotEmpty)
+            .toSet()
+            .toList()
+          ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
 
-    final aniosDisponibles = materias
-        .map((m) => m.anio)
-        .where((y) => y > 0)
-        .toSet()
-        .toList()
-      ..sort();
-    final anios =
-        aniosDisponibles.isEmpty ? <int>[1, 2, 3, 4] : aniosDisponibles;
+    final aniosDisponibles =
+        materias.map((m) => m.anio).where((y) => y > 0).toSet().toList()
+          ..sort();
+    final anios = aniosDisponibles.isEmpty
+        ? <int>[1, 2, 3, 4]
+        : aniosDisponibles;
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -157,8 +156,9 @@ class _SearchBarRowState extends ConsumerState<SearchBarRow> {
   @override
   void initState() {
     super.initState();
-    _searchCtrl =
-        TextEditingController(text: ref.read(proveedorTerminoBusqueda));
+    _searchCtrl = TextEditingController(
+      text: ref.read(proveedorTerminoBusqueda),
+    );
     _searchCtrl.addListener(() {
       final v = _searchCtrl.text;
       if (ref.read(proveedorTerminoBusqueda) != v) {
@@ -210,9 +210,7 @@ class _SearchBarRowState extends ConsumerState<SearchBarRow> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
-    final isDarkTheme = theme.brightness == Brightness.dark;
-    final themeMode = ref.watch(proveedorModoTema);
-    final isDark = themeMode == ThemeMode.dark;
+    final isDark = theme.brightness == Brightness.dark;
     final downloadUrl = ref.watch(proveedorUrlDescargaCarrera);
 
     ref.listen<String>(proveedorTerminoBusqueda, (prev, next) {
@@ -234,7 +232,7 @@ class _SearchBarRowState extends ConsumerState<SearchBarRow> {
               prefixIcon: const Icon(Icons.search_rounded),
               isDense: true,
               filled: true,
-              fillColor: isDarkTheme ? cs.surface : Colors.white,
+              fillColor: isDark ? cs.surface : Colors.white,
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 16,
                 vertical: 14,
@@ -272,9 +270,9 @@ class _SearchBarRowState extends ConsumerState<SearchBarRow> {
               mode: LaunchMode.externalApplication,
             );
             if (!ok && context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('No se pudo abrir: $uri')),
-              );
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text('No se pudo abrir: $uri')));
             }
           },
         ),
@@ -284,8 +282,7 @@ class _SearchBarRowState extends ConsumerState<SearchBarRow> {
           tooltip: isDark ? 'Modo claro' : 'Modo oscuro',
           icon: isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
           onTap: () {
-            ref.read(proveedorModoTema.notifier).state =
-                isDark ? ThemeMode.light : ThemeMode.dark;
+            toggleTheme(ref, brightnessActual: theme.brightness);
           },
         ),
       ],

@@ -626,9 +626,26 @@ class _FilaMateriaTrayectoriaAtlassian extends StatelessWidget {
                     style: Theme.of(context).textTheme.titleSmall,
                   ),
                   const SizedBox(height: 5),
-                  LozengeAtlassian(
-                    label: subject.estado.etiqueta,
-                    appearance: aparienciaEstadoAtlassian(subject.estado),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 6,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      LozengeAtlassian(
+                        label: subject.estado.etiqueta,
+                        appearance: aparienciaEstadoAtlassian(subject.estado),
+                      ),
+                      if (subject.tieneNota)
+                        Text(
+                          'Nota ${subject.nota}',
+                          style: Theme.of(context).textTheme.labelMedium,
+                        ),
+                      if (subject.tieneFecha)
+                        Text(
+                          formatearFechaAcademicaSage(subject.fecha),
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                    ],
                   ),
                 ],
               ),
@@ -726,6 +743,20 @@ class PantallaDetalleMateriaAtlassian extends StatelessWidget {
                             ? 'Sin dato'
                             : subject.estadoOriginal,
                       ),
+                      if (subject.tieneNota) ...[
+                        const Divider(height: 1),
+                        _DatoMateriaAtlassian(
+                          label: 'Nota',
+                          value: subject.nota!,
+                        ),
+                      ],
+                      if (subject.tieneFecha) ...[
+                        const Divider(height: 1),
+                        _DatoMateriaAtlassian(
+                          label: 'Fecha',
+                          value: formatearFechaAcademicaSage(subject.fecha),
+                        ),
+                      ],
                       const Divider(height: 1),
                       _DatoMateriaAtlassian(
                         label: 'ID SAGE',

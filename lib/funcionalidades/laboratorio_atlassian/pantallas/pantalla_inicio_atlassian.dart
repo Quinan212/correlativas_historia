@@ -14,7 +14,6 @@ import '../tema/tema_atlassian.dart';
 import 'pantalla_calendario_atlassian.dart';
 import 'pantalla_centro_sage_atlassian.dart';
 import 'pantalla_disenos_atlassian.dart';
-import 'pantalla_materias_atlassian.dart';
 import 'pantallas_herramientas_atlassian.dart';
 import 'utilidades_atlassian.dart';
 
@@ -161,6 +160,7 @@ class _PantallaInicioAtlassianState extends State<PantallaInicioAtlassian> {
     _pushAtlassian(
       (_) => PantallaCalendarioAtlassian(
         careerId: idCarreraExamenAtlassian(career?.nombre ?? 'historia'),
+        trayectoria: widget.trajectoryListenable.value,
       ),
     );
   }

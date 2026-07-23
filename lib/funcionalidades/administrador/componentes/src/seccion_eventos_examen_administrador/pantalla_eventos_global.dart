@@ -1,9 +1,7 @@
 part of '../../seccion_eventos_examen_administrador.dart';
 
 class _PantallaEventosExamenGlobalAdmin extends ConsumerStatefulWidget {
-  const _PantallaEventosExamenGlobalAdmin({
-    required this.adminDeviceId,
-  });
+  const _PantallaEventosExamenGlobalAdmin({required this.adminDeviceId});
 
   final String adminDeviceId;
 
@@ -23,16 +21,18 @@ class _PantallaEventosExamenGlobalAdminState
   }
 
   Future<void> _openEditor(
-      BuildContext context, EventoExamenAdministrador? event) async {
+    BuildContext context,
+    EventoExamenAdministrador? event,
+  ) async {
     final draft = await mostrarHojaEditorEventoExamen(
       context: context,
       title: event == null
           ? _scope == 'mesas'
-              ? 'Nueva mesa'
-              : 'Nuevo coloquio'
+                ? 'Nueva mesa'
+                : 'Nuevo coloquio'
           : _scope == 'mesas'
-              ? 'Editar mesa'
-              : 'Editar coloquio',
+          ? 'Editar mesa'
+          : 'Editar coloquio',
       coloquioMode: _scope == 'coloquios',
       initialEvent: event,
     );
@@ -51,14 +51,14 @@ class _PantallaEventosExamenGlobalAdminState
       );
       ref.invalidate(proveedorEventosExamenAdministrador);
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Examen guardado')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Examen guardado')));
     } catch (error) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('No se pudo guardar: $error')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('No se pudo guardar: $error')));
     } finally {
       if (mounted) {
         setState(() => _busy = false);
@@ -67,8 +67,11 @@ class _PantallaEventosExamenGlobalAdminState
   }
 
   Future<void> _deleteEvent(
-      BuildContext context, EventoExamenAdministrador event) async {
-    final confirmed = await showDialog<bool>(
+    BuildContext context,
+    EventoExamenAdministrador event,
+  ) async {
+    final confirmed =
+        await showDialog<bool>(
           context: context,
           builder: (dialogContext) => AlertDialog(
             title: const Text('Borrar examen'),
@@ -103,14 +106,14 @@ class _PantallaEventosExamenGlobalAdminState
       );
       ref.invalidate(proveedorEventosExamenAdministrador);
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Examen borrado')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Examen borrado')));
     } catch (error) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('No se pudo borrar: $error')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('No se pudo borrar: $error')));
     } finally {
       if (mounted) {
         setState(() => _busy = false);
@@ -121,7 +124,6 @@ class _PantallaEventosExamenGlobalAdminState
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     final examenesAsync = ref.watch(proveedorEventosExamenAdministrador);
 
     return Scaffold(
@@ -141,12 +143,9 @@ class _PantallaEventosExamenGlobalAdminState
             margin: const EdgeInsets.all(16),
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF0B1220) : Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color:
-                    isDark ? const Color(0xFF243041) : const Color(0xFFE5E7EB),
-              ),
+              color: theme.colorScheme.surface,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: theme.colorScheme.outlineVariant),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -230,9 +229,7 @@ class _PantallaEventosExamenGlobalAdminState
                   },
                   loading: () => const Padding(
                     padding: EdgeInsets.symmetric(vertical: 24),
-                    child: Center(
-                      child: CircularProgressIndicator(),
-                    ),
+                    child: Center(child: CircularProgressIndicator()),
                   ),
                   error: (error, _) => Padding(
                     padding: const EdgeInsets.symmetric(vertical: 24),

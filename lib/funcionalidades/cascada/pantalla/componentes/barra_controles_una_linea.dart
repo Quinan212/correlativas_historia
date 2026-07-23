@@ -14,7 +14,7 @@ class BarraControlesUnaLinea extends ConsumerStatefulWidget {
   });
 
   final InputDecoration Function(BuildContext, {String? hint})
-      inputDecorationBuilder;
+  inputDecorationBuilder;
 
   @override
   ConsumerState<BarraControlesUnaLinea> createState() =>
@@ -34,8 +34,9 @@ class _BarraControlesUnaLineaState
   void initState() {
     super.initState();
     final currentCareer = ref.read(proveedorCarreraSeleccionadaONula);
-    _selectedType =
-        currentCareer == null ? null : tipoCarreraDeId(currentCareer.id);
+    _selectedType = currentCareer == null
+        ? null
+        : tipoCarreraDeId(currentCareer.id);
   }
 
   void _resetMapState() {
@@ -96,7 +97,8 @@ class _BarraControlesUnaLineaState
     final filteredCareers = _selectedType == null
         ? const <CareerInfo>[]
         : carrerasDeTipo(careers, _selectedType!);
-    final initialCareer = currentCareer != null &&
+    final initialCareer =
+        currentCareer != null &&
             filteredCareers.any((career) => career.id == currentCareer.id)
         ? currentCareer.id
         : null;
@@ -121,8 +123,10 @@ class _BarraControlesUnaLineaState
             ? cs.surface.withValues(alpha: 120 / 255)
             : const Color(0xFFF3F4F6),
         isDense: true,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 12,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
@@ -181,11 +185,7 @@ class _BarraControlesUnaLineaState
       padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Row(
         children: [
-          Icon(
-            Icons.school_outlined,
-            size: 18,
-            color: cs.primary,
-          ),
+          Icon(Icons.school_outlined, size: 18, color: cs.primary),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
@@ -246,12 +246,13 @@ class _BarraControlesUnaLineaState
                 setState(() {
                   _selectedType = value;
                 });
-                ref.read(proveedorTipoCarreraSeleccionada.notifier).state =
-                    value == null
-                        ? 'todas'
-                        : value == TipoCarrera.profesorado
-                            ? 'profesorado'
-                            : 'grado';
+                ref
+                    .read(proveedorTipoCarreraSeleccionada.notifier)
+                    .state = value == null
+                    ? 'todas'
+                    : value == TipoCarrera.profesorado
+                    ? 'profesorado'
+                    : 'grado';
                 if (value == null ||
                     (currentCareer != null &&
                         tipoCarreraDeId(currentCareer.id) != value)) {
@@ -344,8 +345,9 @@ class _BarraControlesUnaLineaState
                       }
                     }
                     ref
-                        .read(proveedorIdInstitucionSeleccionada.notifier)
-                        .state = value;
+                            .read(proveedorIdInstitucionSeleccionada.notifier)
+                            .state =
+                        value;
                     _resetMapState();
                     if (nextInstitution != null) {
                       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -365,10 +367,7 @@ class _BarraControlesUnaLineaState
             onChanged: (value) =>
                 ref.read(proveedorTerminoBusqueda.notifier).state = value,
             decoration: widget
-                .inputDecorationBuilder(
-                  context,
-                  hint: 'Buscar materia...',
-                )
+                .inputDecorationBuilder(context, hint: 'Buscar materia...')
                 .copyWith(
                   prefixIcon: const Icon(Icons.search),
                   suffixIcon: searchValue.isNotEmpty
@@ -404,9 +403,9 @@ class _BarraControlesUnaLineaState
                     ),
                   )
                   .toList(),
-              onChanged: (value) => ref
-                  .read(filtroTipoProvider.notifier)
-                  .state = value ?? 'todos',
+              onChanged: (value) =>
+                  ref.read(filtroTipoProvider.notifier).state =
+                      value ?? 'todos',
             ),
           );
 
@@ -423,10 +422,7 @@ class _BarraControlesUnaLineaState
               decoration: ddDecoration(),
               icon: const Icon(Icons.keyboard_arrow_down_rounded),
               items: <DropdownMenuItem<int?>>[
-                const DropdownMenuItem<int?>(
-                  value: -1,
-                  child: Text('Todos'),
-                ),
+                const DropdownMenuItem<int?>(value: -1, child: Text('Todos')),
                 ...anios.map(
                   (year) => DropdownMenuItem<int?>(
                     value: year,
@@ -436,8 +432,9 @@ class _BarraControlesUnaLineaState
               ],
               onChanged: (value) {
                 if (value == null) return;
-                ref.read(filtroAnioProvider.notifier).state =
-                    value == -1 ? null : value;
+                ref.read(filtroAnioProvider.notifier).state = value == -1
+                    ? null
+                    : value;
               },
             ),
           );
@@ -458,9 +455,7 @@ class _BarraControlesUnaLineaState
                         )) {
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('No se pudo abrir: '),
-                              ),
+                              SnackBar(content: Text('No se pudo abrir: ')),
                             );
                           }
                         }
@@ -473,11 +468,10 @@ class _BarraControlesUnaLineaState
                     : Icons.dark_mode_outlined,
                 tooltip: isDark ? 'Modo claro' : 'Modo oscuro',
                 onTap: () {
-                  final current = ref.read(proveedorModoTema);
-                  ref.read(proveedorModoTema.notifier).state =
-                      current == ThemeMode.dark
-                          ? ThemeMode.light
-                          : ThemeMode.dark;
+                  toggleTheme(
+                    ref,
+                    brightnessActual: Theme.of(context).brightness,
+                  );
                 },
               ),
             ],
@@ -505,10 +499,7 @@ class _BarraControlesUnaLineaState
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Expanded(
-                      child: SizedBox(
-                        height: _h,
-                        child: searchField,
-                      ),
+                      child: SizedBox(height: _h, child: searchField),
                     ),
                     const SizedBox(width: 12),
                     tipoFiltro,
@@ -533,11 +524,7 @@ class _BarraControlesUnaLineaState
                 spacing: 12,
                 runSpacing: 12,
                 crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  typeDropdown,
-                  careerDropdown,
-                  institutionDropdown,
-                ],
+                children: [typeDropdown, careerDropdown, institutionDropdown],
               ),
               const SizedBox(height: 12),
               Wrap(
@@ -545,11 +532,7 @@ class _BarraControlesUnaLineaState
                 runSpacing: 12,
                 crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
-                  SizedBox(
-                    width: 470,
-                    height: _h,
-                    child: searchField,
-                  ),
+                  SizedBox(width: 470, height: _h, child: searchField),
                   tipoFiltro,
                   anioFiltro,
                   actionButtons,

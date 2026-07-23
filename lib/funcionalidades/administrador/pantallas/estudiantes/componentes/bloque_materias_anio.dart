@@ -86,10 +86,12 @@ class BloqueMateriasAnio extends StatelessWidget {
                       onChanged: saving
                           ? null
                           : (value) =>
-                              onToggleEnrollment(materia, value ?? false),
+                                onToggleEnrollment(materia, value ?? false),
                     )
-                  : Icon(Icons.check_circle_rounded,
-                      color: theme.colorScheme.primary),
+                  : Icon(
+                      Icons.check_circle_rounded,
+                      color: theme.colorScheme.primary,
+                    ),
               title: Text(
                 materia.displayNombre,
                 style: const TextStyle(fontWeight: FontWeight.w700),
@@ -107,7 +109,9 @@ class BloqueMateriasAnio extends StatelessWidget {
   }
 
   String _subtituloMateria(
-      MateriaEstudianteAdministrador? saved, Materia materia) {
+    MateriaEstudianteAdministrador? saved,
+    Materia materia,
+  ) {
     final reqs = materia.correlativasDetalladas.length;
     if (saved == null) {
       return reqs == 0 ? 'Sin correlativas' : '$reqs correlativas';

@@ -3,8 +3,6 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-
 import '../../administrador/pantallas/acceso_administrador_pantalla.dart';
 import '../../trayectoria_sage_laboratorio/datos/repositorio_estado_sincronizacion_sage.dart';
 import '../../trayectoria_sage_laboratorio/datos/repositorio_trayectoria_sage_laboratorio.dart';
@@ -72,25 +70,7 @@ class _PantallaLaboratorioAtlassianState
   @override
   void initState() {
     super.initState();
-    unawaited(_limpiarPreferenciasObsolotas());
     unawaited(_loadLocal());
-  }
-
-  Future<void> _limpiarPreferenciasObsolotas() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final keys = prefs.getKeys();
-      for (final key in keys) {
-        final k = key.toLowerCase();
-        if (k.contains('barra') ||
-            k.contains('navigation') ||
-            k.contains('legacy') ||
-            k.contains('vieja') ||
-            k.contains('bottom_bar')) {
-          await prefs.remove(key);
-        }
-      }
-    } catch (_) {}
   }
 
   Future<void> _loadLocal() async {
@@ -264,6 +244,7 @@ class _PantallaLaboratorioAtlassianState
           PantallaCalendarioAtlassian(
             careerId: destination.careerId ?? 'historia',
             initialDate: destination.fecha,
+            trayectoria: _trajectory.value,
           ),
         );
         return;
@@ -473,8 +454,9 @@ class _PantallaLaboratorioAtlassianState
           observers: <NavigatorObserver>[
             _SectionNavigatorObserver(_handleSectionRouteChanged),
           ],
-          onGenerateRoute: (_) =>
-              MaterialPageRoute<void>(builder: (_) => sectionChildren[index]),
+          onGenerateRoute: (_) => MaterialPageRoute<void>(
+            builder: (_) => sectionChildren[index],
+          ),
         ),
       );
     });
@@ -775,7 +757,9 @@ class _PantallaLaboratorioAtlassianState
           onPopInvokedWithResult: (didPop, _) async {
             if (didPop) return;
             final shouldExit = await _handleBack();
-            if (shouldExit && context.mounted) Navigator.of(context).pop();
+            if (shouldExit && !widget.hideExit && context.mounted) {
+              Navigator.of(context).pop();
+            }
           },
           child: ValueListenableBuilder<TrayectoriaSageLaboratorio?>(
             valueListenable: _trajectory,
@@ -860,15 +844,15 @@ class DrawerMovilAtlassian extends StatelessWidget {
     return Padding(
       padding: EdgeInsets.only(top: topPadding),
       child: Drawer(
-        backgroundColor: Colors.black,
+        backgroundColor: scheme.surface,
         width: width,
         shape: const RoundedRectangleBorder(),
         child: DecoratedBox(
-          decoration: const BoxDecoration(
-            color: Colors.black,
+          decoration: BoxDecoration(
+            color: scheme.surface,
             border: Border(
               right: BorderSide(
-                color: Colors.white,
+                color: scheme.outlineVariant,
                 width: 0.5,
               ),
             ),
@@ -891,7 +875,7 @@ class DrawerMovilAtlassian extends StatelessWidget {
                       child: Text(
                         'Correlativas',
                         style: theme.textTheme.headlineMedium?.copyWith(
-                          color: Colors.white,
+                          color: scheme.onSurface,
                           fontWeight: FontWeight.w800,
                           fontSize: 26,
                         ),
@@ -906,13 +890,13 @@ class DrawerMovilAtlassian extends StatelessWidget {
                       child: Container(
                         width: 44,
                         height: 44,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFF222224),
+                        decoration: BoxDecoration(
+                          color: scheme.surfaceContainerHighest,
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.search_rounded,
-                          color: Colors.white,
+                          color: scheme.onSurface,
                           size: 22,
                         ),
                       ),
@@ -938,7 +922,7 @@ class DrawerMovilAtlassian extends StatelessWidget {
                             item.$1,
                             color: selectedIndex == item.$3
                                 ? scheme.primary
-                                : Colors.white,
+                                : scheme.onSurface,
                             size: 24,
                           ),
                           const SizedBox(width: 16),
@@ -947,7 +931,7 @@ class DrawerMovilAtlassian extends StatelessWidget {
                             style: theme.textTheme.titleMedium?.copyWith(
                               color: selectedIndex == item.$3
                                   ? scheme.primary
-                                  : Colors.white,
+                                  : scheme.onSurface,
                               fontWeight: FontWeight.w700,
                               fontSize: 18,
                             ),
@@ -975,14 +959,14 @@ class DrawerMovilAtlassian extends StatelessWidget {
                       child: Container(
                         width: 46,
                         height: 46,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFF222224),
+                        decoration: BoxDecoration(
+                          color: scheme.surfaceContainerHighest,
                           shape: BoxShape.circle,
                         ),
                         alignment: Alignment.center,
-                        child: const Icon(
+                        child: Icon(
                           Icons.admin_panel_settings_rounded,
-                          color: Colors.white,
+                          color: scheme.onSurface,
                           size: 22,
                         ),
                       ),

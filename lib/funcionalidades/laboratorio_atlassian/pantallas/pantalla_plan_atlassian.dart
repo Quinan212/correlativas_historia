@@ -102,7 +102,7 @@ class _PantallaPlanAtlassianState extends State<PantallaPlanAtlassian> {
 
     setState(() {
       if (requestedCareer != null && requestedCareer.id != _career.id) {
-        _career = requestedCareer!;
+        _career = requestedCareer;
         final institutions = _institutionsFor(_career);
         _institution = institutions.isEmpty ? null : institutions.first;
         _future = _load(_career, _institution);

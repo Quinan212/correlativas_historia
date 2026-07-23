@@ -216,7 +216,6 @@ class _PantallaBusquedaGlobalAtlassianState
     BuildContext context,
     TrayectoriaSageLaboratorio? trajectory,
   ) {
-    final theme = Theme.of(context);
     final actions = _baseActions(trajectory);
     final navigation = actions
         .where((item) => item.group == _ActionGroup.navigation)
@@ -896,7 +895,7 @@ class _PantallaBusquedaGlobalAtlassianState
       final trajectoryMetadata = builder.trajectory
           .map(
             (item) =>
-                '${item.career.nombre} ${item.subject.estado.etiqueta} ${item.subject.estadoOriginal} ${item.subject.anio ?? ''} año',
+                '${item.career.nombre} ${item.subject.estado.etiqueta} ${item.subject.estadoOriginal} ${item.subject.anio ?? ''} año ${item.subject.nota ?? ''} ${item.subject.fecha ?? ''}',
           )
           .join(' ');
       final examMetadata = builder.events
@@ -1272,7 +1271,7 @@ class _QuickActionCard extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            action.title, 
+            action.title,
             style: theme.textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.bold,
               letterSpacing: 0.1,

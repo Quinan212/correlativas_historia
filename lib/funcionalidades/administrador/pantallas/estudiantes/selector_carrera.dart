@@ -20,10 +20,7 @@ class SelectorCarreraAdministrador extends StatelessWidget {
           value: 'artes_visuales',
           child: Text('Profesorado en Artes Visuales'),
         ),
-        DropdownMenuItem(
-          value: 'musica',
-          child: Text('Profesorado en Música'),
-        ),
+        DropdownMenuItem(value: 'musica', child: Text('Profesorado en Música')),
       ],
       onChanged: onChanged,
     );

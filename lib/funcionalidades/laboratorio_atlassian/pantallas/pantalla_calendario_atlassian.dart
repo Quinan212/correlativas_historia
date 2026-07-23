@@ -5,9 +5,11 @@ import 'package:skeletonizer/skeletonizer.dart';
 
 import '../../examenes/datos/repositorio_examenes.dart';
 import '../../examenes/modelos/evento_examen.dart';
+import '../../trayectoria_sage_laboratorio/modelos/modelos_trayectoria_sage_laboratorio.dart';
 import '../componentes/componentes_atlassian.dart';
 import '../tema/tema_atlassian.dart';
 import 'pantalla_examenes_atlassian.dart';
+import 'pantalla_materias_atlassian.dart';
 import 'utilidades_atlassian.dart';
 
 class PantallaCalendarioAtlassian extends StatefulWidget {
@@ -15,10 +17,12 @@ class PantallaCalendarioAtlassian extends StatefulWidget {
     super.key,
     required this.careerId,
     this.initialDate,
+    this.trayectoria,
   });
 
   final String careerId;
   final DateTime? initialDate;
+  final TrayectoriaSageLaboratorio? trayectoria;
 
   @override
   State<PantallaCalendarioAtlassian> createState() =>
@@ -161,6 +165,62 @@ class _PantallaCalendarioAtlassianState
     });
   }
 
+  List<_EntradaCalendarioAtlassian> _crearEntradas(
+    List<EventoExamen> events,
+  ) {
+    final entries = <_EntradaCalendarioAtlassian>[
+      for (final event in events)
+        if (event.fecha != null) _EntradaCalendarioAtlassian.examen(event),
+    ];
+    final trajectory = widget.trayectoria;
+    if (trajectory != null) {
+      for (final career in trajectory.carreras) {
+        if (idCarreraExamenAtlassian(career.nombre) != _careerId) continue;
+        for (final subject in career.materias) {
+          final date = subject.fechaAprobacion;
+          if (subject.estado != EstadoMateriaSageLaboratorio.aprobada ||
+              date == null) {
+            continue;
+          }
+          entries.add(
+            _EntradaCalendarioAtlassian.aprobacion(
+              subject: subject,
+              career: career,
+              date: date,
+            ),
+          );
+        }
+      }
+    }
+    entries.sort(
+      (first, second) => first.fechaOrden.compareTo(second.fechaOrden),
+    );
+    return List<_EntradaCalendarioAtlassian>.unmodifiable(entries);
+  }
+
+  void _abrirEntrada(_EntradaCalendarioAtlassian entry) {
+    final exam = entry.examen;
+    if (exam != null) {
+      Navigator.of(context).push<void>(
+        rutaAtlassian<void>(
+          builder: (_) => PantallaDetalleExamenAtlassian(event: exam),
+        ),
+      );
+      return;
+    }
+    final subject = entry.materia;
+    final career = entry.carrera;
+    if (subject == null || career == null) return;
+    Navigator.of(context).push<void>(
+      rutaAtlassian<void>(
+        builder: (_) => PantallaDetalleMateriaAtlassian(
+          subject: subject,
+          career: career,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -169,7 +229,7 @@ class _PantallaCalendarioAtlassianState
         children: [
           EncabezadoPaginaAtlassian(
             title: 'Calendario',
-            subtitle: 'Mesas, coloquios y fechas publicadas',
+            subtitle: 'Mesas, coloquios y aprobaciones',
             centerTitle: true,
             leading: BotonIconoAtlassian(
               icon: Icons.arrow_back_rounded,
@@ -178,11 +238,14 @@ class _PantallaCalendarioAtlassianState
             ),
             actions: [
               BotonIconoAtlassian(
+                icon: Icons.today_rounded,
+                tooltip: 'Ir a hoy',
+                onPressed: _goToday,
+              ),
+              BotonIconoAtlassian(
                 icon: Icons.refresh_rounded,
                 tooltip: 'Actualizar',
-                onPressed: () {
-                  _refresh();
-                },
+                onPressed: () => unawaited(_refresh()),
               ),
             ],
           ),
@@ -211,22 +274,23 @@ class _PantallaCalendarioAtlassianState
                 }
 
                 final events = snapshot.data ?? const <EventoExamen>[];
-                final datedEvents = events
-                    .where((item) => item.fecha != null)
-                    .toList(growable: false);
-                final byDay = <DateTime, List<EventoExamen>>{};
-                for (final event in datedEvents) {
-                  final key = _dayKey(event.fecha!);
-                  byDay.putIfAbsent(key, () => <EventoExamen>[]).add(event);
+                final entries = _crearEntradas(events);
+                final byDay = <DateTime, List<_EntradaCalendarioAtlassian>>{};
+                for (final entry in entries) {
+                  final key = _dayKey(entry.fecha);
+                  byDay
+                      .putIfAbsent(
+                        key,
+                        () => <_EntradaCalendarioAtlassian>[],
+                      )
+                      .add(entry);
                 }
                 final selectedEvents =
-                    byDay[_dayKey(_selectedDay)] ?? const <EventoExamen>[];
-                final upcoming = datedEvents
-                    .where((event) {
-                      final date = event.fecha!;
-                      final today = _dayKey(DateTime.now());
-                      return !_dayKey(date).isBefore(today);
-                    })
+                    byDay[_dayKey(_selectedDay)] ??
+                    const <_EntradaCalendarioAtlassian>[];
+                final today = _dayKey(DateTime.now());
+                final upcoming = entries
+                    .where((entry) => !_dayKey(entry.fecha).isBefore(today))
                     .toList(growable: false);
 
                 return RefreshIndicator(
@@ -246,7 +310,7 @@ class _PantallaCalendarioAtlassianState
                       ),
                       const SizedBox(height: 12),
                       _ResumenCalendarioAtlassian(
-                        total: events.length,
+                        total: entries.length,
                         upcoming: upcoming.length,
                         next: upcoming.isEmpty ? null : upcoming.first,
                       ),
@@ -303,7 +367,7 @@ class _PantallaCalendarioAtlassianState
                         const MensajeSeccionAtlassian(
                           title: 'Día libre',
                           message:
-                              'No hay mesas ni coloquios publicados para esta fecha.',
+                              'No hay mesas, coloquios ni aprobaciones para esta fecha.',
                           icon: Icons.event_available_outlined,
                         )
                       else
@@ -318,16 +382,8 @@ class _PantallaCalendarioAtlassianState
                               ) ...[
                                 _CalendarEventRowAtlassian(
                                   event: selectedEvents[index],
-                                  onTap: () {
-                                    Navigator.of(context).push<void>(
-                                      rutaAtlassian<void>(
-                                        builder: (_) =>
-                                            PantallaDetalleExamenAtlassian(
-                                              event: selectedEvents[index],
-                                            ),
-                                      ),
-                                    );
-                                  },
+                                  onTap: () =>
+                                      _abrirEntrada(selectedEvents[index]),
                                 ),
                                 if (index != selectedEvents.length - 1)
                                   const Divider(height: 1),
@@ -335,7 +391,7 @@ class _PantallaCalendarioAtlassianState
                             ],
                           ),
                         ),
-                      if (events.isEmpty) ...[
+                      if (entries.isEmpty) ...[
                         const SizedBox(height: 16),
                         const MensajeSeccionAtlassian(
                           title: 'Sin fechas publicadas',
@@ -366,7 +422,7 @@ class _ResumenCalendarioAtlassian extends StatelessWidget {
 
   final int total;
   final int upcoming;
-  final EventoExamen? next;
+  final _EntradaCalendarioAtlassian? next;
 
   @override
   Widget build(BuildContext context) {
@@ -397,17 +453,14 @@ class _ResumenCalendarioAtlassian extends StatelessWidget {
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      nextEvent.materia,
+                      nextEvent.titulo,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.titleSmall,
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      formatoFechaHoraAtlassian(
-                        nextEvent.fecha,
-                        nextEvent.hora,
-                      ),
+                      nextEvent.subtitulo,
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                   ],
@@ -484,7 +537,7 @@ class _MonthGridAtlassian extends StatelessWidget {
 
   final DateTime month;
   final DateTime selectedDay;
-  final Map<DateTime, List<EventoExamen>> eventsByDay;
+  final Map<DateTime, List<_EntradaCalendarioAtlassian>> eventsByDay;
   final ValueChanged<DateTime> onSelected;
 
   @override
@@ -576,7 +629,7 @@ class _MonthGridAtlassian extends StatelessWidget {
 class _CalendarEventRowAtlassian extends StatelessWidget {
   const _CalendarEventRowAtlassian({required this.event, required this.onTap});
 
-  final EventoExamen event;
+  final _EntradaCalendarioAtlassian event;
   final VoidCallback onTap;
 
   @override
@@ -597,9 +650,7 @@ class _CalendarEventRowAtlassian extends StatelessWidget {
                 borderRadius: BorderRadius.circular(RadioAtlassian.medium),
               ),
               child: Icon(
-                event.instancia == 'coloquio'
-                    ? Icons.groups_2_outlined
-                    : Icons.event_note_outlined,
+                event.icono,
                 color: Theme.of(context).brightness == Brightness.dark
                     ? Colors.white
                     : Theme.of(context).colorScheme.primary,
@@ -612,12 +663,12 @@ class _CalendarEventRowAtlassian extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    event.materia,
+                    event.titulo,
                     style: Theme.of(context).textTheme.titleSmall,
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    formatoFechaHoraAtlassian(event.fecha, event.hora),
+                    event.subtitulo,
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ],
@@ -630,6 +681,62 @@ class _CalendarEventRowAtlassian extends StatelessWidget {
       ),
     );
   }
+}
+
+class _EntradaCalendarioAtlassian {
+  const _EntradaCalendarioAtlassian._({
+    required this.fecha,
+    required this.fechaOrden,
+    required this.titulo,
+    required this.subtitulo,
+    required this.icono,
+    this.examen,
+    this.materia,
+    this.carrera,
+  });
+
+  factory _EntradaCalendarioAtlassian.examen(EventoExamen event) {
+    final date = event.fecha!;
+    return _EntradaCalendarioAtlassian._(
+      fecha: date,
+      fechaOrden: event.fechaHora ?? date,
+      titulo: event.materia,
+      subtitulo: formatoFechaHoraAtlassian(event.fecha, event.hora),
+      icono: event.instancia == 'coloquio'
+          ? Icons.groups_2_outlined
+          : Icons.event_note_outlined,
+      examen: event,
+    );
+  }
+
+  factory _EntradaCalendarioAtlassian.aprobacion({
+    required MateriaTrayectoriaSageLaboratorio subject,
+    required CarreraTrayectoriaSageLaboratorio career,
+    required DateTime date,
+  }) {
+    final grade = subject.nota?.trim() ?? '';
+    return _EntradaCalendarioAtlassian._(
+      fecha: date,
+      fechaOrden: date,
+      titulo: subject.nombre,
+      subtitulo: grade.isEmpty
+          ? 'Materia aprobada · ${formatearFechaAcademicaSage(subject.fecha)}'
+          : 'Materia aprobada · Nota $grade · '
+                '${formatearFechaAcademicaSage(subject.fecha)}',
+      icono: Icons.verified_rounded,
+      materia: subject,
+      carrera: career,
+    );
+  }
+
+  final DateTime fecha;
+  final DateTime fechaOrden;
+  final String titulo;
+  final String subtitulo;
+  final IconData icono;
+  final EventoExamen? examen;
+  final MateriaTrayectoriaSageLaboratorio? materia;
+  final CarreraTrayectoriaSageLaboratorio? carrera;
 }
 
 DateTime _dayKey(DateTime date) => DateTime(date.year, date.month, date.day);
@@ -832,29 +939,33 @@ class _EsqueletoCalendarioAtlassian extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           _CalendarEventRowAtlassian(
-            event: EventoExamen(
-              careerId: careerId,
-              anio: 1,
-              fecha: now,
-              hora: '19:00',
-              materia: 'Cargando materia de examen...',
-              instancia: 'llamado_1',
-              docentes: const ['Cargando docente...'],
-              actaUrl: null,
+            event: _EntradaCalendarioAtlassian.examen(
+              EventoExamen(
+                careerId: careerId,
+                anio: 1,
+                fecha: now,
+                hora: '19:00',
+                materia: 'Cargando materia de examen...',
+                instancia: 'llamado_1',
+                docentes: const ['Cargando docente...'],
+                actaUrl: null,
+              ),
             ),
             onTap: () {},
           ),
           const SizedBox(height: 8),
           _CalendarEventRowAtlassian(
-            event: EventoExamen(
-              careerId: careerId,
-              anio: 2,
-              fecha: now,
-              hora: '19:00',
-              materia: 'Cargando otra materia de examen...',
-              instancia: 'llamado_2',
-              docentes: const ['Cargando docente...'],
-              actaUrl: null,
+            event: _EntradaCalendarioAtlassian.examen(
+              EventoExamen(
+                careerId: careerId,
+                anio: 2,
+                fecha: now,
+                hora: '19:00',
+                materia: 'Cargando otra materia de examen...',
+                instancia: 'llamado_2',
+                docentes: const ['Cargando docente...'],
+                actaUrl: null,
+              ),
             ),
             onTap: () {},
           ),

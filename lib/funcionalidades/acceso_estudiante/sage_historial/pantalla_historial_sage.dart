@@ -886,6 +886,10 @@ class _SubjectsList extends StatelessWidget {
           ),
           ...groups[year]!.map((subject) {
             final statusLower = subject.estado.toLowerCase();
+            final nota = subject.nota?.trim();
+            final fecha = subject.fecha?.trim();
+            final tieneNota = nota != null && nota.isNotEmpty;
+            final tieneFecha = fecha != null && fecha.isNotEmpty;
             final statusColor = statusLower.contains('aprob')
                 ? const Color(0xFF2E7D32)
                 : statusLower.contains('curs')
@@ -934,6 +938,25 @@ class _SubjectsList extends StatelessWidget {
                                   ),
                             ),
                           ),
+                          if (tieneNota || tieneFecha) ...[
+                            const SizedBox(height: 6),
+                            Wrap(
+                              spacing: 12,
+                              runSpacing: 4,
+                              children: [
+                                if (tieneNota)
+                                  _DatoAcademicoMateria(
+                                    icono: Icons.grade_outlined,
+                                    texto: 'Nota $nota',
+                                  ),
+                                if (tieneFecha)
+                                  _DatoAcademicoMateria(
+                                    icono: Icons.event_available_outlined,
+                                    texto: fecha,
+                                  ),
+                              ],
+                            ),
+                          ],
                         ],
                       ),
                     ),
@@ -952,6 +975,33 @@ class _SubjectsList extends StatelessWidget {
             );
           }),
         ],
+      ],
+    );
+  }
+}
+
+class _DatoAcademicoMateria extends StatelessWidget {
+  const _DatoAcademicoMateria({required this.icono, required this.texto});
+
+  final IconData icono;
+  final String texto;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final color = theme.colorScheme.onSurface.withValues(alpha: 0.58);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icono, size: 14, color: color),
+        const SizedBox(width: 4),
+        Text(
+          texto,
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: color,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ],
     );
   }

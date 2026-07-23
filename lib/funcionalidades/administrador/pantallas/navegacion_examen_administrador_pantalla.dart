@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../modelos/evento_navegacion_examen_administrador.dart';
-import '../../laboratorio_atlassian/tema/tema_atlassian.dart';
+import '../tema/tema_administrador_atlassian.dart';
 import '../proveedores/proveedores_navegacion_examen_administrador.dart';
 import 'navegacion_examen_usuario_administrador_pantalla.dart';
 
@@ -13,17 +13,16 @@ class NavegacionExamenAdministradorPantalla extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final overviewAsync =
-        ref.watch(proveedorResumenNavegacionExamenAdministrador);
+    final overviewAsync = ref.watch(
+      proveedorResumenNavegacionExamenAdministrador,
+    );
     final width = MediaQuery.of(context).size.width;
     final isDesktop = width >= 1000;
 
     return Scaffold(
-      backgroundColor:
-          isDark ? const Color(0xFF030712) : const Color(0xFFF9FAFB),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Recorrido de exámenes'),
-        centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
@@ -55,14 +54,14 @@ class NavegacionExamenAdministradorPantalla extends ConsumerWidget {
                   overview.events.where((e) => _isSameDay(e.createdAt, today)),
                 );
                 final monthViews = _topMatterCounts(
-                  overview.events
-                      .where((e) => _isSameMonth(e.createdAt, today)),
+                  overview.events.where(
+                    (e) => _isSameMonth(e.createdAt, today),
+                  ),
                 );
                 final allViews = _topMatterCounts(overview.events);
-                final viewEvents =
-                    overview.events.where((event) => event.isView).toList(
-                          growable: false,
-                        );
+                final viewEvents = overview.events
+                    .where((event) => event.isView)
+                    .toList(growable: false);
 
                 final padding = isDesktop
                     ? const EdgeInsets.symmetric(horizontal: 40, vertical: 24)
@@ -85,8 +84,9 @@ class NavegacionExamenAdministradorPantalla extends ConsumerWidget {
                     _TarjetaResumen(
                       totalEvents: overview.events.length,
                       totalViews: overview.events.where((e) => e.isView).length,
-                      totalTransitions:
-                          overview.events.where((e) => !e.isView).length,
+                      totalTransitions: overview.events
+                          .where((e) => !e.isView)
+                          .length,
                       totalUsers: overview.deviceSummaries.length,
                     ),
                     const SizedBox(height: 24),
@@ -94,14 +94,15 @@ class NavegacionExamenAdministradorPantalla extends ConsumerWidget {
                       title: 'Usuarios',
                       child: Column(
                         children: overview.deviceSummaries
-                            .map((device) => Padding(
-                                  padding: const EdgeInsets.only(bottom: 12),
-                                  child: _UserTile(
-                                    device: device,
-                                    onTap: () =>
-                                        _navigateToUser(context, device),
-                                  ),
-                                ))
+                            .map(
+                              (device) => Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: _UserTile(
+                                  device: device,
+                                  onTap: () => _navigateToUser(context, device),
+                                ),
+                              ),
+                            )
                             .toList(),
                       ),
                     ),
@@ -139,17 +140,15 @@ class NavegacionExamenAdministradorPantalla extends ConsumerWidget {
     );
   }
 
-  void _navigateToUser(BuildContext context,
-      ResumenDispositivoNavegacionExamenAdministrador device) {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => Theme(
-          data: temaLaboratorioAtlassian(context),
-          child: NavegacionExamenUsuarioAdministradorPantalla(
-            deviceId: device.deviceId,
-            deviceLabel: device.label,
-          ),
-        ),
+  void _navigateToUser(
+    BuildContext context,
+    ResumenDispositivoNavegacionExamenAdministrador device,
+  ) {
+    abrirPantallaAdministradorAtlassian<void>(
+      context,
+      NavegacionExamenUsuarioAdministradorPantalla(
+        deviceId: device.deviceId,
+        deviceLabel: device.label,
       ),
     );
   }
@@ -198,24 +197,22 @@ class _NavegacionExamenAdminEscritorio extends StatelessWidget {
                       physics: const NeverScrollableScrollPhysics(),
                       gridDelegate:
                           const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
-                        childAspectRatio: 2.8,
-                      ),
+                            crossAxisCount: 2,
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 12,
+                            childAspectRatio: 2.8,
+                          ),
                       itemCount: overview.deviceSummaries.length,
                       itemBuilder: (context, index) {
                         final device = overview.deviceSummaries[index];
                         return _UserTile(
                           device: device,
                           onTap: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute<void>(
-                                builder: (_) =>
-                                    NavegacionExamenUsuarioAdministradorPantalla(
-                                  deviceId: device.deviceId,
-                                  deviceLabel: device.label,
-                                ),
+                            abrirPantallaAdministradorAtlassian<void>(
+                              context,
+                              NavegacionExamenUsuarioAdministradorPantalla(
+                                deviceId: device.deviceId,
+                                deviceLabel: device.label,
                               ),
                             );
                           },
@@ -233,11 +230,11 @@ class _NavegacionExamenAdminEscritorio extends StatelessWidget {
                             physics: const NeverScrollableScrollPhysics(),
                             gridDelegate:
                                 const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              crossAxisSpacing: 12,
-                              mainAxisSpacing: 12,
-                              childAspectRatio: 3.2,
-                            ),
+                                  crossAxisCount: 2,
+                                  crossAxisSpacing: 12,
+                                  mainAxisSpacing: 12,
+                                  childAspectRatio: 3.2,
+                                ),
                             itemCount: viewEvents.length.clamp(0, 10),
                             itemBuilder: (context, index) =>
                                 _BaldosaEvento(event: viewEvents[index]),
@@ -300,11 +297,9 @@ class _TarjetaResumen extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF0B1220) : Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: isDark ? const Color(0xFF243041) : const Color(0xFFE5E7EB),
-        ),
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -320,21 +315,25 @@ class _TarjetaResumen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               _Metric(
-                  label: 'Total Eventos',
-                  value: '$totalEvents',
-                  icon: Icons.history_rounded),
+                label: 'Total Eventos',
+                value: '$totalEvents',
+                icon: Icons.history_rounded,
+              ),
               _Metric(
-                  label: 'Vistas Examen',
-                  value: '$totalViews',
-                  icon: Icons.visibility_rounded),
+                label: 'Vistas Examen',
+                value: '$totalViews',
+                icon: Icons.visibility_rounded,
+              ),
               _Metric(
-                  label: 'Saltos Instancia',
-                  value: '$totalTransitions',
-                  icon: Icons.swap_horiz_rounded),
+                label: 'Saltos Instancia',
+                value: '$totalTransitions',
+                icon: Icons.swap_horiz_rounded,
+              ),
               _Metric(
-                  label: 'Usuarios Únicos',
-                  value: '$totalUsers',
-                  icon: Icons.people_outline_rounded),
+                label: 'Usuarios Únicos',
+                value: '$totalUsers',
+                icon: Icons.people_outline_rounded,
+              ),
             ],
           ),
         ],
@@ -357,11 +356,9 @@ class _Metric extends StatelessWidget {
       width: 220,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF161E2C) : const Color(0xFFF8FAFC),
+        color: theme.colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isDark ? const Color(0xFF243041) : const Color(0xFFE5E7EB),
-        ),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
       ),
       child: Row(
         children: [
@@ -370,12 +367,18 @@ class _Metric extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(value,
-                  style: theme.textTheme.titleLarge
-                      ?.copyWith(fontWeight: FontWeight.w900)),
-              Text(label,
-                  style: theme.textTheme.labelSmall
-                      ?.copyWith(color: theme.hintColor)),
+              Text(
+                value,
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              Text(
+                label,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: theme.hintColor,
+                ),
+              ),
             ],
           ),
         ],
@@ -406,10 +409,12 @@ class _SeccionRanking extends StatelessWidget {
             )
           : Column(
               children: items
-                  .map((item) => Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
-                        child: _BaldosaRankingMateria(item: item),
-                      ))
+                  .map(
+                    (item) => Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: _BaldosaRankingMateria(item: item),
+                    ),
+                  )
                   .toList(),
             ),
     );
@@ -417,24 +422,24 @@ class _SeccionRanking extends StatelessWidget {
 }
 
 class _ItemRankingMateria {
-  const _ItemRankingMateria({
-    required this.matterName,
-    required this.count,
-  });
+  const _ItemRankingMateria({required this.matterName, required this.count});
   final String matterName;
   final int count;
 }
 
 List<_ItemRankingMateria> _topMatterCounts(
-    Iterable<EventoNavegacionExamenAdministrador> events) {
+  Iterable<EventoNavegacionExamenAdministrador> events,
+) {
   final counts = <String, int>{};
   for (final event in events) {
     if (!event.isView) continue;
     counts[event.matterName] = (counts[event.matterName] ?? 0) + 1;
   }
   final items = counts.entries
-      .map((entry) =>
-          _ItemRankingMateria(matterName: entry.key, count: entry.value))
+      .map(
+        (entry) =>
+            _ItemRankingMateria(matterName: entry.key, count: entry.value),
+      )
       .toList();
   items.sort((a, b) => b.count.compareTo(a.count));
   return items;
@@ -451,16 +456,18 @@ class _BaldosaRankingMateria extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF161E2C) : const Color(0xFFF8FAFC),
+        color: theme.colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(14),
       ),
       child: Row(
         children: [
           Expanded(
-            child: Text(item.matterName,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontWeight: FontWeight.w700)),
+            child: Text(
+              item.matterName,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
           ),
           const SizedBox(width: 12),
           Container(
@@ -469,10 +476,13 @@ class _BaldosaRankingMateria extends StatelessWidget {
               color: theme.colorScheme.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Text('${item.count}',
-                style: TextStyle(
-                    fontWeight: FontWeight.w900,
-                    color: theme.colorScheme.primary)),
+            child: Text(
+              '${item.count}',
+              style: TextStyle(
+                fontWeight: FontWeight.w900,
+                color: theme.colorScheme.primary,
+              ),
+            ),
           ),
         ],
       ),
@@ -491,22 +501,25 @@ class _BaldosaEvento extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF161E2C) : const Color(0xFFF8FAFC),
+        color: theme.colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-            color: isDark ? const Color(0xFF243041) : const Color(0xFFE5E7EB)),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(event.matterName,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontWeight: FontWeight.w800)),
+          Text(
+            event.matterName,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontWeight: FontWeight.w800),
+          ),
           const SizedBox(height: 4),
-          Text(_formatHourMinute(event.createdAt),
-              style: theme.textTheme.bodySmall),
+          Text(
+            _formatHourMinute(event.createdAt),
+            style: theme.textTheme.bodySmall,
+          ),
         ],
       ),
     );
@@ -526,18 +539,19 @@ class _TarjetaSeccion extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF0B1220) : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isDark ? const Color(0xFF243041) : const Color(0xFFE5E7EB),
-        ),
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title,
-              style: theme.textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w900)),
+          Text(
+            title,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w900,
+            ),
+          ),
           const SizedBox(height: 16),
           child,
         ],
@@ -556,7 +570,7 @@ class _UserTile extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     return Material(
-      color: isDark ? const Color(0xFF161E2C) : const Color(0xFFF8FAFC),
+      color: theme.colorScheme.surfaceContainerLow,
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
@@ -567,24 +581,32 @@ class _UserTile extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 20,
-                backgroundColor:
-                    theme.colorScheme.primary.withValues(alpha: 0.1),
-                child: Text(_initials(device.label),
-                    style: TextStyle(
-                        fontWeight: FontWeight.w900,
-                        color: theme.colorScheme.primary)),
+                backgroundColor: theme.colorScheme.primary.withValues(
+                  alpha: 0.1,
+                ),
+                child: Text(
+                  _initials(device.label),
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(device.label,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontWeight: FontWeight.w800)),
-                    Text('${device.views} vistas',
-                        style: theme.textTheme.bodySmall),
+                    Text(
+                      device.label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                    Text(
+                      '${device.views} vistas',
+                      style: theme.textTheme.bodySmall,
+                    ),
                   ],
                 ),
               ),
@@ -613,8 +635,11 @@ String _formatHourMinute(DateTime value) =>
     '${value.hour.toString().padLeft(2, '0')}:${value.minute.toString().padLeft(2, '0')}';
 
 class _EstadoVacio extends StatelessWidget {
-  const _EstadoVacio(
-      {required this.title, required this.subtitle, required this.icon});
+  const _EstadoVacio({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+  });
   final String title;
   final String subtitle;
   final IconData icon;
@@ -628,9 +653,12 @@ class _EstadoVacio extends StatelessWidget {
         children: [
           Icon(icon, size: 64, color: theme.hintColor.withValues(alpha: 0.5)),
           const SizedBox(height: 16),
-          Text(title,
-              style: theme.textTheme.titleLarge
-                  ?.copyWith(fontWeight: FontWeight.w900)),
+          Text(
+            title,
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w900,
+            ),
+          ),
           const SizedBox(height: 8),
           Text(subtitle, style: theme.textTheme.bodyMedium),
         ],

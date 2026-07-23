@@ -22,11 +22,12 @@ class DispositivoObservadoAdministrador {
 
 final proveedorRepositorioLimpiezaMasivaAdministrador =
     Provider<RepositorioLimpiezaMasivaAdministrador>((ref) {
-  return const RepositorioLimpiezaMasivaAdministrador();
-});
+      return const RepositorioLimpiezaMasivaAdministrador();
+    });
 
-final proveedorEstadoDispositivoAdministrador =
-    FutureProvider<EstadoDispositivoAdministrador>((ref) async {
+final proveedorEstadoDispositivoAdministrador = FutureProvider<EstadoDispositivoAdministrador>((
+  ref,
+) async {
   final deviceId = await ref.watch(proveedorIdDispositivo.future);
   final bootstrap = ref.watch(proveedorArranqueSupabase);
   final client = ref.watch(proveedorClienteSupabase);
@@ -85,115 +86,126 @@ final proveedorEstadoDispositivoAdministrador =
 
 final proveedorDispositivosObservadosAdministrador =
     FutureProvider<List<DispositivoObservadoAdministrador>>((ref) async {
-  final bootstrap = ref.watch(proveedorArranqueSupabase);
-  final client = ref.watch(proveedorClienteSupabase);
+      final bootstrap = ref.watch(proveedorArranqueSupabase);
+      final client = ref.watch(proveedorClienteSupabase);
 
-  if (!bootstrap.isReady || client == null) {
-    return const <DispositivoObservadoAdministrador>[];
-  }
+      if (!bootstrap.isReady || client == null) {
+        return const <DispositivoObservadoAdministrador>[];
+      }
 
-  final registryRows = await client
-      .from('device_registry')
-      .select('device_id, label, notes, last_active_at')
-      .eq('lifecycle_status', 'active')
-      .order('label');
+      final registryRows = await client
+          .from('device_registry')
+          .select('device_id, label, notes, last_active_at')
+          .eq('lifecycle_status', 'active')
+          .order('label');
 
-  final registry = registryRows.cast<Map<String, dynamic>>().where((row) {
-    final deviceId = (row['device_id'] ?? '').toString().trim();
-    final label = (row['label'] ?? '').toString().trim();
-    final notes = (row['notes'] ?? '').toString().trim();
-    return !shouldHideDeviceFromAdminPanels(
-      deviceId: deviceId,
-      label: label,
-      notes: notes,
-    );
-  }).toList(growable: false);
-  if (registry.isEmpty) return const <DispositivoObservadoAdministrador>[];
+      final registry = registryRows
+          .cast<Map<String, dynamic>>()
+          .where((row) {
+            final deviceId = (row['device_id'] ?? '').toString().trim();
+            final label = (row['label'] ?? '').toString().trim();
+            final notes = (row['notes'] ?? '').toString().trim();
+            return !shouldHideDeviceFromAdminPanels(
+              deviceId: deviceId,
+              label: label,
+              notes: notes,
+            );
+          })
+          .toList(growable: false);
+      if (registry.isEmpty) return const <DispositivoObservadoAdministrador>[];
 
-  final deviceIds = registry
-      .map((row) => (row['device_id'] ?? '').toString().trim())
-      .where((value) => value.isNotEmpty)
-      .toList(growable: false);
+      final deviceIds = registry
+          .map((row) => (row['device_id'] ?? '').toString().trim())
+          .where((value) => value.isNotEmpty)
+          .toList(growable: false);
 
-  final tokenRows = await client
-      .from('device_push_tokens')
-      .select('device_id, enabled, last_seen_at, updated_at')
-      .inFilter('device_id', deviceIds);
+      final tokenRows = await client
+          .from('device_push_tokens')
+          .select('device_id, enabled, last_seen_at, updated_at')
+          .inFilter('device_id', deviceIds);
 
-  final profileRows = await client
-      .from('device_profiles')
-      .select('device_id, device_label, public_alias, reference_name')
-      .inFilter('device_id', deviceIds);
+      final profileRows = await client
+          .from('device_profiles')
+          .select('device_id, device_label, public_alias, reference_name')
+          .inFilter('device_id', deviceIds);
 
-  final profileByDevice = <String, Map<String, dynamic>>{};
-  for (final row in profileRows.cast<Map<String, dynamic>>()) {
-    final deviceId = (row['device_id'] ?? '').toString().trim();
-    if (deviceId.isEmpty) continue;
-    profileByDevice[deviceId] = row;
-  }
+      final profileByDevice = <String, Map<String, dynamic>>{};
+      for (final row in profileRows.cast<Map<String, dynamic>>()) {
+        final deviceId = (row['device_id'] ?? '').toString().trim();
+        if (deviceId.isEmpty) continue;
+        profileByDevice[deviceId] = row;
+      }
 
-  final latestSeenByDevice = <String, DateTime?>{};
-  for (final raw in tokenRows.cast<Map<String, dynamic>>()) {
-    final deviceId = (raw['device_id'] ?? '').toString().trim();
-    if (deviceId.isEmpty) continue;
-    final enabled = raw['enabled'] == true;
-    if (!enabled) continue;
-    final seenRaw = raw['last_seen_at'] ?? raw['updated_at'];
-    final parsed =
-        seenRaw == null ? null : DateTime.tryParse(seenRaw.toString());
-    final current = latestSeenByDevice[deviceId];
-    if (parsed == null) {
-      latestSeenByDevice.putIfAbsent(deviceId, () => current);
-      continue;
-    }
-    if (current == null || parsed.isAfter(current)) {
-      latestSeenByDevice[deviceId] = parsed;
-    }
-  }
+      final latestSeenByDevice = <String, DateTime?>{};
+      for (final raw in tokenRows.cast<Map<String, dynamic>>()) {
+        final deviceId = (raw['device_id'] ?? '').toString().trim();
+        if (deviceId.isEmpty) continue;
+        final enabled = raw['enabled'] == true;
+        if (!enabled) continue;
+        final seenRaw = raw['last_seen_at'] ?? raw['updated_at'];
+        final parsed = seenRaw == null
+            ? null
+            : DateTime.tryParse(seenRaw.toString());
+        final current = latestSeenByDevice[deviceId];
+        if (parsed == null) {
+          latestSeenByDevice.putIfAbsent(deviceId, () => current);
+          continue;
+        }
+        if (current == null || parsed.isAfter(current)) {
+          latestSeenByDevice[deviceId] = parsed;
+        }
+      }
 
-  final items = registry.map(
-    (row) {
-      final deviceId = (row['device_id'] ?? '').toString().trim();
-      final profile = profileByDevice[deviceId];
-      final deviceLabel = _cleanDisplayText(profile?['device_label']);
-      final alias = _cleanDisplayText(profile?['public_alias']);
-      final referenceName = _cleanDisplayText(profile?['reference_name']);
-      final registryLabel = _cleanDisplayText(row['label']);
+      final items =
+          registry
+              .map((row) {
+                final deviceId = (row['device_id'] ?? '').toString().trim();
+                final profile = profileByDevice[deviceId];
+                final deviceLabel = _cleanDisplayText(profile?['device_label']);
+                final alias = _cleanDisplayText(profile?['public_alias']);
+                final referenceName = _cleanDisplayText(
+                  profile?['reference_name'],
+                );
+                final registryLabel = _cleanDisplayText(row['label']);
 
-      final resolvedLabel = deviceLabel.isNotEmpty
-          ? deviceLabel
-          : alias.isNotEmpty
-              ? alias
-              : referenceName.isNotEmpty
-                  ? referenceName
-                  : registryLabel.isNotEmpty
-                      ? registryLabel
-                      : _friendlyDeviceFallback(deviceId);
+                final resolvedLabel = deviceLabel.isNotEmpty
+                    ? deviceLabel
+                    : alias.isNotEmpty
+                    ? alias
+                    : referenceName.isNotEmpty
+                    ? referenceName
+                    : registryLabel.isNotEmpty
+                    ? registryLabel
+                    : _friendlyDeviceFallback(deviceId);
 
-      return DispositivoObservadoAdministrador(
-        deviceId: deviceId,
-        label: resolvedLabel,
-        lastSeenAt:
-            DateTime.tryParse((row['last_active_at'] ?? '').toString()) ??
-                latestSeenByDevice[deviceId],
-        notes: (row['notes'] as String?)?.trim(),
-      );
-    },
-  ).toList(growable: false)
-    ..sort((a, b) {
-      final aSeen = a.lastSeenAt;
-      final bSeen = b.lastSeenAt;
-      if (aSeen == null && bSeen == null) return a.label.compareTo(b.label);
-      if (aSeen == null) return 1;
-      if (bSeen == null) return -1;
-      return bSeen.compareTo(aSeen);
+                return DispositivoObservadoAdministrador(
+                  deviceId: deviceId,
+                  label: resolvedLabel,
+                  lastSeenAt:
+                      DateTime.tryParse(
+                        (row['last_active_at'] ?? '').toString(),
+                      ) ??
+                      latestSeenByDevice[deviceId],
+                  notes: (row['notes'] as String?)?.trim(),
+                );
+              })
+              .toList(growable: false)
+            ..sort((a, b) {
+              final aSeen = a.lastSeenAt;
+              final bSeen = b.lastSeenAt;
+              if (aSeen == null && bSeen == null)
+                return a.label.compareTo(b.label);
+              if (aSeen == null) return 1;
+              if (bSeen == null) return -1;
+              return bSeen.compareTo(aSeen);
+            });
+
+      return items;
     });
 
-  return items;
-});
-
-final proveedorCantidadEstudiantesDemoAdministrador =
-    FutureProvider<int>((ref) async {
+final proveedorCantidadEstudiantesDemoAdministrador = FutureProvider<int>((
+  ref,
+) async {
   final bootstrap = ref.watch(proveedorArranqueSupabase);
   final client = ref.watch(proveedorClienteSupabase);
 
@@ -201,8 +213,10 @@ final proveedorCantidadEstudiantesDemoAdministrador =
     return 0;
   }
 
-  final rows =
-      await client.from('academic_students').select('id').eq('is_demo', true);
+  final rows = await client
+      .from('academic_students')
+      .select('id')
+      .eq('is_demo', true);
   return rows.length;
 });
 

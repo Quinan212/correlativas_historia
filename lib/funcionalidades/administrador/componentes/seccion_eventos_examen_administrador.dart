@@ -6,6 +6,7 @@ import '../../../compartido/supabase/supabase.dart';
 import '../../../compartido/utilidades/sanitizar_texto.dart';
 import '../modelos/evento_examen_administrador.dart';
 import '../proveedores/proveedores_eventos_examen_administrador.dart';
+import '../tema/tema_administrador_atlassian.dart';
 import 'hoja_editor_evento_examen.dart';
 
 part 'src/seccion_eventos_examen_administrador/pantalla_eventos_por_carrera.dart';
@@ -38,11 +39,9 @@ class _SeccionEventosExamenAdministradorState
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF0B1220) : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isDark ? const Color(0xFF243041) : const Color(0xFFE5E7EB),
-        ),
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
         boxShadow: isDark
             ? const []
             : [
@@ -95,11 +94,10 @@ class _SeccionEventosExamenAdministradorState
   }
 
   Future<void> _openByCareer(BuildContext context) async {
-    await Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => _PantallaEventosExamenPorCarreraAdmin(
-          adminDeviceId: widget.adminDeviceId,
-        ),
+    await abrirPantallaAdministradorAtlassian<void>(
+      context,
+      _PantallaEventosExamenPorCarreraAdmin(
+        adminDeviceId: widget.adminDeviceId,
       ),
     );
     if (!mounted) return;
@@ -107,12 +105,9 @@ class _SeccionEventosExamenAdministradorState
   }
 
   Future<void> _openGlobal(BuildContext context) async {
-    await Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => _PantallaEventosExamenGlobalAdmin(
-          adminDeviceId: widget.adminDeviceId,
-        ),
-      ),
+    await abrirPantallaAdministradorAtlassian<void>(
+      context,
+      _PantallaEventosExamenGlobalAdmin(adminDeviceId: widget.adminDeviceId),
     );
     if (!mounted) return;
     ref.invalidate(proveedorEventosExamenAdministrador);

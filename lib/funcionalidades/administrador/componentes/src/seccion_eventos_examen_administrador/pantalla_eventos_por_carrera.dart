@@ -1,9 +1,7 @@
 part of '../../seccion_eventos_examen_administrador.dart';
 
 class _PantallaEventosExamenPorCarreraAdmin extends ConsumerWidget {
-  const _PantallaEventosExamenPorCarreraAdmin({
-    required this.adminDeviceId,
-  });
+  const _PantallaEventosExamenPorCarreraAdmin({required this.adminDeviceId});
 
   final String adminDeviceId;
 
@@ -18,9 +16,7 @@ class _PantallaEventosExamenPorCarreraAdmin extends ConsumerWidget {
         .toList(growable: false);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Exámenes por carrera'),
-      ),
+      appBar: AppBar(title: const Text('Exámenes por carrera')),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
@@ -49,7 +45,8 @@ class _PantallaEventosExamenPorCarreraAdmin extends ConsumerWidget {
                           padding: const EdgeInsets.only(bottom: 12),
                           child: _TarjetaResumenCarrera(
                             career: career,
-                            items: byCareer[career.id] ??
+                            items:
+                                byCareer[career.id] ??
                                 const <EventoExamenAdministrador>[],
                             adminDeviceId: adminDeviceId,
                           ),
@@ -85,23 +82,22 @@ class _TarjetaResumenCarrera extends StatelessWidget {
 
     return Material(
       color: theme.colorScheme.surface,
-      borderRadius: BorderRadius.circular(18),
+      borderRadius: BorderRadius.circular(14),
       child: InkWell(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(14),
         onTap: () {
-          Navigator.of(context).push(
-            MaterialPageRoute<void>(
-              builder: (_) => _PantallaCarreraExamenAdmin(
-                adminDeviceId: adminDeviceId,
-                career: career,
-              ),
+          abrirPantallaAdministradorAtlassian<void>(
+            context,
+            _PantallaCarreraExamenAdmin(
+              adminDeviceId: adminDeviceId,
+              career: career,
             ),
           );
         },
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(14),
             border: Border.all(color: theme.colorScheme.outlineVariant),
           ),
           child: Row(

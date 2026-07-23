@@ -25,14 +25,16 @@ class _PantallaCarreraExamenAdminState
   }
 
   Future<void> _openEditor(
-      BuildContext context, EventoExamenAdministrador? event) async {
+    BuildContext context,
+    EventoExamenAdministrador? event,
+  ) async {
     final draft = await mostrarHojaEditorEventoExamen(
       context: context,
       title: event == null
           ? 'Nuevo examen'
           : event.isColoquio
-              ? 'Editar coloquio'
-              : 'Editar mesa',
+          ? 'Editar coloquio'
+          : 'Editar mesa',
       coloquioMode: event?.isColoquio ?? false,
       initialEvent: event,
     );
@@ -51,14 +53,14 @@ class _PantallaCarreraExamenAdminState
       );
       ref.invalidate(proveedorEventosExamenAdministrador);
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Examen guardado')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Examen guardado')));
     } catch (error) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('No se pudo guardar: $error')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('No se pudo guardar: $error')));
     } finally {
       if (mounted) {
         setState(() => _busy = false);
@@ -67,8 +69,11 @@ class _PantallaCarreraExamenAdminState
   }
 
   Future<void> _deleteEvent(
-      BuildContext context, EventoExamenAdministrador event) async {
-    final confirmed = await showDialog<bool>(
+    BuildContext context,
+    EventoExamenAdministrador event,
+  ) async {
+    final confirmed =
+        await showDialog<bool>(
           context: context,
           builder: (dialogContext) => AlertDialog(
             title: const Text('Borrar examen'),
@@ -103,14 +108,14 @@ class _PantallaCarreraExamenAdminState
       );
       ref.invalidate(proveedorEventosExamenAdministrador);
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Examen borrado')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Examen borrado')));
     } catch (error) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('No se pudo borrar: $error')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('No se pudo borrar: $error')));
     } finally {
       if (mounted) {
         setState(() => _busy = false);
@@ -137,9 +142,8 @@ class _PantallaCarreraExamenAdminState
       body: SafeArea(
         child: examenesAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, _) => Center(
-            child: Text('No se pudieron cargar los exámenes: $error'),
-          ),
+          error: (error, _) =>
+              Center(child: Text('No se pudieron cargar los exámenes: $error')),
           data: (items) {
             final careerEvents = items
                 .where((event) => event.careerId == careerId)

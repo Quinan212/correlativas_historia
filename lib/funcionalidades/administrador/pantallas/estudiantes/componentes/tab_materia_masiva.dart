@@ -123,8 +123,8 @@ class TabMateriaMasiva extends StatelessWidget {
                           label: 'Materia',
                           value:
                               selectedSubjectId.isEmpty && materias.isNotEmpty
-                                  ? materias.first.id
-                                  : selectedSubjectId,
+                              ? materias.first.id
+                              : selectedSubjectId,
                           items: {
                             for (final materia in materias)
                               materia.id: materia.displayNombre,
@@ -185,12 +185,15 @@ class TabMateriaMasiva extends StatelessWidget {
                           label: 'Nota',
                           value: grade?.toString(),
                           items: {
-                            for (final item
-                                in List<int>.generate(10, (i) => i + 1))
+                            for (final item in List<int>.generate(
+                              10,
+                              (i) => i + 1,
+                            ))
                               '$item': '$item',
                           },
                           onChanged: (value) => onGradeChanged(
-                              value == null ? null : int.tryParse(value)),
+                            value == null ? null : int.tryParse(value),
+                          ),
                         ),
                       ),
                       SizedBox(
@@ -283,18 +286,22 @@ class TabMateriaMasiva extends StatelessWidget {
                 const SizedBox(height: 12),
                 if (roster.isEmpty)
                   const Text(
-                      'Todavia no hay alumnos inscriptos en esta materia.')
+                    'Todavia no hay alumnos inscriptos en esta materia.',
+                  )
                 else
                   ...roster.map(
                     (item) => Padding(
                       padding: const EdgeInsets.only(bottom: 6),
                       child: CheckboxListTile(
-                        value:
-                            selectedRosterStudentIds.contains(item.studentId),
+                        value: selectedRosterStudentIds.contains(
+                          item.studentId,
+                        ),
                         onChanged: saving
                             ? null
-                            : (value) =>
-                                onToggleStudent(item.studentId, value ?? false),
+                            : (value) => onToggleStudent(
+                                item.studentId,
+                                value ?? false,
+                              ),
                         contentPadding: EdgeInsets.zero,
                         controlAffinity: ListTileControlAffinity.leading,
                         dense: true,

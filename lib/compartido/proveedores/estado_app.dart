@@ -12,18 +12,33 @@ export 'logica_evaluacion.dart';
 
 // =================== THEME ===================
 
-final proveedorModoTema = StateProvider<ThemeMode>((_) => ThemeMode.light);
+final proveedorModoTema = StateProvider<ThemeMode>((_) => ThemeMode.system);
 
-void toggleTheme(WidgetRef ref) {
-  final cur = ref.read(proveedorModoTema);
-  ref.read(proveedorModoTema.notifier).state =
-      cur == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
+ThemeMode modoTemaOpuestoPara(Brightness brightness) {
+  return brightness == Brightness.dark ? ThemeMode.light : ThemeMode.dark;
+}
+
+void toggleTheme(WidgetRef ref, {Brightness? brightnessActual}) {
+  final modoSeleccionado = ref.read(proveedorModoTema);
+  final brightnessEfectivo =
+      brightnessActual ??
+      switch (modoSeleccionado) {
+        ThemeMode.dark => Brightness.dark,
+        ThemeMode.light => Brightness.light,
+        ThemeMode.system =>
+          WidgetsBinding.instance.platformDispatcher.platformBrightness,
+      };
+
+  ref.read(proveedorModoTema.notifier).state = modoTemaOpuestoPara(
+    brightnessEfectivo,
+  );
 }
 
 // =================== CAREERS ===================
 
 final proveedorCarreras = Provider<List<CareerInfo>>(
-    (_) => kCareers.where((c) => !c.hidden).toList());
+  (_) => kCareers.where((c) => !c.hidden).toList(),
+);
 
 // 'todas' | 'profesorado' | 'grado'
 final proveedorTipoCarreraSeleccionada = StateProvider<String>((_) => 'todas');
@@ -64,15 +79,16 @@ final proveedorCarreraSeleccionada = Provider<CareerInfo>((ref) {
 });
 
 final proveedorInstituciones = Provider<List<InstitutionInfo>>(
-    (_) => kInstitutions.where((i) => !i.hidden).toList());
+  (_) => kInstitutions.where((i) => !i.hidden).toList(),
+);
 
 final proveedorInstitucionesCarreraSeleccionada =
     Provider<List<InstitutionInfo>>((ref) {
-  final careerId = ref.watch(proveedorCarreraSeleccionadaONula)?.id;
-  if (careerId == null) return const <InstitutionInfo>[];
-  final all = ref.watch(proveedorInstituciones);
-  return all.where((i) => i.careerId == careerId).toList();
-});
+      final careerId = ref.watch(proveedorCarreraSeleccionadaONula)?.id;
+      if (careerId == null) return const <InstitutionInfo>[];
+      final all = ref.watch(proveedorInstituciones);
+      return all.where((i) => i.careerId == careerId).toList();
+    });
 
 final proveedorInstitucionSeleccionada = Provider<InstitutionInfo?>((ref) {
   final selectedId = ref.watch(proveedorIdInstitucionSeleccionada);
@@ -105,22 +121,24 @@ List<Materia> _applyInstitutionOverrides(
     for (final override in overrides) override.materiaId: override,
   };
 
-  return materias.map((m) {
-    final override = byId[m.id];
-    if (override == null) return m;
-    return Materia(
-      id: m.id,
-      codigo: override.codigo ?? m.codigo,
-      nombre: override.nombre ?? m.nombre,
-      anio: override.anio ?? m.anio,
-      cuatri: override.cuatri ?? m.cuatri,
-      tipo: override.tipo ?? m.tipo,
-      formato: override.formato ?? m.formato,
-      correlativas: m.correlativas,
-      horas: override.horas ?? m.horas,
-      correlativasDetalladas: m.correlativasDetalladas,
-    );
-  }).toList(growable: false);
+  return materias
+      .map((m) {
+        final override = byId[m.id];
+        if (override == null) return m;
+        return Materia(
+          id: m.id,
+          codigo: override.codigo ?? m.codigo,
+          nombre: override.nombre ?? m.nombre,
+          anio: override.anio ?? m.anio,
+          cuatri: override.cuatri ?? m.cuatri,
+          tipo: override.tipo ?? m.tipo,
+          formato: override.formato ?? m.formato,
+          correlativas: m.correlativas,
+          horas: override.horas ?? m.horas,
+          correlativasDetalladas: m.correlativasDetalladas,
+        );
+      })
+      .toList(growable: false);
 }
 
 // sin autoDispose para evitar recargas al navegar
@@ -137,7 +155,8 @@ final proveedorPlan = FutureProvider<DatosPlan>((ref) async {
   );
   return DatosPlan(
     materias: materias,
-    pdfUrl: Uri.tryParse(
+    pdfUrl:
+        Uri.tryParse(
           institution?.downloadUrl?.isNotEmpty == true
               ? institution!.downloadUrl!
               : career.downloadUrl,
@@ -167,8 +186,9 @@ final proveedorModoCompacto = StateProvider<bool>((_) => false);
 
 final proveedorZoom = StateProvider<double>((_) => 1.0);
 
-final proveedorControladorTransformacion =
-    Provider<TransformationController>((ref) {
+final proveedorControladorTransformacion = Provider<TransformationController>((
+  ref,
+) {
   final c = TransformationController();
   ref.onDispose(c.dispose);
   return c;
@@ -180,10 +200,9 @@ final proveedorIdMateriaSeleccionada = StateProvider<String?>((_) => null);
 
 final proveedorMateriasFiltradas = Provider<List<Materia>>(
   (ref) {
-    final plan = ref.watch(proveedorPlan).maybeWhen(
-          data: (p) => p,
-          orElse: () => null,
-        );
+    final plan = ref
+        .watch(proveedorPlan)
+        .maybeWhen(data: (p) => p, orElse: () => null);
 
     final term = ref.watch(proveedorTerminoBusqueda);
     final tipo = ref.watch(filtroTipoProvider);
@@ -192,7 +211,8 @@ final proveedorMateriasFiltradas = Provider<List<Materia>>(
     final list = plan?.materias ?? const <Materia>[];
     return list.where((m) {
       final t = term.trim().toLowerCase();
-      final okTerm = t.isEmpty ||
+      final okTerm =
+          t.isEmpty ||
           m.nombre.toLowerCase().contains(t) ||
           m.codigo.toLowerCase().contains(t);
 
@@ -238,13 +258,14 @@ List<String> getTodasCorrelativas(
 // =================== CALCULADORA ===================
 
 final proveedorAnioEvaluacion = StateProvider<int>((_) => 2);
-final proveedorIdMateriaCalculadoraSeleccionada =
-    StateProvider<String?>((_) => null);
+final proveedorIdMateriaCalculadoraSeleccionada = StateProvider<String?>(
+  (_) => null,
+);
 
 final proveedorMapaEstadosCorrelativas =
     StateNotifierProvider<CorrelativaStatusMap, Map<String, String>>(
-  (ref) => CorrelativaStatusMap(),
-);
+      (ref) => CorrelativaStatusMap(),
+    );
 
 class CorrelativaStatusMap extends StateNotifier<Map<String, String>> {
   CorrelativaStatusMap() : super({});

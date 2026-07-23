@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../compartido/identidad_dispositivo/perfil_dispositivo.dart';
+import '../../laboratorio_atlassian/tema/tema_atlassian.dart';
 import '../modelos/solicitud_verificacion.dart';
 
 class TarjetaSolicitudVerificacion extends StatelessWidget {
@@ -22,16 +23,13 @@ class TarjetaSolicitudVerificacion extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-        ),
+        color: theme.colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -42,13 +40,14 @@ class TarjetaSolicitudVerificacion extends StatelessWidget {
             child: Stack(
               children: [
                 ClipRRect(
-                  borderRadius:
-                      const BorderRadius.vertical(top: Radius.circular(17)),
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(17),
+                  ),
                   child: LayoutBuilder(
                     builder: (context, constraints) {
                       final pixelRatio = MediaQuery.devicePixelRatioOf(context);
-                      final cacheWidth =
-                          (constraints.maxWidth * pixelRatio).round();
+                      final cacheWidth = (constraints.maxWidth * pixelRatio)
+                          .round();
                       return AspectRatio(
                         aspectRatio: 16 / 9,
                         child: Image.network(
@@ -59,8 +58,10 @@ class TarjetaSolicitudVerificacion extends StatelessWidget {
                           errorBuilder: (_, __, ___) => const ColoredBox(
                             color: Color(0xFFE2E8F0),
                             child: Center(
-                              child:
-                                  Icon(Icons.broken_image_outlined, size: 34),
+                              child: Icon(
+                                Icons.broken_image_outlined,
+                                size: 34,
+                              ),
                             ),
                           ),
                         ),
@@ -77,8 +78,10 @@ class TarjetaSolicitudVerificacion extends StatelessWidget {
                       borderRadius: BorderRadius.circular(999),
                     ),
                     child: const Padding(
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -146,10 +149,7 @@ class TarjetaSolicitudVerificacion extends StatelessWidget {
                 ],
                 if ((request.reviewNote ?? '').trim().isNotEmpty) ...[
                   const SizedBox(height: 8),
-                  Text(
-                    request.reviewNote!,
-                    style: theme.textTheme.bodyMedium,
-                  ),
+                  Text(request.reviewNote!, style: theme.textTheme.bodyMedium),
                 ],
                 if (onApprove != null || onReject != null) ...[
                   const SizedBox(height: 12),
@@ -217,11 +217,7 @@ class _VistaPreviaImagenVerificacionPantalla extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.black,
         foregroundColor: Colors.white,
-        title: Text(
-          title,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
+        title: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
       ),
       body: SafeArea(
         child: InteractiveViewer(
@@ -269,22 +265,30 @@ class _EtiquetaEstado extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    final (bg, fg, label) = switch (status) {
+    final dark = theme.brightness == Brightness.dark;
+    final (bg, fg, label, border) = switch (status) {
       EstadoSolicitudVerificacion.pending => (
-          const Color(0xFFFEF3C7),
-          const Color(0xFF92400E),
-          'Pendiente',
-        ),
+        dark
+            ? PaletaAtlassian.warningSubtleDark
+            : PaletaAtlassian.warningSubtle,
+        dark ? const Color(0xFFFFF0B3) : const Color(0xFF7F5F01),
+        'Pendiente',
+        PaletaAtlassian.warning,
+      ),
       EstadoSolicitudVerificacion.approved => (
-          const Color(0xFFDCFCE7),
-          const Color(0xFF166534),
-          'Aprobada',
-        ),
+        dark
+            ? PaletaAtlassian.successSubtleDark
+            : PaletaAtlassian.successSubtle,
+        dark ? const Color(0xFFBAF3DB) : const Color(0xFF164B35),
+        'Aprobada',
+        PaletaAtlassian.success,
+      ),
       EstadoSolicitudVerificacion.rejected => (
-          const Color(0xFFFEE2E2),
-          const Color(0xFF991B1B),
-          'Rechazada',
-        ),
+        dark ? PaletaAtlassian.dangerSubtleDark : PaletaAtlassian.dangerSubtle,
+        dark ? const Color(0xFFFFD2CC) : const Color(0xFF5D1F1A),
+        'Rechazada',
+        PaletaAtlassian.danger,
+      ),
     };
 
     return Container(
@@ -292,6 +296,7 @@ class _EtiquetaEstado extends StatelessWidget {
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: border),
       ),
       child: Text(
         label,

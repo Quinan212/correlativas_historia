@@ -47,7 +47,6 @@ class _EventosExamenAdministradorEscritorioState
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     final eventsAsync = ref.watch(proveedorEventosExamenAdministrador);
 
     return eventsAsync.when(
@@ -71,8 +70,7 @@ class _EventosExamenAdministradorEscritorioState
             ),
             Expanded(
               child: Container(
-                color:
-                    isDark ? const Color(0xFF070C15) : const Color(0xFFF5F7FA),
+                color: theme.scaffoldBackgroundColor,
                 child: Column(
                   children: [
                     _EncabezadoEscritorio(
@@ -108,9 +106,9 @@ class _EventosExamenAdministradorEscritorioState
                               onNew: _busy
                                   ? null
                                   : () => setState(() {
-                                        _editingEvent = null;
-                                        _showEditor = true;
-                                      }),
+                                      _editingEvent = null;
+                                      _showEditor = true;
+                                    }),
                             )
                           : _ListaExamenesEscritorio(
                               events: visible,
@@ -181,17 +179,19 @@ class _EventosExamenAdministradorEscritorioState
     } catch (error) {
       if (!mounted) return;
       setState(() => _busy = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('No se pudo guardar: $error')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('No se pudo guardar: $error')));
     }
   }
 
   List<EventoExamenAdministrador> _applyFilters(
-      List<EventoExamenAdministrador> items) {
+    List<EventoExamenAdministrador> items,
+  ) {
     return items.where((event) {
-      final passesScope =
-          _scope == 'mesas' ? !event.isColoquio : event.isColoquio;
+      final passesScope = _scope == 'mesas'
+          ? !event.isColoquio
+          : event.isColoquio;
       if (!passesScope) return false;
 
       if (_selectedCareerId != 'all' && event.careerId != _selectedCareerId) {
@@ -205,22 +205,23 @@ class _EventosExamenAdministradorEscritorioState
       final query = _searchQuery.trim().toLowerCase();
       if (query.isNotEmpty) {
         final inMateria = event.materia.toLowerCase().contains(query);
-        final inDocentes = event.docentes
-            .any((docente) => docente.toLowerCase().contains(query));
-        final inCareer =
-            _etiquetaCarrera(event.careerId).toLowerCase().contains(query);
+        final inDocentes = event.docentes.any(
+          (docente) => docente.toLowerCase().contains(query),
+        );
+        final inCareer = _etiquetaCarrera(
+          event.careerId,
+        ).toLowerCase().contains(query);
         if (!inMateria && !inDocentes && !inCareer) return false;
       }
 
       return true;
-    }).toList()
-      ..sort((a, b) {
-        final dateComp = _dateSortValue(a).compareTo(_dateSortValue(b));
-        if (dateComp != 0) return dateComp;
-        final yearComp = (a.anio ?? 99).compareTo(b.anio ?? 99);
-        if (yearComp != 0) return yearComp;
-        return a.materia.compareTo(b.materia);
-      });
+    }).toList()..sort((a, b) {
+      final dateComp = _dateSortValue(a).compareTo(_dateSortValue(b));
+      if (dateComp != 0) return dateComp;
+      final yearComp = (a.anio ?? 99).compareTo(b.anio ?? 99);
+      if (yearComp != 0) return yearComp;
+      return a.materia.compareTo(b.materia);
+    });
   }
 
   int _dateSortValue(EventoExamenAdministrador event) {
@@ -230,9 +231,12 @@ class _EventosExamenAdministradorEscritorioState
   }
 
   Future<void> _deleteEvent(
-      BuildContext context, EventoExamenAdministrador event) async {
+    BuildContext context,
+    EventoExamenAdministrador event,
+  ) async {
     final typeLabel = event.isColoquio ? 'coloquio' : 'mesa';
-    final confirmed = await showDialog<bool>(
+    final confirmed =
+        await showDialog<bool>(
           context: context,
           builder: (dialogContext) => AlertDialog(
             title: Text('Eliminar $typeLabel'),
@@ -279,9 +283,9 @@ class _EventosExamenAdministradorEscritorioState
       }
     } catch (error) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('No se pudo eliminar: $error')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('No se pudo eliminar: $error')));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -304,7 +308,8 @@ class _EstadisticasEventosExamen {
   final Map<String, int> coloquiosByCareer;
 
   factory _EstadisticasEventosExamen.from(
-      List<EventoExamenAdministrador> items) {
+    List<EventoExamenAdministrador> items,
+  ) {
     var totalMesas = 0;
     var totalColoquios = 0;
     var withoutDate = 0;
@@ -315,12 +320,18 @@ class _EstadisticasEventosExamen {
       if (event.fecha == null) withoutDate++;
       if (event.isColoquio) {
         totalColoquios++;
-        coloquiosByCareer.update(event.careerId, (value) => value + 1,
-            ifAbsent: () => 1);
+        coloquiosByCareer.update(
+          event.careerId,
+          (value) => value + 1,
+          ifAbsent: () => 1,
+        );
       } else {
         totalMesas++;
-        mesasByCareer.update(event.careerId, (value) => value + 1,
-            ifAbsent: () => 1);
+        mesasByCareer.update(
+          event.careerId,
+          (value) => value + 1,
+          ifAbsent: () => 1,
+        );
       }
     }
 
@@ -334,7 +345,7 @@ class _EstadisticasEventosExamen {
   }
 }
 
-  List<CareerInfo> get _adminCareers => kCareers
+List<CareerInfo> get _adminCareers => kCareers
     .where(
       (career) =>
           career.id == 'historia' ||

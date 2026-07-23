@@ -2,14 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../compartido/supabase/supabase.dart';
+import '../../laboratorio_atlassian/tema/tema_atlassian.dart';
 import '../../verificacion/proveedores/proveedores_verificacion.dart';
+import '../componentes/componentes_administrador_atlassian.dart';
 import '../proveedores/proveedores_acceso_administrador.dart';
 
 class LimpiezaAdministradorPantalla extends ConsumerStatefulWidget {
-  const LimpiezaAdministradorPantalla({
-    super.key,
-    required this.adminDeviceId,
-  });
+  const LimpiezaAdministradorPantalla({super.key, required this.adminDeviceId});
 
   final String adminDeviceId;
 
@@ -62,11 +61,9 @@ class _LimpiezaAdministradorPantallaState
     final isDesktop = width >= 900;
 
     return Scaffold(
-      backgroundColor:
-          isDark ? const Color(0xFF030712) : const Color(0xFFF9FAFB),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Limpieza y reinicio'),
-        centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
@@ -106,18 +103,19 @@ class _LimpiezaAdministradorPantallaState
                           physics: const NeverScrollableScrollPhysics(),
                           gridDelegate:
                               const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            crossAxisSpacing: 16,
-                            mainAxisSpacing: 16,
-                            childAspectRatio: 2.8,
-                          ),
+                                crossAxisCount: 2,
+                                crossAxisSpacing: 16,
+                                mainAxisSpacing: 16,
+                                childAspectRatio: 2.8,
+                              ),
                           itemCount: _options.length,
                           itemBuilder: (context, index) {
                             final option = _options[index];
                             return _CleanupChoiceTile(
                               option: option,
-                              selected:
-                                  _selectedActions.contains(option.action),
+                              selected: _selectedActions.contains(
+                                option.action,
+                              ),
                               busy: _runningAction == option.action,
                               onChanged: (value) {
                                 setState(() {
@@ -138,8 +136,9 @@ class _LimpiezaAdministradorPantallaState
                               .map(
                                 (option) => _CleanupChoiceTile(
                                   option: option,
-                                  selected:
-                                      _selectedActions.contains(option.action),
+                                  selected: _selectedActions.contains(
+                                    option.action,
+                                  ),
                                   busy: _runningAction == option.action,
                                   onChanged: (value) {
                                     setState(() {
@@ -165,13 +164,16 @@ class _LimpiezaAdministradorPantallaState
                           Expanded(
                             flex: isDesktop ? 0 : 1,
                             child: FilledButton.icon(
-                              onPressed: _selectedActions.isEmpty ||
+                              onPressed:
+                                  _selectedActions.isEmpty ||
                                       _runningAction != null
                                   ? null
                                   : _runSelectedActions,
                               style: FilledButton.styleFrom(
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 24, vertical: 16),
+                                  horizontal: 24,
+                                  vertical: 16,
+                                ),
                               ),
                               icon: const Icon(Icons.play_arrow_rounded),
                               label: const Text('Ejecutar selección'),
@@ -181,16 +183,17 @@ class _LimpiezaAdministradorPantallaState
                           Expanded(
                             flex: isDesktop ? 0 : 1,
                             child: FilledButton.tonal(
-                              onPressed:
-                                  _runningAction != null ? null : _runResetAll,
+                              onPressed: _runningAction != null
+                                  ? null
+                                  : _runResetAll,
                               style: FilledButton.styleFrom(
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 24, vertical: 16),
-                                foregroundColor: const Color(0xFFDC2626),
-                                backgroundColor:
-                                    const Color(0xFFDC2626).withValues(
-                                  alpha: 0.08,
+                                  horizontal: 24,
+                                  vertical: 16,
                                 ),
+                                foregroundColor: PaletaAtlassian.danger,
+                                backgroundColor: PaletaAtlassian.danger
+                                    .withValues(alpha: 0.08),
                               ),
                               child: const Text('Reiniciar todo'),
                             ),
@@ -222,11 +225,14 @@ class _LimpiezaAdministradorPantallaState
         .toList();
     if (selected.isEmpty) return;
 
-    final confirmed = await showDialog<bool>(
+    final confirmed =
+        await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
-            title: const Text('Confirmar selección',
-                style: TextStyle(fontWeight: FontWeight.w900)),
+            title: const Text(
+              'Confirmar selección',
+              style: TextStyle(fontWeight: FontWeight.w900),
+            ),
             content: Text(
               'Se van a ejecutar ${selected.length} acciones de limpieza. Esta acción no se puede deshacer.',
             ),
@@ -275,11 +281,14 @@ class _LimpiezaAdministradorPantallaState
     bool askConfirmation = true,
   }) async {
     if (askConfirmation) {
-      final confirmed = await showDialog<bool>(
+      final confirmed =
+          await showDialog<bool>(
             context: context,
             builder: (context) => AlertDialog(
-              title: Text(title,
-                  style: const TextStyle(fontWeight: FontWeight.w900)),
+              title: Text(
+                title,
+                style: const TextStyle(fontWeight: FontWeight.w900),
+              ),
               content: Text(confirmation),
               actions: [
                 TextButton(
@@ -324,9 +333,7 @@ class _LimpiezaAdministradorPantallaState
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('No se pudo completar la limpieza: $error'),
-        ),
+        SnackBar(content: Text('No se pudo completar la limpieza: $error')),
       );
     } finally {
       if (mounted) {
@@ -339,42 +346,11 @@ class _LimpiezaAdministradorPantallaState
 class _TarjetaEncabezado extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFEE2E2),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFFECACA)),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.warning_amber_rounded,
-              color: Color(0xFF991B1B), size: 32),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Zona de Peligro',
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w900,
-                    color: const Color(0xFF991B1B),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                const Text(
-                  'Las acciones en esta pantalla son permanentes e irreversibles.',
-                  style: TextStyle(color: Color(0xFF991B1B)),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+    return const AvisoAdministradorAtlassian(
+      icon: Icons.warning_amber_rounded,
+      title: 'Zona de peligro',
+      message: 'Las acciones de esta pantalla son permanentes.',
+      level: NivelAvisoAdministrador.danger,
     );
   }
 }
@@ -393,11 +369,9 @@ class _TarjetaSeccion extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF0B1220) : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isDark ? const Color(0xFF243041) : const Color(0xFFE5E7EB),
-        ),
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -440,7 +414,7 @@ class _CleanupChoiceTile extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF161E2C) : const Color(0xFFF8FAFC),
+        color: theme.colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: selected
@@ -450,10 +424,7 @@ class _CleanupChoiceTile extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Checkbox(
-            value: selected,
-            onChanged: busy ? null : onChanged,
-          ),
+          Checkbox(value: selected, onChanged: busy ? null : onChanged),
           const SizedBox(width: 8),
           Expanded(
             child: Column(
@@ -467,10 +438,7 @@ class _CleanupChoiceTile extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 2),
-                Text(
-                  option.description,
-                  style: theme.textTheme.bodySmall,
-                ),
+                Text(option.description, style: theme.textTheme.bodySmall),
               ],
             ),
           ),
@@ -484,7 +452,7 @@ class _CleanupChoiceTile extends StatelessWidget {
             IconButton(
               onPressed: onDeletePressed,
               icon: const Icon(Icons.delete_outline_rounded),
-              color: const Color(0xFFDC2626),
+              color: PaletaAtlassian.danger,
               tooltip: 'Borrar solo esta opción',
             ),
         ],
@@ -511,10 +479,10 @@ String _summarizeCleanupResult(Map<String, dynamic> summary) {
   final resenasMateria = (summary['matter_reviews_deleted'] ?? 0).toString();
   final resenasDocente = (summary['teacher_reviews_deleted'] ?? 0).toString();
   final photos = (summary['photos_deleted'] ?? 0).toString();
-  final verifications =
-      (summary['verification_requests_deleted'] ?? 0).toString();
-  final permissions =
-      (summary['verification_permissions_deleted'] ?? 0).toString();
+  final verifications = (summary['verification_requests_deleted'] ?? 0)
+      .toString();
+  final permissions = (summary['verification_permissions_deleted'] ?? 0)
+      .toString();
 
   return 'Listo. Materias: $resenasMateria, docentes: $resenasDocente, fotos: $photos, verificaciones: $verifications, permisos: $permissions.';
 }

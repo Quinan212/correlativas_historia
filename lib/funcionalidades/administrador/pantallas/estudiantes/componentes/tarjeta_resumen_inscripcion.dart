@@ -33,8 +33,10 @@ class TarjetaResumenInscripcion extends StatelessWidget {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.assignment_add,
-                        color: theme.colorScheme.primary),
+                    Icon(
+                      Icons.assignment_add,
+                      color: theme.colorScheme.primary,
+                    ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Column(
@@ -77,14 +79,16 @@ class TarjetaResumenInscripcion extends StatelessWidget {
                             ? const SizedBox(
                                 width: 16,
                                 height: 16,
-                                child:
-                                    CircularProgressIndicator(strokeWidth: 2),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
                               )
                             : const Icon(Icons.save_alt_rounded),
                         label: Text(
-                            saving ? 'Guardando...' : 'Guardar seleccionadas',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis),
+                          saving ? 'Guardando...' : 'Guardar seleccionadas',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                     ),
                   ],

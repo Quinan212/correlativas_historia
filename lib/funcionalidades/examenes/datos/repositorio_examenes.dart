@@ -12,37 +12,73 @@ import '../modelos/evento_examen.dart';
 class RepositorioExamenes {
   const RepositorioExamenes();
 
+  static const String _examEventColumns =
+      'id, career_id, anio, fecha, hora, materia, instancia, docentes, '
+      'acta_url, division, legacy, suspendido, estado, titulo_estado, '
+      'mensaje_estado, fecha_reprogramada, hora_reprogramada, '
+      'acta_habilitada, visible';
+
   static final Map<String, Future<List<EventoExamen>>> _eventCache = {};
 
   Future<List<EventoExamen>> loadLlamado1() async {
     final list = await _loadSupabaseOrAsset(
-      instancia: 'llamado_1', assetPath: 'assets/examenes_mayo_2026.json');
+      instancia: 'llamado_1',
+      assetPath: 'assets/examenes_mayo_2026.json',
+    );
     return list.map((e) => e.copyWith(legacy: true)).toList();
   }
 
   Future<List<EventoExamen>> loadLlamado2() async {
     final list = await _loadSupabaseOrAsset(
-      instancia: 'llamado_2', assetPath: 'assets/examenes_llamado2.json');
+      instancia: 'llamado_2',
+      assetPath: 'assets/examenes_llamado2.json',
+    );
     return list.map((e) => e.copyWith(legacy: true)).toList();
   }
 
   Future<List<EventoExamen>> loadColoquios() async {
     final list = await _loadSupabaseOrAsset(
-      instancia: 'coloquio', assetPath: 'assets/coloquios_mayo_2026.json');
+      instancia: 'coloquio',
+      assetPath: 'assets/coloquios_mayo_2026.json',
+    );
     return list.map((e) => e.copyWith(legacy: true)).toList();
   }
 
   Future<List<EventoExamen>> loadJulioLlamado1() => _loadSupabaseOrAsset(
-      instancia: 'llamado_1',
-      assetPath: 'assets/examenes_julio_llamado1.json');
+    instancia: 'llamado_1',
+    assetPath: 'assets/examenes_julio_llamado1.json',
+  );
 
   Future<List<EventoExamen>> loadJulioLlamado2() => _loadSupabaseOrAsset(
-      instancia: 'llamado_2',
-      assetPath: 'assets/examenes_julio_llamado2.json');
+    instancia: 'llamado_2',
+    assetPath: 'assets/examenes_julio_llamado2.json',
+  );
 
   Future<List<EventoExamen>> loadJulioColoquios() => _loadSupabaseOrAsset(
-      instancia: 'coloquio',
-      assetPath: 'assets/coloquios_julio_2026.json');
+    instancia: 'coloquio',
+    assetPath: 'assets/coloquios_julio_2026.json',
+  );
+
+  Future<EventoExamen?> loadById(String id) async {
+    final cleanId = id.trim();
+    if (cleanId.isEmpty) return null;
+
+    try {
+      final row = await Supabase.instance.client
+          .from('exam_events')
+          .select(_examEventColumns)
+          .eq('id', cleanId)
+          .maybeSingle()
+          .timeout(const Duration(seconds: 15));
+      if (row == null) return null;
+      return EventoExamen.fromJson(row);
+    } on TimeoutException {
+      return null;
+    } catch (error) {
+      debugPrint('Error cargando exam_event $cleanId: $error');
+      return null;
+    }
+  }
 
   Future<List<EventoExamen>> _loadSupabaseOrAsset({
     required String instancia,
@@ -50,75 +86,68 @@ class RepositorioExamenes {
   }) async {
     final localEvents = await _loadJson(assetPath);
     final supabaseEvents = await _loadSupabase(instancia: instancia);
-    if (supabaseEvents != null && supabaseEvents.isNotEmpty) {
+    if (supabaseEvents != null) {
       final localMap = <String, EventoExamen>{
         for (final e in localEvents)
-          '${e.careerId}_${e.anio}_${_cleanSubjectKey(e.materia)}_${e.fecha?.toIso8601String().split('T').first}': e
+          '${e.careerId}_${e.anio}_${_cleanSubjectKey(e.materia)}_${e.fecha?.toIso8601String().split('T').first}':
+              e,
       };
 
-      return supabaseEvents.map((e) {
-        final key =
-            '${e.careerId}_${e.anio}_${_cleanSubjectKey(e.materia)}_${e.fecha?.toIso8601String().split('T').first}';
-        final localMatch = localMap[key];
-        final isLocallySuspended = localMatch?.suspendido ?? false;
-        final localActaUrl = localMatch?.actaUrl;
+      return supabaseEvents
+          .where((event) => event.visible)
+          .map((event) {
+            final key =
+                '${event.careerId}_${event.anio}_${_cleanSubjectKey(event.materia)}_${event.fecha?.toIso8601String().split('T').first}';
+            final localActaUrl = localMap[key]?.actaUrl;
+            final finalActaUrl =
+                (event.actaUrl != null && event.actaUrl!.trim().isNotEmpty)
+                ? event.actaUrl
+                : localActaUrl;
 
-        final finalActaUrl = (e.actaUrl != null && e.actaUrl!.trim().isNotEmpty)
-            ? e.actaUrl
-            : localActaUrl;
-
-        return e.copyWith(
-          suspendido: e.suspendido || isLocallySuspended,
-          actaUrl: finalActaUrl,
-        );
-      }).toList();
+            return event.copyWith(actaUrl: finalActaUrl);
+          })
+          .toList(growable: false);
     }
-    return localEvents;
+    return localEvents.where((event) => event.visible).toList(growable: false);
   }
 
   static String _cleanSubjectKey(String subject) {
-    var s = subject.toUpperCase();
-    if (s.startsWith('[SUSPENDIDA]')) {
-      s = s.replaceAll('[SUSPENDIDA]', '');
+    var value = subject.toUpperCase().trim();
+    for (final prefix in const [
+      '[SUSPENDIDA]',
+      '[SUSPENDIDO]',
+      '[CANCELADA]',
+      '[CANCELADO]',
+      '[REPROGRAMADA]',
+      '[REPROGRAMADO]',
+    ]) {
+      if (value.startsWith(prefix)) {
+        value = value.substring(prefix.length).trim();
+      }
     }
-    if (s.startsWith('[SUSPENDIDO]')) {
-      s = s.replaceAll('[SUSPENDIDO]', '');
-    }
-    return s.toLowerCase().trim();
+    return value.toLowerCase();
   }
 
   Future<List<EventoExamen>?> _loadSupabase({required String instancia}) async {
     try {
-      final client = Supabase.instance.client;
-      final rows = await client
+      final rows = await Supabase.instance.client
           .from('exam_events')
-          .select(
-            'career_id, anio, fecha, hora, materia, instancia, docentes, acta_url, division, legacy, suspendido',
-          )
+          .select(_examEventColumns)
           .eq('instancia', instancia)
+          .eq('visible', true)
           .order('fecha')
           .order('career_id')
           .order('anio')
           .order('materia')
           .timeout(const Duration(seconds: 25));
 
-      final list = rows.cast<Map<String, dynamic>>();
       return List<EventoExamen>.unmodifiable(
-        list.map((row) {
-          final item = EventoExamen.fromJson(row);
-          final isSuspendedInTitle =
-              item.materia.toUpperCase().contains('[SUSPENDIDA]') ||
-              item.materia.toUpperCase().contains('[SUSPENDIDO]');
-          if (isSuspendedInTitle && !item.suspendido) {
-            return item.copyWith(suspendido: true);
-          }
-          return item;
-        }),
+        rows.cast<Map<String, dynamic>>().map(EventoExamen.fromJson),
       );
     } on TimeoutException {
       return null;
-    } catch (e) {
-      debugPrint('Error cargando exam_events de Supabase: $e');
+    } catch (error) {
+      debugPrint('Error cargando exam_events de Supabase: $error');
       return null;
     }
   }
@@ -130,8 +159,9 @@ class RepositorioExamenes {
 
       if (decoded is List) {
         return List<EventoExamen>.unmodifiable(
-          decoded
-              .map((e) => _eventoDesdeJson((e as Map).cast<String, dynamic>())),
+          decoded.map(
+            (e) => _eventoDesdeJson((e as Map).cast<String, dynamic>()),
+          ),
         );
       }
 
@@ -215,8 +245,10 @@ Future<DatosPlan> cargarPlanDesdeHtml(String assetPath) {
         .map((e) => Materia.fromMap(e as Map<String, dynamic>))
         .toList(growable: false);
 
-    final pdfMatch = RegExp(r"const\s+pdfUrl\s*=\s*'([^']+)'", multiLine: true)
-        .firstMatch(html);
+    final pdfMatch = RegExp(
+      r"const\s+pdfUrl\s*=\s*'([^']+)'",
+      multiLine: true,
+    ).firstMatch(html);
     final pdfUrl = pdfMatch != null ? Uri.tryParse(pdfMatch.group(1)!) : null;
 
     return DatosPlan(
@@ -231,8 +263,10 @@ String? _extraerArrayMaterias(String html) {
   src = src.replaceAll(RegExp(r'/\*[\s\S]*?\*/'), '');
   src = src.replaceAll(RegExp(r'//[^\n\r]*'), '');
 
-  final match =
-      RegExp(r'\bmaterias\b\s*=\s*\[', caseSensitive: false).firstMatch(src);
+  final match = RegExp(
+    r'\bmaterias\b\s*=\s*\[',
+    caseSensitive: false,
+  ).firstMatch(src);
   if (match == null) return null;
 
   final startBracket = match.end - 1;
@@ -328,8 +362,9 @@ void _applyReqsToCorrelativasDetalladas(List<dynamic> list) {
     if (reqs is! List || reqs.isEmpty) continue;
 
     final existingRaw = map['correlativasDetalladas'];
-    final det =
-        existingRaw is List ? List<dynamic>.from(existingRaw) : <dynamic>[];
+    final det = existingRaw is List
+        ? List<dynamic>.from(existingRaw)
+        : <dynamic>[];
 
     for (final req in reqs) {
       if (req is! Map) continue;

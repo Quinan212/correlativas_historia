@@ -60,11 +60,12 @@ abstract final class RadioAtlassian {
   static const pill = 999.0;
 }
 
-ThemeData temaLaboratorioAtlassian(BuildContext context, {bool forceDark = false}) {
+ThemeData temaLaboratorioAtlassian(
+  BuildContext context, {
+  bool forceDark = false,
+}) {
   final parent = Theme.of(context);
-  final dark = forceDark ||
-      parent.brightness == Brightness.dark ||
-      MediaQuery.platformBrightnessOf(context) == Brightness.dark;
+  final dark = forceDark || parent.brightness == Brightness.dark;
   final canvas = dark
       ? PaletaAtlassian.canvasDark
       : PaletaAtlassian.canvasLight;

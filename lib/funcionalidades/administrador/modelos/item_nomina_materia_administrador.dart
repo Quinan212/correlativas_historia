@@ -30,7 +30,7 @@ class ItemNominaMateriaAdministrador {
 
     final student =
         (row['academic_students'] as Map?)?.cast<String, dynamic>() ??
-            const <String, dynamic>{};
+        const <String, dynamic>{};
 
     return ItemNominaMateriaAdministrador(
       studentId: (row['student_id'] ?? '').toString(),

@@ -58,9 +58,10 @@ class EstudianteAdministrador {
       isNewStudent: row['is_new_student'] != false,
       isRepeating: row['is_repeating'] == true,
       enrollmentStatus: (row['enrollment_status'] ?? 'active').toString(),
-      initialPassword: (row['initial_password'] ??
-              BorradorEstudianteAdministrador.defaultPassword)
-          .toString(),
+      initialPassword:
+          (row['initial_password'] ??
+                  BorradorEstudianteAdministrador.defaultPassword)
+              .toString(),
       mustChangePassword: row['must_change_password'] != false,
       notes: _emptyToNull(row['notes']),
     );

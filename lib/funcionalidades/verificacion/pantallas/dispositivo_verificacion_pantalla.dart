@@ -20,11 +20,9 @@ class DispositivoVerificacionPantalla extends ConsumerWidget {
     final isDesktop = width >= 900;
 
     return Scaffold(
-      backgroundColor:
-          isDark ? const Color(0xFF030712) : const Color(0xFFF9FAFB),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Este dispositivo'),
-        centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
@@ -47,8 +45,8 @@ class DispositivoVerificacionPantalla extends ConsumerWidget {
                         profile?.deviceLabel,
                         detectedDeviceLabel,
                       );
-                      final referenceName =
-                          (profile?.referenceName ?? '').trim();
+                      final referenceName = (profile?.referenceName ?? '')
+                          .trim();
 
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -89,9 +87,9 @@ class DispositivoVerificacionPantalla extends ConsumerWidget {
                             profile == null
                                 ? 'Tus referencias públicas se muestran de forma anónima.'
                                 : profile.publicDisplayLabel ==
-                                        'Referencia anonima'
-                                    ? 'Tus referencias públicas se muestran de forma anónima.'
-                                    : 'Tus referencias públicas usan el alias "${profile.publicDisplayLabel}".',
+                                      'Referencia anonima'
+                                ? 'Tus referencias públicas se muestran de forma anónima.'
+                                : 'Tus referencias públicas usan el alias "${profile.publicDisplayLabel}".',
                             style: theme.textTheme.bodyMedium?.copyWith(
                               color: theme.hintColor,
                             ),
@@ -101,8 +99,9 @@ class DispositivoVerificacionPantalla extends ConsumerWidget {
                             onPressed: () async {
                               final client = ref.read(proveedorClienteSupabase);
                               if (client == null) return;
-                              final currentProfile = await ref
-                                  .read(ownPerfilDispositivoProvider.future);
+                              final currentProfile = await ref.read(
+                                ownPerfilDispositivoProvider.future,
+                              );
                               if (!context.mounted) return;
                               final draft = await mostrarHojaPerfilDispositivo(
                                 context: context,
@@ -114,10 +113,12 @@ class DispositivoVerificacionPantalla extends ConsumerWidget {
                               );
                               if (draft == null || !context.mounted) return;
 
-                              final repo = ref
-                                  .read(proveedorRepositorioPerfilDispositivo);
-                              final deviceId =
-                                  await ref.read(proveedorIdDispositivo.future);
+                              final repo = ref.read(
+                                proveedorRepositorioPerfilDispositivo,
+                              );
+                              final deviceId = await ref.read(
+                                proveedorIdDispositivo.future,
+                              );
                               await repo.upsertProfile(
                                 client: client,
                                 deviceId: deviceId,
@@ -131,7 +132,8 @@ class DispositivoVerificacionPantalla extends ConsumerWidget {
                               );
                               ref.invalidate(ownPerfilDispositivoProvider);
                               ref.invalidate(
-                                  proveedorPerfilesDispositivoPorIds);
+                                proveedorPerfilesDispositivoPorIds,
+                              );
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
@@ -142,7 +144,9 @@ class DispositivoVerificacionPantalla extends ConsumerWidget {
                             },
                             style: OutlinedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 20, vertical: 16),
+                                horizontal: 20,
+                                vertical: 16,
+                              ),
                             ),
                             icon: const Icon(Icons.badge_outlined),
                             label: const Text('Editar perfil'),
@@ -170,10 +174,7 @@ class DispositivoVerificacionPantalla extends ConsumerWidget {
                     data: (status) => Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          status.message,
-                          style: theme.textTheme.bodyLarge,
-                        ),
+                        Text(status.message, style: theme.textTheme.bodyLarge),
                         const SizedBox(height: 20),
                         Wrap(
                           spacing: 12,
@@ -182,11 +183,14 @@ class DispositivoVerificacionPantalla extends ConsumerWidget {
                             OutlinedButton.icon(
                               onPressed: () {
                                 ref.invalidate(
-                                    proveedorEstadoDispositivoAdministrador);
+                                  proveedorEstadoDispositivoAdministrador,
+                                );
                               },
                               style: OutlinedButton.styleFrom(
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 20, vertical: 16),
+                                  horizontal: 20,
+                                  vertical: 16,
+                                ),
                               ),
                               icon: const Icon(Icons.refresh_rounded),
                               label: const Text('Refrescar'),
@@ -198,18 +202,21 @@ class DispositivoVerificacionPantalla extends ConsumerWidget {
                                     MaterialPageRoute<void>(
                                       builder: (_) =>
                                           PanelAdministradorPantalla(
-                                        deviceId: status.deviceId,
-                                        adminLabel: status.adminLabel,
-                                      ),
+                                            deviceId: status.deviceId,
+                                            adminLabel: status.adminLabel,
+                                          ),
                                     ),
                                   );
                                 },
                                 style: FilledButton.styleFrom(
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 24, vertical: 16),
+                                    horizontal: 24,
+                                    vertical: 16,
+                                  ),
                                 ),
                                 icon: const Icon(
-                                    Icons.admin_panel_settings_rounded),
+                                  Icons.admin_panel_settings_rounded,
+                                ),
                                 label: const Text('Panel admin'),
                               ),
                           ],
@@ -253,11 +260,9 @@ class _TarjetaSeccion extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF0B1220) : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isDark ? const Color(0xFF243041) : const Color(0xFFE5E7EB),
-        ),
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

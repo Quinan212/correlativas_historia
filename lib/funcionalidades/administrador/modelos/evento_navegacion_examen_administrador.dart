@@ -38,7 +38,8 @@ class EventoNavegacionExamenAdministrador {
   bool get isView => eventType == 'view';
 
   factory EventoNavegacionExamenAdministrador.fromMap(
-      Map<String, dynamic> map) {
+    Map<String, dynamic> map,
+  ) {
     DateTime parseDate(String key) {
       final raw = map[key]?.toString();
       if (raw == null || raw.isEmpty) {
