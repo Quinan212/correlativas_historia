@@ -13,7 +13,7 @@ class RepositorioEventosExamenAdministrador {
         .from('exam_events')
         .select(
           'id, career_id, anio, fecha, hora, materia, instancia, docentes, '
-          'acta_url, suspendido, estado, titulo_estado, mensaje_estado, '
+          'acta_url, legacy, suspendido, estado, titulo_estado, mensaje_estado, '
           'fecha_reprogramada, hora_reprogramada, acta_habilitada, visible, '
           'updated_at, updated_by_device_id',
         )

@@ -18,6 +18,7 @@ class _PantallaCarreraExamenAdminState
     extends ConsumerState<_PantallaCarreraExamenAdmin> {
   bool _busy = false;
   String _scope = 'mesas';
+  String _legacyScope = 'actuales';
 
   Future<void> _refresh() async {
     ref.invalidate(proveedorEventosExamenAdministrador);
@@ -155,23 +156,21 @@ class _PantallaCarreraExamenAdminState
                   scope: _scope,
                   onChanged: (value) => setState(() => _scope = value),
                 ),
+                const SizedBox(height: 10),
+                _SelectorOrigenEventos(
+                  origin: _legacyScope,
+                  onChanged: (value) =>
+                      setState(() => _legacyScope = value),
+                ),
                 const SizedBox(height: 14),
-                if (_scope == 'mesas')
-                  _CareerScopeView(
-                    careerEvents: careerEvents,
-                    busy: _busy,
-                    scope: _scope,
-                    onEdit: (event) => _openEditor(context, event),
-                    onDelete: (event) => _deleteEvent(context, event),
-                  )
-                else
-                  _CareerScopeView(
-                    careerEvents: careerEvents,
-                    busy: _busy,
-                    scope: _scope,
-                    onEdit: (event) => _openEditor(context, event),
-                    onDelete: (event) => _deleteEvent(context, event),
-                  ),
+                _CareerScopeView(
+                  careerEvents: careerEvents,
+                  busy: _busy,
+                  scope: _scope,
+                  legacyScope: _legacyScope,
+                  onEdit: (event) => _openEditor(context, event),
+                  onDelete: (event) => _deleteEvent(context, event),
+                ),
               ],
             );
           },

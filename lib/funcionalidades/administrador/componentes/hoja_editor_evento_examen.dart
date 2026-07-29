@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../laboratorio_atlassian/componentes/componentes_atlassian.dart';
 import '../modelos/evento_examen_administrador.dart';
 import 'editor_evento_examen.dart';
 
@@ -9,12 +10,9 @@ Future<BorradorEventoExamenAdministrador?> mostrarHojaEditorEventoExamen({
   required bool coloquioMode,
   EventoExamenAdministrador? initialEvent,
 }) {
-  return showModalBottomSheet<BorradorEventoExamenAdministrador>(
+  return mostrarHojaAtlassian<BorradorEventoExamenAdministrador>(
     context: context,
-    isScrollControlled: true,
-    useSafeArea: true,
-    backgroundColor: Colors.transparent,
-    builder: (context) => _ContenedorHojaMobile(
+    builder: (sheetContext) => _ContenidoEditorEventoExamen(
       title: title,
       coloquioMode: coloquioMode,
       initialEvent: initialEvent,
@@ -22,8 +20,8 @@ Future<BorradorEventoExamenAdministrador?> mostrarHojaEditorEventoExamen({
   );
 }
 
-class _ContenedorHojaMobile extends StatelessWidget {
-  const _ContenedorHojaMobile({
+class _ContenidoEditorEventoExamen extends StatelessWidget {
+  const _ContenidoEditorEventoExamen({
     required this.title,
     required this.coloquioMode,
     this.initialEvent,
@@ -35,25 +33,14 @@ class _ContenedorHojaMobile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final mq = MediaQuery.of(context);
-    final bottomInset = mq.viewInsets.bottom;
+    final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
 
-    return SafeArea(
-      top: false,
-      child: Container(
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-          boxShadow: [
-            BoxShadow(
-              blurRadius: 20,
-              color: Colors.black.withValues(alpha: 0.18),
-            ),
-          ],
-        ),
+    return Align(
+      alignment: Alignment.topCenter,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 760),
         child: SingleChildScrollView(
-          padding: EdgeInsets.fromLTRB(24, 12, 24, 24 + bottomInset),
+          padding: EdgeInsets.fromLTRB(16, 4, 16, 24 + bottomInset),
           child: EditorEventoExamenAdministrador(
             title: title,
             coloquioMode: coloquioMode,

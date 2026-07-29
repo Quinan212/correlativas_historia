@@ -10,7 +10,6 @@ class ActividadAdministradorPantalla extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     final observedDevicesAsync = ref.watch(
       proveedorDispositivosObservadosAdministrador,
     );
@@ -109,7 +108,6 @@ class _EstadisticasEncabezado extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return Container(
       width: double.infinity,
@@ -148,7 +146,6 @@ class _TarjetaDispositivoObservado extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     final online = _isConsideredOnline(device.lastSeenAt);
     final displayLabel = _normalizarEtiquetaDispositivo(device.label);
     final initials = _buildInitials(displayLabel);
@@ -239,7 +236,6 @@ class _TarjetaDispositivoObservado extends StatelessWidget {
 
   void _openDetails(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     final displayLabel = _normalizarEtiquetaDispositivo(device.label);
 
     showDialog<void>(

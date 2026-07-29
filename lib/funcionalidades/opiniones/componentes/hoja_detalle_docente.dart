@@ -360,21 +360,26 @@ class _PaginaDetalleDocente extends ConsumerWidget {
                                   )
                                 else
                                   ...base.materias.map(
-                                    (materia) => ListTile(
-                                      contentPadding: EdgeInsets.zero,
-                                      dense: true,
-                                      title: Text(materia.nombre),
-                                      subtitle: Text('${materia.anio}° año'),
-                                      trailing: const Icon(
-                                          Icons.chevron_right_rounded),
-                                      onTap: () {
-                                        HapticFeedback.selectionClick();
-                                        ref
-                                            .read(proveedorIdMateriaSeleccionada
-                                                .notifier)
-                                            .state = materia.id;
-                                        Navigator.of(context).pop();
-                                      },
+                                    (materia) => Material(
+                                      color: Colors.transparent,
+                                      child: ListTile(
+                                        contentPadding: EdgeInsets.zero,
+                                        dense: true,
+                                        title: Text(materia.nombre),
+                                        subtitle: Text('${materia.anio}° año'),
+                                        trailing: const Icon(
+                                            Icons.chevron_right_rounded),
+                                        onTap: () {
+                                          HapticFeedback.selectionClick();
+                                          ref
+                                              .read(
+                                                proveedorIdMateriaSeleccionada
+                                                    .notifier,
+                                              )
+                                              .state = materia.id;
+                                          Navigator.of(context).pop();
+                                        },
+                                      ),
                                     ),
                                   ),
                               ],

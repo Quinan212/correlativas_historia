@@ -15,7 +15,12 @@ import 'componentes/tablero_anios_escritorio.dart';
 import 'componentes/tarjeta_regimen_correlatividades.dart';
 
 class PantallaMapaCorrelatividades extends ConsumerWidget {
-  const PantallaMapaCorrelatividades({super.key});
+  const PantallaMapaCorrelatividades({
+    super.key,
+    this.mostrarAccesoExamenes = true,
+  });
+
+  final bool mostrarAccesoExamenes;
 
   static const Color kPageBgLight = Color(0xFFF5F7FA);
   static const double kMaxWGeneral = 1400;
@@ -43,7 +48,7 @@ class PantallaMapaCorrelatividades extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: isDark ? cs.surface : kPageBgLight,
-      floatingActionButton: !isDesktop
+      floatingActionButton: mostrarAccesoExamenes && !isDesktop
           ? FloatingActionButton(
               heroTag: 'fab_examenes_cascada',
               onPressed: () => _openExamenes(context, ref),

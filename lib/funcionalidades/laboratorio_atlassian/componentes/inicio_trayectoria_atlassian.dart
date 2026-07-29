@@ -70,8 +70,6 @@ class _EncabezadoTrayectoriaAtlassianState
     final progress = Curves.easeOutCubic.transform(_progress);
     final actionsOpacity = (1 - progress * 1.2).clamp(0.0, 1.0).toDouble();
     final titleOpacity = (1 - progress * 1.35).clamp(0.0, 1.0).toDouble();
-    final nombre = primerNombreAtlassian(widget.nombreEstudiante);
-
     return Material(
       color: Theme.of(context).scaffoldBackgroundColor,
       child: SafeArea(

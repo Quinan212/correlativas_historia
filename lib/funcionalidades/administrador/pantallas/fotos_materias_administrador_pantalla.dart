@@ -11,7 +11,6 @@ class FotosMateriasAdministradorPantalla extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     final statsAsync = ref.watch(proveedorResumenFotosMateriasAdministrador);
     final width = MediaQuery.of(context).size.width;
     final isDesktop = width >= 900;
@@ -137,7 +136,6 @@ class _TarjetaResumen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return Container(
       width: double.infinity,
@@ -178,7 +176,6 @@ class _TarjetaCarrera extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return Material(
       color: theme.colorScheme.surface,

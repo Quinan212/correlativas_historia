@@ -9,6 +9,7 @@ class BarraFiltrosExamenes extends StatelessWidget {
     required this.careerId,
     required this.searchController,
     required this.searchQuery,
+    this.searchHint = 'Buscar materia, código o tramo...',
     required this.scope,
     required this.yearFilter,
     required this.onCareerChanged,
@@ -21,6 +22,7 @@ class BarraFiltrosExamenes extends StatelessWidget {
   final String careerId;
   final TextEditingController searchController;
   final String searchQuery;
+  final String searchHint;
   final String scope;
   final int? yearFilter;
   final ValueChanged<String> onCareerChanged;
@@ -128,7 +130,7 @@ class BarraFiltrosExamenes extends StatelessWidget {
             controller: searchController,
             onChanged: (_) => onSearchChanged(),
             decoration: InputDecoration(
-              hintText: 'Buscar materia, código o tramo...',
+              hintText: searchHint,
               prefixIcon: const Icon(Icons.search_rounded),
               suffixIcon: searchQuery.isEmpty
                   ? null
@@ -306,5 +308,4 @@ class PanelFiltrosJerarquicoExamenes extends StatelessWidget {
     );
   }
 }
-
 

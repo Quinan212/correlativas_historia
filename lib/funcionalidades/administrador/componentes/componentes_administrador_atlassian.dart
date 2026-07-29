@@ -20,35 +20,30 @@ class PanelAdministradorAtlassian extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
+    final scheme = Theme.of(context).colorScheme;
     final fill =
         backgroundColor ??
         (selected
             ? scheme.primaryContainer.withValues(alpha: 0.72)
             : scheme.surface);
-
-    final content = Container(
-      width: double.infinity,
-      padding: padding,
-      decoration: BoxDecoration(
-        color: fill,
-        borderRadius: BorderRadius.circular(RadioAtlassian.large),
-        border: Border.all(
-          color: selected ? scheme.primary : scheme.outlineVariant,
-        ),
+    final shape = RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(RadioAtlassian.large),
+      side: BorderSide(
+        color: selected ? scheme.primary : scheme.outlineVariant,
+        width: selected ? 2 : 1,
       ),
-      child: child,
     );
 
-    if (onTap == null) return content;
     return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(RadioAtlassian.large),
-        child: content,
-      ),
+      color: fill,
+      shape: shape,
+      clipBehavior: Clip.antiAlias,
+      child: onTap == null
+          ? Padding(padding: padding, child: child)
+          : InkWell(
+              onTap: onTap,
+              child: Padding(padding: padding, child: child),
+            ),
     );
   }
 }

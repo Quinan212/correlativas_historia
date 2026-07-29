@@ -118,6 +118,7 @@ class _PantallaVisorPdfSageState extends State<PantallaVisorPdfSage> {
       appBar: construirAppBarSage(
         context,
         title: widget.nombreArchivo,
+        toolbarHeight: 72,
         leading: IconButton(
           tooltip: 'Volver',
           onPressed: () => Navigator.of(context).pop(),

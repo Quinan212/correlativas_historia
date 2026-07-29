@@ -23,7 +23,7 @@
         android:label="Correlativas"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
-        android:enableOnBackInvokedCallback="false">
+        android:enableOnBackInvokedCallback="true">
 
 
         <activity

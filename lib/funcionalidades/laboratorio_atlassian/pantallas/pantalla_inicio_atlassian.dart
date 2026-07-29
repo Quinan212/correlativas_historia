@@ -11,11 +11,17 @@ import '../busqueda/modelos_busqueda_atlassian.dart';
 import '../componentes/componentes_atlassian.dart';
 import '../componentes/inicio_trayectoria_atlassian.dart';
 import '../tema/tema_atlassian.dart';
+import 'pantalla_acceso_developer_atlassian.dart';
 import 'pantalla_calendario_atlassian.dart';
 import 'pantalla_centro_sage_atlassian.dart';
 import 'pantalla_disenos_atlassian.dart';
 import 'pantallas_herramientas_atlassian.dart';
 import 'utilidades_atlassian.dart';
+
+const bool _developerLegacyEnabled = bool.fromEnvironment(
+  'ENABLE_DEVELOPER_LEGACY',
+  defaultValue: kDebugMode,
+);
 
 class PantallaInicioAtlassian extends StatefulWidget {
   const PantallaInicioAtlassian({
@@ -167,6 +173,11 @@ class _PantallaInicioAtlassianState extends State<PantallaInicioAtlassian> {
 
   void _openDesigns() {
     _pushAtlassian((_) => const PantallaDisenosAtlassian());
+  }
+
+  void _openDeveloperAccess() {
+    if (!_developerLegacyEnabled) return;
+    _pushAtlassian((_) => const PantallaAccesoDeveloperAtlassian());
   }
 
   Future<TrayectoriaSageLaboratorio> _saveAutomaticTrajectory(
@@ -624,6 +635,7 @@ class _PantallaInicioAtlassianState extends State<PantallaInicioAtlassian> {
                             _GrillaAccionesReducidaAtlassian(
                               onOpenCalendar: _openCalendar,
                               onOpenDesigns: _openDesigns,
+                              onOpenDeveloper: _openDeveloperAccess,
                               onOpenScenarios: _openScenarios,
                               onOpenHelp: _openHelp,
                             ),
@@ -705,6 +717,8 @@ class _PantallaInicioAtlassianState extends State<PantallaInicioAtlassian> {
                                             onOpenProgress: _openProgress,
                                             onOpenCalendar: _openCalendar,
                                             onOpenDesigns: _openDesigns,
+                                            onOpenDeveloper:
+                                                _openDeveloperAccess,
                                           ),
                                         ],
                                       ),
@@ -778,6 +792,7 @@ class _PantallaInicioAtlassianState extends State<PantallaInicioAtlassian> {
                             onOpenProgress: _openProgress,
                             onOpenCalendar: _openCalendar,
                             onOpenDesigns: _openDesigns,
+                            onOpenDeveloper: _openDeveloperAccess,
                           ),
                           const SizedBox(height: 22),
                           _MateriasRecientesAtlassian(
@@ -1203,6 +1218,7 @@ class _GrillaAccionesAtlassian extends StatelessWidget {
     required this.onOpenProgress,
     required this.onOpenCalendar,
     required this.onOpenDesigns,
+    required this.onOpenDeveloper,
   });
 
   final VoidCallback onOpenRecord;
@@ -1213,6 +1229,7 @@ class _GrillaAccionesAtlassian extends StatelessWidget {
   final VoidCallback onOpenProgress;
   final VoidCallback onOpenCalendar;
   final VoidCallback onOpenDesigns;
+  final VoidCallback onOpenDeveloper;
 
   @override
   Widget build(BuildContext context) {
@@ -1265,6 +1282,13 @@ class _GrillaAccionesAtlassian extends StatelessWidget {
         icon: Icons.menu_book_rounded,
         onTap: onOpenDesigns,
       ),
+      if (_developerLegacyEnabled)
+        _AccionAtlassian(
+          label: 'Acceso developer',
+          description: 'Versiones de la aplicación',
+          icon: Icons.developer_mode_rounded,
+          onTap: onOpenDeveloper,
+        ),
     ];
 
     return LayoutBuilder(
@@ -1304,12 +1328,14 @@ class _GrillaAccionesReducidaAtlassian extends StatelessWidget {
     required this.onOpenDesigns,
     required this.onOpenScenarios,
     required this.onOpenHelp,
+    required this.onOpenDeveloper,
   });
 
   final VoidCallback onOpenCalendar;
   final VoidCallback onOpenDesigns;
   final VoidCallback onOpenScenarios;
   final VoidCallback onOpenHelp;
+  final VoidCallback onOpenDeveloper;
 
   @override
   Widget build(BuildContext context) {
@@ -1326,6 +1352,13 @@ class _GrillaAccionesReducidaAtlassian extends StatelessWidget {
         icon: Icons.menu_book_rounded,
         onTap: onOpenDesigns,
       ),
+      if (_developerLegacyEnabled)
+        _AccionAtlassian(
+          label: 'Acceso developer',
+          description: 'Versiones de la aplicación',
+          icon: Icons.developer_mode_rounded,
+          onTap: onOpenDeveloper,
+        ),
       _AccionAtlassian(
         label: 'Escenarios',
         description: 'Qué podés cursar',

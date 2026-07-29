@@ -21,6 +21,7 @@ class EventoExamenAdministrador {
     this.horaReprogramada,
     this.actaHabilitada = true,
     this.visible = true,
+    this.legacy = false,
     this.updatedAt,
     this.updatedByDeviceId,
   });
@@ -41,6 +42,7 @@ class EventoExamenAdministrador {
   final String? horaReprogramada;
   final bool actaHabilitada;
   final bool visible;
+  final bool legacy;
   final DateTime? updatedAt;
   final String? updatedByDeviceId;
 
@@ -84,6 +86,7 @@ class EventoExamenAdministrador {
     String? horaReprogramada,
     bool? actaHabilitada,
     bool? visible,
+    bool? legacy,
     DateTime? updatedAt,
     String? updatedByDeviceId,
   }) {
@@ -104,6 +107,7 @@ class EventoExamenAdministrador {
       horaReprogramada: horaReprogramada ?? this.horaReprogramada,
       actaHabilitada: actaHabilitada ?? this.actaHabilitada,
       visible: visible ?? this.visible,
+      legacy: legacy ?? this.legacy,
       updatedAt: updatedAt ?? this.updatedAt,
       updatedByDeviceId: updatedByDeviceId ?? this.updatedByDeviceId,
     );
@@ -127,6 +131,7 @@ class EventoExamenAdministrador {
       'hora_reprogramada': _cleanNullable(horaReprogramada),
       'acta_habilitada': actaHabilitada,
       'visible': visible,
+      'legacy': legacy,
       'expected_updated_at': updatedAt?.toUtc().toIso8601String(),
     };
   }
@@ -216,6 +221,7 @@ class EventoExamenAdministrador {
       horaReprogramada: parseHora(row['hora_reprogramada']),
       actaHabilitada: parseBool(row['acta_habilitada'], fallback: true),
       visible: parseBool(row['visible'], fallback: true),
+      legacy: parseBool(row['legacy'], fallback: false),
       updatedAt: parseDate(row['updated_at']),
       updatedByDeviceId: parseNullableText(row['updated_by_device_id']),
     );
@@ -250,6 +256,7 @@ class BorradorEventoExamenAdministrador {
     required this.horaReprogramada,
     required this.actaHabilitada,
     required this.visible,
+    this.legacy = false,
     this.updatedAt,
   });
 
@@ -269,6 +276,7 @@ class BorradorEventoExamenAdministrador {
   final TimeOfDay? horaReprogramada;
   final bool actaHabilitada;
   final bool visible;
+  final bool legacy;
   final DateTime? updatedAt;
 
   EventoExamenAdministrador toModel() {
@@ -296,6 +304,7 @@ class BorradorEventoExamenAdministrador {
       horaReprogramada: formatTime(horaReprogramada),
       actaHabilitada: actaHabilitada,
       visible: visible,
+      legacy: legacy,
       updatedAt: updatedAt,
     );
   }

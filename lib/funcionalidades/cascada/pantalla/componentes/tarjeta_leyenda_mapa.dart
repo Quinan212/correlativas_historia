@@ -175,11 +175,13 @@ class TarjetaLeyendaMapa extends StatelessWidget {
               children: [
                 Icon(Icons.info_outline_rounded, size: 22, color: cs.primary),
                 const SizedBox(width: 12),
-                Text(
-                  'Guia del mapa',
-                  style: tt.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: cs.onSurface,
+                Flexible(
+                  child: Text(
+                    'Guía del mapa',
+                    style: tt.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      color: cs.onSurface,
+                    ),
                   ),
                 ),
               ],

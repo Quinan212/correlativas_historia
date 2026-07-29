@@ -131,7 +131,6 @@ class _SolicitudesPendientesAdminEscritorioState
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -190,52 +189,55 @@ class _SolicitudesPendientesAdminEscritorioState
                     final profile = widget.profileMap[item.deviceId];
                     final isSelected = _selectedRequest?.id == item.id;
 
-                    return ListTile(
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 12,
-                      ),
-                      selected: isSelected,
-                      selectedTileColor: theme.colorScheme.primary.withValues(
-                        alpha: 0.08,
-                      ),
-                      leading: Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.primary.withValues(
-                            alpha: 0.1,
-                          ),
-                          shape: BoxShape.circle,
+                    return Material(
+                      color: Colors.transparent,
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 12,
                         ),
-                        alignment: Alignment.center,
-                        child: Text(
-                          _buildInitials(
-                            profile?.adminDisplayLabel ?? 'Usuario',
+                        selected: isSelected,
+                        selectedTileColor: theme.colorScheme.primary.withValues(
+                          alpha: 0.08,
+                        ),
+                        leading: Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.primary.withValues(
+                              alpha: 0.1,
+                            ),
+                            shape: BoxShape.circle,
                           ),
-                          style: TextStyle(
-                            fontWeight: FontWeight.w900,
-                            color: theme.colorScheme.primary,
+                          alignment: Alignment.center,
+                          child: Text(
+                            _buildInitials(
+                              profile?.adminDisplayLabel ?? 'Usuario',
+                            ),
+                            style: TextStyle(
+                              fontWeight: FontWeight.w900,
+                              color: theme.colorScheme.primary,
+                            ),
                           ),
                         ),
-                      ),
-                      title: Text(
-                        profile?.adminDisplayLabel ?? 'Usuario desconocido',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontWeight: FontWeight.w800),
-                      ),
-                      subtitle: Padding(
-                        padding: const EdgeInsets.only(top: 4),
-                        child: Text(
-                          item.matterName,
+                        title: Text(
+                          profile?.adminDisplayLabel ?? 'Usuario desconocido',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.bodySmall,
+                          style: const TextStyle(fontWeight: FontWeight.w800),
                         ),
+                        subtitle: Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Text(
+                            item.matterName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.bodySmall,
+                          ),
+                        ),
+                        trailing: const Icon(Icons.chevron_right_rounded),
+                        onTap: () => setState(() => _selectedRequest = item),
                       ),
-                      trailing: const Icon(Icons.chevron_right_rounded),
-                      onTap: () => setState(() => _selectedRequest = item),
                     );
                   },
                 ),
@@ -399,7 +401,6 @@ class _EncabezadoDetalle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return Container(
       padding: const EdgeInsets.all(24),
@@ -593,7 +594,6 @@ class _BarraAcciones extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return Container(
       padding: const EdgeInsets.all(24),
@@ -709,7 +709,6 @@ class _TarjetaSeccion extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),

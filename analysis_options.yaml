@@ -9,6 +9,12 @@
 # packages, and plugins designed to encourage good coding practices.
 include: package:flutter_lints/flutter.yaml
 
+# Archivos legacy conservados como referencia; no forman parte del flujo activo
+# desde la pantalla Atlassian unificada.
+analyzer:
+  exclude:
+    - lib/funcionalidades/administrador/componentes/src/seccion_eventos_examen_administrador/**
+
 linter:
   # The lint rules applied to this project can be customized in the
   # section below to disable rules from the `package:flutter_lints/flutter.yaml`

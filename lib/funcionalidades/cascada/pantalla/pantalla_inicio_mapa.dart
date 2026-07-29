@@ -9,7 +9,9 @@ import 'componentes/tarjeta_autor_mapa.dart';
 import 'componentes/tarjeta_leyenda_mapa.dart';
 
 class PantallaInicioMapa extends ConsumerWidget {
-  const PantallaInicioMapa({super.key});
+  const PantallaInicioMapa({super.key, this.mostrarAccesosExternos = true});
+
+  final bool mostrarAccesosExternos;
 
   static const Color kPageBgLight = Color(0xFFF5F7FA);
 
@@ -44,6 +46,7 @@ class PantallaInicioMapa extends ConsumerWidget {
               ref.read(proveedorIndiceRouter.notifier).state = 2,
           onOpenExamenes: () => _openExamenes(context, ref),
           onOpenStudentAccess: () => _openStudentAccess(context),
+          mostrarAccesosExternos: mostrarAccesosExternos,
         ),
       );
     }
@@ -95,12 +98,14 @@ class _LayoutInicioEscritorio extends StatelessWidget {
     required this.onOpenCalculadora,
     required this.onOpenExamenes,
     required this.onOpenStudentAccess,
+    required this.mostrarAccesosExternos,
   });
 
   final VoidCallback onOpenMapa;
   final VoidCallback onOpenCalculadora;
   final VoidCallback onOpenExamenes;
   final VoidCallback onOpenStudentAccess;
+  final bool mostrarAccesosExternos;
 
   @override
   Widget build(BuildContext context) {
@@ -166,26 +171,28 @@ class _LayoutInicioEscritorio extends StatelessWidget {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 20),
-                        _TarjetaAccionEscritorio(
-                          title: 'Exámenes',
-                          desc:
-                              'Cronograma oficial de mesas y llamados de finales.',
-                          icon: Icons.event_note_rounded,
-                          color: const Color(0xFF8B5CF6),
-                          horizontal: true,
-                          onTap: onOpenExamenes,
-                        ),
-                        const SizedBox(height: 20),
-                        _TarjetaAccionEscritorio(
-                          title: 'Alumno y trayectoria',
-                          desc:
-                              'Ingreso del alumno para ver materias, estados y avance.',
-                          icon: Icons.school_rounded,
-                          color: const Color(0xFF1F7A99),
-                          horizontal: true,
-                          onTap: onOpenStudentAccess,
-                        ),
+                        if (mostrarAccesosExternos) ...[
+                          const SizedBox(height: 20),
+                          _TarjetaAccionEscritorio(
+                            title: 'Exámenes',
+                            desc:
+                                'Cronograma oficial de mesas y llamados de finales.',
+                            icon: Icons.event_note_rounded,
+                            color: const Color(0xFF8B5CF6),
+                            horizontal: true,
+                            onTap: onOpenExamenes,
+                          ),
+                          const SizedBox(height: 20),
+                          _TarjetaAccionEscritorio(
+                            title: 'Alumno y trayectoria',
+                            desc:
+                                'Ingreso del alumno para ver materias, estados y avance.',
+                            icon: Icons.school_rounded,
+                            color: const Color(0xFF1F7A99),
+                            horizontal: true,
+                            onTap: onOpenStudentAccess,
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -345,5 +352,3 @@ class _TarjetaAccionEscritorioState extends State<_TarjetaAccionEscritorio> {
     );
   }
 }
-
-

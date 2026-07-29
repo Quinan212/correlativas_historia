@@ -15,7 +15,6 @@ class FotosMateriasCarreraAdministradorPantalla extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     final overviewAsync = ref.watch(proveedorResumenFotosMateriasAdministrador);
     final career = kCareers.firstWhere(
       (item) => item.id == careerId,
@@ -128,7 +127,6 @@ class _TarjetaEncabezado extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return Container(
       width: double.infinity,
@@ -172,7 +170,6 @@ class _TarjetaAnio extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -238,7 +235,6 @@ class _BaldosaMateria extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),

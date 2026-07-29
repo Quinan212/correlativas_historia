@@ -1,11 +1,10 @@
-import 'package:correlativas_historia/main.dart';
 import 'package:correlativas_historia/compartido/supabase/supabase.dart';
-import 'package:flutter/material.dart';
+import 'package:correlativas_historia/main.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('MainScreen builds sin Supabase inicializado', (
+  testWidgets('App se construye sin Supabase inicializado', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
@@ -18,11 +17,11 @@ void main() {
             ),
           ),
         ],
-        child: const MaterialApp(home: MainScreen()),
+        child: const App(),
       ),
     );
     await tester.pump();
 
-    expect(find.byType(MainScreen), findsOneWidget);
+    expect(find.byType(App), findsOneWidget);
   });
 }

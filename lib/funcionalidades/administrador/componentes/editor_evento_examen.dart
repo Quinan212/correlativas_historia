@@ -598,6 +598,7 @@ class _EditorEventoExamenAdministradorState
             : null,
         actaHabilitada: _actaHabilitada,
         visible: _visible,
+        legacy: widget.initialEvent?.legacy ?? false,
         updatedAt: widget.initialEvent?.updatedAt,
       ),
     );

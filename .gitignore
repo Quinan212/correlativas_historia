@@ -76,6 +76,12 @@ backups/
 codex_*.png
 stacking_sandbox.html
 steps.jsonl
+.capturas_informe_work/
+CAPTURAS_INFORME_CORRELATIVAS/
+.patch_backups/
+.tmp_*/
+mapas_contacto.jpg
+ocr_mapas.txt
 
 # Reportes generados
 DIAGNOSTICO_SAGE_REPORTES_V2.md

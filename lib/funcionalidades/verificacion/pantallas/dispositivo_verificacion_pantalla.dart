@@ -12,7 +12,6 @@ class DispositivoVerificacionPantalla extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     final adminAsync = ref.watch(proveedorEstadoDispositivoAdministrador);
     final ownProfileAsync = ref.watch(ownPerfilDispositivoProvider);
     final deviceLabelAsync = ref.watch(proveedorEtiquetaDispositivo);
@@ -254,7 +253,6 @@ class _TarjetaSeccion extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return Container(
       width: double.infinity,
