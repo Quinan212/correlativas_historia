@@ -57,6 +57,9 @@ backups/
 .codex-backups/
 .codex-remote-attachments/
 .agents/
+*.iml
+/.mcp.json
+/opencode.json
 
 # Documentación generada
 *.aux
@@ -87,6 +90,19 @@ ocr_mapas.txt
 DIAGNOSTICO_SAGE_REPORTES_V2.md
 INFORME_*.md
 LOGS_SANITIZADOS_SAGE_V3.md
+/VALIDACION/
+/VALIDACION_ESTRUCTURAL.json
+/DOCUMENTACION_APENOM_NOMBRE_COMPLETO/
+/DOCUMENTACION_DESINCRONIZAR_ROJO/
+/AUDITORIA_COPIAS_LIB.md
+
+# Scripts locales descartables
+/_col_html.ps1
+/_comparativa.ps1
+/_conteo.ps1
+/_faltantes.ps1
+/_mapeo_actas.ps1
+/_pdf_extract.ps1
 
 # Datos exportados
 /auth_users.json

@@ -1,2 +1,0 @@
-﻿ok: true
-{ fechaAntesDeNota: { id: '8619', grade: '9', date: '14/07/2026' }, notaAntesDeFecha: { id: '8620', grade: '8,50', date: '20/12/2025' }, columns: [ID,Asignatura,Estado,Año,Nota,Fecha] }

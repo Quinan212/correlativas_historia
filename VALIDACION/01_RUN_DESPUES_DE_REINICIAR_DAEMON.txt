@@ -1,5 +1,0 @@
-﻿La aplicación compiló e instaló correctamente SIN cambios en el código.
-flutter run -d emulator-5554 completó: Built app-debug.apk, instaló y lanzó la app.
-No hubo error de Gradle. El daemon no desapareció en este intento.
-Advertencia pdfx presente pero no bloqueante.
-Resultado: ÉXITO en primer intento sin modificar código.

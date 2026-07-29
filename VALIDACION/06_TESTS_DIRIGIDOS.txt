@@ -1,2 +1,0 @@
-﻿flutter test --no-pub extractor_historial_sage_test datos_academicos_materia_sage_test materia_nota_fecha_test repositorio_trayectoria_sage_idempotente_test
-14 tests passed. All tests passed.

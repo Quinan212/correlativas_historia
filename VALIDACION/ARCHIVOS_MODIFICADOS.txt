@@ -1,6 +1,0 @@
-NINGUNO
-
-No se modificó ningún archivo del proyecto. La compilación se resolvió sin cambios.
-Solo se ejecutó dart format sobre 5 archivos del hotfix (2 reformateados):
-- lib/funcionalidades/acceso_estudiante/sage_historial/extractor_historial_sage.dart (formateado)
-- test/sage_historial/extractor_historial_sage_test.dart (formateado)

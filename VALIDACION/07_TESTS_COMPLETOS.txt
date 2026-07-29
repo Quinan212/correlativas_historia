@@ -1,8 +1,0 @@
-﻿flutter test --no-pub
-80 passed, 2 failed
-
-Failing tests (pre-existing legacy):
-1. documentos_academicos_sage_test - Expected 2, Actual 3 (pre-existing)
-2. widget_test.dart - MainScreen not found (legacy, no modificado)
-
-Tests del hotfix SAGE: Todos pasaron.
