@@ -88,4 +88,16 @@ void main() {
     expect(failed.success, isFalse);
     expect(success.success, isTrue);
   });
+
+  test('decodifica la paginación de la grilla de legajos', () async {
+    const raw =
+        '{"stage":"listadoLegajos","state":"ready","page":2,"lastPage":5,"records":47,"profiles":[{"rowId":"r2","signature":"s2","name":"Perfil 2","fields":{}}]}';
+    final result = await ExtractorLegajoSage((_) => _respuesta(raw)).extraer();
+
+    expect(result.paginaActual, 2);
+    expect(result.totalPaginas, 5);
+    expect(result.totalRegistros, 47);
+    expect(result.tienePaginaAnterior, isTrue);
+    expect(result.tienePaginaSiguiente, isTrue);
+  });
 }

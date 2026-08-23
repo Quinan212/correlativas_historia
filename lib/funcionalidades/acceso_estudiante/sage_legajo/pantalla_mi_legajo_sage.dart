@@ -11,6 +11,11 @@ class PantallaMiLegajoSage extends StatelessWidget {
     required this.onBack,
     this.loadingTitle,
     this.errorMessage,
+    this.paginaActual = 1,
+    this.totalPaginas = 1,
+    this.totalRegistros = 0,
+    this.onPaginaAnterior,
+    this.onPaginaSiguiente,
   });
 
   final List<PerfilLegajoSage> perfiles;
@@ -18,6 +23,11 @@ class PantallaMiLegajoSage extends StatelessWidget {
   final VoidCallback onBack;
   final String? loadingTitle;
   final String? errorMessage;
+  final int paginaActual;
+  final int totalPaginas;
+  final int totalRegistros;
+  final VoidCallback? onPaginaAnterior;
+  final VoidCallback? onPaginaSiguiente;
 
   @override
   Widget build(BuildContext context) {
@@ -57,6 +67,17 @@ class PantallaMiLegajoSage extends StatelessWidget {
                 onTap: () => onSelect(perfil),
               ),
               const SizedBox(height: 10),
+            ],
+            if (totalPaginas > 1) ...[
+              const SizedBox(height: 6),
+              _PaginacionLegajosSage(
+                paginaActual: paginaActual,
+                totalPaginas: totalPaginas,
+                totalRegistros: totalRegistros,
+                busy: busy,
+                onPaginaAnterior: onPaginaAnterior,
+                onPaginaSiguiente: onPaginaSiguiente,
+              ),
             ],
             if (loadingTitle != null)
               Padding(
@@ -143,6 +164,54 @@ class _TarjetaLegajoSage extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _PaginacionLegajosSage extends StatelessWidget {
+  const _PaginacionLegajosSage({
+    required this.paginaActual,
+    required this.totalPaginas,
+    required this.totalRegistros,
+    required this.busy,
+    required this.onPaginaAnterior,
+    required this.onPaginaSiguiente,
+  });
+
+  final int paginaActual;
+  final int totalPaginas;
+  final int totalRegistros;
+  final bool busy;
+  final VoidCallback? onPaginaAnterior;
+  final VoidCallback? onPaginaSiguiente;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Row(
+      children: [
+        IconButton(
+          tooltip: 'Página anterior',
+          onPressed: busy || paginaActual <= 1 ? null : onPaginaAnterior,
+          icon: const Icon(Icons.chevron_left_rounded),
+        ),
+        Expanded(
+          child: Text(
+            totalRegistros > 0
+                ? 'Página $paginaActual de $totalPaginas · $totalRegistros registros'
+                : 'Página $paginaActual de $totalPaginas',
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodySmall,
+          ),
+        ),
+        IconButton(
+          tooltip: 'Página siguiente',
+          onPressed: busy || paginaActual >= totalPaginas
+              ? null
+              : onPaginaSiguiente,
+          icon: const Icon(Icons.chevron_right_rounded),
+        ),
+      ],
     );
   }
 }

@@ -45,6 +45,8 @@ class EstadoPersistidoSincronizacionSage {
     int? fallosConsecutivos,
     bool limpiarError = false,
     bool limpiarSesion = false,
+    bool reemplazarIdentidad = false,
+    bool limpiarIdentidad = false,
   }) {
     return EstadoPersistidoSincronizacionSage(
       ultimoIntento: ultimoIntento ?? this.ultimoIntento,
@@ -55,9 +57,21 @@ class EstadoPersistidoSincronizacionSage {
       ultimoMensajeError: limpiarError
           ? null
           : ultimoMensajeError ?? this.ultimoMensajeError,
-      nombrePerfil: nombrePerfil ?? this.nombrePerfil,
-      dniPerfil: dniPerfil ?? this.dniPerfil,
-      firmaLegajo: firmaLegajo ?? this.firmaLegajo,
+      nombrePerfil: limpiarIdentidad
+          ? null
+          : reemplazarIdentidad
+          ? _nullableText(nombrePerfil)
+          : nombrePerfil ?? this.nombrePerfil,
+      dniPerfil: limpiarIdentidad
+          ? null
+          : reemplazarIdentidad
+          ? _nullableText(dniPerfil)
+          : dniPerfil ?? this.dniPerfil,
+      firmaLegajo: limpiarIdentidad
+          ? null
+          : reemplazarIdentidad
+          ? _nullableText(firmaLegajo)
+          : firmaLegajo ?? this.firmaLegajo,
       clavesCarrera: clavesCarrera ?? this.clavesCarrera,
       sesionConfirmada: limpiarSesion
           ? false
@@ -159,6 +173,7 @@ class RepositorioEstadoSincronizacionSage {
         ultimoMensajeError: mensaje,
         fallosConsecutivos: current.fallosConsecutivos + 1,
         limpiarSesion: sesionVencida,
+        limpiarIdentidad: sesionVencida,
       ),
     );
   }
@@ -175,6 +190,7 @@ class RepositorioEstadoSincronizacionSage {
         nombrePerfil: trayectoria.perfil.nombre,
         dniPerfil: trayectoria.perfil.dni,
         firmaLegajo: firmaLegajo,
+        reemplazarIdentidad: true,
         clavesCarrera: <String>[
           for (final career in trayectoria.carreras) _careerKey(career),
         ],
@@ -188,7 +204,9 @@ class RepositorioEstadoSincronizacionSage {
 
   Future<void> registrarSesionCerrada() async {
     final current = await cargar();
-    await _guardar(current.copyWith(limpiarSesion: true));
+    await _guardar(
+      current.copyWith(limpiarSesion: true, limpiarIdentidad: true),
+    );
   }
 
   Future<void> borrarPreferencias() async {

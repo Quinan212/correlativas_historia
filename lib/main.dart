@@ -50,7 +50,7 @@ class App extends ConsumerWidget {
     return ArranqueNotificacionesPush(
       child: MaterialApp(
         navigatorKey: appNavigatorKey,
-        title: 'Mapa y Calculadora de Correlatividades',
+        title: 'Trayectorias',
         debugShowCheckedModeBanner: false,
         showPerformanceOverlay: RendimientoApp.diagnosticosHabilitados,
         builder: (context, child) {

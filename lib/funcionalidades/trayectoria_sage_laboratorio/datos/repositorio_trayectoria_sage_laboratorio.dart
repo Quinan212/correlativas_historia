@@ -33,7 +33,8 @@ class RepositorioTrayectoriaSageLaboratorio {
   ) async {
     final previous = await cargar();
     final normalizedDraft = _normalizarTrayectoria(draft);
-    final normalized = previous == null
+    final normalized = previous == null ||
+            !_mismaIdentidad(normalizedDraft.perfil, previous.perfil)
         ? normalizedDraft
         : _conservarDatosAcademicosPrevios(normalizedDraft, previous);
     if (!normalized.listaParaSincronizar) {
@@ -87,6 +88,32 @@ class RepositorioTrayectoriaSageLaboratorio {
       sincronizadaEn: draft.sincronizadaEn,
     );
   }
+
+  bool _mismaIdentidad(
+    PerfilTrayectoriaSageLaboratorio actual,
+    PerfilTrayectoriaSageLaboratorio anterior,
+  ) {
+    final dniActual = actual.dni?.replaceAll(RegExp(r'[^0-9]+'), '') ?? '';
+    final dniAnterior = anterior.dni?.replaceAll(RegExp(r'[^0-9]+'), '') ?? '';
+    if (dniActual.isNotEmpty || dniAnterior.isNotEmpty) {
+      return dniActual.isNotEmpty && dniActual == dniAnterior;
+    }
+    final nombreActual = _normalizarIdentidad(actual.nombre);
+    final nombreAnterior = _normalizarIdentidad(anterior.nombre);
+    return nombreActual.isNotEmpty && nombreActual == nombreAnterior;
+  }
+
+  String _normalizarIdentidad(String value) => value
+      .toLowerCase()
+      .replaceAll('á', 'a')
+      .replaceAll('é', 'e')
+      .replaceAll('í', 'i')
+      .replaceAll('ó', 'o')
+      .replaceAll('ú', 'u')
+      .replaceAll('ü', 'u')
+      .replaceAll(RegExp(r'[^a-z0-9]+'), ' ')
+      .replaceAll(RegExp(r'\s+'), ' ')
+      .trim();
 
   TrayectoriaSageLaboratorio _conservarDatosAcademicosPrevios(
     TrayectoriaSageLaboratorio current,
@@ -163,15 +190,21 @@ class RepositorioTrayectoriaSageLaboratorio {
     List<DocumentoAcademicoSage> documentos,
   ) {
     final result = <DocumentoAcademicoSage>[];
-    final seen = <String>{};
+    final indexes = <String, int>{};
     for (final documento in documentos) {
-      if (!documento.disponible) continue;
       final key = <String>[
         documento.identidadCarrera,
         documento.tipo.clave,
       ].join('|');
-      if (!seen.add(key)) continue;
-      result.add(documento);
+      final existingIndex = indexes[key];
+      if (existingIndex == null) {
+        indexes[key] = result.length;
+        result.add(documento);
+        continue;
+      }
+      if (!result[existingIndex].disponible && documento.disponible) {
+        result[existingIndex] = documento;
+      }
     }
     return List<DocumentoAcademicoSage>.unmodifiable(result);
   }

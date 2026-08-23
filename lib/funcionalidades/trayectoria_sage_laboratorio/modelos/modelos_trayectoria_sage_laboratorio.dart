@@ -371,7 +371,6 @@ class TrayectoriaSageLaboratorio {
     final structural = carrera.careerKey.trim().toLowerCase();
     return documentos
         .where((documento) {
-          if (!documento.disponible) return false;
           if (structural.isNotEmpty && documento.careerKey.trim().isNotEmpty) {
             return documento.careerKey.trim().toLowerCase() == structural;
           }

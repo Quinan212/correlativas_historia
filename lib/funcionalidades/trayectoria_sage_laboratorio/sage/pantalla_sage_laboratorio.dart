@@ -90,7 +90,8 @@ class PantallaSageLaboratorio extends StatefulWidget {
       _PantallaSageLaboratorioState();
 }
 
-class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
+class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio>
+    with WidgetsBindingObserver {
   static final Uri _initialUri = Uri.parse(
     'https://sage.entrerios.gov.ar/login/',
   );
@@ -112,6 +113,11 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
   DateTime? _activeDownloadStartedAt;
   DateTime? _firstPageStartedAt;
   bool _isClosing = false;
+  bool _appLifecycleActive = true;
+  bool _firstFrameReady = false;
+  bool _automaticPollingStopped = false;
+  bool _automaticWaitingForStudentChoice = false;
+  bool _legajoPageBusy = false;
   bool _navigationProbeRunning = false;
   bool _historyProbeRunning = false;
   bool _nativeHistoryVisible = false;
@@ -177,6 +183,16 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
   bool _usuarioSolicitoEscolares = false;
   int _loadRequestCount = 0;
   PerfilLegajoSage? _selectedStudentRecord;
+  PerfilLegajoSage? _pendingStudentRecord;
+  PerfilSage? _automaticSourceProfile;
+  final Set<PerfilSage> _automaticAvailableProfiles = <PerfilSage>{};
+  final Set<PerfilSage> _automaticAttemptedProfiles = <PerfilSage>{};
+  PerfilSage? _automaticFallbackTarget;
+  bool _automaticProfileFallbackInFlight = false;
+  bool _automaticProfileRoutesExhausted = false;
+  String _automaticPendingProfileReason = 'active_profile';
+  List<PerfilLegajoSage> _automaticStudentChoices = const [];
+  final Map<String, String> _lastDebugProbeSignatures = <String, String>{};
   String? _lastTrajectorySignature;
   EstadoSincronizacionSageAutomatica _automaticState =
       const EstadoSincronizacionSageAutomatica.preparando();
@@ -213,9 +229,154 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
   bool get _documentDownloadMode =>
       widget.modo == ModoPantallaSageLaboratorio.descargaDocumento;
 
+  String get _automaticSourceProfileLabel => switch (_automaticSourceProfile) {
+    PerfilSage.agente => 'Docente',
+    PerfilSage.alumnos => 'Estudiante',
+    null => 'no confirmado',
+  };
+
+  String get _automaticSourceProfileLog => switch (_automaticSourceProfile) {
+    PerfilSage.agente => 'agente',
+    PerfilSage.alumnos => 'alumnos',
+    null => 'desconocido',
+  };
+
+  List<PerfilSage> _supportedAutomaticProfiles(
+    CapturaPerfilesSage profiles,
+  ) {
+    final result = <PerfilSage>[];
+    for (final item in profiles.perfiles) {
+      if (!item.disponible || result.contains(item.perfil)) continue;
+      if (_documentDownloadMode && item.perfil != PerfilSage.alumnos) continue;
+      result.add(item.perfil);
+    }
+    return result;
+  }
+
+  void _rememberAutomaticProfiles(CapturaPerfilesSage profiles) {
+    _automaticAvailableProfiles.addAll(_supportedAutomaticProfiles(profiles));
+  }
+
+  PerfilSage? _chooseAutomaticProfile(CapturaPerfilesSage profiles) {
+    final available = _supportedAutomaticProfiles(profiles);
+    _automaticAvailableProfiles.addAll(available);
+    return elegirPerfilSincronizacionSage(
+      disponibles: available,
+      activo: profiles.activo,
+      intentados: _automaticAttemptedProfiles,
+      preferido: _automaticFallbackTarget,
+    );
+  }
+
+  PerfilSage? _nextAutomaticFallbackProfile() {
+    return elegirPerfilSincronizacionSage(
+      disponibles: _automaticAvailableProfiles,
+      intentados: _automaticAttemptedProfiles,
+    );
+  }
+
+  bool _canTryAlternateProfile({
+    required bool loginAvailable,
+    required CodigoErrorSincronizacionSage code,
+    required PasoSincronizacionSageAutomatica step,
+  }) {
+    if (!_automaticMode ||
+        _authenticationOnlyMode ||
+        _documentDownloadMode ||
+        loginAvailable ||
+        _automaticAttemptedProfiles.isEmpty ||
+        _automaticProfileFallbackInFlight ||
+        _automaticCompleting) {
+      return false;
+    }
+    if (step == PasoSincronizacionSageAutomatica.sesion ||
+        step == PasoSincronizacionSageAutomatica.documentos ||
+        step == PasoSincronizacionSageAutomatica.guardado) {
+      return false;
+    }
+    return code != CodigoErrorSincronizacionSage.red &&
+        code != CodigoErrorSincronizacionSage.credenciales &&
+        code != CodigoErrorSincronizacionSage.sesionVencida &&
+        code != CodigoErrorSincronizacionSage.guardadoLocal &&
+        code != CodigoErrorSincronizacionSage.cancelada;
+  }
+
+  void _startAutomaticProfileFallback(
+    PerfilSage target, {
+    required CodigoErrorSincronizacionSage reason,
+  }) {
+    _automaticProfileFallbackInFlight = true;
+    _automaticProfileRoutesExhausted = false;
+    _automaticFallbackTarget = target;
+    _automaticRunId++;
+    _automaticRetryTimer?.cancel();
+    _automaticRetryTimer = null;
+    _automaticWatchdog?.cancel();
+    _automaticWatchdog = null;
+    _stopProfileSwitchWatchdog();
+    _automaticPollingStopped = false;
+    _automaticFlowActive = true;
+    _automaticActionBusy = false;
+    _automaticCredentialsBusy = false;
+    _automaticProfileMisses = 0;
+    _automaticStepAttempts.clear();
+    _automaticLastFailedStep = null;
+    _automaticRetryAction = null;
+    _automaticRetryMessage = null;
+    _automaticStudentChoices = const [];
+    _automaticWaitingForStudentChoice = false;
+    _profileSwitchBusy = false;
+    _profileHomeResetBusy = false;
+    _profileSwitchTarget = null;
+    _profileChoiceMade = false;
+    _selectedProfile = null;
+    _automaticSourceProfile = null;
+    _invalidateStudentAcademicContext();
+    _setAutomaticState(
+      EtapaSincronizacionSageAutomatica.reintentandoPaso,
+      'Probando otro acceso',
+      detalle: 'Continuando con el otro perfil de SAGE…',
+      progreso: 0.20,
+      paso: PasoSincronizacionSageAutomatica.perfil,
+      codigoError: reason,
+    );
+    if (kDebugMode) {
+      debugPrint(
+        '[SAGE sync] fallback_profile=${target.clave}; reason=${reason.clave}',
+      );
+    }
+    _ensureProbeTimer();
+    unawaited(_recoverAutomaticProfileContext());
+  }
+
+  bool get _canKeepProbeTimer {
+    if (!_appLifecycleActive || _isClosing) return false;
+    if (!_automaticMode) return true;
+    if (_credentialEntryActive) return false;
+    return !_automaticPollingStopped;
+  }
+
+  bool get _credentialEntryActive =>
+      _automaticMode &&
+      _automaticState.solicitaCredenciales &&
+      !_automaticCredentialsBusy;
+
+  bool get _shouldProbeNow {
+    if (!_canKeepProbeTimer || !_firstFrameReady || !mounted) return false;
+    final route = ModalRoute.of(context);
+    return route == null || route.isCurrent;
+  }
+
+  void _debugPrintChanged(String channel, String signature, String message) {
+    if (!kDebugMode || _lastDebugProbeSignatures[channel] == signature) return;
+    _lastDebugProbeSignatures[channel] = signature;
+    debugPrint(message);
+  }
+
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     if (_automaticMode && !_authenticationOnlyMode) {
       unawaited(_loadAutomaticSyncMetadata());
       if (!_documentDownloadMode) {
@@ -394,9 +555,40 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
       }),
     );
     _ensureProbeTimer();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _firstFrameReady = true;
+      _requestSageProbe();
+    });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    final active = state == AppLifecycleState.resumed;
+    _appLifecycleActive = active;
+    if (!active) {
+      _stopProbeTimer();
+      _navigationDebounceTimer?.cancel();
+      _automaticWatchdog?.cancel();
+      return;
+    }
+    _ensureProbeTimer();
+    if (_automaticFlowActive && !_automaticWaitingForStudentChoice) {
+      _restartAutomaticWatchdog();
+    }
+    _requestSageProbe();
+  }
+
+  void _stopProbeTimer() {
+    _historyPollTimer?.cancel();
+    _historyPollTimer = null;
   }
 
   void _ensureProbeTimer() {
+    if (!_canKeepProbeTimer) {
+      _stopProbeTimer();
+      return;
+    }
     if (_historyPollTimer?.isActive == true) return;
     _historyPollTimer = Timer.periodic(
       const Duration(seconds: 2),
@@ -448,11 +640,13 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
   }
 
   void _requestSageProbe() {
+    if (!_shouldProbeNow) return;
     unawaited(_probeNavigationAndApply());
     unawaited(_probeHistoryAndApply());
   }
 
   void _scheduleNavigationProbe() {
+    if (!_shouldProbeNow) return;
     _navigationDebounceTimer?.cancel();
     _navigationDebounceTimer = Timer(
       const Duration(milliseconds: 180),
@@ -667,7 +861,8 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
 
   void _retryLastAutomaticStep() {
     final step = _automaticLastFailedStep;
-    if (step == null) {
+    if (_automaticProfileRoutesExhausted || step == null) {
+      _automaticProfileRoutesExhausted = false;
       _automaticFlowActive = false;
       unawaited(_retry().then((_) => _beginAutomaticFlow()));
       return;
@@ -784,6 +979,8 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
     if (!_automaticMode ||
         !_automaticFlowActive ||
         _automaticCompleting ||
+        !_appLifecycleActive ||
+        _automaticWaitingForStudentChoice ||
         _automaticState.solicitaCredenciales ||
         _automaticState.esError ||
         _automaticState.completada) {
@@ -811,6 +1008,7 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
     if (!_automaticMode || _automaticCompleting) return;
     _automaticRunId++;
     _automaticRetryTimer?.cancel();
+    _automaticPollingStopped = false;
     _automaticFlowActive = true;
     _automaticActionBusy = false;
     _automaticCredentialsBusy = false;
@@ -822,6 +1020,16 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
     _automaticLastFailedStep = null;
     _automaticRetryAction = null;
     _automaticRetryMessage = null;
+    _automaticStudentChoices = const [];
+    _automaticWaitingForStudentChoice = false;
+    _automaticSourceProfile = null;
+    _automaticAvailableProfiles.clear();
+    _automaticAttemptedProfiles.clear();
+    _automaticFallbackTarget = null;
+    _automaticProfileFallbackInFlight = false;
+    _automaticProfileRoutesExhausted = false;
+    _automaticPendingProfileReason = 'active_profile';
+    _invalidateStudentAcademicContext();
     _lastTrajectorySignature = null;
     _manualNavigationActive = false;
     _automaticSessionReused = !_automaticCredentialsSubmittedThisRun;
@@ -839,11 +1047,14 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
           ? (_documentDownloadMode
                 ? 'SAGE sigue conectado. Buscando el documento…'
                 : 'SAGE sigue conectado. Continuando la sincronización…')
-          : 'Buscando el perfil Estudiante…',
+          : 'Buscando un perfil Estudiante o Docente…',
       progreso: _automaticSessionReused ? 0.18 : 0.22,
       paso: PasoSincronizacionSageAutomatica.sesion,
       sesionReutilizada: _automaticSessionReused,
     );
+    if (kDebugMode) {
+      debugPrint('[SAGE sync] profile_policy=active_then_fallback');
+    }
     _ensureProbeTimer();
     _requestSageProbe();
     _scheduleNavigationProbe();
@@ -858,34 +1069,66 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
     bool permiteReintentar = true,
   }) {
     if (!_automaticMode) return;
+    final failedStep =
+        step ?? _automaticState.paso ?? _stepForStage(_automaticState.etapa);
+    _automaticLastFailedStep = failedStep;
+    _automaticLastErrorCode = code;
+
+    if (_canTryAlternateProfile(
+      loginAvailable: loginAvailable,
+      code: code,
+      step: failedStep,
+    )) {
+      final fallback = _nextAutomaticFallbackProfile();
+      if (fallback != null) {
+        _startAutomaticProfileFallback(fallback, reason: code);
+        return;
+      }
+    }
+
+    _automaticProfileRoutesExhausted =
+        _automaticAvailableProfiles.isNotEmpty &&
+        _automaticAvailableProfiles.every(
+          _automaticAttemptedProfiles.contains,
+        );
+
     _automaticRunId++;
     _automaticWatchdog?.cancel();
     _automaticRetryTimer?.cancel();
     _automaticFlowActive = false;
+    _automaticPollingStopped = true;
+    _stopProbeTimer();
     _automaticActionBusy = false;
     _automaticCredentialsBusy = false;
     _automaticProfileMisses = 0;
     _automaticCompleting = false;
     _automaticDocumentsPreparing = false;
     _automaticDocumentRequestRunning = false;
+    _automaticStudentChoices = const [];
+    _automaticWaitingForStudentChoice = false;
+    _automaticFallbackTarget = null;
+    _automaticProfileFallbackInFlight = false;
+    _pendingStudentRecord = null;
     _navigationAwaitingTransition = false;
     _navigationActionInFlight = null;
     _legajoActionInFlight = null;
     _tipoAccionLegajo = TipoAccionLegajoSage.ninguna;
-    final failedStep =
-        step ?? _automaticState.paso ?? _stepForStage(_automaticState.etapa);
-    _automaticLastFailedStep = failedStep;
-    _automaticLastErrorCode = code;
+
+    final showSpecificMessage =
+        loginAvailable || _documentDownloadMode || _authenticationOnlyMode;
+    final visibleMessage = showSpecificMessage
+        ? message
+        : 'No se pudo cargar la información de SAGE.';
     final state = EstadoSincronizacionSageAutomatica(
       etapa: loginAvailable
           ? EtapaSincronizacionSageAutomatica.credenciales
           : EtapaSincronizacionSageAutomatica.error,
-      titulo: loginAvailable ? 'Conectar con SAGE' : 'No se pudo sincronizar',
-      detalle: message,
+      titulo: loginAvailable ? 'Conectar con SAGE' : 'No se pudo cargar',
+      detalle: visibleMessage,
       progreso: null,
       permiteReintentar: !loginAvailable && permiteReintentar,
       paso: failedStep,
-      codigoError: code,
+      codigoError: showSpecificMessage ? code : null,
       sesionReutilizada: _automaticSessionReused,
     );
     if (mounted) {
@@ -903,12 +1146,17 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
       );
     }
     widget.onEstadoPreparacion?.call(
-      EstadoPreparacionSageLaboratorio(mensaje: message, bloqueado: true),
+      EstadoPreparacionSageLaboratorio(
+        mensaje: visibleMessage,
+        bloqueado: true,
+      ),
     );
   }
 
   void _retryAutomaticSync() {
     if (!_automaticMode || _automaticCredentialsBusy) return;
+    _automaticPollingStopped = false;
+    _ensureProbeTimer();
     if (_loginDocumentReady) {
       setState(() {
         _automaticState = EstadoSincronizacionSageAutomatica(
@@ -964,10 +1212,12 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
     final userJson = jsonEncode(usuario.trim());
     final passwordJson = jsonEncode(password);
     _automaticCredentialsSubmittedThisRun = true;
+    _automaticPollingStopped = false;
     _automaticSessionReused = false;
     _loginErrorObservations = 0;
     _firstLoginErrorObservedAt = null;
     setState(() => _automaticCredentialsBusy = true);
+    _ensureProbeTimer();
     _setAutomaticState(
       EtapaSincronizacionSageAutomatica.autenticando,
       'Iniciando sesión',
@@ -1109,6 +1359,121 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
     }
   }
 
+  void _setAutomaticSourceProfile(
+    PerfilSage profile, {
+    required String reason,
+  }) {
+    _automaticSourceProfile = profile;
+    _automaticAttemptedProfiles.add(profile);
+    if (kDebugMode) {
+      debugPrint(
+        '[SAGE sync] source_profile=${profile.clave}; '
+        'selection_reason=$reason',
+      );
+    }
+  }
+
+  void _invalidateStudentAcademicContext({bool clearConfirmedRecord = true}) {
+    if (clearConfirmedRecord) _selectedStudentRecord = null;
+    _pendingStudentRecord = null;
+    _history = null;
+    _historyState = EstadoHistorialSage.esperandoPagina;
+    _historyAutoLoadRunning = false;
+    _historyNeedsFreshDom = true;
+    _historyAutoAttemptedCareerIds.clear();
+    _lastTrajectorySignature = null;
+    _automaticDocumentsPreparing = false;
+    _automaticDocumentRequestRunning = false;
+    _automaticDocumentRequestCompleted = false;
+    _reportInFlight = false;
+  }
+
+  void _beginPendingStudentRecord(PerfilLegajoSage record) {
+    _invalidateStudentAcademicContext();
+    _pendingStudentRecord = record;
+  }
+
+  void _clearPendingStudentRecord() {
+    _pendingStudentRecord = null;
+  }
+
+  void _confirmPendingStudentRecordIfNeeded(
+    ResultadoDeteccionNavegacionSage navigation,
+    ResultadoExtraccionLegajoSage? extraction,
+  ) {
+    final pending = _pendingStudentRecord;
+    if (pending == null) return;
+    final confirmed =
+        extraction?.etapa == EtapaLegajoSage.secciones ||
+        extraction?.etapa == EtapaLegajoSage.escolares ||
+        extraction?.pathname.toLowerCase() == '/dic/tabs.php' ||
+        navigation.estado == EstadoNavegacionSage.seccionesLegajo ||
+        navigation.estado == EstadoNavegacionSage.escolares;
+    if (!confirmed) return;
+    _selectedStudentRecord = pending;
+    _pendingStudentRecord = null;
+    if (kDebugMode) {
+      debugPrint(
+        '[SAGE sync] student_record_confirmed=true; '
+        'source_profile=$_automaticSourceProfileLog',
+      );
+    }
+  }
+
+  void _showAutomaticStudentChoices(List<PerfilLegajoSage> records) {
+    _automaticWatchdog?.cancel();
+    _automaticWaitingForStudentChoice = true;
+    if (mounted) {
+      setState(() {
+        _automaticStudentChoices = List<PerfilLegajoSage>.unmodifiable(records);
+      });
+    } else {
+      _automaticStudentChoices = List<PerfilLegajoSage>.unmodifiable(records);
+    }
+  }
+
+  Future<void> _recoverAutomaticProfileContext() async {
+    if (!_automaticMode || !mounted || _isClosing) return;
+    final transitionId = ++_profileTransitionId;
+    _profileHomeResetBusy = true;
+    _profileChoiceMade = false;
+    _selectedProfile = null;
+    _profileCapture = null;
+    _automaticSourceProfile = null;
+    setState(() {
+      _nativeProfileSelectorVisible = false;
+      _nativeHistoryVisible = false;
+      _nativeModulesVisible = false;
+      _nativeSubmodulesVisible = false;
+      _nativeLegajoVisible = false;
+      _nativeSeccionesLegajoVisible = false;
+      _nativeEscolaresVisible = false;
+      _nativeAgentHomeVisible = false;
+      _nativeAgentStudentMenuVisible = false;
+      _nativeLoadingVisible = true;
+      _nativeLoadingMessage = 'Confirmando el perfil activo…';
+    });
+    final returnedHome = await _returnRealSageToHome(
+      transitionId,
+    ).timeout(const Duration(seconds: 14), onTimeout: () => false);
+    if (!mounted || transitionId != _profileTransitionId) return;
+    setState(() {
+      _profileHomeResetBusy = false;
+      _nativeLoadingVisible = false;
+    });
+    if (!returnedHome) {
+      _failAutomaticSync(
+        'No se pudo confirmar el perfil activo de SAGE. Volvé a intentar desde el inicio.',
+        code: CodigoErrorSincronizacionSage.cambioPerfil,
+        step: PasoSincronizacionSageAutomatica.perfil,
+      );
+      return;
+    }
+    _automaticStepAttempts[PasoSincronizacionSageAutomatica.perfil] = 0;
+    _requestSageProbe();
+    _scheduleNavigationProbe();
+  }
+
   PerfilLegajoSage? _preferredAutomaticStudentRecord(
     List<PerfilLegajoSage> records,
   ) {
@@ -1166,6 +1531,65 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
       }
     }
     return best ?? records.first;
+  }
+
+  PerfilLegajoSage? _preferredAutomaticAgentStudentRecord(
+    List<PerfilLegajoSage> records,
+  ) {
+    if (records.isEmpty) return null;
+
+    final preferredSignature = _persistedSyncState.firmaLegajo?.trim() ?? '';
+    if (preferredSignature.isNotEmpty) {
+      final matches = records
+          .where((record) => record.firmaTecnica == preferredSignature)
+          .toList(growable: false);
+      if (matches.length == 1) return matches.first;
+    }
+
+    final expected = widget.perfilEsperado;
+    final expectedDni = _digitsOnly(
+      expected?.dni ?? _persistedSyncState.dniPerfil ?? '',
+    );
+    if (expectedDni.isNotEmpty) {
+      final matches = records.where((record) {
+        final digits = _digitsOnly(
+          <String>[
+            record.nombreVisible,
+            ...record.camposVisibles.values,
+          ].join(' '),
+        );
+        return digits.contains(expectedDni);
+      }).toList(growable: false);
+      if (matches.length == 1) return matches.first;
+    }
+
+    final expectedName = _normalizeAutomaticIdentity(
+      expected?.nombre ?? _persistedSyncState.nombrePerfil ?? '',
+    );
+    if (expectedName.isEmpty) return null;
+
+    final exactMatches = records.where((record) {
+      return _normalizeAutomaticIdentity(record.nombreVisible) == expectedName;
+    }).toList(growable: false);
+    if (exactMatches.length == 1) return exactMatches.first;
+
+    final expectedTokens = expectedName
+        .split(' ')
+        .where((token) => token.length >= 3)
+        .toList(growable: false);
+    if (expectedTokens.length < 2) return null;
+
+    final tokenMatches = records.where((record) {
+      final searchable = _normalizeAutomaticIdentity(
+        <String>[
+          record.nombreVisible,
+          ...record.camposVisibles.keys,
+          ...record.camposVisibles.values,
+        ].join(' '),
+      );
+      return expectedTokens.every(searchable.contains);
+    }).toList(growable: false);
+    return tokenMatches.length == 1 ? tokenMatches.first : null;
   }
 
   String _normalizeAutomaticIdentity(String value) {
@@ -1249,6 +1673,8 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
       return true;
     }
 
+    _rememberAutomaticProfiles(profiles);
+
     if (_automaticActionBusy ||
         _profileSwitchBusy ||
         _profileHomeResetBusy ||
@@ -1260,7 +1686,11 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
       return true;
     }
 
-    if (!_profileChoiceMade || _effectiveProfile != PerfilSage.alumnos) {
+    final effectiveProfile = _effectiveProfile;
+    final supportedProfile =
+        effectiveProfile == PerfilSage.alumnos ||
+        effectiveProfile == PerfilSage.agente;
+    if (!_profileChoiceMade || !supportedProfile) {
       final studentContext =
           extraction?.disponible == true ||
           navigation.estado == EstadoNavegacionSage.submodulosLegajoUnico ||
@@ -1268,40 +1698,70 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
           navigation.estado == EstadoNavegacionSage.seccionesLegajo ||
           navigation.estado == EstadoNavegacionSage.escolares;
       if (profiles.perfiles.isEmpty && studentContext) {
-        _selectedProfile = PerfilSage.alumnos;
-        _profileChoiceMade = true;
-        _setAutomaticState(
-          EtapaSincronizacionSageAutomatica.abriendoLegajo,
-          'Perfil Estudiante detectado',
-          detalle: 'Preparando el acceso al historial…',
-          progreso: 0.30,
+        final explicitProfile = _automaticSourceProfile;
+        if (explicitProfile != null) {
+          _selectedProfile = explicitProfile;
+          _profileChoiceMade = true;
+          _setAutomaticSourceProfile(
+            explicitProfile,
+            reason: 'resumed_explicit_context',
+          );
+          _setAutomaticState(
+            EtapaSincronizacionSageAutomatica.abriendoLegajo,
+            'Perfil confirmado',
+            detalle: 'Continuando el recorrido académico…',
+            progreso: 0.30,
+          );
+          _scheduleNavigationProbe();
+          return true;
+        }
+        _scheduleAutomaticStepRetry(
+          step: PasoSincronizacionSageAutomatica.perfil,
+          message:
+              'La sesión quedó dentro de un legajo, pero SAGE no permitió confirmar el perfil activo.',
+          code: CodigoErrorSincronizacionSage.cambioPerfil,
+          action: _recoverAutomaticProfileContext,
+          maxAttempts: 1,
         );
-        _scheduleNavigationProbe();
         return true;
       }
       _setAutomaticState(
         EtapaSincronizacionSageAutomatica.detectandoPerfil,
         'Detectando perfil',
-        detalle: 'Buscando el perfil Estudiante…',
+        detalle: 'Buscando un perfil Estudiante o Docente…',
         progreso: 0.22,
       );
-      if (profiles.contiene(PerfilSage.alumnos)) {
+      final target = _chooseAutomaticProfile(profiles);
+      if (target != null) {
+        final alreadyActive = profiles.activo == target;
+        final isStudent = target == PerfilSage.alumnos;
+        final profileLabel = isStudent ? 'Estudiante' : 'Docente';
+        final title = alreadyActive
+            ? 'Perfil $profileLabel detectado'
+            : 'Activando perfil $profileLabel';
+        final detail = isStudent
+            ? alreadyActive
+                  ? 'Preparando el acceso al historial…'
+                  : 'Cambiando el perfil activo de SAGE…'
+            : 'Preparando Legajo Único Alumno…';
         _automaticProfileMisses = 0;
+        _automaticAttemptedProfiles.add(target);
+        _automaticPendingProfileReason = _automaticProfileFallbackInFlight
+            ? 'fallback_profile'
+            : alreadyActive
+            ? 'active_profile'
+            : 'available_profile';
         _automaticActionBusy = true;
         _setAutomaticState(
-          profiles.activo == PerfilSage.alumnos
-              ? EtapaSincronizacionSageAutomatica.abriendoLegajo
-              : EtapaSincronizacionSageAutomatica.cambiandoAEstudiante,
-          profiles.activo == PerfilSage.alumnos
-              ? 'Perfil Estudiante detectado'
-              : 'Activando perfil Estudiante',
-          detalle: profiles.activo == PerfilSage.alumnos
-              ? 'Preparando el acceso al historial…'
-              : 'Cambiando el perfil activo de SAGE…',
-          progreso: profiles.activo == PerfilSage.alumnos ? 0.30 : 0.27,
+          isStudent && !alreadyActive
+              ? EtapaSincronizacionSageAutomatica.cambiandoAEstudiante
+              : EtapaSincronizacionSageAutomatica.abriendoLegajo,
+          title,
+          detalle: detail,
+          progreso: alreadyActive ? 0.30 : 0.27,
         );
         try {
-          await _selectProfile(PerfilSage.alumnos);
+          await _selectProfile(target);
         } finally {
           _automaticActionBusy = false;
         }
@@ -1311,7 +1771,7 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
         _automaticProfileMisses++;
         if (_automaticProfileMisses >= 3) {
           _failAutomaticSync(
-            'La cuenta de SAGE no expuso un perfil Estudiante.',
+            'La cuenta de SAGE no expuso otro perfil compatible para continuar.',
             code: CodigoErrorSincronizacionSage.perfilEstudianteAusente,
             step: PasoSincronizacionSageAutomatica.perfil,
             permiteReintentar: false,
@@ -1320,6 +1780,40 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
           _scheduleNavigationProbe();
         }
       }
+      return true;
+    }
+
+    if (_automaticStudentChoices.isNotEmpty) return true;
+
+    if (extraction?.etapa == EtapaLegajoSage.miLegajo) {
+      if (extraction!.estado == EstadoExtraccionLegajoSage.vacio) {
+        _failAutomaticSync(
+          'SAGE no encontró legajos disponibles para este perfil.',
+          code: CodigoErrorSincronizacionSage.legajoAusente,
+          step: PasoSincronizacionSageAutomatica.legajo,
+          permiteReintentar: false,
+        );
+        return true;
+      }
+      if (extraction.estado ==
+              EstadoExtraccionLegajoSage.estructuraIncompatible ||
+          extraction.estado == EstadoExtraccionLegajoSage.error) {
+        _failAutomaticSync(
+          'SAGE mostró una grilla de legajos incompatible.',
+          code: CodigoErrorSincronizacionSage.estructuraIncompatible,
+          step: PasoSincronizacionSageAutomatica.legajo,
+        );
+        return true;
+      }
+    }
+
+    if (effectiveProfile == PerfilSage.agente &&
+        _selectedStudentRecord == null &&
+        extraction?.disponible != true &&
+        navigation.estado != EstadoNavegacionSage.listadoLegajos &&
+        navigation.estado != EstadoNavegacionSage.seccionesLegajo &&
+        navigation.estado != EstadoNavegacionSage.escolares) {
+      await _openAutomaticAgentStudentRecords();
       return true;
     }
 
@@ -1370,7 +1864,29 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
     if (extraction != null && extraction.disponible) {
       switch (extraction.etapa) {
         case EtapaLegajoSage.miLegajo:
-          final record = _preferredAutomaticStudentRecord(extraction.perfiles);
+          final record = effectiveProfile == PerfilSage.agente
+              ? _preferredAutomaticAgentStudentRecord(extraction.perfiles)
+              : _preferredAutomaticStudentRecord(extraction.perfiles);
+          if (record == null &&
+              effectiveProfile == PerfilSage.agente &&
+              extraction.perfiles.isNotEmpty) {
+            if (kDebugMode) {
+              debugPrint(
+                '[SAGE automático] agent_records=${extraction.perfiles.length}; '
+                'selection=required; page=${extraction.paginaActual}; '
+                'pages=${extraction.totalPaginas}',
+              );
+            }
+            _showAutomaticStudentChoices(extraction.perfiles);
+            _setAutomaticState(
+              EtapaSincronizacionSageAutomatica.seleccionandoLegajo,
+              'Elegí tu legajo',
+              detalle:
+                  'Confirmá el legajo correcto para continuar con el perfil Docente.',
+              progreso: 0.46,
+            );
+            return true;
+          }
           if (record == null) {
             _scheduleAutomaticStepRetry(
               step: PasoSincronizacionSageAutomatica.legajo,
@@ -1544,6 +2060,8 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
       return;
     _automaticCompleting = true;
     _automaticFlowActive = false;
+    _automaticPollingStopped = true;
+    _stopProbeTimer();
     _automaticWatchdog?.cancel();
     _setAutomaticState(
       EtapaSincronizacionSageAutomatica.guardando,
@@ -1567,11 +2085,19 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
           firmaLegajo: _selectedStudentRecord?.firmaTecnica,
         ),
       );
+      final baseDetail =
+          detalleCompletado ?? '${stored.totalMaterias} materias actualizadas.';
+      final sourceDetail = '$baseDetail · Perfil $_automaticSourceProfileLabel';
+      if (kDebugMode) {
+        debugPrint(
+          '[SAGE sync] completed=true; '
+          'source_profile=$_automaticSourceProfileLog',
+        );
+      }
       _setAutomaticState(
         EtapaSincronizacionSageAutomatica.completada,
         'Sincronización completa',
-        detalle:
-            detalleCompletado ?? '${stored.totalMaterias} materias actualizadas.',
+        detalle: sourceDetail,
         progreso: 1,
         paso: PasoSincronizacionSageAutomatica.guardado,
       );
@@ -2323,6 +2849,7 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
     try {
       final result = await _probeSageNavigation();
       final legajoResult = await _probeLegajoIfRelevant(result);
+      _confirmPendingStudentRecordIfNeeded(result, legajoResult);
       final agentHome = await _probeAgentHome();
       final agentPersonal = await _probeAgentPersonal();
       final profiles =
@@ -2387,6 +2914,9 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
         if (_tipoAccionLegajo == TipoAccionLegajoSage.abrirHistorial) {
           if (!timedOut) return;
           final tipoFallido = _tipoAccionLegajo;
+          if (tipoFallido == TipoAccionLegajoSage.abrirPerfil) {
+            _clearPendingStudentRecord();
+          }
           setState(() {
             _navigationAwaitingTransition = false;
             _navigationActionInFlight = null;
@@ -2437,6 +2967,9 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
           _tipoAccionLegajo = TipoAccionLegajoSage.ninguna;
         } else if (timedOut) {
           final tipoFallido = _tipoAccionLegajo;
+          if (tipoFallido == TipoAccionLegajoSage.abrirPerfil) {
+            _clearPendingStudentRecord();
+          }
           setState(() {
             _navigationAwaitingTransition = false;
             _navigationActionInFlight = null;
@@ -2945,6 +3478,20 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
     _cancelStudentAutomaticLanding();
     _profileSwitchTarget = null;
     _ensureProbeTimer();
+    final previousProfile = _effectiveProfile;
+    if (_automaticMode || previousProfile != profile) {
+      _invalidateStudentAcademicContext();
+    }
+    if (_automaticMode) {
+      _setAutomaticSourceProfile(
+        profile,
+        reason: _automaticPendingProfileReason,
+      );
+      _automaticPendingProfileReason = 'active_profile';
+      _automaticFallbackTarget = null;
+      _automaticProfileFallbackInFlight = false;
+      _automaticProfileRoutesExhausted = false;
+    }
     final previousCapture = _profileCapture;
     if (previousCapture != null) {
       _profileCapture = CapturaPerfilesSage(
@@ -3001,23 +3548,18 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
     });
 
     if (_automaticMode) {
-      if (profile == PerfilSage.alumnos) {
-        _setAutomaticState(
-          EtapaSincronizacionSageAutomatica.abriendoLegajo,
-          'Perfil Estudiante listo',
-          detalle: 'Preparando el acceso al historial…',
-          progreso: 0.30,
-        );
-        _requestSageProbe();
-        _scheduleNavigationProbe();
-      } else {
-        _failAutomaticSync(
-          'La sincronización requiere un perfil Estudiante.',
-          code: CodigoErrorSincronizacionSage.perfilEstudianteAusente,
-          step: PasoSincronizacionSageAutomatica.perfil,
-          permiteReintentar: false,
-        );
-      }
+      _setAutomaticState(
+        EtapaSincronizacionSageAutomatica.abriendoLegajo,
+        profile == PerfilSage.alumnos
+            ? 'Perfil Estudiante listo'
+            : 'Perfil Docente listo',
+        detalle: profile == PerfilSage.alumnos
+            ? 'Preparando el acceso al historial…'
+            : 'Preparando Legajo Único Alumno…',
+        progreso: 0.30,
+      );
+      _requestSageProbe();
+      _scheduleNavigationProbe();
     } else if (profile == PerfilSage.alumnos) {
       _reportPreparation(
         const EstadoPreparacionSageLaboratorio(
@@ -3028,8 +3570,8 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
     } else {
       _reportPreparation(
         const EstadoPreparacionSageLaboratorio(
-          mensaje: 'La sincronización personal requiere el perfil Estudiante.',
-          bloqueado: true,
+          mensaje:
+              'Perfil Docente listo. Abrí Legajo Único Alumno y seleccioná tu legajo.',
         ),
       );
       _cancelStudentAutomaticLanding();
@@ -3272,6 +3814,190 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
     _navigationAwaitingTransition = true;
     _scheduleNavigationProbe();
     unawaited(_installNavigationObservers());
+  }
+
+  Future<OpcionAgenteSage?> _waitForAgentStudentRecordsOption() async {
+    final deadline = DateTime.now().add(const Duration(seconds: 12));
+    while (mounted &&
+        !_isClosing &&
+        DateTime.now().isBefore(deadline) &&
+        _automaticFlowActive) {
+      final menu = await ExtractorAgenteSage(
+        _evaluateJavascript,
+      ).extraerLegajoUnicoAlumno();
+      for (final option in menu.opciones) {
+        if (option.claveCanonica == 'legajo_alumnos') return option;
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 350));
+    }
+    return null;
+  }
+
+  Future<bool> _openAutomaticAgentStudentRecords() async {
+    if (!_automaticMode ||
+        _effectiveProfile != PerfilSage.agente ||
+        _automaticActionBusy ||
+        _selectedStudentRecord != null) {
+      return false;
+    }
+
+    _automaticActionBusy = true;
+    _setAutomaticState(
+      EtapaSincronizacionSageAutomatica.abriendoLegajo,
+      'Abriendo Legajo Único Alumno',
+      detalle: 'Ingresando a Legajo Alumnos con el perfil Docente…',
+      progreso: 0.36,
+    );
+    try {
+      final legajoAlumnos = await _waitForAgentStudentRecordsOption();
+      if (legajoAlumnos == null) {
+        _scheduleAutomaticStepRetry(
+          step: PasoSincronizacionSageAutomatica.legajo,
+          message: 'SAGE no mostró la opción Legajo Alumnos para el perfil Docente.',
+          code: CodigoErrorSincronizacionSage.abrirLegajo,
+          action: () async {
+            await _openAutomaticAgentStudentRecords();
+          },
+        );
+        return true;
+      }
+
+      _navigationOriginSignature = _lastNavigationResult?.firma;
+      _navigationOriginState = _lastNavigationResult?.estado;
+      _navigationOriginPath = _lastNavigationResult?.documentoActivo?.pathname;
+      _navigationActionStartedAt = DateTime.now();
+      _navigationActionInFlight = legajoAlumnos.etiqueta;
+      if (mounted) {
+        setState(() {
+          _nativeAgentHomeVisible = false;
+          _nativeAgentStudentMenuVisible = false;
+          _nativeLoadingVisible = true;
+          _nativeLoadingMessage = 'Abriendo Legajo Alumnos…';
+        });
+      }
+
+      final result = await EjecutorShellAgenteSage(
+        _evaluateJavascript,
+      ).abrirOpcionLegajoAlumno(legajoAlumnos);
+      if (!mounted) return true;
+      if (!result.success) {
+        setState(() {
+          _navigationActionInFlight = null;
+          _nativeLoadingVisible = false;
+        });
+        _scheduleAutomaticStepRetry(
+          step: PasoSincronizacionSageAutomatica.legajo,
+          message: 'No se pudo abrir Legajo Alumnos con el perfil Docente.',
+          code: CodigoErrorSincronizacionSage.abrirLegajo,
+          action: () async {
+            await _openAutomaticAgentStudentRecords();
+          },
+        );
+        return true;
+      }
+
+      if (kDebugMode) {
+        debugPrint(
+          '[SAGE automático] agent_legajo_alumnos=true; '
+          'matched_by=${result.matchedBy}',
+        );
+      }
+      _navigationAwaitingTransition = true;
+      _scheduleNavigationProbe();
+      unawaited(_installNavigationObservers());
+      return true;
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _navigationActionInFlight = null;
+          _nativeLoadingVisible = false;
+        });
+      }
+      _scheduleAutomaticStepRetry(
+        step: PasoSincronizacionSageAutomatica.legajo,
+        message: 'No se pudo preparar Legajo Alumnos con el perfil Docente.',
+        code: CodigoErrorSincronizacionSage.abrirLegajo,
+        action: () async {
+          await _openAutomaticAgentStudentRecords();
+        },
+      );
+      return true;
+    } finally {
+      _automaticActionBusy = false;
+    }
+  }
+
+  Future<void> _changeLegajoPage(
+    int targetPage, {
+    required bool automatic,
+  }) async {
+    if (_legajoPageBusy || targetPage < 1 || !mounted) return;
+    setState(() => _legajoPageBusy = true);
+    try {
+      final reloaded = await EjecutorLegajoSage(
+        _evaluateJavascript,
+      ).irAPaginaLegajos(targetPage);
+      if (!reloaded) {
+        throw StateError('SAGE no aceptó el cambio de página.');
+      }
+      ResultadoExtraccionLegajoSage? updated;
+      for (var attempt = 0; attempt < 24; attempt++) {
+        await Future<void>.delayed(const Duration(milliseconds: 250));
+        if (!mounted || _isClosing) return;
+        final extraction = await ExtractorLegajoSage(
+          _evaluateJavascript,
+        ).extraer();
+        if (extraction.etapa == EtapaLegajoSage.miLegajo &&
+            extraction.estado != EstadoExtraccionLegajoSage.cargando &&
+            extraction.paginaActual == targetPage) {
+          updated = extraction;
+          break;
+        }
+      }
+      if (updated == null) {
+        throw StateError('SAGE no confirmó la página solicitada.');
+      }
+      _legajoExtraction = updated;
+      if (automatic) {
+        _automaticWatchdog?.cancel();
+        _automaticWaitingForStudentChoice = true;
+        setState(() {
+          _automaticStudentChoices = List<PerfilLegajoSage>.unmodifiable(
+            updated!.perfiles,
+          );
+        });
+      } else {
+        setState(() {});
+      }
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No se pudo cambiar la página de legajos.')),
+      );
+    } finally {
+      if (mounted) setState(() => _legajoPageBusy = false);
+    }
+  }
+
+  Future<void> _selectAutomaticStudentRecord(PerfilLegajoSage record) async {
+    if (!_automaticMode || !mounted || _automaticActionBusy) return;
+    setState(() => _automaticStudentChoices = const []);
+    _automaticWaitingForStudentChoice = false;
+    _restartAutomaticWatchdog();
+    _automaticActionBusy = true;
+    _setAutomaticState(
+      EtapaSincronizacionSageAutomatica.seleccionandoLegajo,
+      'Seleccionando legajo',
+      detalle: record.nombreVisible.trim().isEmpty
+          ? 'Abriendo tu información académica…'
+          : 'Abriendo ${record.nombreVisible}…',
+      progreso: 0.48,
+    );
+    try {
+      await _activateLegajoProfile(record);
+    } finally {
+      _automaticActionBusy = false;
+    }
   }
 
   Future<bool> _hasRealSageHomeDocument() async {
@@ -3645,6 +4371,15 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
     _historyNeedsFreshDom = false;
     _reportInFlight = false;
     _selectedStudentRecord = null;
+    _pendingStudentRecord = null;
+    _automaticSourceProfile = null;
+    _automaticAvailableProfiles.clear();
+    _automaticAttemptedProfiles.clear();
+    _automaticFallbackTarget = null;
+    _automaticProfileFallbackInFlight = false;
+    _automaticProfileRoutesExhausted = false;
+    _automaticStudentChoices = const [];
+    _automaticWaitingForStudentChoice = false;
     _lastTrajectorySignature = null;
     _historyAutoAttemptedCareerIds.clear();
     if (_automaticMode) {
@@ -3981,16 +4716,37 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
     if (!relevant) return null;
     final extraction = await ExtractorLegajoSage(_evaluateJavascript).extraer();
     _legajoExtraction = extraction;
-    if (kDebugMode && extraction.etapa != EtapaLegajoSage.ninguna) {
-      debugPrint(
+    if (extraction.etapa != EtapaLegajoSage.ninguna) {
+      final legajoSignature = <Object?>[
+        extraction.etapa.name,
+        extraction.estado.name,
+        extraction.firma,
+        extraction.paginaActual,
+        extraction.totalPaginas,
+        extraction.totalRegistros,
+      ].join('|');
+      _debugPrintChanged(
+        'legajo',
+        legajoSignature,
         '[SAGE legajo] stage=${extraction.etapa.name}; '
         'state=${extraction.estado.name}; frame=${extraction.frameId}; '
         'path=${extraction.pathname}; profiles=${extraction.perfiles.length}; '
         'sections=${extraction.secciones.length}; '
-        'school_options=${extraction.opcionesEscolares.length}',
+        'school_options=${extraction.opcionesEscolares.length}; '
+        'page=${extraction.paginaActual}; pages=${extraction.totalPaginas}; '
+        'records=${extraction.totalRegistros}',
       );
       if (extraction.etapa == EtapaLegajoSage.escolares) {
-        debugPrint(
+        final schoolSignature = <Object?>[
+          extraction.firma,
+          extraction.childFrameFound,
+          extraction.childReady,
+          extraction.childPathname,
+          extraction.historyControlFound,
+        ].join('|');
+        _debugPrintChanged(
+          'escolares',
+          schoolSignature,
           '[SAGE escolares detect] parent_found=${extraction.parentFrameFound}; '
           'parent_path=${extraction.pathname}; '
           'child_found=${extraction.childFrameFound}; '
@@ -4004,7 +4760,16 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
       }
       if (extraction.etapa == EtapaLegajoSage.secciones ||
           extraction.etapa == EtapaLegajoSage.escolares) {
-        debugPrint(
+        final sectionsSignature = <Object?>[
+          extraction.firma,
+          extraction.historyControlFound,
+          extraction.childFrameFound,
+          _usuarioSolicitoEscolares,
+          _nativeSeccionesLegajoVisible,
+        ].join('|');
+        _debugPrintChanged(
+          'secciones',
+          sectionsSignature,
           '[SAGE secciones detect] tabs_found=true; '
           'tabs_frame=${extraction.frameId}; tabs_path=${extraction.pathname}; '
           'extracted_sections=${extraction.secciones.length}; '
@@ -4065,14 +4830,22 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
         _evaluateJavascript,
         timeout: const Duration(seconds: 3),
       );
-      if (kDebugMode) {
-        debugPrint(
-          '[SAGE historial] extraction_state=${result.estado.name}; '
-          'frame_detected=${result.pantallaDetectada}; '
-          'master_loader_visible=${result.masterLoaderVisible}; '
-          'career_row_count=${result.careerRowCount}',
-        );
-      }
+      final historyLogSignature = <Object?>[
+        result.estado.name,
+        result.pantallaDetectada,
+        result.masterLoaderVisible,
+        result.careerRowCount,
+        result.historial?.carreras.length ?? 0,
+      ].join('|');
+      _debugPrintChanged(
+        'historial',
+        historyLogSignature,
+        '[SAGE historial] extraction_state=${result.estado.name}; '
+        'frame_detected=${result.pantallaDetectada}; '
+        'master_loader_visible=${result.masterLoaderVisible}; '
+        'career_row_count=${result.careerRowCount}; '
+        'native_view_visible=${result.pantallaDetectada}',
+      );
       if (!mounted) return;
       if (_profileSwitchBusy ||
           _profileHomeResetBusy ||
@@ -4107,16 +4880,13 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
           _historyState = result.estado;
           _nativeHistoryVisible = true;
         });
-        if (kDebugMode) {
-          debugPrint('[SAGE historial] frame_detected');
-          debugPrint('[SAGE historial] native_view_visible=true');
-        }
+
         final careers = _history?.carreras;
-        if (_effectiveProfile != PerfilSage.alumnos) {
+        if (!_hasConfirmedStudentContext) {
           _reportPreparation(
             const EstadoPreparacionSageLaboratorio(
               mensaje:
-                  'La sincronización personal requiere el perfil Estudiante.',
+                  'Seleccioná un legajo de alumno antes de sincronizar el Historial.',
               bloqueado: true,
             ),
           );
@@ -4258,14 +5028,21 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
       );
       final result = _navigationDetector.detectarResultado(capture);
       _lastNavigationResult = result;
-      if (kDebugMode) {
-        debugPrint(
-          '[SAGE navegación] selected_path=${result.documentoActivo?.pathname ?? '/'}; '
-          'selected_frame=${result.documentoActivo?.frameId ?? 'root'}; '
-          'documents=${capture.documentos.length}; state=${result.estado.name}; '
-          'signature=${result.firma}',
-        );
-      }
+      final navigationLogSignature = <Object?>[
+        result.estado.name,
+        result.firma,
+        result.documentoActivo?.pathname ?? '/',
+        result.documentoActivo?.frameId ?? 'root',
+        capture.documentos.length,
+      ].join('|');
+      _debugPrintChanged(
+        'navegacion',
+        navigationLogSignature,
+        '[SAGE navegación] selected_path=${result.documentoActivo?.pathname ?? '/'}; '
+        'selected_frame=${result.documentoActivo?.frameId ?? 'root'}; '
+        'documents=${capture.documentos.length}; state=${result.estado.name}; '
+        'signature=${result.firma}',
+      );
       return result;
     } catch (_) {
       return const ResultadoDeteccionNavegacionSage(
@@ -4623,7 +5400,7 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
 
   Future<void> _activateLegajoProfile(PerfilLegajoSage profile) async {
     if (_legajoActionInFlight != null) return;
-    _selectedStudentRecord = profile;
+    _beginPendingStudentRecord(profile);
     _manualNavigationActive = false;
     _usuarioSolicitoEscolares = false;
     _beginLegajoAction('Abriendo tu legajo…', TipoAccionLegajoSage.abrirPerfil);
@@ -4634,6 +5411,7 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
     if (!mounted) return;
     if (!result.success) {
       _usuarioSolicitoEscolares = false;
+      _clearPendingStudentRecord();
       _endLegajoAction();
       await _showLegajoActionFailure(
         'No se pudo abrir este legajo.',
@@ -4852,7 +5630,7 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
   Future<void> _autoLoadAllCareers(List<CarreraHistorialSage> careers) async {
     if (!mounted ||
         _historyAutoLoadRunning ||
-        _effectiveProfile != PerfilSage.alumnos) {
+        !_hasConfirmedStudentContext) {
       return;
     }
     _historyAutoLoadRunning = true;
@@ -4915,6 +5693,23 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
     }
   }
 
+  List<DocumentoAcademicoSage> _disabledAcademicDocuments(
+    TrayectoriaSageLaboratorio trajectory,
+  ) {
+    return List<DocumentoAcademicoSage>.unmodifiable(<DocumentoAcademicoSage>[
+      for (final career in trajectory.carreras)
+        for (final type in TipoDocumentoAcademicoSage.values)
+          DocumentoAcademicoSage(
+            tipo: type,
+            gridRowId: career.gridRowId,
+            careerKey: career.careerKey,
+            carrera: career.nombre,
+            institucion: career.institucion,
+            disponible: false,
+          ),
+    ]);
+  }
+
   Future<List<DocumentoAcademicoSage>> _detectAcademicDocuments(
     HistorialNivelSuperiorSage history,
   ) async {
@@ -4975,6 +5770,24 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
     if (_automaticDocumentsPreparing || _automaticCompleting) return;
     _automaticDocumentsPreparing = true;
     try {
+      final sourceProfile = _automaticSourceProfile ?? _effectiveProfile;
+      if (sourceProfile == PerfilSage.agente) {
+        final enriched = trajectory.conDocumentos(
+          _disabledAcademicDocuments(trajectory),
+        );
+        if (kDebugMode) {
+          debugPrint(
+            '[SAGE documentos] source_profile=agente; enabled=false',
+          );
+        }
+        await _completeAutomaticSync(
+          enriched,
+          detalleCompletado:
+              '${enriched.totalMaterias} materias actualizadas.',
+        );
+        return;
+      }
+
       final history = _history;
       final documents = history == null
           ? const <DocumentoAcademicoSage>[]
@@ -5231,7 +6044,7 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
   }
 
   void _emitTrajectoryIfReady() {
-    if (!mounted || _effectiveProfile != PerfilSage.alumnos) return;
+    if (!mounted || !_hasConfirmedStudentContext) return;
     final history = _history;
     if (history == null || history.carreras.isEmpty) return;
     if (history.carreras.any((career) => !career.materiasCargadas)) return;
@@ -5744,6 +6557,11 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
   PerfilSage? get _effectiveProfile =>
       _selectedProfile ?? _profileCapture?.activo;
 
+  bool get _hasConfirmedStudentContext =>
+      _effectiveProfile == PerfilSage.alumnos ||
+      (_effectiveProfile == PerfilSage.agente &&
+          _selectedStudentRecord != null);
+
   Future<void> _requestSageHome() async {
     _cancelStudentAutomaticLanding();
     if (!mounted ||
@@ -5998,7 +6816,28 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
           perfiles: _legajoExtraction?.perfiles ?? const [],
           onSelect: (profile) => unawaited(_activateLegajoProfile(profile)),
           onBack: widget.onClose ?? _showOriginalNavigation,
-          loadingTitle: _navigationActionInFlight,
+          loadingTitle: _legajoPageBusy
+              ? 'Cargando página de legajos…'
+              : _navigationActionInFlight,
+          paginaActual: _legajoExtraction?.paginaActual ?? 1,
+          totalPaginas: _legajoExtraction?.totalPaginas ?? 1,
+          totalRegistros: _legajoExtraction?.totalRegistros ?? 0,
+          onPaginaAnterior: _legajoExtraction?.tienePaginaAnterior == true
+              ? () => unawaited(
+                  _changeLegajoPage(
+                    (_legajoExtraction?.paginaActual ?? 1) - 1,
+                    automatic: false,
+                  ),
+                )
+              : null,
+          onPaginaSiguiente: _legajoExtraction?.tienePaginaSiguiente == true
+              ? () => unawaited(
+                  _changeLegajoPage(
+                    (_legajoExtraction?.paginaActual ?? 1) + 1,
+                    automatic: false,
+                  ),
+                )
+              : null,
         ),
       );
     }
@@ -6424,6 +7263,7 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _historyPollTimer?.cancel();
     _navigationDebounceTimer?.cancel();
     _profileSwitchWatchdog?.cancel();
@@ -6445,8 +7285,9 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
     final scheme = theme.colorScheme;
     final nativeSurfaceVisible = !_automaticMode && _showNativeSageSurface;
     final webViewVisible =
-        _automaticMode ||
-        (!_shouldCoverWebView &&
+        (_automaticMode && !_credentialEntryActive) ||
+        (!_automaticMode &&
+            !_shouldCoverWebView &&
             webViewSageVisible(
               historial: _nativeHistoryVisible,
               modulos: _nativeModulesVisible,
@@ -6657,16 +7498,53 @@ class _PantallaSageLaboratorioState extends State<PantallaSageLaboratorio> {
                   ),
                 if (_automaticMode)
                   Positioned.fill(
-                    child: PantallaSincronizacionSageAutomatica(
-                      estado: _automaticState,
-                      loginDisponible: _loginDocumentReady,
-                      procesandoCredenciales: _automaticCredentialsBusy,
-                      onIngresar: _submitAutomaticCredentials,
-                      onReintentar: _automaticState.permiteReintentar
-                          ? _retryAutomaticSync
-                          : null,
-                      onCancelar: _exitSageToAppHome,
-                    ),
+                    child: _automaticStudentChoices.isNotEmpty
+                        ? PantallaMiLegajoSage(
+                            perfiles: _automaticStudentChoices,
+                            onSelect: (record) {
+                              unawaited(_selectAutomaticStudentRecord(record));
+                            },
+                            onBack: _exitSageToAppHome,
+                            loadingTitle: _legajoPageBusy
+                                ? 'Cargando página de legajos…'
+                                : _automaticActionBusy
+                                ? 'Abriendo tu legajo…'
+                                : null,
+                            paginaActual:
+                                _legajoExtraction?.paginaActual ?? 1,
+                            totalPaginas:
+                                _legajoExtraction?.totalPaginas ?? 1,
+                            totalRegistros:
+                                _legajoExtraction?.totalRegistros ?? 0,
+                            onPaginaAnterior:
+                                _legajoExtraction?.tienePaginaAnterior == true
+                                ? () => unawaited(
+                                    _changeLegajoPage(
+                                      (_legajoExtraction?.paginaActual ?? 1) - 1,
+                                      automatic: true,
+                                    ),
+                                  )
+                                : null,
+                            onPaginaSiguiente:
+                                _legajoExtraction?.tienePaginaSiguiente == true
+                                ? () => unawaited(
+                                    _changeLegajoPage(
+                                      (_legajoExtraction?.paginaActual ?? 1) + 1,
+                                      automatic: true,
+                                    ),
+                                  )
+                                : null,
+                          )
+                        : PantallaSincronizacionSageAutomatica(
+                            estado: _automaticState,
+                            loginDisponible: _loginDocumentReady,
+                            procesandoCredenciales: _automaticCredentialsBusy,
+                            onIngresar: _submitAutomaticCredentials,
+                            onReintentar: _automaticState.permiteReintentar
+                                ? _retryAutomaticSync
+                                : null,
+                            onCancelar: _exitSageToAppHome,
+                          ),
                   ),
               ],
             ),

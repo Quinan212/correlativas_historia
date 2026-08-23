@@ -1,7 +1,7 @@
 name: correlativas_historia
-description: "correlativas"
+description: "Trayectorias"
 publish_to: "none"
-version: 1.3.150726+769
+version: 1.3.150726+771
 environment:
   sdk: ">=3.12.0 <4.0.0"
 
@@ -33,7 +33,8 @@ dependencies:
   webview_flutter: 4.14.1
   webview_flutter_android: 4.13.0
   open_filex: ^4.7.0
-  pdfx: 2.9.2
+  pdfx:
+    path: third_party/pdfx
   skeletonizer: ^2.1.3
   # firebase_performance: ^0.11.4+3 # Deshabilitado temporalmente - usa plugin KGP incompatible
 
@@ -72,6 +73,7 @@ flutter:
     - assets/icon_fore.png
     - assets/career_icons/
     - assets/sage_banner.png
+    - assets/sage_wordmark_react.png
     - assets/examenes_llamado1.json
     - assets/examenes_llamado2.json
     - assets/coloquios_feb_mar_2026.json
@@ -92,7 +94,7 @@ flutter:
         - asset: assets/fonts/Inter_24pt-Regular.ttf
           weight: 400
 msix_config:
-  display_name: Correlativas
+  display_name: Trayectorias
   publisher_display_name: Alan Gabriel Maillet
   publisher: CN=4C9B0D11-F4BA-4831-B28A-BCFADF9CF965
   identity_name: AlanGabrielMaillet.Correlativas
@@ -100,6 +102,6 @@ msix_config:
   logo_path: assets/icon_fore.png
   capabilities: internetClient
   store: false
-  output_name: Correlativas_Local_Build
+  output_name: Trayectorias_Local_Build
   install_certificate: true
   executable_name: correlativas_historia.exe

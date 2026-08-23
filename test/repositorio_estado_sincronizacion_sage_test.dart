@@ -79,4 +79,119 @@ void main() {
     expect(state.totalSincronizaciones, 0);
     expect(state.sesionConfirmada, isFalse);
   });
+
+  test('cerrar sesión limpia la identidad recordada', () async {
+    const repository = RepositorioEstadoSincronizacionSage();
+    final syncedAt = DateTime(2026, 8, 20, 10);
+    final trajectory = TrayectoriaSageLaboratorio(
+      perfil: const PerfilTrayectoriaSageLaboratorio(
+        nombre: 'Persona A',
+        dni: '11111111',
+      ),
+      capturadaEn: syncedAt,
+      sincronizadaEn: syncedAt,
+      carreras: const <CarreraTrayectoriaSageLaboratorio>[
+        CarreraTrayectoriaSageLaboratorio(
+          gridRowId: 'row-1',
+          careerKey: 'historia-pscs',
+          nombre: 'Profesorado de Historia',
+          institucion: 'PSCS',
+          materias: <MateriaTrayectoriaSageLaboratorio>[
+            MateriaTrayectoriaSageLaboratorio(
+              idSage: 'ant',
+              nombre: 'Antigüedad',
+              estadoOriginal: 'Aprobada',
+              estado: EstadoMateriaSageLaboratorio.aprobada,
+            ),
+          ],
+        ),
+      ],
+    );
+
+    await repository.registrarExito(trajectory, firmaLegajo: 'firma-a');
+    await repository.registrarSesionCerrada();
+    final state = await repository.cargar();
+
+    expect(state.sesionConfirmada, isFalse);
+    expect(state.nombrePerfil, isNull);
+    expect(state.dniPerfil, isNull);
+    expect(state.firmaLegajo, isNull);
+  });
+
+  test('una sesión vencida limpia la identidad recordada', () async {
+    const repository = RepositorioEstadoSincronizacionSage();
+    final syncedAt = DateTime(2026, 8, 20, 10);
+    final trajectory = TrayectoriaSageLaboratorio(
+      perfil: const PerfilTrayectoriaSageLaboratorio(
+        nombre: 'Persona A',
+        dni: '11111111',
+      ),
+      capturadaEn: syncedAt,
+      sincronizadaEn: syncedAt,
+      carreras: const <CarreraTrayectoriaSageLaboratorio>[
+        CarreraTrayectoriaSageLaboratorio(
+          gridRowId: 'row-1',
+          careerKey: 'historia-pscs',
+          nombre: 'Profesorado de Historia',
+          institucion: 'PSCS',
+          materias: <MateriaTrayectoriaSageLaboratorio>[
+            MateriaTrayectoriaSageLaboratorio(
+              idSage: 'ant',
+              nombre: 'Antigüedad',
+              estadoOriginal: 'Aprobada',
+              estado: EstadoMateriaSageLaboratorio.aprobada,
+            ),
+          ],
+        ),
+      ],
+    );
+
+    await repository.registrarExito(trajectory, firmaLegajo: 'firma-a');
+    await repository.registrarError(
+      codigo: 'SAGE-SESION',
+      mensaje: 'La sesión venció.',
+      sesionVencida: true,
+    );
+    final state = await repository.cargar();
+
+    expect(state.sesionConfirmada, isFalse);
+    expect(state.nombrePerfil, isNull);
+    expect(state.dniPerfil, isNull);
+    expect(state.firmaLegajo, isNull);
+  });
+
+  test('un nuevo éxito reemplaza una firma anterior aunque venga vacía', () async {
+    const repository = RepositorioEstadoSincronizacionSage();
+    final syncedAt = DateTime(2026, 8, 20, 10);
+    final trajectory = TrayectoriaSageLaboratorio(
+      perfil: const PerfilTrayectoriaSageLaboratorio(
+        nombre: 'Persona A',
+        dni: '11111111',
+      ),
+      capturadaEn: syncedAt,
+      sincronizadaEn: syncedAt,
+      carreras: const <CarreraTrayectoriaSageLaboratorio>[
+        CarreraTrayectoriaSageLaboratorio(
+          gridRowId: 'row-1',
+          careerKey: 'historia-pscs',
+          nombre: 'Profesorado de Historia',
+          institucion: 'PSCS',
+          materias: <MateriaTrayectoriaSageLaboratorio>[
+            MateriaTrayectoriaSageLaboratorio(
+              idSage: 'ant',
+              nombre: 'Antigüedad',
+              estadoOriginal: 'Aprobada',
+              estado: EstadoMateriaSageLaboratorio.aprobada,
+            ),
+          ],
+        ),
+      ],
+    );
+
+    await repository.registrarExito(trajectory, firmaLegajo: 'firma-vieja');
+    await repository.registrarExito(trajectory);
+    final state = await repository.cargar();
+
+    expect(state.firmaLegajo, isNull);
+  });
 }

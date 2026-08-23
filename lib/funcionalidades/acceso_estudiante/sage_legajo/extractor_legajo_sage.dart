@@ -57,6 +57,9 @@ class ExtractorLegajoSage {
       historyGridFound: json['historyGridFound'] == true,
       childPathname: json['childPathname'] as String? ?? '',
       historyControlFound: json['historyControlFound'] == true,
+      paginaActual: _positiveInt(json['page'], fallback: 1),
+      totalPaginas: _positiveInt(json['lastPage'], fallback: 1),
+      totalRegistros: _nonNegativeInt(json['records']),
     );
   }
 
@@ -99,6 +102,16 @@ class ExtractorLegajoSage {
         pathnameDestino: json['targetPath'] as String?,
         controlEncontrado: json['controlFound'] != false,
       );
+
+  int _positiveInt(Object? value, {required int fallback}) {
+    final parsed = value is num ? value.toInt() : int.tryParse('$value');
+    return parsed == null || parsed < 1 ? fallback : parsed;
+  }
+
+  int _nonNegativeInt(Object? value) {
+    final parsed = value is num ? value.toInt() : int.tryParse('$value');
+    return parsed == null || parsed < 0 ? 0 : parsed;
+  }
 
   EstadoExtraccionLegajoSage _state(String value) => switch (value) {
     'loading' => EstadoExtraccionLegajoSage.cargando,
@@ -213,9 +226,22 @@ class ExtractorLegajoSage {
       let ids = [];
       let colModel = [];
       let colNames = [];
-      try { ids = grid.jqGrid('getDataIDs') || []; colModel = grid.jqGrid('getGridParam','colModel') || []; colNames = grid.jqGrid('getGridParam','colNames') || []; } catch (_) {}
+      let page = 1;
+      let lastPage = 1;
+      let records = 0;
+      try {
+        ids = grid.jqGrid('getDataIDs') || [];
+        colModel = grid.jqGrid('getGridParam','colModel') || [];
+        colNames = grid.jqGrid('getGridParam','colNames') || [];
+        page = Number(grid.jqGrid('getGridParam','page') || 1);
+        lastPage = Number(grid.jqGrid('getGridParam','lastpage') || 1);
+        records = Number(grid.jqGrid('getGridParam','records') || ids.length);
+      } catch (_) {}
+      if (!Number.isFinite(page) || page < 1) page = 1;
+      if (!Number.isFinite(lastPage) || lastPage < 1) lastPage = 1;
+      if (!Number.isFinite(records) || records < 0) records = ids.length;
       const loader = list.doc.querySelector('#load_list2,[id*="load_list2"]');
-      if (visible(loader) && ids.length === 0) return JSON.stringify({stage:'listadoLegajos',state:'loading',frameId:list.frameId,pathname:list.pathname,signature:list.frameId+'|'+list.pathname+'|listadoLegajos|loading'});
+      if (visible(loader) && ids.length === 0) return JSON.stringify({stage:'listadoLegajos',state:'loading',frameId:list.frameId,pathname:list.pathname,page,lastPage,records,signature:list.frameId+'|'+list.pathname+'|listadoLegajos|loading|'+page+'|'+lastPage+'|'+records});
       const profiles = ids.map((rowId, index) => {
         let data = {};
         try { data = grid.jqGrid('getRowData', rowId) || {}; } catch (_) {}
@@ -230,8 +256,8 @@ class ExtractorLegajoSage {
         const nameEntry = Object.entries(fields).find(([key]) => /alumno|nombre|apellido/i.test(key));
         return {rowId:String(rowId), signature:hash(String(rowId)+'|'+normalizedFields), name:clean(nameEntry?.[1] || visibleValues[0] || 'Perfil'), fields, index, frameId:list.frameId, pathname:list.pathname};
       });
-      const state = profiles.length ? 'ready' : 'empty';
-      return JSON.stringify({stage:'listadoLegajos',state,frameId:list.frameId,pathname:list.pathname,profiles,signature:list.frameId+'|'+list.pathname+'|listadoLegajos|'+profiles.map(item => item.signature).join(',')});
+      const state = profiles.length ? 'ready' : (records > 0 ? 'loading' : 'empty');
+      return JSON.stringify({stage:'listadoLegajos',state,frameId:list.frameId,pathname:list.pathname,profiles,page,lastPage,records,signature:list.frameId+'|'+list.pathname+'|listadoLegajos|'+page+'|'+lastPage+'|'+records+'|'+profiles.map(item => item.signature).join(',')});
     }
     const tabs = docs.find(item => item.pathname.toLowerCase() === '/dic/tabs.php' && item.frameId.toLowerCase() === 'frm_alumnos') ||
       docs.find(item => item.pathname.toLowerCase() === '/dic/tabs.php');

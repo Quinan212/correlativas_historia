@@ -11,11 +11,24 @@ import '../componentes/componentes_atlassian.dart';
 import '../tema/tema_atlassian.dart';
 
 class PantallaAccesoDeveloperAtlassian extends StatelessWidget {
-  const PantallaAccesoDeveloperAtlassian({super.key});
+  const PantallaAccesoDeveloperAtlassian({
+    super.key,
+    this.inicioReactBuilder,
+  });
+
+  final WidgetBuilder? inicioReactBuilder;
 
   void _openLegacy(BuildContext context) {
     Navigator.of(context).push<void>(
       rutaAtlassian<void>(builder: (_) => const PantallaModoLegacyDeveloper()),
+    );
+  }
+
+  void _openInicioReact(BuildContext context) {
+    final builder = inicioReactBuilder;
+    if (builder == null) return;
+    Navigator.of(context).push<void>(
+      rutaAtlassian<void>(builder: builder),
     );
   }
 
@@ -66,6 +79,17 @@ class PantallaAccesoDeveloperAtlassian extends StatelessWidget {
                     badge: 'LAB',
                     onTap: () => _openExcelLab(context),
                   ),
+                  if (inicioReactBuilder != null) ...[
+                    const SizedBox(height: 12),
+                    TarjetaAccionAtlassian(
+                      label: 'Inicio React',
+                      description:
+                          'Clon experimental del Inicio. La pantalla principal queda intacta.',
+                      icon: Icons.auto_awesome_mosaic_rounded,
+                      badge: 'LAB',
+                      onTap: () => _openInicioReact(context),
+                    ),
+                  ],
                 ],
               ),
             ),

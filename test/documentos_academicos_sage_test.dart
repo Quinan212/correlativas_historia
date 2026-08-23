@@ -25,13 +25,17 @@ void main() {
     ],
   );
 
-  DocumentoAcademicoSage document(TipoDocumentoAcademicoSage type) {
+  DocumentoAcademicoSage document(
+    TipoDocumentoAcademicoSage type, {
+    bool disponible = true,
+  }) {
     return DocumentoAcademicoSage(
       tipo: type,
       gridRowId: career.gridRowId,
       careerKey: career.careerKey,
       carrera: career.nombre,
       institucion: career.institucion,
+      disponible: disponible,
     );
   }
 
@@ -49,7 +53,7 @@ void main() {
 
     final decoded = TrayectoriaSageLaboratorio.fromJson(trajectory.toJson());
 
-    expect(decoded.versionEsquema, 2);
+    expect(decoded.versionEsquema, 3);
     expect(decoded.documentos, hasLength(3));
     expect(
       decoded.documentos.first.tipo,
@@ -79,6 +83,134 @@ void main() {
 
     expect(result, hasLength(1));
     expect(result.single.tipo, TipoDocumentoAcademicoSage.analitico);
+  });
+
+  test('conserva documentos deshabilitados para mostrarlos atenuados', () {
+    final trajectory = TrayectoriaSageLaboratorio(
+      perfil: const PerfilTrayectoriaSageLaboratorio(nombre: 'Alan'),
+      carreras: const <CarreraTrayectoriaSageLaboratorio>[career],
+      documentos: <DocumentoAcademicoSage>[
+        document(
+          TipoDocumentoAcademicoSage.analitico,
+          disponible: false,
+        ),
+      ],
+      capturadaEn: DateTime(2026, 7, 17),
+    );
+
+    final decoded = TrayectoriaSageLaboratorio.fromJson(trajectory.toJson());
+    final result = decoded.documentosDeCarrera(career);
+
+    expect(result, hasLength(1));
+    expect(result.single.disponible, isFalse);
+  });
+
+  test('el repositorio persiste documentos deshabilitados', () async {
+    const repository = RepositorioTrayectoriaSageLaboratorio();
+    final trajectory = TrayectoriaSageLaboratorio(
+      perfil: const PerfilTrayectoriaSageLaboratorio(nombre: 'Alan'),
+      carreras: const <CarreraTrayectoriaSageLaboratorio>[career],
+      documentos: <DocumentoAcademicoSage>[
+        document(
+          TipoDocumentoAcademicoSage.situacionAcademica,
+          disponible: false,
+        ),
+        document(
+          TipoDocumentoAcademicoSage.analitico,
+          disponible: false,
+        ),
+        document(
+          TipoDocumentoAcademicoSage.libreta,
+          disponible: false,
+        ),
+      ],
+      capturadaEn: DateTime(2026, 7, 17),
+    );
+
+    final stored = await repository.guardarIdempotente(trajectory);
+    final reloaded = await repository.cargar();
+
+    expect(stored.documentos, hasLength(3));
+    expect(stored.documentos.every((item) => !item.disponible), isTrue);
+    expect(reloaded, isNotNull);
+    final loaded = reloaded!;
+    expect(loaded.documentos, hasLength(3));
+    expect(loaded.documentos.every((item) => !item.disponible), isTrue);
+  });
+
+  test('una sincronización Docente deja atenuados documentos previos', () async {
+    const repository = RepositorioTrayectoriaSageLaboratorio();
+    final studentTrajectory = TrayectoriaSageLaboratorio(
+      perfil: const PerfilTrayectoriaSageLaboratorio(nombre: 'Alan'),
+      carreras: const <CarreraTrayectoriaSageLaboratorio>[career],
+      documentos: <DocumentoAcademicoSage>[
+        for (final type in TipoDocumentoAcademicoSage.values) document(type),
+      ],
+      capturadaEn: DateTime(2026, 7, 17),
+    );
+    final agentTrajectory = TrayectoriaSageLaboratorio(
+      perfil: const PerfilTrayectoriaSageLaboratorio(nombre: 'Alan'),
+      carreras: const <CarreraTrayectoriaSageLaboratorio>[career],
+      documentos: <DocumentoAcademicoSage>[
+        for (final type in TipoDocumentoAcademicoSage.values)
+          document(type, disponible: false),
+      ],
+      capturadaEn: DateTime(2026, 7, 18),
+    );
+
+    await repository.guardarIdempotente(studentTrajectory);
+    final stored = await repository.guardarIdempotente(agentTrajectory);
+
+    expect(stored.documentos, hasLength(3));
+    expect(stored.documentos.every((item) => !item.disponible), isTrue);
+  });
+
+  test('una sincronización Estudiante vuelve a habilitar los documentos', () async {
+    const repository = RepositorioTrayectoriaSageLaboratorio();
+    final agentTrajectory = TrayectoriaSageLaboratorio(
+      perfil: const PerfilTrayectoriaSageLaboratorio(nombre: 'Alan'),
+      carreras: const <CarreraTrayectoriaSageLaboratorio>[career],
+      documentos: <DocumentoAcademicoSage>[
+        for (final type in TipoDocumentoAcademicoSage.values)
+          document(type, disponible: false),
+      ],
+      capturadaEn: DateTime(2026, 7, 17),
+    );
+    final studentTrajectory = TrayectoriaSageLaboratorio(
+      perfil: const PerfilTrayectoriaSageLaboratorio(nombre: 'Alan'),
+      carreras: const <CarreraTrayectoriaSageLaboratorio>[career],
+      documentos: <DocumentoAcademicoSage>[
+        for (final type in TipoDocumentoAcademicoSage.values) document(type),
+      ],
+      capturadaEn: DateTime(2026, 7, 18),
+    );
+
+    await repository.guardarIdempotente(agentTrajectory);
+    final stored = await repository.guardarIdempotente(studentTrajectory);
+
+    expect(stored.documentos, hasLength(3));
+    expect(stored.documentos.every((item) => item.disponible), isTrue);
+  });
+
+  test('al deduplicar prefiere el documento habilitado', () async {
+    const repository = RepositorioTrayectoriaSageLaboratorio();
+    final trajectory = TrayectoriaSageLaboratorio(
+      perfil: const PerfilTrayectoriaSageLaboratorio(nombre: 'Alan'),
+      carreras: const <CarreraTrayectoriaSageLaboratorio>[career],
+      documentos: <DocumentoAcademicoSage>[
+        document(
+          TipoDocumentoAcademicoSage.analitico,
+          disponible: false,
+        ),
+        document(TipoDocumentoAcademicoSage.analitico),
+      ],
+      capturadaEn: DateTime(2026, 7, 17),
+    );
+
+    final stored = await repository.guardarIdempotente(trajectory);
+
+    expect(stored.documentos, hasLength(1));
+    expect(stored.documentos.single.disponible, isTrue);
   });
 
   test('guardado idempotente elimina documentos duplicados', () async {

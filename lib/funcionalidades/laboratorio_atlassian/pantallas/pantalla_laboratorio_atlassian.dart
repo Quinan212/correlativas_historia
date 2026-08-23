@@ -9,13 +9,14 @@ import '../../trayectoria_sage_laboratorio/datos/repositorio_trayectoria_sage_la
 import '../../trayectoria_sage_laboratorio/modelos/modelos_trayectoria_sage_laboratorio.dart';
 import '../busqueda/modelos_busqueda_atlassian.dart';
 import '../busqueda/pantalla_busqueda_global_atlassian.dart';
+import '../busqueda/pantalla_busqueda_global_react_developer.dart';
 import '../componentes/componentes_atlassian.dart';
 import '../tema/tema_atlassian.dart';
 import 'pantalla_calendario_atlassian.dart';
 import 'pantalla_datos_atlassian.dart';
 import 'pantalla_disenos_atlassian.dart';
 import 'pantalla_examenes_atlassian.dart';
-import 'pantalla_inicio_atlassian.dart';
+import 'pantalla_inicio_react_developer.dart';
 import 'pantalla_materias_atlassian.dart';
 import 'pantalla_plan_atlassian.dart';
 import 'pantallas_herramientas_atlassian.dart';
@@ -180,6 +181,18 @@ class _PantallaLaboratorioAtlassianState
     );
   }
 
+  Future<void> _openReactSearch() async {
+    await Navigator.of(context, rootNavigator: true).push<void>(
+      rutaAtlassian<void>(
+        builder: (_) => PantallaBusquedaGlobalReactDeveloper(
+          trajectoryListenable: _trajectory,
+          selectedCareerListenable: _selectedCareer,
+          onOpenDestination: _handleSearchDestination,
+        ),
+      ),
+    );
+  }
+
   void _pushInSection(int section, Widget page) {
     _activateSection(section);
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -288,6 +301,15 @@ class _PantallaLaboratorioAtlassianState
         _activateSection(0);
         _homeRequest.value = SolicitudInicioAtlassian(
           AccionInicioAtlassian.sincronizar,
+        );
+        return;
+      case TipoDestinoBusquedaAtlassian.documentoAcademico:
+        final tipoDocumento = destination.tipoDocumento;
+        if (tipoDocumento == null) return;
+        _activateSection(0);
+        _homeRequest.value = SolicitudInicioAtlassian(
+          AccionInicioAtlassian.descargarDocumento,
+          tipoDocumento: tipoDocumento,
         );
         return;
       case TipoDestinoBusquedaAtlassian.desincronizar:
@@ -399,7 +421,7 @@ class _PantallaLaboratorioAtlassianState
     final desktop = size.width >= 720 || size.width > size.height;
 
     final sectionChildren = <Widget>[
-      PantallaInicioAtlassian(
+      PantallaInicioReactDeveloper(
         trajectoryListenable: _trajectory,
         localLoadedListenable: _localLoaded,
         selectedCareerListenable: _selectedCareer,
@@ -407,7 +429,7 @@ class _PantallaLaboratorioAtlassianState
         actionRequestListenable: _homeRequest,
         onTrajectoryChanged: _replaceTrajectory,
         onNavigate: _selectSection,
-        onSearch: _openGlobalSearch,
+        onSearch: _openReactSearch,
         onExit: widget.hideExit
             ? null
             : () {
@@ -454,9 +476,8 @@ class _PantallaLaboratorioAtlassianState
           observers: <NavigatorObserver>[
             _SectionNavigatorObserver(_handleSectionRouteChanged),
           ],
-          onGenerateRoute: (_) => MaterialPageRoute<void>(
-            builder: (_) => sectionChildren[index],
-          ),
+          onGenerateRoute: (_) =>
+              MaterialPageRoute<void>(builder: (_) => sectionChildren[index]),
         ),
       );
     });
@@ -481,10 +502,9 @@ class _PantallaLaboratorioAtlassianState
       },
       child: rawContent,
     );
-    final isSubRoute =
-        _navigatorKeys[_section].currentState?.canPop() ?? false;
+    final isSubRoute = _navigatorKeys[_section].currentState?.canPop() ?? false;
     final allowBlursAndSearch = !desktop && !isSubRoute;
-    final showFloatingSearch = allowBlursAndSearch;
+    final showFloatingSearch = allowBlursAndSearch && _section != 0;
     final body = desktop
         ? ValueListenableBuilder<TrayectoriaSageLaboratorio?>(
             valueListenable: _trajectory,
@@ -505,8 +525,10 @@ class _PantallaLaboratorioAtlassianState
                     onExit: widget.hideExit
                         ? null
                         : () {
-                            if (Navigator.of(context, rootNavigator: true)
-                                .canPop()) {
+                            if (Navigator.of(
+                              context,
+                              rootNavigator: true,
+                            ).canPop()) {
                               Navigator.of(context).pop();
                             }
                           },
@@ -520,15 +542,22 @@ class _PantallaLaboratorioAtlassianState
                     child: Material(
                       color: Colors.transparent,
                       child: InkWell(
-                        onTap: () => setState(() => _sidebarHidden = !_sidebarHidden),
-                        borderRadius: BorderRadius.circular(RadioAtlassian.medium),
+                        onTap: () =>
+                            setState(() => _sidebarHidden = !_sidebarHidden),
+                        borderRadius: BorderRadius.circular(
+                          RadioAtlassian.medium,
+                        ),
                         child: Container(
                           width: 45,
                           height: 45,
                           decoration: BoxDecoration(
                             color: theme.colorScheme.surface,
-                            border: Border.all(color: theme.colorScheme.outlineVariant),
-                            borderRadius: BorderRadius.circular(RadioAtlassian.medium),
+                            border: Border.all(
+                              color: theme.colorScheme.outlineVariant,
+                            ),
+                            borderRadius: BorderRadius.circular(
+                              RadioAtlassian.medium,
+                            ),
                             boxShadow: [
                               if (_sidebarHidden)
                                 BoxShadow(
@@ -539,7 +568,9 @@ class _PantallaLaboratorioAtlassianState
                             ],
                           ),
                           child: Icon(
-                            _sidebarHidden ? Icons.menu_rounded : Icons.menu_open_rounded,
+                            _sidebarHidden
+                                ? Icons.menu_rounded
+                                : Icons.menu_open_rounded,
                             size: 26,
                             color: theme.colorScheme.onSurfaceVariant,
                           ),
@@ -582,18 +613,26 @@ class _PantallaLaboratorioAtlassianState
                               },
                               blendMode: BlendMode.dstIn,
                               child: BackdropFilter(
-                                filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                                filter: ui.ImageFilter.blur(
+                                  sigmaX: 16,
+                                  sigmaY: 16,
+                                ),
                                 child: Container(
-                                  height: MediaQuery.paddingOf(context).top + 60,
+                                  height:
+                                      MediaQuery.paddingOf(context).top + 60,
                                   decoration: BoxDecoration(
                                     gradient: LinearGradient(
                                       begin: Alignment.topCenter,
                                       end: Alignment.bottomCenter,
                                       colors: [
-                                        theme.scaffoldBackgroundColor.withValues(alpha: 0.98),
-                                        theme.scaffoldBackgroundColor.withValues(alpha: 0.80),
-                                        theme.scaffoldBackgroundColor.withValues(alpha: 0.40),
-                                        theme.scaffoldBackgroundColor.withValues(alpha: 0.0),
+                                        theme.scaffoldBackgroundColor
+                                            .withValues(alpha: 0.98),
+                                        theme.scaffoldBackgroundColor
+                                            .withValues(alpha: 0.80),
+                                        theme.scaffoldBackgroundColor
+                                            .withValues(alpha: 0.40),
+                                        theme.scaffoldBackgroundColor
+                                            .withValues(alpha: 0.0),
                                       ],
                                       stops: const [0.0, 0.35, 0.70, 1.0],
                                     ),
@@ -631,7 +670,10 @@ class _PantallaLaboratorioAtlassianState
                             },
                             blendMode: BlendMode.dstIn,
                             child: BackdropFilter(
-                              filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                              filter: ui.ImageFilter.blur(
+                                sigmaX: 16,
+                                sigmaY: 16,
+                              ),
                               child: Container(
                                 height: 140,
                                 decoration: BoxDecoration(
@@ -639,10 +681,18 @@ class _PantallaLaboratorioAtlassianState
                                     begin: Alignment.bottomCenter,
                                     end: Alignment.topCenter,
                                     colors: [
-                                      theme.scaffoldBackgroundColor.withValues(alpha: 0.98),
-                                      theme.scaffoldBackgroundColor.withValues(alpha: 0.80),
-                                      theme.scaffoldBackgroundColor.withValues(alpha: 0.40),
-                                      theme.scaffoldBackgroundColor.withValues(alpha: 0.0),
+                                      theme.scaffoldBackgroundColor.withValues(
+                                        alpha: 0.98,
+                                      ),
+                                      theme.scaffoldBackgroundColor.withValues(
+                                        alpha: 0.80,
+                                      ),
+                                      theme.scaffoldBackgroundColor.withValues(
+                                        alpha: 0.40,
+                                      ),
+                                      theme.scaffoldBackgroundColor.withValues(
+                                        alpha: 0.0,
+                                      ),
                                     ],
                                     stops: const [0.0, 0.35, 0.70, 1.0],
                                   ),
@@ -687,8 +737,10 @@ class _PantallaLaboratorioAtlassianState
                 child: SafeArea(
                   child: Builder(
                     builder: (btnContext) {
-                      final canGoBack = _section != 0 ||
-                          (_navigatorKeys[_section].currentState?.canPop() ?? false);
+                      final canGoBack =
+                          _section != 0 ||
+                          (_navigatorKeys[_section].currentState?.canPop() ??
+                              false);
                       return Material(
                         color: Colors.transparent,
                         child: InkWell(
@@ -699,7 +751,9 @@ class _PantallaLaboratorioAtlassianState
                               Scaffold.of(btnContext).openDrawer();
                             }
                           },
-                          borderRadius: BorderRadius.circular(RadioAtlassian.pill),
+                          borderRadius: BorderRadius.circular(
+                            RadioAtlassian.pill,
+                          ),
                           child: Container(
                             width: 45,
                             height: 45,
@@ -773,7 +827,7 @@ class _PantallaLaboratorioAtlassianState
                     : DrawerMovilAtlassian(
                         selectedIndex: _section,
                         onSelected: _selectSection,
-                        onSearch: _openGlobalSearch,
+                        onSearch: _openReactSearch,
                         nombreEstudiante: trajectory?.perfil.nombre,
                       ),
               );
@@ -851,10 +905,7 @@ class DrawerMovilAtlassian extends StatelessWidget {
           decoration: BoxDecoration(
             color: scheme.surface,
             border: Border(
-              right: BorderSide(
-                color: scheme.outlineVariant,
-                width: 0.5,
-              ),
+              right: BorderSide(color: scheme.outlineVariant, width: 0.5),
             ),
           ),
           child: SafeArea(
@@ -862,150 +913,159 @@ class DrawerMovilAtlassian extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pop(context);
-                        onSelected(0);
-                      },
-                      child: Text(
-                        'Correlativas',
-                        style: theme.textTheme.headlineMedium?.copyWith(
-                          color: scheme.onSurface,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 26,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.pop(context);
+                          onSelected(0);
+                        },
+                        child: Text(
+                          'Trayectorias',
+                          style: theme.textTheme.headlineMedium?.copyWith(
+                            color: scheme.onSurface,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 26,
+                          ),
                         ),
                       ),
-                    ),
+                      InkWell(
+                        onTap: () {
+                          Navigator.pop(context);
+                          onSearch();
+                        },
+                        borderRadius: BorderRadius.circular(
+                          RadioAtlassian.pill,
+                        ),
+                        child: Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: scheme.surfaceContainerHighest,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.search_rounded,
+                            color: scheme.onSurface,
+                            size: 22,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 32),
+                  for (final item in destinos) ...[
                     InkWell(
                       onTap: () {
                         Navigator.pop(context);
-                        onSearch();
+                        onSelected(item.$3);
                       },
-                      borderRadius: BorderRadius.circular(RadioAtlassian.pill),
-                      child: Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: scheme.surfaceContainerHighest,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.search_rounded,
-                          color: scheme.onSurface,
-                          size: 22,
-                        ),
+                      borderRadius: BorderRadius.circular(
+                        RadioAtlassian.medium,
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 32),
-                for (final item in destinos) ...[
-                  InkWell(
-                    onTap: () {
-                      Navigator.pop(context);
-                      onSelected(item.$3);
-                    },
-                    borderRadius: BorderRadius.circular(RadioAtlassian.medium),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 12,
-                        horizontal: 4,
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            item.$1,
-                            color: selectedIndex == item.$3
-                                ? scheme.primary
-                                : scheme.onSurface,
-                            size: 24,
-                          ),
-                          const SizedBox(width: 16),
-                          Text(
-                            item.$2,
-                            style: theme.textTheme.titleMedium?.copyWith(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 12,
+                          horizontal: 4,
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              item.$1,
                               color: selectedIndex == item.$3
                                   ? scheme.primary
                                   : scheme.onSurface,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 18,
+                              size: 24,
+                            ),
+                            const SizedBox(width: 16),
+                            Text(
+                              item.$2,
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                color: selectedIndex == item.$3
+                                    ? scheme.primary
+                                    : scheme.onSurface,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 18,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                  const Spacer(),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      InkWell(
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) =>
+                                  const AccesoAdministradorPantalla(),
+                            ),
+                          );
+                        },
+                        borderRadius: BorderRadius.circular(
+                          RadioAtlassian.pill,
+                        ),
+                        child: Container(
+                          width: 46,
+                          height: 46,
+                          decoration: BoxDecoration(
+                            color: scheme.surfaceContainerHighest,
+                            shape: BoxShape.circle,
+                          ),
+                          alignment: Alignment.center,
+                          child: Icon(
+                            Icons.admin_panel_settings_rounded,
+                            color: scheme.onSurface,
+                            size: 22,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      InkWell(
+                        onTap: () {
+                          Navigator.pop(context);
+                          onSelected(4);
+                        },
+                        borderRadius: BorderRadius.circular(
+                          RadioAtlassian.pill,
+                        ),
+                        child: Container(
+                          width: 46,
+                          height: 46,
+                          decoration: BoxDecoration(
+                            color: scheme.primary,
+                            shape: BoxShape.circle,
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            iniciales,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 16,
+                              letterSpacing: 0.5,
                             ),
                           ),
-                        ],
+                        ),
                       ),
-                    ),
+                    ],
                   ),
-                  const SizedBox(height: 8),
                 ],
-                const Spacer(),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    InkWell(
-                      onTap: () {
-                        Navigator.pop(context);
-                        Navigator.of(context).push(
-                          MaterialPageRoute<void>(
-                            builder: (_) => const AccesoAdministradorPantalla(),
-                          ),
-                        );
-                      },
-                      borderRadius: BorderRadius.circular(RadioAtlassian.pill),
-                      child: Container(
-                        width: 46,
-                        height: 46,
-                        decoration: BoxDecoration(
-                          color: scheme.surfaceContainerHighest,
-                          shape: BoxShape.circle,
-                        ),
-                        alignment: Alignment.center,
-                        child: Icon(
-                          Icons.admin_panel_settings_rounded,
-                          color: scheme.onSurface,
-                          size: 22,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    InkWell(
-                      onTap: () {
-                        Navigator.pop(context);
-                        onSelected(4);
-                      },
-                      borderRadius: BorderRadius.circular(RadioAtlassian.pill),
-                      child: Container(
-                        width: 46,
-                        height: 46,
-                        decoration: BoxDecoration(
-                          color: scheme.primary,
-                          shape: BoxShape.circle,
-                        ),
-                        alignment: Alignment.center,
-                        child: Text(
-                          iniciales,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w800,
-                            fontSize: 16,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+              ),
             ),
           ),
         ),
       ),
-    ),
-  );
+    );
   }
 
   static String _obtenerInicialesAtlassian(String? nombre) {

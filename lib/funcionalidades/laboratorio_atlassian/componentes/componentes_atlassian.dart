@@ -1388,7 +1388,7 @@ class NavegacionLateralAtlassian extends StatelessWidget {
                                           crossAxisAlignment: CrossAxisAlignment.center,
                                           children: [
                                             Text(
-                                              'Correlativas',
+                                              'Trayectorias',
                                               maxLines: 1,
                                               overflow: TextOverflow.ellipsis,
                                               textAlign: TextAlign.center,

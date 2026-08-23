@@ -1,0 +1,41 @@
+group 'io.scer.pdf_renderer'
+version '1.0-SNAPSHOT'
+
+// ponytail: Local Android migration for pdfx 2.11.0; remove this fork once
+// upstream no longer declares the legacy Kotlin plugin in its build script.
+
+rootProject.allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+apply plugin: 'com.android.library'
+
+android {
+    // Conditional for compatibility with AGP <4.2.
+    if (project.android.hasProperty("namespace")) {
+        namespace 'io.scer.pdf_renderer'
+    }
+
+    compileSdk 35
+
+    sourceSets {
+        main.java.srcDirs += 'src/main/kotlin'
+    }
+
+    defaultConfig {
+        minSdkVersion 16
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+
+}
+
+dependencies {
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
+}

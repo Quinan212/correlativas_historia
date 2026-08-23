@@ -90,6 +90,9 @@ class ResultadoExtraccionLegajoSage {
     this.historyGridFound = false,
     this.childPathname = '',
     this.historyControlFound = false,
+    this.paginaActual = 1,
+    this.totalPaginas = 1,
+    this.totalRegistros = 0,
   });
 
   final EtapaLegajoSage etapa;
@@ -106,8 +109,13 @@ class ResultadoExtraccionLegajoSage {
   final bool historyGridFound;
   final String childPathname;
   final bool historyControlFound;
+  final int paginaActual;
+  final int totalPaginas;
+  final int totalRegistros;
 
   bool get disponible => estado == EstadoExtraccionLegajoSage.disponible;
+  bool get tienePaginaAnterior => paginaActual > 1;
+  bool get tienePaginaSiguiente => paginaActual < totalPaginas;
 }
 
 class ResultadoAccionLegajoSage {

@@ -14,6 +14,7 @@ enum TipoDestinoBusquedaAtlassian {
   avance,
   sage,
   sincronizar,
+  documentoAcademico,
   desincronizar,
   cerrarSesionSage,
   salir,
@@ -36,6 +37,7 @@ class DestinoBusquedaAtlassian {
     this.contenidoCurricular,
     this.materiaTrayectoria,
     this.carreraTrayectoria,
+    this.tipoDocumento,
     this.query,
     this.year,
     this.status,
@@ -53,6 +55,7 @@ class DestinoBusquedaAtlassian {
   final ContenidoCurricular? contenidoCurricular;
   final MateriaTrayectoriaSageLaboratorio? materiaTrayectoria;
   final CarreraTrayectoriaSageLaboratorio? carreraTrayectoria;
+  final TipoDocumentoAcademicoSage? tipoDocumento;
   final String? query;
   final int? year;
   final EstadoMateriaSageLaboratorio? status;
@@ -97,10 +100,16 @@ class SolicitudMateriasAtlassian {
   final bool focusSearch;
 }
 
-enum AccionInicioAtlassian { abrirSage, sincronizar, cerrarSesionSage }
+enum AccionInicioAtlassian {
+  abrirSage,
+  sincronizar,
+  descargarDocumento,
+  cerrarSesionSage,
+}
 
 class SolicitudInicioAtlassian {
-  const SolicitudInicioAtlassian(this.accion);
+  const SolicitudInicioAtlassian(this.accion, {this.tipoDocumento});
 
   final AccionInicioAtlassian accion;
+  final TipoDocumentoAcademicoSage? tipoDocumento;
 }

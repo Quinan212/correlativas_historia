@@ -23,8 +23,6 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
         isCoreLibraryDesugaringEnabled = true
     }
-    kotlinOptions { jvmTarget = JavaVersion.VERSION_11.toString() }
-
     lint {
         checkDependencies = false
         abortOnError = false
@@ -39,7 +37,7 @@ android {
         minSdk = 24
 
         // ✅ requerido por Play
-        targetSdk = 35
+        targetSdk = 36
 
         versionCode = flutter.versionCode
         versionName = flutter.versionName

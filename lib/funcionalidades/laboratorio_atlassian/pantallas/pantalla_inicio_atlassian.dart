@@ -12,6 +12,7 @@ import '../componentes/componentes_atlassian.dart';
 import '../componentes/inicio_trayectoria_atlassian.dart';
 import '../tema/tema_atlassian.dart';
 import 'pantalla_acceso_developer_atlassian.dart';
+import 'pantalla_inicio_react_developer.dart';
 import 'pantalla_calendario_atlassian.dart';
 import 'pantalla_centro_sage_atlassian.dart';
 import 'pantalla_disenos_atlassian.dart';
@@ -34,6 +35,7 @@ class PantallaInicioAtlassian extends StatefulWidget {
     required this.onTrajectoryChanged,
     required this.onNavigate,
     required this.onSearch,
+    this.onReactSearch,
     this.onExit,
   });
 
@@ -45,6 +47,7 @@ class PantallaInicioAtlassian extends StatefulWidget {
   final ValueChanged<TrayectoriaSageLaboratorio?> onTrajectoryChanged;
   final ValueChanged<int> onNavigate;
   final VoidCallback onSearch;
+  final VoidCallback? onReactSearch;
   final VoidCallback? onExit;
 
   @override
@@ -60,6 +63,7 @@ class _PantallaInicioAtlassianState extends State<PantallaInicioAtlassian> {
       const EstadoPreparacionSageLaboratorio(mensaje: 'Pendiente');
   bool _saving = false;
   bool _sageFlowOpen = false;
+  TipoDocumentoAcademicoSage? _openingDocumentType;
   final ScrollController _scrollController = ScrollController();
 
   @override
@@ -102,6 +106,15 @@ class _PantallaInicioAtlassianState extends State<PantallaInicioAtlassian> {
         case AccionInicioAtlassian.sincronizar:
           unawaited(_sync());
           return;
+        case AccionInicioAtlassian.descargarDocumento:
+          final tipo = request.tipoDocumento;
+          final documento = tipo == null
+              ? null
+              : _selectedAcademicDocument(tipo);
+          if (documento != null) {
+            unawaited(_openAcademicDocument(documento));
+          }
+          return;
         case AccionInicioAtlassian.cerrarSesionSage:
           unawaited(_openSage(logoutOnOpen: true));
           return;
@@ -118,6 +131,7 @@ class _PantallaInicioAtlassianState extends State<PantallaInicioAtlassian> {
       );
       _saving = false;
       _sageFlowOpen = false;
+      _openingDocumentType = null;
     });
   }
 
@@ -140,6 +154,29 @@ class _PantallaInicioAtlassianState extends State<PantallaInicioAtlassian> {
     return _currentCareer(
       widget.trajectoryListenable.value,
       widget.selectedCareerListenable.value,
+    );
+  }
+
+  DocumentoAcademicoSage? _selectedAcademicDocument(
+    TipoDocumentoAcademicoSage tipo,
+  ) {
+    final trajectory = widget.trajectoryListenable.value;
+    final career = _selectedCareerNow();
+    if (trajectory == null || career == null) return null;
+    final saved = trajectory
+        .documentosDeCarrera(career)
+        .where((document) => document.tipo == tipo)
+        .firstOrNull;
+    if (saved != null) return saved;
+    return DocumentoAcademicoSage(
+      tipo: tipo,
+      gridRowId: career.gridRowId,
+      careerKey: career.careerKey,
+      carrera: career.nombre,
+      institucion: career.institucion,
+      disponible:
+          career.gridRowId.trim().isNotEmpty ||
+          career.careerKey.trim().isNotEmpty,
     );
   }
 
@@ -177,7 +214,31 @@ class _PantallaInicioAtlassianState extends State<PantallaInicioAtlassian> {
 
   void _openDeveloperAccess() {
     if (!_developerLegacyEnabled) return;
-    _pushAtlassian((_) => const PantallaAccesoDeveloperAtlassian());
+    _pushAtlassian(
+      (developerContext) => PantallaAccesoDeveloperAtlassian(
+        inicioReactBuilder: (experimentContext) => PantallaInicioReactDeveloper(
+          trajectoryListenable: widget.trajectoryListenable,
+          localLoadedListenable: widget.localLoadedListenable,
+          selectedCareerListenable: widget.selectedCareerListenable,
+          resetListenable: widget.resetListenable,
+          actionRequestListenable: widget.actionRequestListenable,
+          onTrajectoryChanged: widget.onTrajectoryChanged,
+          onNavigate: (index) {
+            final navigator = Navigator.of(experimentContext);
+            if (navigator.canPop()) navigator.pop();
+            if (navigator.canPop()) navigator.pop();
+            widget.onNavigate(index);
+          },
+          onSearch: () {
+            final navigator = Navigator.of(experimentContext);
+            if (navigator.canPop()) navigator.pop();
+            if (navigator.canPop()) navigator.pop();
+            (widget.onReactSearch ?? widget.onSearch)();
+          },
+          onExit: () => Navigator.of(experimentContext).pop(),
+        ),
+      ),
+    );
   }
 
   Future<TrayectoriaSageLaboratorio> _saveAutomaticTrajectory(
@@ -331,6 +392,7 @@ class _PantallaInicioAtlassianState extends State<PantallaInicioAtlassian> {
     required bool automatic,
     bool logoutOnOpen = false,
   }) async {
+    if (!mounted) return;
     final atlassianTheme = temaLaboratorioAtlassian(context);
     await Navigator.of(context, rootNavigator: true).push<void>(
       rutaAtlassian<void>(
@@ -383,9 +445,10 @@ class _PantallaInicioAtlassianState extends State<PantallaInicioAtlassian> {
   }
 
   Future<void> _openAcademicDocument(DocumentoAcademicoSage document) async {
-    if (_saving || _sageFlowOpen) return;
+    if (!document.disponible || _saving || _sageFlowOpen) return;
     setState(() {
       _sageFlowOpen = true;
+      _openingDocumentType = document.tipo;
       _preparation = EstadoPreparacionSageLaboratorio(
         mensaje: 'Preparando ${document.tipo.etiqueta}',
       );
@@ -420,7 +483,12 @@ class _PantallaInicioAtlassianState extends State<PantallaInicioAtlassian> {
         ),
       );
     } finally {
-      if (mounted) setState(() => _sageFlowOpen = false);
+      if (mounted) {
+        setState(() {
+          _sageFlowOpen = false;
+          _openingDocumentType = null;
+        });
+      }
     }
   }
 
@@ -644,6 +712,10 @@ class _PantallaInicioAtlassianState extends State<PantallaInicioAtlassian> {
                         );
                       }
 
+                      final academicDocuments = trajectory.documentosDeCarrera(
+                        career,
+                      );
+
                       if (isWide) {
                         return Center(
                           child: ConstrainedBox(
@@ -658,12 +730,16 @@ class _PantallaInicioAtlassianState extends State<PantallaInicioAtlassian> {
                                       child: _PanelPerfilAtlassian(
                                         trajectory: trajectory,
                                         career: career,
-                                        onChooseCareer: () => _chooseCareer(trajectory),
-                                        onOpenMaterias: () => widget.onNavigate(3),
+                                        onChooseCareer: () =>
+                                            _chooseCareer(trajectory),
+                                        onOpenMaterias: () =>
+                                            widget.onNavigate(3),
                                         onOpenPlan: () => widget.onNavigate(2),
                                         onOpenExams: () => widget.onNavigate(1),
-                                        ultimaSincronizacion: trajectory.sincronizadaEn,
-                                        syncAvailable: !_saving && !_sageFlowOpen,
+                                        ultimaSincronizacion:
+                                            trajectory.sincronizadaEn,
+                                        syncAvailable:
+                                            !_saving && !_sageFlowOpen,
                                         syncing: _saving || _sageFlowOpen,
                                         onSync: _sync,
                                       ),
@@ -671,15 +747,19 @@ class _PantallaInicioAtlassianState extends State<PantallaInicioAtlassian> {
                                     const SizedBox(width: 16),
                                     Expanded(
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.stretch,
                                         children: [
-                                          _ResumenProgresoAtlassian(career: career),
+                                          _ResumenProgresoAtlassian(
+                                            career: career,
+                                          ),
                                           const SizedBox(height: 12),
                                           Row(
                                             children: [
                                               Expanded(
                                                 child: _AtajoExamenesAtlassian(
-                                                  onTap: () => widget.onNavigate(1),
+                                                  onTap: () =>
+                                                      widget.onNavigate(1),
                                                 ),
                                               ),
                                               const SizedBox(width: 10),
@@ -695,22 +775,36 @@ class _PantallaInicioAtlassianState extends State<PantallaInicioAtlassian> {
                                     ),
                                   ],
                                 ),
+                                if (academicDocuments.isNotEmpty) ...[
+                                  const SizedBox(height: 16),
+                                  _DocumentosAcademicosAtlassian(
+                                    documentos: academicDocuments,
+                                    busy: _sageFlowOpen || _saving,
+                                    loadingType: _openingDocumentType,
+                                    onOpen: _openAcademicDocument,
+                                  ),
+                                ],
                                 const SizedBox(height: 24),
                                 Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Expanded(
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.stretch,
                                         children: [
                                           SeparadorTituloAtlassian(
                                             title: 'Herramientas',
-                                            subtitle: nombreCarreraAtlassian(career.nombre),
+                                            subtitle: nombreCarreraAtlassian(
+                                              career.nombre,
+                                            ),
                                           ),
                                           const SizedBox(height: 10),
                                           _GrillaAccionesAtlassian(
-                                            onOpenRecord: () => widget.onNavigate(3),
-                                            onOpenPlan: () => widget.onNavigate(2),
+                                            onOpenRecord: () =>
+                                                widget.onNavigate(3),
+                                            onOpenPlan: () =>
+                                                widget.onNavigate(2),
                                             onOpenScenarios: _openScenarios,
                                             onOpenHelp: _openHelp,
                                             onOpenNextSteps: _openNextSteps,
@@ -726,22 +820,14 @@ class _PantallaInicioAtlassianState extends State<PantallaInicioAtlassian> {
                                     const SizedBox(width: 24),
                                     Expanded(
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.stretch,
                                         children: [
                                           _MateriasRecientesAtlassian(
                                             career: career,
-                                            onOpenAll: () => widget.onNavigate(3),
+                                            onOpenAll: () =>
+                                                widget.onNavigate(3),
                                           ),
-                                          if (trajectory
-                                              .documentosDeCarrera(career)
-                                              .isNotEmpty) ...[
-                                            const SizedBox(height: 22),
-                                            _DocumentosAcademicosAtlassian(
-                                              documentos: trajectory.documentosDeCarrera(career),
-                                              busy: _sageFlowOpen || _saving,
-                                              onOpen: _openAcademicDocument,
-                                            ),
-                                          ],
                                         ],
                                       ),
                                     ),
@@ -769,6 +855,15 @@ class _PantallaInicioAtlassianState extends State<PantallaInicioAtlassian> {
                             syncing: _saving || _sageFlowOpen,
                             onSync: _sync,
                           ),
+                          if (academicDocuments.isNotEmpty) ...[
+                            const SizedBox(height: 16),
+                            _DocumentosAcademicosAtlassian(
+                              documentos: academicDocuments,
+                              busy: _sageFlowOpen || _saving,
+                              loadingType: _openingDocumentType,
+                              onOpen: _openAcademicDocument,
+                            ),
+                          ],
                           const SizedBox(height: 16),
                           _ResumenProgresoAtlassian(career: career),
                           const SizedBox(height: 12),
@@ -799,16 +894,6 @@ class _PantallaInicioAtlassianState extends State<PantallaInicioAtlassian> {
                             career: career,
                             onOpenAll: () => widget.onNavigate(3),
                           ),
-                          if (trajectory
-                              .documentosDeCarrera(career)
-                              .isNotEmpty) ...[
-                            const SizedBox(height: 22),
-                            _DocumentosAcademicosAtlassian(
-                              documentos: trajectory.documentosDeCarrera(career),
-                              busy: _sageFlowOpen || _saving,
-                              onOpen: _openAcademicDocument,
-                            ),
-                          ],
                         ],
                       );
                     },
@@ -820,36 +905,55 @@ class _PantallaInicioAtlassianState extends State<PantallaInicioAtlassian> {
                   body: CustomScrollView(
                     controller: _scrollController,
                     physics: const AlwaysScrollableScrollPhysics(),
-                      slivers: [
-                        SliverToBoxAdapter(
-                          child: EncabezadoTrayectoriaAtlassian(
-                            scrollController: _scrollController,
-                            onSearch: widget.onSearch,
-                            onExit: widget.onExit,
-                            nombreEstudiante: trajectory?.perfil.nombre,
+                    slivers: [
+                      SliverToBoxAdapter(
+                        child: EncabezadoTrayectoriaAtlassian(
+                          scrollController: _scrollController,
+                          onSearch: widget.onSearch,
+                          onExit: widget.onExit,
+                          nombreEstudiante: trajectory?.perfil.nombre,
+                        ),
+                      ),
+                      SliverToBoxAdapter(child: mainContent),
+                      if (trajectory != null && career != null)
+                        SliverPersistentHeader(
+                          pinned: false,
+                          delegate: SugerenciasApiladasAtlassianDelegate(
+                            viewportHeight:
+                                MediaQuery.sizeOf(context).height -
+                                headerHeight,
+                            onOpenExams: () => widget.onNavigate(1),
+                            onOpenScenarios: _openScenarios,
+                            onOpenSubjects: () => widget.onNavigate(3),
+                            onOpenCalendar: _openCalendar,
                           ),
                         ),
-                        SliverToBoxAdapter(child: mainContent),
-                        if (trajectory != null && career != null)
-                          SliverPersistentHeader(
-                            pinned: true,
-                            delegate:
-                                SugerenciasApiladasAtlassianDelegate(
-                                  viewportHeight:
-                                      MediaQuery.sizeOf(context).height -
+                      const SliverToBoxAdapter(child: SizedBox(height: 144)),
+                      if (trajectory != null && career != null)
+                        SliverPersistentHeader(
+                          pinned: true,
+                          delegate: SugerenciasStackReactBitsAtlassianDelegate(
+                            viewportHeight:
+                                MediaQuery.sizeOf(context).height -
+                                headerHeight,
+                            onOpenExams: () => widget.onNavigate(1),
+                            onOpenScenarios: _openScenarios,
+                            onOpenSubjects: () => widget.onNavigate(3),
+                            onOpenCalendar: _openCalendar,
+                          ),
+                        ),
+                      if (trajectory != null && career != null)
+                        SliverToBoxAdapter(
+                          child: SizedBox(
+                            height:
+                                SugerenciasStackReactBitsAtlassianDelegate.trailingExtentFor(
+                                  MediaQuery.sizeOf(context).height -
                                       headerHeight,
-                                  onOpenExams: () => widget.onNavigate(1),
-                                  onOpenScenarios: _openScenarios,
-                                  onOpenSubjects: () =>
-                                      widget.onNavigate(3),
-                                  onOpenCalendar: _openCalendar,
                                 ),
                           ),
-                        const SliverToBoxAdapter(
-                          child: SizedBox(height: 144),
                         ),
-                      ],
-                    ),
+                    ],
+                  ),
                 );
               },
             );
@@ -1095,8 +1199,8 @@ class _AccionPerfilAtlassian extends StatelessWidget {
                 color: onTap == null
                     ? scheme.onSurfaceVariant.withValues(alpha: 0.45)
                     : (Theme.of(context).brightness == Brightness.dark
-                        ? Colors.white
-                        : scheme.primary),
+                          ? Colors.white
+                          : scheme.primary),
               ),
             ),
             const SizedBox(height: 6),
@@ -1591,53 +1695,428 @@ class _DocumentosAcademicosAtlassian extends StatelessWidget {
   const _DocumentosAcademicosAtlassian({
     required this.documentos,
     required this.busy,
+    required this.loadingType,
     required this.onOpen,
   });
 
   final List<DocumentoAcademicoSage> documentos;
   final bool busy;
+  final TipoDocumentoAcademicoSage? loadingType;
   final ValueChanged<DocumentoAcademicoSage> onOpen;
 
   @override
   Widget build(BuildContext context) {
-    final ordered = <DocumentoAcademicoSage>[
-      for (final type in TipoDocumentoAcademicoSage.values)
-        ...documentos.where((documento) => documento.tipo == type),
-    ];
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const SeparadorTituloAtlassian(title: 'Documentos académicos'),
-        const SizedBox(height: 8),
-        PanelAtlassian(
-          padding: EdgeInsets.zero,
-          child: Column(
-            children: [
-              for (var index = 0; index < ordered.length; index++) ...[
-                Material(
-                  color: Colors.transparent,
-                  child: ListTile(
-                    enabled: !busy,
-                    leading: Icon(
-                      _documentIcon(ordered[index].tipo),
-                      color: Theme.of(context).colorScheme.primary,
+    if (documentos.isEmpty) return const SizedBox.shrink();
+
+    final ordered = _orderedDocuments();
+    final availableCount = ordered
+        .where((documento) => documento.disponible)
+        .length;
+
+    if (availableCount == 0) {
+      return const _EstadoDocumentosAcademicosDocenteAtlassian();
+    }
+
+    final scheme = Theme.of(context).colorScheme;
+    final reduceMotion =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    late final String statusLabel;
+    late final AparienciaLozengeAtlassian statusAppearance;
+    late final IconData statusIcon;
+    if (loadingType != null) {
+      statusLabel = 'Preparando';
+      statusAppearance = AparienciaLozengeAtlassian.brand;
+      statusIcon = Icons.download_rounded;
+    } else if (busy) {
+      statusLabel = 'Actualizando';
+      statusAppearance = AparienciaLozengeAtlassian.brand;
+      statusIcon = Icons.sync_rounded;
+    } else if (availableCount == ordered.length) {
+      statusLabel = '$availableCount disponibles';
+      statusAppearance = AparienciaLozengeAtlassian.success;
+      statusIcon = Icons.check_rounded;
+    } else {
+      statusLabel = '$availableCount de ${ordered.length}';
+      statusAppearance = AparienciaLozengeAtlassian.warning;
+      statusIcon = Icons.info_outline_rounded;
+    }
+
+    return Semantics(
+      container: true,
+      label:
+          'Documentos académicos, $availableCount de ${ordered.length} disponibles',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SeparadorTituloAtlassian(
+            title: 'Documentos académicos',
+            action: LozengeAtlassian(
+              label: statusLabel,
+              appearance: statusAppearance,
+              icon: statusIcon,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Align(
+            alignment: Alignment.center,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 720),
+              child: Material(
+                key: const ValueKey<String>('academic-documents-dock'),
+                color: Color.alphaBlend(
+                  scheme.primary.withValues(alpha: 0.025),
+                  scheme.surface,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(RadioAtlassian.large),
+                  side: BorderSide(color: scheme.outlineVariant),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: TweenAnimationBuilder<double>(
+                    key: ValueKey<String>(
+                      'academic-documents-entry-${ordered.map((item) => item.tipo.clave).join('-')}',
                     ),
-                    title: Text(ordered[index].tipo.etiqueta),
-                    trailing: busy
-                        ? const SizedBox.square(
-                            dimension: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.download_rounded),
-                    onTap: busy ? null : () => onOpen(ordered[index]),
+                    tween: Tween<double>(begin: 0, end: 1),
+                    duration: reduceMotion
+                        ? Duration.zero
+                        : const Duration(milliseconds: 360),
+                    builder: (context, progress, _) {
+                      return Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          for (
+                            var index = 0;
+                            index < ordered.length;
+                            index++
+                          ) ...[
+                            if (index > 0) const SizedBox(width: 6),
+                            Expanded(
+                              child: _entradaEscalonada(
+                                progress: progress,
+                                index: index,
+                                child: _TarjetaDocumentoAcademicoAtlassian(
+                                  documento: ordered[index],
+                                  busy: busy,
+                                  loading: loadingType == ordered[index].tipo,
+                                  onOpen: onOpen,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      );
+                    },
                   ),
                 ),
-                if (index != ordered.length - 1) const Divider(height: 1),
-              ],
-            ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<DocumentoAcademicoSage> _orderedDocuments() {
+    final template = documentos.first;
+    return <DocumentoAcademicoSage>[
+      for (final type in TipoDocumentoAcademicoSage.values)
+        _preferredDocument(type) ??
+            DocumentoAcademicoSage(
+              tipo: type,
+              gridRowId: template.gridRowId,
+              careerKey: template.careerKey,
+              carrera: template.carrera,
+              institucion: template.institucion,
+              disponible: false,
+            ),
+    ];
+  }
+
+  DocumentoAcademicoSage? _preferredDocument(TipoDocumentoAcademicoSage type) {
+    DocumentoAcademicoSage? selected;
+    for (final document in documentos) {
+      if (document.tipo != type) continue;
+      selected ??= document;
+      if (document.disponible) return document;
+    }
+    return selected;
+  }
+
+  Widget _entradaEscalonada({
+    required double progress,
+    required int index,
+    required Widget child,
+  }) {
+    final start = index * 0.16;
+    final normalized = ((progress - start) / (1 - start))
+        .clamp(0.0, 1.0)
+        .toDouble();
+    final curved = Curves.easeOutCubic.transform(normalized);
+    return Opacity(
+      opacity: curved,
+      child: Transform.translate(
+        offset: Offset(0, 8 * (1 - curved)),
+        child: child,
+      ),
+    );
+  }
+}
+
+class _EstadoDocumentosAcademicosDocenteAtlassian extends StatelessWidget {
+  const _EstadoDocumentosAcademicosDocenteAtlassian();
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final reduceMotion =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+
+    return Semantics(
+      container: true,
+      label:
+          'Documentos académicos. Perfil Docente. Se habilitan al sincronizar desde el Perfil Estudiante de SAGE.',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const SeparadorTituloAtlassian(
+            title: 'Documentos académicos',
+            action: LozengeAtlassian(
+              label: 'Perfil Docente',
+              icon: Icons.badge_outlined,
+            ),
+          ),
+          const SizedBox(height: 10),
+          TweenAnimationBuilder<double>(
+            tween: Tween<double>(begin: 0, end: 1),
+            duration: reduceMotion
+                ? Duration.zero
+                : const Duration(milliseconds: 220),
+            curve: Curves.easeOutCubic,
+            builder: (context, progress, child) {
+              return Opacity(
+                opacity: progress,
+                child: Transform.translate(
+                  offset: Offset(0, 6 * (1 - progress)),
+                  child: child,
+                ),
+              );
+            },
+            child: Material(
+              key: const ValueKey<String>('academic-documents-disabled-state'),
+              color: Color.alphaBlend(
+                scheme.primary.withValues(alpha: 0.035),
+                scheme.surface,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(RadioAtlassian.large),
+                side: BorderSide(color: scheme.outlineVariant),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(14),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    const _IconoDocumentoEnCapasAtlassian(
+                      icon: Icons.folder_copy_outlined,
+                      available: true,
+                      loading: false,
+                      pressed: false,
+                      showDownloadBadge: false,
+                      reduceMotion: true,
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Disponibles desde el Perfil Estudiante de SAGE',
+                            style: Theme.of(context).textTheme.titleSmall,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Situación académica · Analítico · Libreta',
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(color: scheme.onSurfaceVariant),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TarjetaDocumentoAcademicoAtlassian extends StatefulWidget {
+  const _TarjetaDocumentoAcademicoAtlassian({
+    required this.documento,
+    required this.busy,
+    required this.loading,
+    required this.onOpen,
+  });
+
+  final DocumentoAcademicoSage documento;
+  final bool busy;
+  final bool loading;
+  final ValueChanged<DocumentoAcademicoSage> onOpen;
+
+  @override
+  State<_TarjetaDocumentoAcademicoAtlassian> createState() =>
+      _TarjetaDocumentoAcademicoAtlassianState();
+}
+
+class _TarjetaDocumentoAcademicoAtlassianState
+    extends State<_TarjetaDocumentoAcademicoAtlassian> {
+  bool _pressed = false;
+
+  @override
+  void didUpdateWidget(
+    covariant _TarjetaDocumentoAcademicoAtlassian oldWidget,
+  ) {
+    super.didUpdateWidget(oldWidget);
+    if ((!widget.documento.disponible || widget.busy) && _pressed) {
+      _pressed = false;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final reduceMotion =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    final duration = reduceMotion
+        ? Duration.zero
+        : const Duration(milliseconds: 180);
+    final available = widget.documento.disponible;
+    final enabled = available && !widget.busy;
+    final dimmed = widget.busy && !widget.loading;
+    final background = widget.loading
+        ? Color.alphaBlend(
+            scheme.primary.withValues(alpha: 0.12),
+            scheme.surfaceContainerHigh,
+          )
+        : _pressed
+        ? Color.alphaBlend(
+            scheme.primary.withValues(alpha: 0.08),
+            scheme.surfaceContainerHigh,
+          )
+        : available
+        ? scheme.surfaceContainerHigh
+        : scheme.surfaceContainerLow;
+    final borderColor = widget.loading ? scheme.primary : Colors.transparent;
+    final scale = _pressed && enabled
+        ? 0.97
+        : widget.loading
+        ? 1.015
+        : 1.0;
+    final semanticLabel = widget.loading
+        ? 'Preparando ${widget.documento.tipo.etiqueta}'
+        : available
+        ? 'Descargar ${widget.documento.tipo.etiqueta}'
+        : '${widget.documento.tipo.etiqueta} no disponible';
+
+    return Semantics(
+      button: available,
+      enabled: enabled,
+      label: semanticLabel,
+      child: ExcludeSemantics(
+        child: AnimatedOpacity(
+          duration: duration,
+          opacity: !available
+              ? 0.5
+              : dimmed
+              ? 0.68
+              : 1,
+          child: AnimatedSlide(
+            duration: duration,
+            curve: Curves.easeOutCubic,
+            offset: widget.loading ? const Offset(0, -0.025) : Offset.zero,
+            child: AnimatedScale(
+              duration: duration,
+              curve: Curves.easeOutBack,
+              scale: scale,
+              child: AnimatedContainer(
+                duration: duration,
+                curve: Curves.easeOutCubic,
+                height: 126,
+                decoration: BoxDecoration(
+                  color: background,
+                  borderRadius: BorderRadius.circular(RadioAtlassian.medium),
+                  border: Border.all(
+                    color: borderColor,
+                    width: widget.loading ? 1.5 : 1,
+                  ),
+                  boxShadow: widget.loading
+                      ? [
+                          BoxShadow(
+                            color: scheme.primary.withValues(alpha: 0.18),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ]
+                      : const <BoxShadow>[],
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    key: ValueKey<String>(
+                      'document-action-${widget.documento.tipo.clave}',
+                    ),
+                    borderRadius: BorderRadius.circular(RadioAtlassian.medium),
+                    onTap: enabled
+                        ? () => widget.onOpen(widget.documento)
+                        : null,
+                    onHighlightChanged: enabled
+                        ? (pressed) {
+                            if (_pressed == pressed) return;
+                            setState(() => _pressed = pressed);
+                          }
+                        : null,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(8, 8, 8, 10),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _IconoDocumentoEnCapasAtlassian(
+                            icon: _documentIcon(widget.documento.tipo),
+                            available: available,
+                            loading: widget.loading,
+                            pressed: _pressed,
+                            showDownloadBadge: true,
+                            reduceMotion: reduceMotion,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            widget.documento.tipo.etiqueta,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
+                            style: Theme.of(
+                              context,
+                            ).textTheme.labelLarge?.copyWith(height: 1.12),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ),
         ),
-      ],
+      ),
     );
   }
 
@@ -1647,6 +2126,145 @@ class _DocumentosAcademicosAtlassian extends StatelessWidget {
     TipoDocumentoAcademicoSage.analitico => Icons.fact_check_outlined,
     TipoDocumentoAcademicoSage.libreta => Icons.menu_book_outlined,
   };
+}
+
+class _IconoDocumentoEnCapasAtlassian extends StatelessWidget {
+  const _IconoDocumentoEnCapasAtlassian({
+    required this.icon,
+    required this.available,
+    required this.loading,
+    required this.pressed,
+    required this.showDownloadBadge,
+    required this.reduceMotion,
+  });
+
+  final IconData icon;
+  final bool available;
+  final bool loading;
+  final bool pressed;
+  final bool showDownloadBadge;
+  final bool reduceMotion;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final duration = reduceMotion
+        ? Duration.zero
+        : const Duration(milliseconds: 180);
+    final backColor = available
+        ? scheme.primary.withValues(alpha: loading ? 0.72 : 0.48)
+        : scheme.outlineVariant.withValues(alpha: 0.7);
+    final frontColor = available
+        ? Color.alphaBlend(
+            scheme.primary.withValues(alpha: loading ? 0.18 : 0.08),
+            scheme.surfaceContainerHigh,
+          )
+        : scheme.surfaceContainerHighest;
+    final iconColor = available
+        ? (dark ? const Color(0xFFCCE0FF) : scheme.primary)
+        : scheme.onSurfaceVariant;
+
+    return SizedBox(
+      width: 62,
+      height: 58,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          AnimatedPositioned(
+            duration: duration,
+            curve: Curves.easeOutBack,
+            top: loading || pressed ? 1 : 5,
+            left: loading || pressed ? 13 : 16,
+            child: Transform.rotate(
+              angle: 0.12,
+              child: AnimatedContainer(
+                duration: duration,
+                width: 42,
+                height: 46,
+                decoration: BoxDecoration(
+                  color: backColor,
+                  borderRadius: BorderRadius.circular(RadioAtlassian.medium),
+                ),
+              ),
+            ),
+          ),
+          AnimatedPositioned(
+            duration: duration,
+            curve: Curves.easeOutBack,
+            top: loading ? 3 : 9,
+            left: loading || pressed ? 5 : 7,
+            child: AnimatedContainer(
+              duration: duration,
+              width: 46,
+              height: 48,
+              decoration: BoxDecoration(
+                color: frontColor,
+                borderRadius: BorderRadius.circular(RadioAtlassian.medium),
+                border: Border.all(
+                  color: available
+                      ? scheme.primary.withValues(alpha: loading ? 0.9 : 0.42)
+                      : scheme.outlineVariant,
+                ),
+              ),
+              alignment: Alignment.center,
+              child: Icon(icon, size: 23, color: iconColor),
+            ),
+          ),
+          if (showDownloadBadge)
+            Positioned(
+              top: 0,
+              right: 0,
+              child: AnimatedSwitcher(
+                duration: duration,
+                switchInCurve: Curves.easeOutBack,
+                switchOutCurve: Curves.easeInCubic,
+                transitionBuilder: (child, animation) => ScaleTransition(
+                  scale: animation,
+                  child: FadeTransition(opacity: animation, child: child),
+                ),
+                child: Container(
+                  key: ValueKey<String>(
+                    loading
+                        ? 'loading'
+                        : available
+                        ? 'download'
+                        : 'unavailable',
+                  ),
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: available
+                        ? scheme.primary
+                        : scheme.surfaceContainerHighest,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: scheme.surface, width: 2),
+                  ),
+                  alignment: Alignment.center,
+                  child: loading && available
+                      ? const SizedBox.square(
+                          dimension: 12,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : Icon(
+                          available
+                              ? Icons.download_rounded
+                              : Icons.lock_outline_rounded,
+                          size: 14,
+                          color: available
+                              ? Colors.white
+                              : scheme.onSurfaceVariant,
+                        ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
 }
 
 class _PanelConexionAtlassian extends StatelessWidget {

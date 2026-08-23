@@ -19,4 +19,18 @@ void main() {
       expect(capturedSource, contains('matchedBy'));
     },
   );
+
+  test('la paginación solicita y recarga la página indicada', () async {
+    String? capturedSource;
+    final executor = EjecutorLegajoSage((source) async {
+      capturedSource = source;
+      return '{"found":true,"reloaded":true,"page":3,"lastPage":5}';
+    });
+
+    final reloaded = await executor.irAPaginaLegajos(3);
+
+    expect(reloaded, isTrue);
+    expect(capturedSource, contains('const requestedPage = 3'));
+    expect(capturedSource, contains("trigger('reloadGrid')"));
+  });
 }

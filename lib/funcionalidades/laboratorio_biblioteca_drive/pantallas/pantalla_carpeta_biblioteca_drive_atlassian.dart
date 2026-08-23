@@ -217,14 +217,30 @@ class _PantallaCarpetaBibliotecaDriveAtlassianState
     }
   }
 
-  Future<void> _openFileActions(ElementoBibliotecaDrive item) async {
+  Future<void> _openFileActions(
+    ElementoBibliotecaDrive item,
+    Offset anchorPosition,
+  ) async {
     if (item.isFolder) return;
-    final action = await mostrarHojaAtlassian<_AccionArchivoBiblioteca>(
+    final atlassianTheme = temaLaboratorioAtlassian(context);
+    final action = await showGeneralDialog<_AccionArchivoBiblioteca>(
       context: context,
-      builder: (_) => _HojaAccionesArchivoBiblioteca(
-        item: item,
-        downloaded: _downloadedItemIds.contains(item.id),
-      ),
+      useRootNavigator: true,
+      barrierDismissible: false,
+      barrierLabel: 'Cerrar acciones de archivo',
+      barrierColor: atlassianTheme.colorScheme.scrim.withValues(alpha: 0.28),
+      transitionDuration: const Duration(milliseconds: 150),
+      pageBuilder: (dialogContext, animation, secondaryAnimation) {
+        return Theme(
+          data: atlassianTheme,
+          child: _MenuFlotanteAccionesArchivoBiblioteca(
+            item: item,
+            downloaded: _downloadedItemIds.contains(item.id),
+            anchorPosition: anchorPosition,
+            animation: animation,
+          ),
+        );
+      },
     );
     if (action == null || !mounted) return;
 
@@ -432,9 +448,14 @@ class _PantallaCarpetaBibliotecaDriveAtlassianState
                                 onTap: item.isFolder
                                     ? () => _openFolder(item)
                                     : () => _openFile(item),
-                                onLongPress: item.isFolder
+                                onLongPressStart: item.isFolder
                                     ? null
-                                    : () => unawaited(_openFileActions(item)),
+                                    : (details) => unawaited(
+                                        _openFileActions(
+                                          item,
+                                          details.globalPosition,
+                                        ),
+                                      ),
                               );
                             },
                             childCount: filtered.length * 2 - 1,
@@ -548,77 +569,212 @@ enum _AccionArchivoBiblioteca {
   eliminarDescarga,
 }
 
-class _HojaAccionesArchivoBiblioteca extends StatelessWidget {
-  const _HojaAccionesArchivoBiblioteca({
+class _MenuFlotanteAccionesArchivoBiblioteca extends StatelessWidget {
+  const _MenuFlotanteAccionesArchivoBiblioteca({
     required this.item,
     required this.downloaded,
+    required this.anchorPosition,
+    required this.animation,
   });
 
   final ElementoBibliotecaDrive item;
   final bool downloaded;
+  final Offset anchorPosition;
+  final Animation<double> animation;
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
+    final media = MediaQuery.of(context);
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final dark = theme.brightness == Brightness.dark;
     final canDownload = !item.isGoogleWorkspaceFile && item.canDownload;
     final canSaveToDevice = canDownload && Platform.isAndroid;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
+    final curvedAnimation = CurvedAnimation(
+      parent: animation,
+      curve: Curves.easeOutCubic,
+      reverseCurve: Curves.easeInCubic,
+    );
+    final scaleAlignment = anchorPosition.dy > media.size.height / 2
+        ? Alignment.bottomLeft
+        : Alignment.topLeft;
+
+    return Material(
+      type: MaterialType.transparency,
+      child: Stack(
         children: [
-          Text(
-            item.visibleName,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            downloaded ? 'Disponible sin conexión' : 'Material de Biblioteca',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: scheme.onSurfaceVariant,
+          Positioned.fill(
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => Navigator.of(context).pop(),
+              child: const SizedBox.expand(),
             ),
           ),
-          const SizedBox(height: 12),
-          _OpcionArchivoBiblioteca(
-            icon: Icons.open_in_new_rounded,
-            label: 'Abrir',
-            onTap: () => Navigator.of(
-              context,
-            ).pop(_AccionArchivoBiblioteca.abrir),
-          ),
-          if (canSaveToDevice)
-            _OpcionArchivoBiblioteca(
-              icon: Icons.save_alt_rounded,
-              label: 'Guardar en el dispositivo',
-              subtitle: 'Elegí una carpeta del teléfono',
-              onTap: () => Navigator.of(context).pop(
-                _AccionArchivoBiblioteca.guardarEnDispositivo,
+          Positioned.fill(
+            child: CustomSingleChildLayout(
+              delegate: _MenuFlotanteArchivoLayoutDelegate(
+                anchorPosition: anchorPosition,
+                safePadding: media.padding,
+              ),
+              child: FadeTransition(
+                opacity: curvedAnimation,
+                child: ScaleTransition(
+                  scale: Tween<double>(begin: 0.98, end: 1).animate(
+                    curvedAnimation,
+                  ),
+                  alignment: scaleAlignment,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: scheme.surface,
+                      borderRadius: BorderRadius.circular(
+                        RadioAtlassian.medium,
+                      ),
+                      border: Border.all(color: scheme.outlineVariant),
+                      boxShadow: [
+                        BoxShadow(
+                          color: scheme.shadow.withValues(
+                            alpha: dark ? 0.34 : 0.14,
+                          ),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Material(
+                      color: Colors.transparent,
+                      surfaceTintColor: Colors.transparent,
+                      borderRadius: BorderRadius.circular(
+                        RadioAtlassian.medium,
+                      ),
+                      clipBehavior: Clip.antiAlias,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.all(
+                              EspacioAtlassian.xs,
+                            ),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                _OpcionArchivoBiblioteca(
+                                  icon: Icons.open_in_new_rounded,
+                                  label: 'Abrir',
+                                  onTap: () => Navigator.of(
+                                    context,
+                                  ).pop(_AccionArchivoBiblioteca.abrir),
+                                ),
+                                if (canSaveToDevice)
+                                  _OpcionArchivoBiblioteca(
+                                    icon: Icons.save_alt_rounded,
+                                    label: 'Guardar en el dispositivo',
+                                    onTap: () => Navigator.of(context).pop(
+                                      _AccionArchivoBiblioteca
+                                          .guardarEnDispositivo,
+                                    ),
+                                  ),
+                                _OpcionArchivoBiblioteca(
+                                  icon: Icons.share_rounded,
+                                  label: 'Compartir',
+                                  onTap: () => Navigator.of(
+                                    context,
+                                  ).pop(_AccionArchivoBiblioteca.compartir),
+                                ),
+                                if (canDownload && downloaded) ...[
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: EspacioAtlassian.xxs,
+                                    ),
+                                    child: Divider(
+                                      height: 1,
+                                      color: scheme.outlineVariant,
+                                    ),
+                                  ),
+                                  _OpcionArchivoBiblioteca(
+                                    icon: Icons.delete_outline_rounded,
+                                    label:
+                                        'Eliminar descarga sin conexión',
+                                    foregroundColor: scheme.error,
+                                    onTap: () => Navigator.of(context).pop(
+                                      _AccionArchivoBiblioteca
+                                          .eliminarDescarga,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
               ),
             ),
-          _OpcionArchivoBiblioteca(
-            icon: Icons.share_rounded,
-            label: 'Compartir',
-            onTap: () => Navigator.of(
-              context,
-            ).pop(_AccionArchivoBiblioteca.compartir),
           ),
-          if (canDownload && downloaded) ...[
-            const Divider(height: 20),
-            _OpcionArchivoBiblioteca(
-              icon: Icons.delete_outline_rounded,
-              label: 'Eliminar descarga sin conexión',
-              foregroundColor: scheme.error,
-              onTap: () => Navigator.of(context).pop(
-                _AccionArchivoBiblioteca.eliminarDescarga,
-              ),
-            ),
-          ],
         ],
       ),
     );
+  }
+}
+
+class _MenuFlotanteArchivoLayoutDelegate extends SingleChildLayoutDelegate {
+  const _MenuFlotanteArchivoLayoutDelegate({
+    required this.anchorPosition,
+    required this.safePadding,
+  });
+
+  static const double _menuWidth = 292;
+  static const double _horizontalMargin = 12;
+  static const double _verticalMargin = 12;
+  static const double _anchorGap = 10;
+
+  final Offset anchorPosition;
+  final EdgeInsets safePadding;
+
+  @override
+  BoxConstraints getConstraintsForChild(BoxConstraints constraints) {
+    final availableWidth = constraints.maxWidth - (_horizontalMargin * 2);
+    final width = availableWidth < _menuWidth ? availableWidth : _menuWidth;
+    final maxHeight = constraints.maxHeight -
+        safePadding.vertical -
+        (_verticalMargin * 2);
+    return BoxConstraints(
+      minWidth: width,
+      maxWidth: width,
+      minHeight: 0,
+      maxHeight: maxHeight,
+    );
+  }
+
+  @override
+  Offset getPositionForChild(Size size, Size childSize) {
+    final safeLeft = _horizontalMargin;
+    final safeRight = size.width - _horizontalMargin;
+    final safeTop = safePadding.top + _verticalMargin;
+    final safeBottom = size.height - safePadding.bottom - _verticalMargin;
+
+    final desiredLeft = anchorPosition.dx - 24;
+    final maxLeft = safeRight - childSize.width;
+    final left = desiredLeft.clamp(safeLeft, maxLeft).toDouble();
+
+    final spaceBelow = safeBottom - anchorPosition.dy - _anchorGap;
+    final spaceAbove = anchorPosition.dy - safeTop - _anchorGap;
+    final placeAbove = childSize.height > spaceBelow && spaceAbove > spaceBelow;
+    final desiredTop = placeAbove
+        ? anchorPosition.dy - childSize.height - _anchorGap
+        : anchorPosition.dy + _anchorGap;
+    final maxTop = safeBottom - childSize.height;
+    final top = desiredTop.clamp(safeTop, maxTop).toDouble();
+
+    return Offset(left, top);
+  }
+
+  @override
+  bool shouldRelayout(_MenuFlotanteArchivoLayoutDelegate oldDelegate) {
+    return oldDelegate.anchorPosition != anchorPosition ||
+        oldDelegate.safePadding != safePadding;
   }
 }
 
@@ -627,37 +783,61 @@ class _OpcionArchivoBiblioteca extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.onTap,
-    this.subtitle,
     this.foregroundColor,
   });
 
   final IconData icon;
   final String label;
-  final String? subtitle;
   final Color? foregroundColor;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     final color = foregroundColor ?? scheme.onSurface;
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 4),
-      leading: Icon(icon, color: color),
-      title: Text(label, style: TextStyle(color: color)),
-      subtitle: subtitle == null
-          ? null
-          : Text(
-              subtitle!,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: scheme.onSurfaceVariant,
-              ),
+    final hoverColor = foregroundColor == null
+        ? scheme.surfaceContainerHigh
+        : scheme.errorContainer.withValues(alpha: 0.55);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 1),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(RadioAtlassian.small),
+        overlayColor: WidgetStateProperty.resolveWith<Color?>((states) {
+          if (states.contains(WidgetState.pressed) ||
+              states.contains(WidgetState.hovered) ||
+              states.contains(WidgetState.focused)) {
+            return hoverColor;
+          }
+          return null;
+        }),
+        child: SizedBox(
+          height: 44,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: EspacioAtlassian.sm,
             ),
-      trailing: Icon(
-        Icons.chevron_right_rounded,
-        color: scheme.onSurfaceVariant,
+            child: Row(
+              children: [
+                Icon(icon, size: 19, color: color),
+                const SizedBox(width: EspacioAtlassian.sm),
+                Expanded(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      color: color,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
-      onTap: onTap,
     );
   }
 }
@@ -667,20 +847,20 @@ class _FilaElementoBibliotecaDrive extends StatelessWidget {
     required this.item,
     required this.downloaded,
     required this.onTap,
-    this.onLongPress,
+    this.onLongPressStart,
   });
 
   final ElementoBibliotecaDrive item;
   final bool downloaded;
   final VoidCallback onTap;
-  final VoidCallback? onLongPress;
+  final GestureLongPressStartCallback? onLongPressStart;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onLongPress: onLongPress,
+      onLongPressStart: onLongPressStart,
       child: PanelAtlassian(
         onTap: onTap,
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),

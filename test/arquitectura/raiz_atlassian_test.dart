@@ -3,17 +3,27 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('Atlassian es la única raíz registrada en main.dart', () {
-    final source = File('lib/main.dart').readAsStringSync();
+  test('el shell principal abre directamente el Inicio React', () {
+    final mainSource = File('lib/main.dart').readAsStringSync();
+    final shellSource = File(
+      'lib/funcionalidades/laboratorio_atlassian/pantallas/'
+      'pantalla_laboratorio_atlassian.dart',
+    ).readAsStringSync();
 
     expect(
-      source,
+      mainSource,
       contains('home: const PantallaLaboratorioAtlassian(hideExit: true)'),
     );
-    expect(source, isNot(contains('NavegacionInferiorApp')));
-    expect(source, isNot(contains('proveedorIndiceRouter')));
-    expect(source, isNot(contains('proveedorSeccionNav')));
-    expect(source, isNot(contains('PantallaShellPrincipalLegacy')));
+    expect(shellSource, contains('PantallaInicioReactDeveloper('));
+    expect(shellSource, isNot(contains('PantallaInicioAtlassian(')));
+    expect(
+      shellSource,
+      contains('showFloatingSearch = allowBlursAndSearch && _section != 0'),
+    );
+    expect(mainSource, isNot(contains('NavegacionInferiorApp')));
+    expect(mainSource, isNot(contains('proveedorIndiceRouter')));
+    expect(mainSource, isNot(contains('proveedorSeccionNav')));
+    expect(mainSource, isNot(contains('PantallaShellPrincipalLegacy')));
   });
 
   test('el shell anterior permanece preservado y desconectado', () {

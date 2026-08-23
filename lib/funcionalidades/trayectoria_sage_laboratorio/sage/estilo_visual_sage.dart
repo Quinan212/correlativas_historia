@@ -29,6 +29,7 @@ PreferredSizeWidget construirAppBarSage(
   List<Widget> actions = const <Widget>[],
   PreferredSizeWidget? bottom,
   double? toolbarHeight,
+  bool centerTitle = false,
 }) {
   final theme = Theme.of(context);
   final scheme = theme.colorScheme;
@@ -42,7 +43,7 @@ PreferredSizeWidget construirAppBarSage(
     surfaceTintColor: Colors.transparent,
     elevation: 0,
     scrolledUnderElevation: 0,
-    centerTitle: false,
+    centerTitle: centerTitle,
     toolbarHeight: toolbarHeight,
     shape: atlassian
         ? Border(bottom: BorderSide(color: scheme.outlineVariant))

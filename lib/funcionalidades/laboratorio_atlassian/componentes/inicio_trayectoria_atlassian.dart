@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -453,6 +454,681 @@ class SugerenciasApiladasAtlassianDelegate
         oldDelegate.onOpenCalendar != onOpenCalendar;
   }
 }
+
+
+/// Variante experimental para comparar, debajo del stack original, el
+/// comportamiento de React Bits `Stack` adaptado a Flutter.
+///
+/// La sección original [SugerenciasApiladasAtlassianDelegate] no se modifica.
+/// Esta variante usa un único conjunto de tarjetas: a medida que cada tarjeta
+/// se aproxima a su tope, la composición adopta progresivamente la rotación y
+/// escala del Stack de React Bits. Al completarse el apilado, el mismo layout
+/// habilita drag, send-to-back y autoplay sin cambiar de representación.
+class SugerenciasStackReactBitsAtlassianDelegate
+    extends SliverPersistentHeaderDelegate {
+  SugerenciasStackReactBitsAtlassianDelegate({
+    required this.viewportHeight,
+    required this.onOpenExams,
+    required this.onOpenScenarios,
+    required this.onOpenSubjects,
+    required this.onOpenCalendar,
+  });
+
+  final double viewportHeight;
+  final VoidCallback onOpenExams;
+  final VoidCallback onOpenScenarios;
+  final VoidCallback onOpenSubjects;
+  final VoidCallback onOpenCalendar;
+
+  static const double _cardHeight =
+      SugerenciasApiladasAtlassianDelegate._cardHeight;
+  static const double _cardGap =
+      SugerenciasApiladasAtlassianDelegate._cardGap;
+  static const double _stackedSpread =
+      SugerenciasApiladasAtlassianDelegate._stackedSpread;
+  static const double _horizontalPadding =
+      SugerenciasApiladasAtlassianDelegate._horizontalPadding;
+  static const double _mobileStackMaxWidth =
+      SugerenciasApiladasAtlassianDelegate._mobileStackMaxWidth;
+  static const double _sectionTopPadding =
+      SugerenciasApiladasAtlassianDelegate._sectionTopPadding;
+  static const double _sectionHeaderHeight =
+      SugerenciasApiladasAtlassianDelegate._sectionHeaderHeight;
+  static const double _sectionHeaderGap =
+      SugerenciasApiladasAtlassianDelegate._sectionHeaderGap;
+  static const double _bottomPadding =
+      SugerenciasApiladasAtlassianDelegate._bottomPadding;
+  static const double _mobileMenuTop =
+      SugerenciasApiladasAtlassianDelegate._mobileMenuTop;
+  static const double _mobileMenuSize =
+      SugerenciasApiladasAtlassianDelegate._mobileMenuSize;
+  static const double _pinTravel =
+      SugerenciasApiladasAtlassianDelegate._pinTravel;
+  static const double _fullSpread = _cardHeight + _cardGap;
+  static const double _stackStep = _fullSpread - _stackedSpread;
+
+  static const List<_SugerenciaApiladaData> _items =
+      SugerenciasApiladasAtlassianDelegate._items;
+
+  double get _cardsStartTop =>
+      _sectionTopPadding + _sectionHeaderHeight + _sectionHeaderGap;
+
+  double get _headerTop => _sectionTopPadding;
+
+  double get _stackScrollExtent => (_items.length - 1) * _stackStep;
+
+  double get _stackedHeight =>
+      _cardsStartTop +
+      _cardHeight +
+      ((_items.length - 1) * _stackedSpread) +
+      _bottomPadding;
+
+  @override
+  double get maxExtent => _stackedHeight + _pinTravel + _stackScrollExtent;
+
+  @override
+  double get minExtent => _stackedHeight;
+
+  /// El stack está al final del CustomScrollView. Esta cola garantiza que el
+  /// header pueda recorrer todo su rango de colapso también en teléfonos altos.
+  static double trailingExtentFor(double viewportHeight) {
+    final double stackedHeight =
+        _sectionTopPadding +
+        _sectionHeaderHeight +
+        _sectionHeaderGap +
+        _cardHeight +
+        ((_items.length - 1) * _stackedSpread) +
+        _bottomPadding;
+    return math.max(144.0, viewportHeight - stackedHeight + 32.0).toDouble();
+  }
+
+  double _mobileAlignmentOffset(BuildContext context) {
+    final double screenWidth = MediaQuery.sizeOf(context).width;
+    if (screenWidth >= 600) return 0;
+
+    final double safeTop = MediaQuery.paddingOf(context).top;
+    final double menuCenter = safeTop + _mobileMenuTop + (_mobileMenuSize / 2);
+    final double headerCenterAtBase =
+        _sectionTopPadding + (_sectionHeaderHeight / 2);
+    return math.max(menuCenter - headerCenterAtBase, 0.0);
+  }
+
+  double _cardsPinnedAlignmentOffset(
+    BuildContext context,
+    double shrinkOffset,
+  ) {
+    final double targetOffset = _mobileAlignmentOffset(context);
+    if (targetOffset == 0) return 0;
+
+    final double collapseRange = math.max(maxExtent - minExtent, 1.0);
+    final double collapseProgress = (shrinkOffset / collapseRange)
+        .clamp(0.0, 1.0)
+        .toDouble();
+
+    return targetOffset * Curves.easeOutCubic.transform(collapseProgress);
+  }
+
+  VoidCallback _callbackFor(AccionSugerenciaAtlassian action) {
+    switch (action) {
+      case AccionSugerenciaAtlassian.examenes:
+        return onOpenExams;
+      case AccionSugerenciaAtlassian.escenarios:
+        return onOpenScenarios;
+      case AccionSugerenciaAtlassian.materias:
+        return onOpenSubjects;
+      case AccionSugerenciaAtlassian.calendario:
+        return onOpenCalendar;
+    }
+  }
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    final double scroll = math
+        .max(shrinkOffset - _pinTravel, 0.0)
+        .clamp(0.0, _stackScrollExtent);
+    final bool interactive = scroll >= (_stackScrollExtent - 0.5);
+
+    final ThemeData theme = Theme.of(context);
+    final double cardsPinnedAlignmentOffset = _cardsPinnedAlignmentOffset(
+      context,
+      shrinkOffset,
+    );
+    final double fixedHeaderAlignmentOffset = _mobileAlignmentOffset(context);
+
+    final double lastNaturalTop = (_items.length - 1) * _fullSpread;
+    final double lastStackedTop = (_items.length - 1) * _stackedSpread;
+    final double lastCurrentTop = math.max(
+      lastStackedTop,
+      lastNaturalTop - scroll,
+    );
+    final double cardsVisualHeight = lastCurrentTop + _cardHeight;
+
+    final Widget content = Stack(
+      clipBehavior: Clip.none,
+      children: <Widget>[
+        Positioned.fill(
+          child: ColoredBox(color: theme.scaffoldBackgroundColor),
+        ),
+        Positioned(
+          left: _horizontalPadding,
+          right: _horizontalPadding,
+          top: _cardsStartTop + cardsPinnedAlignmentOffset,
+          height: cardsVisualHeight,
+          child: _ReactBitsStackSugerenciasAtlassian(
+            enabled: interactive,
+            items: _items,
+            cardHeight: _cardHeight,
+            fullSpread: _fullSpread,
+            stackedSpread: _stackedSpread,
+            scroll: scroll,
+            onAction: _callbackFor,
+          ),
+        ),
+        Positioned(
+          left: _horizontalPadding,
+          right: _horizontalPadding,
+          top: _headerTop + fixedHeaderAlignmentOffset,
+          child: const _InicioSugerenciasReactBitsAtlassian(
+            height: _sectionHeaderHeight,
+          ),
+        ),
+      ],
+    );
+
+    final double screenWidth = MediaQuery.sizeOf(context).width;
+    final double centeredWidth = screenWidth >= 600
+        ? math.min(screenWidth, 1000.0)
+        : math.min(screenWidth - 32.0, _mobileStackMaxWidth);
+
+    return Center(
+      child: SizedBox(width: math.max(centeredWidth, 0.0), child: content),
+    );
+  }
+
+  @override
+  bool shouldRebuild(
+    covariant SugerenciasStackReactBitsAtlassianDelegate oldDelegate,
+  ) {
+    return oldDelegate.viewportHeight != viewportHeight ||
+        oldDelegate.onOpenExams != onOpenExams ||
+        oldDelegate.onOpenScenarios != onOpenScenarios ||
+        oldDelegate.onOpenSubjects != onOpenSubjects ||
+        oldDelegate.onOpenCalendar != onOpenCalendar;
+  }
+}
+
+class _InicioSugerenciasReactBitsAtlassian extends StatelessWidget {
+  const _InicioSugerenciasReactBitsAtlassian({required this.height});
+
+  final double height;
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final ColorScheme scheme = theme.colorScheme;
+
+    return SizedBox(
+      height: height,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+        decoration: BoxDecoration(
+          color: theme.scaffoldBackgroundColor,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: scheme.outline.withValues(alpha: 0.10)),
+        ),
+        child: Stack(
+          alignment: Alignment.center,
+          children: <Widget>[
+            Text(
+              'Sugerencias',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w900,
+                color: scheme.onSurface,
+              ),
+            ),
+            Align(
+              alignment: Alignment.centerRight,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 9,
+                  vertical: 5,
+                ),
+                decoration: BoxDecoration(
+                  color: scheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  'STACK NUEVO',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: scheme.onPrimaryContainer,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.35,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ReactBitsStackSugerenciasAtlassian extends StatefulWidget {
+  const _ReactBitsStackSugerenciasAtlassian({
+    required this.enabled,
+    required this.items,
+    required this.cardHeight,
+    required this.fullSpread,
+    required this.stackedSpread,
+    required this.scroll,
+    required this.onAction,
+  });
+
+  final bool enabled;
+  final List<_SugerenciaApiladaData> items;
+  final double cardHeight;
+  final double fullSpread;
+  final double stackedSpread;
+  final double scroll;
+  final VoidCallback Function(AccionSugerenciaAtlassian action) onAction;
+
+  @override
+  State<_ReactBitsStackSugerenciasAtlassian> createState() =>
+      _ReactBitsStackSugerenciasAtlassianState();
+}
+
+class _ReactBitsStackSugerenciasAtlassianState
+    extends State<_ReactBitsStackSugerenciasAtlassian> {
+  static const Duration _autoplayDelay = Duration(seconds: 3);
+  static const List<double> _randomRotations = <double>[
+    -3.6,
+    2.4,
+    -1.8,
+    4.2,
+  ];
+
+  late List<int> _order;
+  Timer? _autoplayTimer;
+  bool _hovered = false;
+  bool _dragging = false;
+
+  double get _stackStep => widget.fullSpread - widget.stackedSpread;
+
+  @override
+  void initState() {
+    super.initState();
+    _resetOrder();
+    _scheduleAutoplay();
+  }
+
+  @override
+  void didUpdateWidget(
+    covariant _ReactBitsStackSugerenciasAtlassian oldWidget,
+  ) {
+    super.didUpdateWidget(oldWidget);
+
+    if (oldWidget.items.length != widget.items.length) {
+      _resetOrder();
+    }
+
+    if (oldWidget.enabled != widget.enabled) {
+      if (!widget.enabled) {
+        _resetOrder();
+      }
+      _scheduleAutoplay();
+    }
+  }
+
+  @override
+  void dispose() {
+    _autoplayTimer?.cancel();
+    super.dispose();
+  }
+
+  void _resetOrder() {
+    _order = List<int>.generate(widget.items.length, (int index) => index);
+  }
+
+  void _scheduleAutoplay() {
+    _autoplayTimer?.cancel();
+    if (!widget.enabled ||
+        _hovered ||
+        _dragging ||
+        widget.items.length <= 1) {
+      return;
+    }
+
+    _autoplayTimer = Timer(_autoplayDelay, () {
+      if (!mounted ||
+          !widget.enabled ||
+          _hovered ||
+          _dragging ||
+          _order.length <= 1) {
+        return;
+      }
+      _sendToBack(_order.last);
+    });
+  }
+
+  void _sendToBack(int itemIndex) {
+    if (!widget.enabled) return;
+    final int currentIndex = _order.indexOf(itemIndex);
+    if (currentIndex < 0) return;
+
+    setState(() {
+      _order.removeAt(currentIndex);
+      _order.insert(0, itemIndex);
+    });
+    _scheduleAutoplay();
+  }
+
+  void _setHovered(bool hovered) {
+    if (_hovered == hovered) return;
+    setState(() => _hovered = hovered);
+    _scheduleAutoplay();
+  }
+
+  void _setDragging(bool dragging) {
+    if (_dragging == dragging) return;
+    setState(() => _dragging = dragging);
+    _scheduleAutoplay();
+  }
+
+  double _randomRotationFor(int itemIndex) {
+    if (_randomRotations.isEmpty) return 0;
+    return _randomRotations[itemIndex % _randomRotations.length];
+  }
+
+  double _joinProgressFor(int itemIndex) {
+    if (widget.items.length <= 1) return 1;
+
+    // La primera tarjeta empieza a adoptar el Stack cuando se aproxima la
+    // segunda; cada tarjeta siguiente ocupa exactamente un tramo de scroll.
+    final int joiningIndex = itemIndex == 0 ? 1 : itemIndex;
+    final double start = (joiningIndex - 1) * _stackStep;
+    return ((widget.scroll - start) / _stackStep)
+        .clamp(0.0, 1.0)
+        .toDouble();
+  }
+
+  double _depthFor(int itemIndex) {
+    double depth = 0;
+    for (int laterIndex = itemIndex + 1;
+        laterIndex < widget.items.length;
+        laterIndex++) {
+      depth += _joinProgressFor(laterIndex);
+    }
+    return depth;
+  }
+
+  double _topFor(int itemIndex, int stackIndex) {
+    if (widget.enabled) {
+      return stackIndex * widget.stackedSpread;
+    }
+
+    final double naturalTop = itemIndex * widget.fullSpread;
+    final double stackedTop = itemIndex * widget.stackedSpread;
+    return math.max(stackedTop, naturalTop - widget.scroll);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => _setHovered(true),
+      onExit: (_) => _setHovered(false),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: <Widget>[
+          for (int stackIndex = 0;
+              stackIndex < _order.length;
+              stackIndex++)
+            _ReactBitsPositionedCardAtlassian(
+              key: ValueKey<String>('react-bits-card-${_order[stackIndex]}'),
+              item: widget.items[_order[stackIndex]],
+              top: _topFor(_order[stackIndex], stackIndex),
+              cardHeight: widget.cardHeight,
+              randomRotation: _randomRotationFor(_order[stackIndex]),
+              membershipProgress: widget.enabled
+                  ? 1
+                  : _joinProgressFor(_order[stackIndex]),
+              depthProgress: widget.enabled
+                  ? (_order.length - stackIndex - 1).toDouble()
+                  : _depthFor(_order[stackIndex]),
+              enabled: widget.enabled,
+              onSendToBack: () => _sendToBack(_order[stackIndex]),
+              onInteractionChanged: _setDragging,
+              onAction: widget.onAction(
+                widget.items[_order[stackIndex]].action,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ReactBitsPositionedCardAtlassian extends StatelessWidget {
+  const _ReactBitsPositionedCardAtlassian({
+    super.key,
+    required this.item,
+    required this.top,
+    required this.cardHeight,
+    required this.randomRotation,
+    required this.membershipProgress,
+    required this.depthProgress,
+    required this.enabled,
+    required this.onSendToBack,
+    required this.onInteractionChanged,
+    required this.onAction,
+  });
+
+  final _SugerenciaApiladaData item;
+  final double top;
+  final double cardHeight;
+  final double randomRotation;
+  final double membershipProgress;
+  final double depthProgress;
+  final bool enabled;
+  final VoidCallback onSendToBack;
+  final ValueChanged<bool> onInteractionChanged;
+  final VoidCallback onAction;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedPositioned(
+      duration: enabled ? const Duration(milliseconds: 360) : Duration.zero,
+      curve: Curves.easeOutBack,
+      left: 0,
+      right: 0,
+      top: top,
+      child: _ReactBitsDraggableCardAtlassian(
+        item: item,
+        cardHeight: cardHeight,
+        randomRotation: randomRotation,
+        membershipProgress: membershipProgress,
+        depthProgress: depthProgress,
+        enabled: enabled,
+        onSendToBack: onSendToBack,
+        onInteractionChanged: onInteractionChanged,
+        onAction: onAction,
+      ),
+    );
+  }
+}
+
+class _ReactBitsDraggableCardAtlassian extends StatefulWidget {
+  const _ReactBitsDraggableCardAtlassian({
+    required this.item,
+    required this.cardHeight,
+    required this.randomRotation,
+    required this.membershipProgress,
+    required this.depthProgress,
+    required this.enabled,
+    required this.onSendToBack,
+    required this.onInteractionChanged,
+    required this.onAction,
+  });
+
+  final _SugerenciaApiladaData item;
+  final double cardHeight;
+  final double randomRotation;
+  final double membershipProgress;
+  final double depthProgress;
+  final bool enabled;
+  final VoidCallback onSendToBack;
+  final ValueChanged<bool> onInteractionChanged;
+  final VoidCallback onAction;
+
+  @override
+  State<_ReactBitsDraggableCardAtlassian> createState() =>
+      _ReactBitsDraggableCardAtlassianState();
+}
+
+class _ReactBitsDraggableCardAtlassianState
+    extends State<_ReactBitsDraggableCardAtlassian> {
+  static const double _sensitivity = 250.0;
+  static const double _dragElastic = 0.6;
+
+  Offset _gestureOffset = Offset.zero;
+  Offset _visualOffset = Offset.zero;
+  bool _dragging = false;
+
+  @override
+  void didUpdateWidget(
+    covariant _ReactBitsDraggableCardAtlassian oldWidget,
+  ) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.enabled && !widget.enabled) {
+      _gestureOffset = Offset.zero;
+      _visualOffset = Offset.zero;
+      _dragging = false;
+    }
+  }
+
+  void _resetDrag() {
+    if (_gestureOffset == Offset.zero &&
+        _visualOffset == Offset.zero &&
+        !_dragging) {
+      return;
+    }
+    setState(() {
+      _gestureOffset = Offset.zero;
+      _visualOffset = Offset.zero;
+      _dragging = false;
+    });
+  }
+
+  void _handlePanStart(DragStartDetails _) {
+    if (!widget.enabled) return;
+    setState(() {
+      _gestureOffset = Offset.zero;
+      _visualOffset = Offset.zero;
+      _dragging = true;
+    });
+    widget.onInteractionChanged(true);
+  }
+
+  void _handlePanUpdate(DragUpdateDetails details) {
+    if (!widget.enabled) return;
+    setState(() {
+      _gestureOffset += details.delta;
+      _visualOffset = _gestureOffset * _dragElastic;
+    });
+  }
+
+  void _handlePanEnd(DragEndDetails _) {
+    if (!widget.enabled) return;
+
+    final bool exceededSensitivity =
+        _gestureOffset.dx.abs() > _sensitivity ||
+        _gestureOffset.dy.abs() > _sensitivity;
+
+    setState(() {
+      _gestureOffset = Offset.zero;
+      _visualOffset = Offset.zero;
+      _dragging = false;
+    });
+    widget.onInteractionChanged(false);
+
+    if (exceededSensitivity) {
+      widget.onSendToBack();
+    }
+  }
+
+  void _handlePanCancel() {
+    if (!widget.enabled) return;
+    _resetDrag();
+    widget.onInteractionChanged(false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final double rotateXDegrees = (-_visualOffset.dy * 0.6)
+        .clamp(-60.0, 60.0)
+        .toDouble();
+    final double rotateYDegrees = (_visualOffset.dx * 0.6)
+        .clamp(-60.0, 60.0)
+        .toDouble();
+
+    // Equivalencia progresiva del Stack de React Bits:
+    // - cada tarjeta presente aporta 0.06 de escala;
+    // - cada tarjeta que queda encima aporta otros 0.06 y 4 grados;
+    // - la rotación aleatoria entra gradualmente con la propia tarjeta.
+    final double membership = widget.membershipProgress
+        .clamp(0.0, 1.0)
+        .toDouble();
+    final double depth = math.max(widget.depthProgress, 0.0).toDouble();
+    final double rotateZDegrees =
+        (depth * 4.0) + (widget.randomRotation * membership);
+    final double scale = math
+        .max(1 - ((membership + depth) * 0.06), 0.72)
+        .toDouble();
+
+    final Matrix4 transform = Matrix4.identity()
+      ..setEntry(3, 2, 0.001)
+      ..rotateX(rotateXDegrees * math.pi / 180)
+      ..rotateY(rotateYDegrees * math.pi / 180)
+      ..rotateZ(rotateZDegrees * math.pi / 180)
+      ..scaleByDouble(scale, scale, 1.0, 1.0);
+
+    return Transform.translate(
+      offset: _visualOffset,
+      child: AnimatedContainer(
+        duration: widget.enabled && !_dragging
+            ? const Duration(milliseconds: 360)
+            : Duration.zero,
+        curve: Curves.easeOutBack,
+        transform: transform,
+        transformAlignment: Alignment.bottomRight,
+        child: GestureDetector(
+          behavior: HitTestBehavior.translucent,
+          onTap: widget.enabled ? widget.onSendToBack : null,
+          onPanStart: widget.enabled ? _handlePanStart : null,
+          onPanUpdate: widget.enabled ? _handlePanUpdate : null,
+          onPanEnd: widget.enabled ? _handlePanEnd : null,
+          onPanCancel: widget.enabled ? _handlePanCancel : null,
+          child: _TarjetaSugerenciaApiladaAtlassian(
+            item: widget.item,
+            collisionProgress: 0,
+            depthProgress: 0,
+            cardHeight: widget.cardHeight,
+            onTap: widget.onAction,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 
 class _InicioSugerenciasAtlassian extends StatelessWidget {
   const _InicioSugerenciasAtlassian({this.height});

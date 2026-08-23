@@ -161,4 +161,58 @@ void main() {
       EstadoMateriaSageLaboratorio.aprobada,
     );
   });
+
+  test('no mezcla notas ni fechas entre personas distintas', () async {
+    const repository = RepositorioTrayectoriaSageLaboratorio();
+
+    TrayectoriaSageLaboratorio trajectory({
+      required String nombre,
+      required String dni,
+      String? nota,
+      String? fecha,
+    }) {
+      return TrayectoriaSageLaboratorio(
+        perfil: PerfilTrayectoriaSageLaboratorio(nombre: nombre, dni: dni),
+        capturadaEn: DateTime(2026, 8, 20),
+        carreras: <CarreraTrayectoriaSageLaboratorio>[
+          CarreraTrayectoriaSageLaboratorio(
+            gridRowId: 'row-1',
+            careerKey: 'historia-pscs',
+            nombre: 'Profesorado de Historia',
+            institucion: 'PSCS',
+            materias: <MateriaTrayectoriaSageLaboratorio>[
+              MateriaTrayectoriaSageLaboratorio(
+                idSage: 'ant',
+                nombre: 'Antigüedad',
+                estadoOriginal: 'Aprobada',
+                estado: EstadoMateriaSageLaboratorio.aprobada,
+                nota: nota,
+                fecha: fecha,
+              ),
+            ],
+          ),
+        ],
+      );
+    }
+
+    await repository.guardarIdempotente(
+      trajectory(
+        nombre: 'Persona A',
+        dni: '11111111',
+        nota: '9',
+        fecha: '14/07/2026',
+      ),
+    );
+    await repository.guardarIdempotente(
+      trajectory(nombre: 'Persona B', dni: '22222222'),
+    );
+
+    final reloaded = await repository.cargar();
+    final subject = reloaded!.carreras.single.materias.single;
+
+    expect(reloaded.perfil.nombre, 'Persona B');
+    expect(reloaded.perfil.dni, '22222222');
+    expect(subject.nota, isNull);
+    expect(subject.fecha, isNull);
+  });
 }

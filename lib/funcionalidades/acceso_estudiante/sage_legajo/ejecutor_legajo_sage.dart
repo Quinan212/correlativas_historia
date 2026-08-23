@@ -40,6 +40,18 @@ class EjecutorLegajoSage {
   Future<ResultadoAccionLegajoSage> activarNivelSuperiorHistorial() =>
       _executeTab('nivel_superior_historial');
 
+  Future<bool> irAPaginaLegajos(int pagina) async {
+    if (pagina < 1) return false;
+    try {
+      final raw = await _evaluateJavascript(_pageScript(pagina));
+      dynamic decoded = jsonDecode(raw);
+      if (decoded is String) decoded = jsonDecode(decoded);
+      return decoded is Map && decoded['reloaded'] == true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   Future<ResultadoAccionLegajoSage> _executeTab(String key) async {
     try {
       final raw = await _evaluateJavascript(_tabScript(jsonEncode(key)));
@@ -170,6 +182,38 @@ class EjecutorLegajoSage {
     }
     return JSON.stringify({found:true,activated:false,mechanism:'',label:wanted,frameId:item.frameId,pathnameBefore:item.pathname,matchedBy:item.exact?'exact_text':'text'});
       })()''';
+
+  String _pageScript(int page) =>
+      '''(() => {
+    const requestedPage = $page;
+    const seen = new Set();
+    const visit = win => {
+      if (!win || seen.has(win)) return null;
+      seen.add(win);
+      try {
+        const gridNode = win.document.querySelector('#list2');
+        const grid = gridNode && win.jQuery?.fn?.jqGrid ? win.jQuery('#list2') : null;
+        if (grid) return {win, grid};
+        for (const frame of win.document.querySelectorAll('iframe')) {
+          const found = visit(frame.contentWindow);
+          if (found) return found;
+        }
+      } catch (_) {}
+      return null;
+    };
+    const target = visit(window);
+    if (!target) return JSON.stringify({found:false,reloaded:false});
+    let lastPage = 1;
+    try { lastPage = Number(target.grid.jqGrid('getGridParam','lastpage') || 1); } catch (_) {}
+    if (!Number.isFinite(lastPage) || lastPage < 1) lastPage = 1;
+    const safePage = Math.max(1, Math.min(requestedPage, lastPage));
+    try {
+      target.grid.jqGrid('setGridParam', {page:safePage}).trigger('reloadGrid');
+      return JSON.stringify({found:true,reloaded:true,page:safePage,lastPage});
+    } catch (_) {
+      return JSON.stringify({found:true,reloaded:false,page:safePage,lastPage});
+    }
+  })()''';
 
   String _tabScript(String key) =>
       '''(() => {

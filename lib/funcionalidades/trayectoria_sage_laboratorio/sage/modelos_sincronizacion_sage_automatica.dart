@@ -1,3 +1,4 @@
+import '../../acceso_estudiante/sage_perfiles/modelos_perfiles_sage.dart';
 import '../modelos/modelos_trayectoria_sage_laboratorio.dart';
 
 enum ModoPantallaSageLaboratorio {
@@ -5,6 +6,30 @@ enum ModoPantallaSageLaboratorio {
   autenticacion,
   sincronizacionAutomatica,
   descargaDocumento,
+}
+
+PerfilSage? elegirPerfilSincronizacionSage({
+  required Iterable<PerfilSage> disponibles,
+  PerfilSage? activo,
+  Set<PerfilSage> intentados = const <PerfilSage>{},
+  PerfilSage? preferido,
+}) {
+  final ordered = <PerfilSage>[];
+  for (final profile in disponibles) {
+    if (!ordered.contains(profile)) ordered.add(profile);
+  }
+
+  bool eligible(PerfilSage? profile) =>
+      profile != null &&
+      ordered.contains(profile) &&
+      !intentados.contains(profile);
+
+  if (eligible(preferido)) return preferido;
+  if (eligible(activo)) return activo;
+  for (final profile in ordered) {
+    if (!intentados.contains(profile)) return profile;
+  }
+  return null;
 }
 
 enum EtapaSincronizacionSageAutomatica {
